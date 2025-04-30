@@ -4,7 +4,7 @@
  */
 import CONFIG from '../config';
 import Logger from '../utils/logger';
-import StorageService from './storageService';
+import StorageService from '../services/storageService';
 
 export class AuthService {
   /**
