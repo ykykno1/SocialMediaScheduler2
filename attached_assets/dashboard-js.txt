@@ -1,0 +1,523 @@
+/**
+ * Dashboard UI handler for Shabbat Robot
+ * Manages the dashboard UI components and interactions
+ */
+
+const DashboardUI = {
+    // DOM elements
+    elements: {
+        section: null,
+        statusIndicator: null,
+        nextActionText: null,
+        nextActionTime: null,
+        platformCards: null,
+        hideNowBtn: null,
+        restoreNowBtn: null,
+        testConnectionBtn: null
+    },
+    
+    /**
+     * Initialize dashboard UI
+     */
+    initialize: function() {
+        // Get DOM elements
+        this.elements.section = document.getElementById('dashboard-section');
+        
+        if (!this.elements.section) {
+            Logger.error('Dashboard section not found');
+            return;
+        }
+        
+        this.elements.statusIndicator = this.elements.section.querySelector('.status-indicator');
+        this.elements.nextActionText = this.elements.section.querySelector('.next-action p:first-child');
+        this.elements.nextActionTime = this.elements.section.querySelector('.next-action .time');
+        this.elements.platformCards = this.elements.section.querySelector('.platform-cards');
+        this.elements.hideNowBtn = document.getElementById('hide-now');
+        this.elements.restoreNowBtn = document.getElementById('restore-now');
+        this.elements.testConnectionBtn = document.getElementById('test-connection');
+        
+        // Add event listeners
+        if (this.elements.hideNowBtn) {
+            this.elements.hideNowBtn.addEventListener('click', this.handleHideNow.bind(this));
+        }
+        
+        if (this.elements.restoreNowBtn) {
+            this.elements.restoreNowBtn.addEventListener('click', this.handleRestoreNow.bind(this));
+        }
+        
+        if (this.elements.testConnectionBtn) {
+            this.elements.testConnectionBtn.addEventListener('click', this.handleTestConnection.bind(this));
+        }
+        
+        // Initialize platform cards
+        this.updatePlatformCards();
+        
+        // Update status
+        this.updateStatus();
+        
+        // Set up timer to update next action countdown
+        setInterval(() => this.updateNextActionCountdown(), 60000); // Update every minute
+    },
+    
+    /**
+     * Update robot status display
+     */
+    updateStatus: function() {
+        // Get scheduler status
+        const isSchedulerRunning = SchedulerService.isRunning();
+        const nextEvents = SchedulerService.getNextEvents();
+        
+        // Update status indicator
+        if (this.elements.statusIndicator) {
+            this.elements.statusIndicator.className = 
+                `status-indicator ${isSchedulerRunning ? 'active' : 'inactive'}`;
+            
+            const iconElement = this.elements.statusIndicator.querySelector('i');
+            const textElement = this.elements.statusIndicator.querySelector('span');
+            
+            if (iconElement) {
+                iconElement.className = isSchedulerRunning ? 
+                    'fas fa-check-circle' : 'fas fa-times-circle';
+            }
+            
+            if (textElement) {
+                textElement.textContent = isSchedulerRunning ? 
+                    'הרובוט מופעל ומוכן' : 'הרובוט כבוי';
+            }
+        }
+        
+        // Update next action
+        if (nextEvents && nextEvents.hide && this.elements.nextActionText && this.elements.nextActionTime) {
+            const nextEvent = nextEvents.hide;
+            
+            this.elements.nextActionText.innerHTML = 
+                `<i class="fas fa-eye-slash"></i> הסתרת תוכן בכניסת שבת`;
+            
+            this.elements.nextActionTime.textContent = 
+                DateTimeUtils.formatDate(nextEvent.time, true);
+            
+            this.updateNextActionCountdown();
+        }
+    },
+    
+    /**
+     * Update countdown to next action
+     */
+    updateNextActionCountdown: function() {
+        const nextEvents = SchedulerService.getNextEvents();
+        
+        if (nextEvents && nextEvents.hide && this.elements.nextActionTime) {
+            const nextEvent = 
+                new Date() < nextEvents.hide.time ? nextEvents.hide : nextEvents.restore;
+            
+            if (nextEvent) {
+                const timeRemaining = DateTimeUtils.getTimeRemaining(nextEvent.time);
+                const formattedTime = DateTimeUtils.formatTimeRemaining(timeRemaining);
+                
+                this.elements.nextActionTime.textContent = 
+                    `${DateTimeUtils.formatDate(nextEvent.time, true)} (${formattedTime})`;
+            }
+        }
+    },
+    
+    /**
+     * Update platform cards with current status
+     */
+    updatePlatformCards: function() {
+        if (!this.elements.platformCards) {
+            return;
+        }
+        
+        const settings = StorageService.getSettings();
+        const platforms = [
+            { name: 'facebook', platform: FacebookPlatform },
+            { name: 'instagram', platform: InstagramPlatform },
+            { name: 'youtube', platform: YouTubePlatform },
+            { name: 'tiktok', platform: TikTokPlatform }
+        ];
+        
+        platforms.forEach(({ name, platform }) => {
+            const platformConfig = settings.platforms[name];
+            const cardElement = this.elements.platformCards.querySelector(`.platform-card .platform-icon.${name}`);
+            
+            if (cardElement && cardElement.parentElement) {
+                const card = cardElement.parentElement;
+                const infoElement = card.querySelector('.platform-info');
+                
+                if (infoElement) {
+                    const statusElement = infoElement.querySelector('p:first-of-type');
+                    const actionElement = infoElement.querySelector('p:last-of-type');
+                    
+                    if (statusElement && actionElement) {
+                        const isEnabled = platformConfig && platformConfig.enabled;
+                        const isConnected = platformConfig && platformConfig.connected;
+                        
+                        // Update status text
+                        statusElement.className = isConnected ? 'connected' : 'not-connected';
+                        statusElement.innerHTML = isConnected ? 
+                            '<i class="fas fa-link"></i> מחובר' : 
+                            '<i class="fas fa-unlink"></i> לא מחובר';
+                        
+                        // Update action text
+                        if (isConnected) {
+                            // Will need to fetch content count in a real implementation
+                            actionElement.innerHTML = '10 פריטי תוכן ינוהלו';
+                        } else if (isEnabled) {
+                            actionElement.innerHTML = 
+                                '<a href="#" class="connect-link" data-platform="' + name + '">חבר עכשיו</a>';
+                        } else {
+                            actionElement.innerHTML = 
+                                '<span class="disabled-text">המערכת מושבתת</span>';
+                        }
+                        
+                        // Add event listener to connect link
+                        const connectLink = actionElement.querySelector('.connect-link');
+                        if (connectLink) {
+                            connectLink.addEventListener('click', (event) => {
+                                event.preventDefault();
+                                this.handleConnectPlatform(name);
+                            });
+                        }
+                    }
+                }
+            }
+        });
+    },
+    
+    /**
+     * Handle connect platform click
+     * @param {string} platformName - Platform name
+     */
+    handleConnectPlatform: function(platformName) {
+        const platforms = {
+            facebook: FacebookPlatform,
+            instagram: InstagramPlatform,
+            youtube: YouTubePlatform,
+            tiktok: TikTokPlatform
+        };
+        
+        const platform = platforms[platformName];
+        
+        if (!platform) {
+            this.showNotification('שגיאה', 'פלטפורמה לא נתמכת', 'error');
+            return;
+        }
+        
+        if (!platform.isConfigured()) {
+            this.showNotification('שגיאה', 'יש להגדיר את הפלטפורמה תחילה', 'error');
+            UINavigation.navigateTo('settings');
+            return;
+        }
+        
+        this.showLoader(`מתחבר ל${platform.displayName}...`);
+        
+        AuthService.authenticate(platformName)
+            .then(() => {
+                this.hideLoader();
+                this.showNotification('הצלחה', `החיבור ל${platform.displayName} בוצע בהצלחה`, 'success');
+                this.updatePlatformCards();
+            })
+            .catch(error => {
+                this.hideLoader();
+                this.showNotification('שגיאה', `החיבור ל${platform.displayName} נכשל: ${error.message}`, 'error');
+            });
+    },
+    
+    /**
+     * Handle hide now button click
+     */
+    handleHideNow: function() {
+        this.showConfirmDialog(
+            'הסתרת תוכן',
+            'האם אתה בטוח שברצונך להסתיר את כל התוכן עכשיו?',
+            () => {
+                this.showLoader('מסתיר תוכן...');
+                
+                SchedulerService.hideAllContent()
+                    .then(result => {
+                        this.hideLoader();
+                        
+                        if (result.success) {
+                            this.showNotification(
+                                'הצלחה', 
+                                `הוסתרו ${result.stats.successful} פריטי תוכן מתוך ${result.stats.total}`, 
+                                'success'
+                            );
+                        } else {
+                            this.showNotification(
+                                'אזהרה', 
+                                `פעולה הושלמה עם שגיאות: ${result.stats.failed} פריטים נכשלו מתוך ${result.stats.total}`, 
+                                'warning'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        this.hideLoader();
+                        this.showNotification('שגיאה', `פעולת ההסתרה נכשלה: ${error.message}`, 'error');
+                    });
+            }
+        );
+    },
+    
+    /**
+     * Handle restore now button click
+     */
+    handleRestoreNow: function() {
+        this.showConfirmDialog(
+            'שחזור תוכן',
+            'האם אתה בטוח שברצונך לשחזר את כל התוכן עכשיו?',
+            () => {
+                this.showLoader('משחזר תוכן...');
+                
+                SchedulerService.restoreAllContent()
+                    .then(result => {
+                        this.hideLoader();
+                        
+                        if (result.success) {
+                            this.showNotification(
+                                'הצלחה', 
+                                `שוחזרו ${result.stats.successful} פריטי תוכן מתוך ${result.stats.total}`, 
+                                'success'
+                            );
+                        } else {
+                            this.showNotification(
+                                'אזהרה', 
+                                `פעולה הושלמה עם שגיאות: ${result.stats.failed} פריטים נכשלו מתוך ${result.stats.total}`, 
+                                'warning'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        this.hideLoader();
+                        this.showNotification('שגיאה', `פעולת השחזור נכשלה: ${error.message}`, 'error');
+                    });
+            }
+        );
+    },
+    
+    /**
+     * Handle test connection button click
+     */
+    handleTestConnection: function() {
+        this.showLoader('בודק חיבורים...');
+        
+        const settings = StorageService.getSettings();
+        const platforms = Object.keys(settings.platforms)
+            .filter(name => settings.platforms[name].enabled && settings.platforms[name].connected);
+        
+        if (platforms.length === 0) {
+            this.hideLoader();
+            this.showNotification('אזהרה', 'אין פלטפורמות מחוברות לבדיקה', 'warning');
+            return;
+        }
+        
+        const testPromises = platforms.map(name => {
+            return ApiService.testConnection(name)
+                .then(result => ({ name, success: result.connected, error: result.error }));
+        });
+        
+        Promise.all(testPromises)
+            .then(results => {
+                this.hideLoader();
+                
+                const successCount = results.filter(r => r.success).length;
+                const failCount = results.length - successCount;
+                
+                if (failCount === 0) {
+                    this.showNotification('הצלחה', 'כל החיבורים תקינים', 'success');
+                } else {
+                    const failedPlatforms = results.filter(r => !r.success).map(r => r.name).join(', ');
+                    this.showNotification(
+                        'אזהרה', 
+                        `נמצאו בעיות ב-${failCount} פלטפורמות: ${failedPlatforms}`, 
+                        'warning'
+                    );
+                }
+            })
+            .catch(error => {
+                this.hideLoader();
+                this.showNotification('שגיאה', `בדיקת החיבורים נכשלה: ${error.message}`, 'error');
+            });
+    },
+    
+    /**
+     * Show loader overlay
+     * @param {string} message - Loading message
+     */
+    showLoader: function(message) {
+        // Create loader element if not exists
+        let loader = document.getElementById('loader-overlay');
+        
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'loader-overlay';
+            loader.className = 'loader-overlay';
+            
+            const loaderContent = document.createElement('div');
+            loaderContent.className = 'loader-content';
+            
+            const spinner = document.createElement('div');
+            spinner.className = 'loader-spinner';
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = 'loader-message';
+            
+            loaderContent.appendChild(spinner);
+            loaderContent.appendChild(messageElement);
+            loader.appendChild(loaderContent);
+            
+            document.body.appendChild(loader);
+        }
+        
+        // Update message
+        const messageElement = loader.querySelector('.loader-message');
+        if (messageElement) {
+            messageElement.textContent = message || 'טוען...';
+        }
+        
+        // Show loader
+        loader.style.display = 'flex';
+    },
+    
+    /**
+     * Hide loader overlay
+     */
+    hideLoader: function() {
+        const loader = document.getElementById('loader-overlay');
+        if (loader) {
+            loader.style.display = 'none';
+        }
+    },
+    
+    /**
+     * Show notification message
+     * @param {string} title - Notification title
+     * @param {string} message - Notification message
+     * @param {string} type - Notification type (success, warning, error)
+     */
+    showNotification: function(title, message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'notification-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.addEventListener('click', () => {
+            notification.classList.add('notification-hidden');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        });
+        
+        // Create content
+        const content = document.createElement('div');
+        content.className = 'notification-content';
+        
+        // Add icon based on type
+        let icon = '';
+        switch (type) {
+            case 'success':
+                icon = '<i class="fas fa-check-circle"></i>';
+                break;
+            case 'warning':
+                icon = '<i class="fas fa-exclamation-triangle"></i>';
+                break;
+            case 'error':
+                icon = '<i class="fas fa-times-circle"></i>';
+                break;
+            default:
+                icon = '<i class="fas fa-info-circle"></i>';
+        }
+        
+        // Add title and message
+        content.innerHTML = `
+            <div class="notification-icon">${icon}</div>
+            <div class="notification-text">
+                <h4>${title}</h4>
+                <p>${message}</p>
+            </div>
+        `;
+        
+        // Add elements to notification
+        notification.appendChild(closeBtn);
+        notification.appendChild(content);
+        
+        // Add to document
+        document.body.appendChild(notification);
+        
+        // Show with animation
+        setTimeout(() => {
+            notification.classList.add('notification-visible');
+        }, 10);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            notification.classList.remove('notification-visible');
+            notification.classList.add('notification-hidden');
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 5000);
+    },
+    
+    /**
+     * Show confirmation dialog
+     * @param {string} title - Dialog title
+     * @param {string} message - Dialog message
+     * @param {Function} onConfirm - Callback on confirm
+     */
+    showConfirmDialog: function(title, message, onConfirm) {
+        // Create dialog element
+        const dialog = document.createElement('div');
+        dialog.className = 'dialog-overlay';
+        
+        // Create dialog content
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <h3>${title}</h3>
+                <p>${message}</p>
+                <div class="dialog-actions">
+                    <button class="btn btn-outline" id="dialog-cancel">ביטול</button>
+                    <button class="btn btn-primary" id="dialog-confirm">אישור</button>
+                </div>
+            </div>
+        `;
+        
+        // Add to document
+        document.body.appendChild(dialog);
+        
+        // Show with animation
+        setTimeout(() => {
+            dialog.classList.add('dialog-visible');
+        }, 10);
+        
+        // Add event listeners
+        const cancelBtn = dialog.querySelector('#dialog-cancel');
+        const confirmBtn = dialog.querySelector('#dialog-confirm');
+        
+        cancelBtn.addEventListener('click', () => {
+            dialog.classList.remove('dialog-visible');
+            setTimeout(() => {
+                document.body.removeChild(dialog);
+            }, 300);
+        });
+        
+        confirmBtn.addEventListener('click', () => {
+            dialog.classList.remove('dialog-visible');
+            setTimeout(() => {
+                document.body.removeChild(dialog);
+                if (typeof onConfirm === 'function') {
+                    onConfirm();
+                }
+            }, 300);
+        });
+    }
+};
+
+// Register the UI handler
+window.DashboardUI = DashboardUI;

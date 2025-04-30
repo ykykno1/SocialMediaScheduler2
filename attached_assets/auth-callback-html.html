@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אימות בתהליך - רובוט שבת</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #2a2a2a;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        h1 {
+            color: #3466ad;
+            margin-bottom: 1rem;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(52, 102, 173, 0.2);
+            border-radius: 50%;
+            border-top-color: #3466ad;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .status {
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>אימות פלטפורמה</h1>
+        <div class="spinner" id="spinner"></div>
+        <p id="status-message">מעבד את האימות...</p>
+        <p class="status" id="status"></p>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        function getUrlParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const hashString = window.location.hash.substring(1);
+            
+            // Parse query parameters
+            if (queryString) {
+                const pairs = queryString.split('&');
+                for (let i = 0; i < pairs.length; i++) {
+                    const pair = pairs[i].split('=');
+                    params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+                }
+            }
+            
+            // Parse hash parameters (used by some OAuth providers)
+            if (hashString) {
+                const pairs = hashString.split('&');
+                for (let i = 0; i < pairs.length; i++) {
+                    const pair = pairs[i].split('=');
+                    params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+                }
+            }
+            
+            return params;
+        }
+        
+        // Process the authentication response
+        function processAuthResponse() {
+            const params = getUrlParams();
+            const statusElement = document.getElementById('status');
+            const messageElement = document.getElementById('status-message');
+            const spinnerElement = document.getElementById('spinner');
+            
+            // Check for errors
+            if (params.error) {
+                statusElement.textContent = params.error_description || params.error;
+                statusElement.className = 'status error';
+                messageElement.textContent = 'האימות נכשל, החלון ייסגר בקרוב.';
+                spinnerElement.style.display = 'none';
+                
+                // Send error to parent window
+                window.opener.postMessage({
+                    error: params.error,
+                    platform: params.state
+                }, window.location.origin);
+                
+                // Close the window after a delay
+                setTimeout(() => window.close(), 5000);
+                return;
+            }
+            
+            // Check for code (authorization code)
+            if (params.code) {
+                statusElement.textContent = 'האימות התקבל בהצלחה!';
+                statusElement.className = 'status success';
+                messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
+                
+                // Send code to parent window
+                window.opener.postMessage({
+                    code: params.code,
+                    platform: params.state
+                }, window.location.origin);
+                
+                // Close the window after a delay
+                setTimeout(() => window.close(), 2000);
+                return;
+            }
+            
+            // Check for token (implicit flow)
+            if (params.access_token) {
+                statusElement.textContent = 'האימות התקבל בהצלחה!';
+                statusElement.className = 'status success';
+                messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
+                
+                // Send token to parent window
+                window.opener.postMessage({
+                    access_token: params.access_token,
+                    expires_in: params.expires_in,
+                    platform: params.state
+                }, window.location.origin);
+                
+                // Close the window after a delay
+                setTimeout(() => window.close(), 2000);
+                return;
+            }
+            
+            // No recognizable response
+            statusElement.textContent = 'תגובה לא חוקית';
+            statusElement.className = 'status error';
+            messageElement.textContent = 'לא התקבלה תגובה חוקית מהשרת. החלון ייסגר בקרוב.';
+            spinnerElement.style.display = 'none';
+            
+            // Close the window after a delay
+            setTimeout(() => window.close(), 5000);
+        }
+        
+        // Run when page loads
+        window.addEventListener('DOMContentLoaded', processAuthResponse);
+    </script>
+</body>
+</html>

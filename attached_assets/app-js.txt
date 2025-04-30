@@ -1,0 +1,144 @@
+/**
+ * Main application for Shabbat Robot
+ * Entry point that initializes all components
+ */
+
+// Application object
+const ShabbatRobot = {
+    /**
+     * Initialize the application
+     */
+    initialize: function() {
+        Logger.info('Initializing Shabbat Robot application', { version: CONFIG.APP_VERSION });
+        
+        try {
+            // Set up error handler
+            this.setupErrorHandler();
+            
+            // Initialize UI components
+            this.initializeUI();
+            
+            // Initialize platforms
+            this.initializePlatforms();
+            
+            // Initialize scheduler
+            this.initializeScheduler();
+            
+            Logger.info('Shabbat Robot initialized successfully');
+        } catch (error) {
+            Logger.error('Failed to initialize Shabbat Robot', { error: error.message });
+            alert('שגיאה באתחול האפליקציה: ' + error.message);
+        }
+    },
+    
+    /**
+     * Set up global error handler
+     */
+    setupErrorHandler: function() {
+        window.onerror = function(message, source, lineno, colno, error) {
+            Logger.error('Unhandled error', { 
+                message, 
+                source, 
+                lineno, 
+                colno, 
+                stack: error ? error.stack : null 
+            });
+            return false;
+        };
+    },
+    
+    /**
+     * Initialize UI components
+     */
+    initializeUI: function() {
+        Logger.info('Initializing UI components');
+        
+        // Initialize UI navigation
+        if (window.UINavigation) {
+            UINavigation.initialize();
+        } else {
+            Logger.error('UINavigation not available');
+        }
+        
+        // Initialize dashboard UI
+        if (window.DashboardUI) {
+            DashboardUI.initialize();
+        } else {
+            Logger.error('DashboardUI not available');
+        }
+        
+        // Initialize settings UI
+        if (window.SettingsUI) {
+            SettingsUI.initialize();
+        } else {
+            Logger.error('SettingsUI not available');
+        }
+        
+        // Initialize history UI
+        if (window.HistoryUI) {
+            HistoryUI.initialize();
+        } else {
+            Logger.error('HistoryUI not available');
+        }
+        
+        // Initialize scheduler UI
+        if (window.SchedulerUI) {
+            SchedulerUI.initialize();
+        } else {
+            Logger.error('SchedulerUI not available');
+        }
+    },
+    
+    /**
+     * Initialize platforms
+     */
+    initializePlatforms: function() {
+        Logger.info('Initializing platforms');
+        
+        // Initialize Facebook platform
+        if (window.FacebookPlatform) {
+            FacebookPlatform.initialize();
+        } else {
+            Logger.error('FacebookPlatform not available');
+        }
+        
+        // Initialize Instagram platform
+        if (window.InstagramPlatform) {
+            InstagramPlatform.initialize();
+        } else {
+            Logger.error('InstagramPlatform not available');
+        }
+        
+        // Initialize YouTube platform
+        if (window.YouTubePlatform) {
+            YouTubePlatform.initialize();
+        } else {
+            Logger.error('YouTubePlatform not available');
+        }
+        
+        // Initialize TikTok platform
+        if (window.TikTokPlatform) {
+            TikTokPlatform.initialize();
+        } else {
+            Logger.error('TikTokPlatform not available');
+        }
+    },
+    
+    /**
+     * Initialize scheduler
+     */
+    initializeScheduler: function() {
+        Logger.info('Initializing scheduler');
+        
+        if (window.SchedulerService) {
+            SchedulerService.initialize();
+        } else {
+            Logger.error('SchedulerService not available');
+        }
+    }
+};
+
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    ShabbatRobot.initialize();
+});
