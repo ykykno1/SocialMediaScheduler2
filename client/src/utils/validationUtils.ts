@@ -29,8 +29,8 @@ export class ValidationUtils {
    * @returns {boolean} True if valid API key format
    */
   static isValidApiKey(apiKey: string): boolean {
-    // This is a simple validation, adjust based on specific API requirements
-    return typeof apiKey === 'string' && apiKey.length >= 8;
+    // Less strict validation to accept any non-empty string
+    return typeof apiKey === 'string' && apiKey.trim() !== '';
   }
   
   /**
@@ -39,8 +39,8 @@ export class ValidationUtils {
    * @returns {boolean} True if valid API secret format
    */
   static isValidApiSecret(apiSecret: string): boolean {
-    // This is a simple validation, adjust based on specific API requirements
-    return typeof apiSecret === 'string' && apiSecret.length >= 8;
+    // Less strict validation to accept any non-empty string
+    return typeof apiSecret === 'string' && apiSecret.trim() !== '';
   }
   
   /**

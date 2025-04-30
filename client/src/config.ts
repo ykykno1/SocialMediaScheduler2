@@ -8,7 +8,7 @@ export const CONFIG = {
   APP_NAME: 'רובוט שבת',
   APP_VERSION: '1.0.0',
   
-  // Development mode flag
+  // Development mode flag - MUST be false for real auth
   DEV_MODE: false,
   
   // Default settings
