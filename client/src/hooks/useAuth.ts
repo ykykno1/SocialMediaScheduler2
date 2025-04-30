@@ -19,6 +19,13 @@ export function useAuth() {
     setAuthenticating(prev => ({ ...prev, [platform]: true }));
     
     try {
+      console.log(`Attempting to authenticate with ${platform}...`);
+      
+      // First validate that platform has API key and secret
+      if (!settings.platforms[platform].apiKey || !settings.platforms[platform].apiSecret) {
+        throw new Error(`נדרש להזין מפתח API וסיסמת API ל${getPlatformDisplayName(platform)}`);
+      }
+      
       await AuthService.authenticate(platform);
       
       // Update settings to reflect connected state
@@ -33,6 +40,7 @@ export function useAuth() {
       
       return true;
     } catch (error) {
+      console.error(`Authentication error with ${platform}:`, error);
       toast({
         title: 'שגיאת חיבור',
         description: (error as Error).message,
