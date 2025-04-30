@@ -8,6 +8,9 @@ export const CONFIG = {
   APP_NAME: 'רובוט שבת',
   APP_VERSION: '1.0.0',
   
+  // Development mode flag
+  DEV_MODE: false,
+  
   // Default settings
   DEFAULT_SETTINGS: {
     autoSchedule: true,
