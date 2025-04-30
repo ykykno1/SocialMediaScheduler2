@@ -153,6 +153,9 @@ const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
                 </div>
 
                 <div className="space-y-3">
+                  <div className="mb-2 p-2 bg-blue-50 rounded-md text-sm text-blue-800">
+                    יש להזין את פרטי האפליקציה שלך מפייסבוק. לאחר מכן, לחץ על "התחברות" כדי להתחבר לחשבון הפייסבוק שלך.
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="facebook-api-key">מפתח API (App ID)</Label>
                     <Input
@@ -161,6 +164,7 @@ const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
                       name="platforms.facebook.apiKey"
                       value={settings.platforms.facebook.apiKey}
                       onChange={handleInputChange}
+                      placeholder="1696013260998525"
                       className={formErrors.platforms?.facebook?.apiKey ? 'border-red-500' : ''}
                     />
                     {formErrors.platforms?.facebook?.apiKey && (
@@ -175,6 +179,7 @@ const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
                       name="platforms.facebook.apiSecret"
                       value={settings.platforms.facebook.apiSecret}
                       onChange={handleInputChange}
+                      placeholder="69b9d2e78c46433758f991a8c32d926b"
                       className={formErrors.platforms?.facebook?.apiSecret ? 'border-red-500' : ''}
                     />
                     {formErrors.platforms?.facebook?.apiSecret && (
@@ -184,7 +189,7 @@ const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
                   <div className="flex items-center justify-between">
                     {isAuthenticated('facebook') ? (
                       <>
-                        <span className="text-green-600 text-sm font-medium px-2 py-1 bg-green-600/10 rounded-full">מחובר</span>
+                        <span className="text-green-600 text-sm font-medium px-2 py-1 bg-green-600/10 rounded-full">מחובר לחשבון פייסבוק</span>
                         <Button 
                           variant="link" 
                           className="text-sm text-red-600 p-0 h-auto"
@@ -200,7 +205,7 @@ const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
                           disabled={authenticating['facebook']}
                           className="text-sm"
                         >
-                          התחברות
+                          התחברות לחשבון פייסבוק
                         </Button>
                       </div>
                     )}

@@ -184,7 +184,7 @@ export class AuthService {
     switch (platform) {
       case 'facebook':
         authUrl = CONFIG.API.facebook.auth;
-        scope = 'pages_show_list,pages_read_engagement,pages_manage_posts';
+        scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
         break;
         
       case 'instagram':
@@ -216,6 +216,7 @@ export class AuthService {
     });
     
     const fullAuthUrl = `${authUrl}?${urlParams.toString()}`;
+    console.log('Auth URL:', fullAuthUrl);
     
     // Open the auth window
     return new Promise((resolve, reject) => {
@@ -228,12 +229,16 @@ export class AuthService {
       
       // Set up message event listener for callback
       const handleCallback = (event: MessageEvent) => {
+        console.log('Received message event:', event);
+        
         // Validate origin for security
         if (event.origin !== window.location.origin) {
+          console.warn('Origin mismatch:', event.origin, window.location.origin);
           return;
         }
         
         const { platform, code, error } = event.data;
+        console.log('Message data:', { platform, code: code ? 'present' : 'missing', error });
         
         if (error) {
           reject(new Error(`Authentication failed: ${error}`));
@@ -253,13 +258,24 @@ export class AuthService {
       
       window.addEventListener('message', handleCallback);
       
-      // Set timeout to handle case when user closes window without completing auth
-      setTimeout(() => {
+      // Set up interval to check if auth window is closed
+      const checkClosed = setInterval(() => {
         if (authWindow.closed) {
+          clearInterval(checkClosed);
           window.removeEventListener('message', handleCallback);
-          reject(new Error('Authentication window was closed'));
+          reject(new Error('Authentication window was closed before completion'));
         }
       }, 1000);
+      
+      // Add a timeout of 5 minutes for the entire auth process
+      setTimeout(() => {
+        clearInterval(checkClosed);
+        window.removeEventListener('message', handleCallback);
+        if (!authWindow.closed) {
+          authWindow.close();
+        }
+        reject(new Error('Authentication timed out'));
+      }, 300000); // 5 minutes
     });
   }
   
