@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Sun, RotateCw } from 'lucide-react';
+import { Sun, RotateCw, List } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -11,9 +11,10 @@ import useSettings from '../hooks/useSettings';
 
 interface DashboardProps {
   onShowSettings: () => void;
+  onShowContent: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onShowSettings }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onShowSettings, onShowContent }) => {
   const { settings, updateSetting, saveSettings } = useSettings();
   const { 
     isRunning,
@@ -181,7 +182,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onShowSettings }) => {
             </li>
           </ul>
 
-          <div className="mt-4">
+          <div className="mt-4 space-y-3">
             <Button 
               className="w-full border border-[#3466ad] text-[#3466ad] hover:bg-[#3466ad]/10 bg-transparent"
               onClick={onShowSettings}
@@ -190,6 +191,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onShowSettings }) => {
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
               הגדרת פלטפורמות
+            </Button>
+            
+            <Button 
+              className="w-full bg-[#3466ad]/10 text-[#3466ad] hover:bg-[#3466ad]/20"
+              onClick={onShowContent}
+            >
+              <List className="h-5 w-5 ml-2" />
+              צפייה בתוכן
             </Button>
           </div>
         </CardContent>
