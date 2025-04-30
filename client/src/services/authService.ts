@@ -169,46 +169,20 @@ export class AuthService {
    * @returns {Promise} Promise resolving when auth window is opened
    */
   static authenticate(platform: string): Promise<any> {
-    const settings = StorageService.getSettings();
-    const platformConfig = settings.platforms[platform];
-    
-    if (!platformConfig) {
-      return Promise.reject(new Error(`Invalid platform: ${platform}`));
+    if (platform !== 'facebook') {
+      return Promise.reject(new Error(`Only Facebook is supported at this time`));
     }
-    
-    let authUrl, redirectUri, scope;
     
     // Set common redirect URI
-    redirectUri = `${window.location.origin}/auth-callback.html`;
+    const redirectUri = `${window.location.origin}/auth-callback.html`;
     
-    switch (platform) {
-      case 'facebook':
-        authUrl = CONFIG.API.facebook.auth;
-        scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
-        break;
-        
-      case 'instagram':
-        authUrl = CONFIG.API.instagram.auth;
-        scope = 'user_profile,user_media';
-        break;
-        
-      case 'youtube':
-        authUrl = CONFIG.API.youtube.auth;
-        scope = 'https://www.googleapis.com/auth/youtube';
-        break;
-        
-      case 'tiktok':
-        authUrl = CONFIG.API.tiktok.auth;
-        scope = 'user.info.basic,video.list,video.upload';
-        break;
-        
-      default:
-        return Promise.reject(new Error(`Unsupported platform: ${platform}`));
-    }
+    // Get Facebook auth URL and credentials
+    const authUrl = CONFIG.API.facebook.auth;
+    const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
     
-    // Build the full auth URL with params
+    // Build the full auth URL with params - use App ID from config
     const urlParams = new URLSearchParams({
-      client_id: platformConfig.apiKey,
+      client_id: CONFIG.FACEBOOK.APP_ID,
       redirect_uri: redirectUri,
       response_type: 'code',
       scope: scope,
@@ -287,61 +261,19 @@ export class AuthService {
    * @returns {Promise} Promise resolving with token data
    */
   static async exchangeCodeForToken(platform: string, code: string, redirectUri: string): Promise<any> {
-    const settings = StorageService.getSettings();
-    const platformConfig = settings.platforms[platform];
-    
-    if (!platformConfig) {
-      throw new Error(`Invalid platform: ${platform}`);
+    if (platform !== 'facebook') {
+      throw new Error(`Only Facebook is supported at this time`);
     }
     
     let url, params;
     
-    switch (platform) {
-      case 'facebook':
-        url = CONFIG.API.facebook.token;
-        params = {
-          client_id: platformConfig.apiKey,
-          client_secret: platformConfig.apiSecret,
-          code: code,
-          redirect_uri: redirectUri
-        };
-        break;
-        
-      case 'instagram':
-        url = CONFIG.API.instagram.token;
-        params = {
-          client_id: platformConfig.apiKey,
-          client_secret: platformConfig.apiSecret,
-          code: code,
-          redirect_uri: redirectUri,
-          grant_type: 'authorization_code'
-        };
-        break;
-        
-      case 'youtube':
-        url = CONFIG.API.youtube.token;
-        params = {
-          client_id: platformConfig.apiKey,
-          client_secret: platformConfig.apiSecret,
-          code: code,
-          redirect_uri: redirectUri,
-          grant_type: 'authorization_code'
-        };
-        break;
-        
-      case 'tiktok':
-        url = CONFIG.API.tiktok.token;
-        params = {
-          client_key: platformConfig.apiKey,
-          client_secret: platformConfig.apiSecret,
-          code: code,
-          grant_type: 'authorization_code'
-        };
-        break;
-        
-      default:
-        throw new Error(`Unsupported platform: ${platform}`);
-    }
+    url = CONFIG.API.facebook.token;
+    params = {
+      client_id: CONFIG.FACEBOOK.APP_ID,
+      client_secret: CONFIG.FACEBOOK.APP_SECRET,
+      code: code,
+      redirect_uri: redirectUri
+    };
     
     try {
       const response = await fetch(url, {

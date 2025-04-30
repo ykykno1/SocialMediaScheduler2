@@ -11,6 +11,12 @@ export const CONFIG = {
   // Development mode flag - MUST be false for real auth
   DEV_MODE: false,
   
+  // Facebook Developer Credentials (Fixed)
+  FACEBOOK: {
+    APP_ID: '1696013260998525',
+    APP_SECRET: '69b9d2e78c46433758f991a8c32d926b'
+  },
+  
   // Default settings
   DEFAULT_SETTINGS: {
     autoSchedule: true,
@@ -21,26 +27,6 @@ export const CONFIG = {
     platforms: {
       facebook: {
         enabled: false,
-        apiKey: '1696013260998525',
-        apiSecret: '69b9d2e78c46433758f991a8c32d926b',
-        connected: false
-      },
-      instagram: {
-        enabled: false,
-        apiKey: '',
-        apiSecret: '',
-        connected: false
-      },
-      youtube: {
-        enabled: false,
-        apiKey: '',
-        apiSecret: '',
-        connected: false
-      },
-      tiktok: {
-        enabled: false,
-        apiKey: '',
-        apiSecret: '',
         connected: false
       }
     },
