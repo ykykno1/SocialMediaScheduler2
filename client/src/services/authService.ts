@@ -176,30 +176,6 @@ export class AuthService {
       return Promise.reject(new Error(`Invalid platform: ${platform}`));
     }
     
-    // For testing/development purposes when no API keys are available
-    // This creates a simulated authentication flow
-    if (platformConfig.apiKey === '' || platformConfig.apiSecret === '') {
-      console.log('[DEV MODE] Using simulated authentication for', platform);
-      
-      // Create a simulated token
-      const simulatedToken = {
-        accessToken: `sim_${platform}_token_${Date.now()}`,
-        refreshToken: `sim_${platform}_refresh_${Date.now()}`,
-        expiresIn: 86400, // 24 hours
-        timestamp: Date.now()
-      };
-      
-      // Save simulated token
-      StorageService.saveAuthToken(platform, simulatedToken);
-      
-      // Update settings
-      const updatedSettings = StorageService.getSettings();
-      updatedSettings.platforms[platform].connected = true;
-      StorageService.saveSettings(updatedSettings);
-      
-      return Promise.resolve(simulatedToken);
-    }
-    
     let authUrl, redirectUri, scope;
     
     // Set common redirect URI
@@ -300,30 +276,6 @@ export class AuthService {
     
     if (!platformConfig) {
       throw new Error(`Invalid platform: ${platform}`);
-    }
-    
-    // For testing/development purposes when no API keys are available
-    // This creates a simulated token exchange
-    if (platformConfig.apiKey === '' || platformConfig.apiSecret === '') {
-      console.log('[DEV MODE] Using simulated token exchange for', platform);
-      
-      // Create a simulated token
-      const simulatedToken = {
-        accessToken: `sim_${platform}_token_${Date.now()}`,
-        refreshToken: `sim_${platform}_refresh_${Date.now()}`,
-        expiresIn: 86400, // 24 hours
-        timestamp: Date.now()
-      };
-      
-      // Save simulated token
-      StorageService.saveAuthToken(platform, simulatedToken);
-      
-      // Update settings
-      const updatedSettings = StorageService.getSettings();
-      updatedSettings.platforms[platform].connected = true;
-      StorageService.saveSettings(updatedSettings);
-      
-      return simulatedToken;
     }
     
     let url, params;
