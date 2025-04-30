@@ -21,8 +21,8 @@ export const CONFIG = {
     platforms: {
       facebook: {
         enabled: false,
-        apiKey: '',
-        apiSecret: '',
+        apiKey: '1696013260998525',
+        apiSecret: '69b9d2e78c46433758f991a8c32d926b',
         connected: false
       },
       instagram: {

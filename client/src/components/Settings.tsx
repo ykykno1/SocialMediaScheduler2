@@ -153,39 +153,6 @@ const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="mb-2 p-2 bg-blue-50 rounded-md text-sm text-blue-800">
-                    יש להזין את פרטי האפליקציה שלך מפייסבוק. לאחר מכן, לחץ על "התחברות" כדי להתחבר לחשבון הפייסבוק שלך.
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="facebook-api-key">מפתח API (App ID)</Label>
-                    <Input
-                      type="text"
-                      id="facebook-api-key"
-                      name="platforms.facebook.apiKey"
-                      value={settings.platforms.facebook.apiKey}
-                      onChange={handleInputChange}
-                      placeholder="1696013260998525"
-                      className={formErrors.platforms?.facebook?.apiKey ? 'border-red-500' : ''}
-                    />
-                    {formErrors.platforms?.facebook?.apiKey && (
-                      <p className="text-red-500 text-xs">{formErrors.platforms.facebook.apiKey}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="facebook-api-secret">סיסמת API (App Secret)</Label>
-                    <Input
-                      type="password"
-                      id="facebook-api-secret"
-                      name="platforms.facebook.apiSecret"
-                      value={settings.platforms.facebook.apiSecret}
-                      onChange={handleInputChange}
-                      placeholder="69b9d2e78c46433758f991a8c32d926b"
-                      className={formErrors.platforms?.facebook?.apiSecret ? 'border-red-500' : ''}
-                    />
-                    {formErrors.platforms?.facebook?.apiSecret && (
-                      <p className="text-red-500 text-xs">{formErrors.platforms.facebook.apiSecret}</p>
-                    )}
-                  </div>
                   <div className="flex items-center justify-between">
                     {isAuthenticated('facebook') ? (
                       <>
@@ -199,11 +166,11 @@ const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
                         </Button>
                       </>
                     ) : (
-                      <div className="flex justify-end w-full">
+                      <div className="flex justify-center w-full">
                         <Button 
                           onClick={() => connectPlatform('facebook')}
                           disabled={authenticating['facebook']}
-                          className="text-sm"
+                          className="text-md px-6 py-4"
                         >
                           התחברות לחשבון פייסבוק
                         </Button>
