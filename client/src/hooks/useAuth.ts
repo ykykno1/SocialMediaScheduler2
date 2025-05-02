@@ -49,7 +49,19 @@ export function useAuth() {
 
   // Check if platform is authenticated
   const isAuthenticated = useCallback((platform: string) => {
-    return AuthService.isAuthenticated(platform);
+    // First check AuthService (stores tokens in localStorage)
+    const isAuthFromService = AuthService.isAuthenticated(platform);
+    
+    // If platform is Facebook, we might be authenticated via SDK only
+    if (platform === 'facebook' && !isAuthFromService) {
+      // Check if we have a token in localStorage that might not be in AuthService
+      const fbToken = StorageService.getAuthTokens().facebook?.accessToken;
+      if (fbToken) {
+        return true;
+      }
+    }
+    
+    return isAuthFromService;
   }, []);
 
   // Connect platform
@@ -110,6 +122,22 @@ export function useAuth() {
   // Disconnect platform
   const disconnectPlatform = useCallback(async (platform: string) => {
     try {
+      // For Facebook, we need to handle SDK logout if initialized
+      if (platform === 'facebook' && fbSdkInitialized && !CONFIG.DEV_MODE) {
+        try {
+          // Use the SDK to logout
+          // This is a placeholder as the SDK doesn't have a direct logout method
+          // We'll rely on removing the token from storage
+          console.log('Logging out of Facebook with SDK...');
+          
+          // The SDK doesn't have a direct logout method we can call
+          // Facebook login state will refresh on next page load
+        } catch (fbError) {
+          console.error('Error logging out from Facebook SDK:', fbError);
+          // Continue with local logout even if FB SDK logout fails
+        }
+      }
+      
       // Remove auth token
       StorageService.removeAuthToken(platform);
       
