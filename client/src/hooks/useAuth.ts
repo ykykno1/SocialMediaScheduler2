@@ -71,41 +71,18 @@ export function useAuth() {
     try {
       console.log(`Attempting to authenticate with ${platform}...`);
       
-      // For Facebook, always use direct SDK approach, which avoids domain restrictions
-      if (platform === 'facebook') {
-        // Make sure SDK is initialized
-        if (!fbSdkInitialized) {
-          // Try to initialize SDK first
-          try {
-            const response = await fetch('/api/facebook-config');
-            if (!response.ok) {
-              throw new Error('Failed to fetch Facebook configuration');
-            }
-            
-            const config = await response.json();
-            if (config?.appId) {
-              await FacebookSdkService.initialize(config.appId);
-              setFbSdkInitialized(true);
-            } else {
-              throw new Error('Failed to get Facebook App ID');
-            }
-          } catch (error) {
-            console.error('Failed to initialize Facebook SDK:', error);
-            throw new Error('לא ניתן לאתחל את SDK של פייסבוק. נסה שוב מאוחר יותר.');
-          }
-        }
-        
-        // Use Facebook SDK directly
-        await FacebookSdkService.login();
-      } else {
-        // For other platforms, use traditional OAuth 
-        // First validate that platform has API key and secret
+      // For all platforms, including Facebook, use the traditional OAuth flow
+      // First validate that platform has API key and secret in dev mode
+      if (CONFIG.DEV_MODE) {
         if (!settings.platforms[platform].apiKey || !settings.platforms[platform].apiSecret) {
           throw new Error(`נדרש להזין מפתח API וסיסמת API ל${getPlatformDisplayName(platform)}`);
         }
-          
-        await AuthService.authenticate(platform);
       }
+      
+      // For all platforms, use AuthService
+      await AuthService.authenticate(platform);
+      
+      // If authentication succeeds, we don't need any platform-specific handling
       
       // Update settings to reflect connected state
       const updatedSettings = { ...settings };

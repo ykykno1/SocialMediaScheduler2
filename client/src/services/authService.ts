@@ -227,7 +227,7 @@ export class AuthService {
         // Try using the actual one first, but if that fails due to domain restrictions,
         // we'll use the fallback in the error handler
         const redirectUri = config.redirectUri;
-        const fallbackUri = config.fallbackUri || 'https://www.example.com/auth-callback.html';
+        const fallbackUri = config.fallbackUri || 'https://www.facebook.com/connect/login_success.html';
         
         // Get Facebook auth URL and credentials
         const authUrl = CONFIG.API.facebook.auth;
