@@ -13,8 +13,9 @@ export const CONFIG = {
   
   // Facebook Developer Credentials (Fixed)
   FACEBOOK: {
-    APP_ID: '1696013260998525',
-    APP_SECRET: '69b9d2e78c46433758f991a8c32d926b'
+    // Replace with your new App ID and Secret from the Facebook Developer portal
+    APP_ID: 'YOUR_NEW_APP_ID_HERE',
+    APP_SECRET: 'YOUR_NEW_APP_SECRET_HERE'
   },
   
   // Default settings
