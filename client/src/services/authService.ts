@@ -223,13 +223,22 @@ export class AuthService {
           throw new Error('Facebook App ID not configured on server');
         }
         
-        // Use the redirectUri from server which has the correct domain for Replit
+        // We have two options for redirect URI - the actual one and a fallback
+        // Try using the actual one first, but if that fails due to domain restrictions,
+        // we'll use the fallback in the error handler
         const redirectUri = config.redirectUri;
+        const fallbackUri = config.fallbackUri || 'https://www.example.com/auth-callback.html';
         
         // Get Facebook auth URL and credentials
         const authUrl = CONFIG.API.facebook.auth;
         // According to latest Facebook documentation
         const scope = 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts';
+        
+        // Store both URIs for use in the error handler
+        const uriOptions = {
+          current: redirectUri,
+          fallback: fallbackUri
+        };
         
         // Build the full auth URL with params - use App ID and redirectUri from server
         const urlParams = new URLSearchParams({
@@ -245,10 +254,35 @@ export class AuthService {
         
         // Open the auth window
         return new Promise<any>((resolve, reject) => {
-          const authWindow = window.open(fullAuthUrl, '_blank', 'width=600,height=700');
+          // Function to attempt auth with given redirect URI
+          const attemptAuth = (uri: string, isRetry = false) => {
+            // Update URL params with the new URI
+            const params = new URLSearchParams({
+              client_id: config.appId,
+              redirect_uri: uri,
+              response_type: 'code',
+              scope: scope,
+              state: platform,
+              retry: isRetry ? 'true' : 'false' // Add retry parameter to track retry attempts
+            });
+            
+            const url = `${authUrl}?${params.toString()}`;
+            console.log(`${isRetry ? 'Retrying' : 'Attempting'} auth with URI:`, uri);
+            
+            const authWindow = window.open(url, '_blank', 'width=600,height=700');
+            
+            if (!authWindow) {
+              reject(new Error('Failed to open authentication window. Please disable popup blocker.'));
+              return null;
+            }
+            
+            return authWindow;
+          };
+          
+          // Try with the primary URI first
+          const authWindow = attemptAuth(redirectUri);
           
           if (!authWindow) {
-            reject(new Error('Failed to open authentication window. Please disable popup blocker.'));
             return;
           }
           
@@ -297,8 +331,12 @@ export class AuthService {
               resolve(tokenData);
             }
             else if (code && platform) {
+              // Determine which URI was used for this authentication attempt
+              // If we're retrying, we should use the fallback URI for token exchange
+              const exchangeUri = isRetrying ? fallbackUri : redirectUri;
+              
               // Exchange code for token using traditional OAuth flow
-              AuthService.exchangeCodeForToken(platform, code, redirectUri)
+              AuthService.exchangeCodeForToken(platform, code, exchangeUri)
                 .then(resolve)
                 .catch(reject);
             }
@@ -310,8 +348,26 @@ export class AuthService {
           window.addEventListener('message', handleCallback);
           
           // Set up interval to check if auth window is closed
+          let isRetrying = false;
+          let currentWindow = authWindow;
+          
           const checkClosed = setInterval(() => {
-            if (authWindow.closed) {
+            if (currentWindow.closed) {
+              // If the window was closed without message, it might be due to domain restriction
+              // Try with fallback URI if not already retrying
+              if (!isRetrying && fallbackUri && fallbackUri !== redirectUri) {
+                console.log("First attempt failed. Trying with fallback URI...");
+                isRetrying = true;
+                
+                // Try with fallback URI
+                const newWindow = attemptAuth(fallbackUri, true);
+                if (newWindow) {
+                  currentWindow = newWindow;
+                  return; // Continue the interval check with the new window
+                }
+              }
+              
+              // If we already tried fallback or couldn't open new window, fail
               clearInterval(checkClosed);
               window.removeEventListener('message', handleCallback);
               reject(new Error('Authentication window was closed before completion'));
@@ -322,8 +378,8 @@ export class AuthService {
           setTimeout(() => {
             clearInterval(checkClosed);
             window.removeEventListener('message', handleCallback);
-            if (!authWindow.closed) {
-              authWindow.close();
+            if (!currentWindow.closed) {
+              currentWindow.close();
             }
             reject(new Error('Authentication timed out'));
           }, 300000); // 5 minutes

@@ -99,6 +99,7 @@
       const state = params.state; // Platform name
       const error = params.error;
       const fbAuthResponse = params.fb_auth_response;
+      const isRetry = params.retry === 'true'; // Check if this is a retry attempt
       
       const loadingEl = document.getElementById('loading');
       const successEl = document.getElementById('success');
