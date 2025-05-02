@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מפנה - רובוט שבת</title>
+  <style>
+    body {
+      font-family: 'Rubik', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 16px;
+      text-align: center;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+    }
+    h1 {
+      color: #3466ad;
+      margin-bottom: 16px;
+    }
+    p {
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3466ad;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 2s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="card">
+    <h1>רובוט שבת</h1>
+    <p>מפנה אותך לאפליקציה...</p>
+    <div class="loader"></div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      // Parse the current URL query parameters
+      const currentParams = new URLSearchParams(window.location.search);
+      
+      // Create new params for the redirect
+      const redirectParams = new URLSearchParams();
+      
+      // Copy relevant OAuth parameters
+      if (currentParams.has('code')) redirectParams.set('code', currentParams.get('code'));
+      if (currentParams.has('state')) redirectParams.set('state', currentParams.get('state'));
+      if (currentParams.has('error')) redirectParams.set('error', currentParams.get('error'));
+      if (currentParams.has('error_reason')) redirectParams.set('error_reason', currentParams.get('error_reason'));
+      
+      // Add the origin app domain parameter to help callback scripts verify origin
+      redirectParams.set('app_domain', window.location.hostname);
+      
+      // Create the full redirect URL
+      const redirectUrl = '/auth-callback.html?' + redirectParams.toString();
+      
+      // Log (for debugging)
+      console.log('Redirecting to:', redirectUrl);
+      
+      // Perform the redirect to the main callback page
+      window.location.href = redirectUrl;
+    };
+  </script>
+</body>
+</html>
