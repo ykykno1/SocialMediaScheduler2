@@ -21,14 +21,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: 'Facebook App ID not configured' });
     }
     
-    // For Replit, use HTTPS and modify to match the Facebook App's registered redirect URI
-    const baseUrl = process.env.REPLIT_DEPLOYMENT ? 
-      'https://shabbat-robot.example.com' : // Replace with your production URL when deployed
-      `${req.protocol}://${req.get('host')}`;
-    
     res.json({
       appId: appId,
-      redirectUri: `${baseUrl}/auth-callback.html`
+      redirectUri: `${req.protocol}://${req.get('host')}/auth-callback.html`
     });
   });
   
