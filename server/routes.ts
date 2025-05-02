@@ -1,13 +1,31 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Ensure environment variables are loaded
+  dotenv.config();
+  
   // Create auth-callback.html in the public folder
   const distPath = path.resolve(process.cwd(), "dist/public");
   const authCallbackPath = path.join(distPath, "auth-callback.html");
+  
+  // Add Facebook app credentials endpoint
+  app.get('/api/facebook-config', (req: Request, res: Response) => {
+    const appId = process.env.FACEBOOK_APP_ID;
+    
+    if (!appId) {
+      return res.status(500).json({ error: 'Facebook App ID not configured' });
+    }
+    
+    res.json({
+      appId: appId,
+      redirectUri: `${req.protocol}://${req.get('host')}/auth-callback.html`
+    });
+  });
   
   // Create auth-callback endpoint
   app.get('/api/auth-callback', (req, res) => {
@@ -23,6 +41,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Send success response
     res.json({ success: true, code, state });
+  });
+  
+  // Add endpoint to exchange authorization code for token
+  app.post('/api/auth-callback', async (req: Request, res: Response) => {
+    const { platform, code, redirectUri } = req.body;
+    
+    if (!platform || !code || !redirectUri) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    try {
+      if (platform === 'facebook') {
+        const appId = process.env.FACEBOOK_APP_ID;
+        const appSecret = process.env.FACEBOOK_APP_SECRET;
+        
+        if (!appId || !appSecret) {
+          return res.status(500).json({ error: 'Facebook credentials not configured' });
+        }
+        
+        // Exchange code for token
+        const tokenUrl = 'https://graph.facebook.com/v18.0/oauth/access_token';
+        const params = new URLSearchParams({
+          client_id: appId,
+          client_secret: appSecret,
+          code: code as string,
+          redirect_uri: redirectUri
+        });
+        
+        const response = await fetch(`${tokenUrl}?${params.toString()}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          return res.status(response.status).json({ 
+            error: errorData.error?.message || 'Failed to exchange code for token' 
+          });
+        }
+        
+        const tokenData = await response.json();
+        res.json(tokenData);
+      } else {
+        res.status(400).json({ error: 'Unsupported platform' });
+      }
+    } catch (error) {
+      console.error('Error exchanging code for token:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   });
   
   // Platform actions API

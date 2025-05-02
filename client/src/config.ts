@@ -11,10 +11,10 @@ export const CONFIG = {
   // Development mode flag - set to false to use real Facebook auth
   DEV_MODE: false,
   
-  // Facebook Developer Credentials (Fixed)
+  // Facebook Developer Credentials
   FACEBOOK: {
-    APP_ID: import.meta.env.FACEBOOK_APP_ID || '',
-    APP_SECRET: import.meta.env.FACEBOOK_APP_SECRET || ''
+    APP_ID: '', // Will be fetched from server
+    APP_SECRET: '' // Should never be exposed in frontend
   },
   
   // Default settings
