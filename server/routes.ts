@@ -28,14 +28,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (process.env.REPL_ID && process.env.REPL_OWNER) {
       // In Replit, we need to use the Replit domain
       const replitDomain = `${process.env.REPL_ID}-00-${process.env.REPL_OWNER}.janeway.replit.dev`;
-      // Primary redirect URI - using /facebook/redirect.html as intermediate step
-      redirectUri = `https://${replitDomain}/facebook/redirect.html`;
+      // Use direct redirect to auth-callback.html
+      redirectUri = `https://${replitDomain}/auth-callback.html`;
       // Fallback URI - using Facebook's built-in success page
       fallbackUri = 'https://www.facebook.com/connect/login_success.html';
     } else {
       // Local development
-      redirectUri = `${req.protocol}://${req.get('host')}/facebook/redirect.html`;
-      fallbackUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
+      redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
+      fallbackUri = 'https://www.facebook.com/connect/login_success.html';
     }
     
     // Send both the actual redirect URI and a fallback that should be approved in Facebook
