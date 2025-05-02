@@ -5,6 +5,7 @@
 import CONFIG from '../config';
 import AuthService from './authService';
 import Logger from '../utils/logger';
+import StorageService from './storageService';
 
 export class ApiService {
   /**
@@ -115,6 +116,41 @@ export class ApiService {
    * @returns {Promise} Promise resolving with content items
    */
   static async getContent(platform: string, options: Record<string, any> = {}): Promise<any> {
+    // If in development mode, return mock data for facebook
+    if (CONFIG.DEV_MODE && platform === 'facebook') {
+      console.log('Using development mode data for content');
+      
+      // Simulate a brief delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Return mock posts
+      return {
+        data: [
+          {
+            id: 'post1',
+            message: 'שלום עולם! פוסט לדוגמה 1',
+            created_time: '2023-04-28T10:00:00+0000',
+            privacy: { value: 'EVERYONE' },
+            permalink_url: 'https://facebook.com/example/post1'
+          },
+          {
+            id: 'post2',
+            message: 'ברוכים הבאים לרובוט שבת! פוסט לדוגמה 2',
+            created_time: '2023-04-29T14:30:00+0000',
+            privacy: { value: 'EVERYONE' },
+            permalink_url: 'https://facebook.com/example/post2'
+          },
+          {
+            id: 'post3',
+            message: 'פוסט לדוגמה 3 עם תמונה',
+            created_time: '2023-04-30T08:15:00+0000',
+            privacy: { value: 'EVERYONE' },
+            permalink_url: 'https://facebook.com/example/post3'
+          }
+        ]
+      };
+    }
+    
     let endpoint = '';
     
     switch (platform) {
@@ -173,6 +209,30 @@ export class ApiService {
    * @returns {Promise} Promise resolving when update is complete
    */
   static async updateContentVisibility(platform: string, contentId: string, action: 'hide' | 'restore'): Promise<any> {
+    // If in development mode, simulate successful update
+    if (CONFIG.DEV_MODE && platform === 'facebook') {
+      console.log(`Development mode: ${action} content for ${platform}, ID: ${contentId}`);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Add update to history
+      const historyEntry = {
+        id: `history_${Date.now()}`,
+        timestamp: Date.now(),
+        platform: platform,
+        action: action,
+        itemCount: 1,
+        status: CONFIG.STATUS.SUCCESS,
+        details: `מצב פיתוח: ${action === 'hide' ? 'הסתרת' : 'שחזור'} פוסט בפלטפורמת ${this.getPlatformDisplayName(platform)}`
+      };
+      
+      // Add history entry
+      StorageService.addHistoryEntry(historyEntry);
+      
+      return { success: true };
+    }
+    
     const isHide = action === 'hide';
     let endpoint = '';
     let method = 'POST';
@@ -238,6 +298,24 @@ export class ApiService {
    * @returns {Promise} Promise resolving with connection status
    */
   static async testConnection(platform: string): Promise<{ success: boolean; message: string }> {
+    // For development mode, simulate successful connection to Facebook
+    if (CONFIG.DEV_MODE && platform === 'facebook') {
+      console.log('Using development mode for connection test');
+      
+      // Update platform connection status in settings
+      const updatedSettings = StorageService.getSettings();
+      updatedSettings.platforms[platform].connected = true;
+      StorageService.saveSettings(updatedSettings);
+      
+      // Simulate a brief delay
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      return {
+        success: true,
+        message: `מחובר ל${this.getPlatformDisplayName(platform)} (מצב פיתוח)`
+      };
+    }
+    
     try {
       await this.getUserProfile(platform);
       return {

@@ -173,6 +173,39 @@ export class AuthService {
       return Promise.reject(new Error(`Only Facebook is supported at this time`));
     }
     
+    // If in development mode, use mock authentication
+    if (CONFIG.DEV_MODE) {
+      console.log('Using development mode authentication');
+      
+      return new Promise((resolve) => {
+        // Simulate a brief delay
+        setTimeout(() => {
+          // Create mock token data
+          const tokenData = {
+            accessToken: 'mock_access_token_' + Date.now(),
+            refreshToken: 'mock_refresh_token',
+            expiresIn: 3600 * 24 * 7, // 7 days
+            timestamp: Date.now()
+          };
+          
+          // Save the token
+          StorageService.saveAuthToken(platform, tokenData);
+          
+          // Update platform connection status
+          const updatedSettings = StorageService.getSettings();
+          updatedSettings.platforms[platform].connected = true;
+          StorageService.saveSettings(updatedSettings);
+          
+          // Log success
+          Logger.info('Mock authentication successful', { platform });
+          
+          // Resolve with token data
+          resolve(tokenData);
+        }, 1500);
+      });
+    }
+    
+    // Real authentication flow for production
     // Set common redirect URI
     const redirectUri = `${window.location.origin}/auth-callback.html`;
     
