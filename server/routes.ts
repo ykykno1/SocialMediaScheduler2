@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
+import { type FacebookPost } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   // Get Facebook app configuration
@@ -55,7 +56,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Failed to exchange code for token", details: errorData });
       }
       
-      const tokenData = await tokenResponse.json();
+      const tokenData = await tokenResponse.json() as { access_token: string; expires_in: number };
       
       // Get user info to get their Facebook ID
       const userUrl = `https://graph.facebook.com/me?access_token=${tokenData.access_token}`;
@@ -67,7 +68,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Failed to get user info", details: errorData });
       }
       
-      const userData = await userResponse.json();
+      const userData = await userResponse.json() as { id: string };
       
       // Save the auth token
       const auth = storage.saveFacebookAuth({
@@ -167,7 +168,7 @@ export function registerRoutes(app: Express): Server {
       const postsResponse = await fetch(postsUrl);
       
       if (!postsResponse.ok) {
-        const errorData = await postsResponse.json();
+        const errorData = await postsResponse.json() as { error?: { code: number; message: string } };
         console.error("Facebook posts fetch error:", errorData);
         
         // Check if the token has expired or is invalid
@@ -180,7 +181,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Failed to fetch Facebook posts", details: errorData });
       }
       
-      const postsData = await postsResponse.json();
+      const postsData = await postsResponse.json() as { data: FacebookPost[] };
       
       if (!postsData.data || !Array.isArray(postsData.data)) {
         return res.status(400).json({ error: "Invalid response format from Facebook" });
@@ -214,12 +215,12 @@ export function registerRoutes(app: Express): Server {
         const postsResponse = await fetch(postsUrl);
         
         if (!postsResponse.ok) {
-          const errorData = await postsResponse.json();
+          const errorData = await postsResponse.json() as { error?: { code: number; message: string } };
           console.error("Facebook posts fetch error:", errorData);
           return res.status(400).json({ error: "Failed to fetch Facebook posts", details: errorData });
         }
         
-        const postsData = await postsResponse.json();
+        const postsData = await postsResponse.json() as { data: FacebookPost[] };
         
         if (!postsData.data || !Array.isArray(postsData.data)) {
           return res.status(400).json({ error: "Invalid response format from Facebook" });
@@ -250,7 +251,7 @@ export function registerRoutes(app: Express): Server {
           if (updateResponse.ok) {
             successCount++;
           } else {
-            const errorData = await updateResponse.json();
+            const errorData = await updateResponse.json() as { error?: { message: string } };
             console.error(`Failed to hide post ${post.id}:`, errorData);
             failureCount++;
             lastError = errorData.error?.message || "Unknown error";
@@ -269,7 +270,7 @@ export function registerRoutes(app: Express): Server {
         platform: "facebook",
         success: failureCount === 0,
         affectedItems: successCount,
-        error: lastError
+        error: lastError || undefined
       });
       
       // Update settings to record last hide operation
@@ -308,12 +309,12 @@ export function registerRoutes(app: Express): Server {
       const postsResponse = await fetch(postsUrl);
       
       if (!postsResponse.ok) {
-        const errorData = await postsResponse.json();
+        const errorData = await postsResponse.json() as { error?: { code: number; message: string } };
         console.error("Facebook posts fetch error:", errorData);
         return res.status(400).json({ error: "Failed to fetch Facebook posts", details: errorData });
       }
       
-      const postsData = await postsResponse.json();
+      const postsData = await postsResponse.json() as { data: FacebookPost[] };
       
       if (!postsData.data || !Array.isArray(postsData.data)) {
         return res.status(400).json({ error: "Invalid response format from Facebook" });
@@ -323,7 +324,7 @@ export function registerRoutes(app: Express): Server {
       storage.saveCachedPosts(postsData.data);
       
       // Find posts with "SELF" privacy to restore
-      const postsToRestore = postsData.data.filter(post => 
+      const postsToRestore = postsData.data.filter((post: FacebookPost) => 
         post.privacy && post.privacy.value === "SELF"
       );
       
@@ -341,7 +342,7 @@ export function registerRoutes(app: Express): Server {
           if (updateResponse.ok) {
             successCount++;
           } else {
-            const errorData = await updateResponse.json();
+            const errorData = await updateResponse.json() as { error?: { message: string } };
             console.error(`Failed to restore post ${post.id}:`, errorData);
             failureCount++;
             lastError = errorData.error?.message || "Unknown error";
@@ -360,7 +361,7 @@ export function registerRoutes(app: Express): Server {
         platform: "facebook",
         success: failureCount === 0,
         affectedItems: successCount,
-        error: lastError
+        error: lastError || undefined
       });
       
       // Update settings to record last restore operation

@@ -1,213 +1,240 @@
-import React, { useEffect } from 'react';
-import { Sun, RotateCw, AlertTriangle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import DateTimeUtils from '../utils/dateTimeUtils';
-import SocialPlatformIcon from './SocialPlatformIcon';
-import useScheduler from '../hooks/useScheduler';
-import useAuth from '../hooks/useAuth';
-import useSettings from '../hooks/useSettings';
-import CONFIG from '../config';
+import { useState } from "react";
+import useFacebookAuth from "@/hooks/useFacebookAuth";
+import useFacebookPosts from "@/hooks/useFacebookPosts";
+import useSettings from "@/hooks/useSettings";
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Clock, Facebook, Lock, Unlock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface DashboardProps {
-  onShowSettings: () => void;
-}
+const Dashboard = () => {
+  const { isAuthenticated, isAuthenticating, startAuthFlow, logout } = useFacebookAuth();
+  const { posts, isLoading: isLoadingPosts, hidePosts, isHiding, restorePosts, isRestoring } = useFacebookPosts();
+  const { settings } = useSettings();
+  const [activeTab, setActiveTab] = useState("overview");
 
-const Dashboard: React.FC<DashboardProps> = ({ onShowSettings }) => {
-  const { settings, updateSetting, saveSettings } = useSettings();
-  const { 
-    isRunning,
-    toggleScheduler,
-    nextHideTime,
-    nextRestoreTime,
-    timeToHide,
-    timeToRestore,
-    manualHide,
-    manualRestore,
-    loading: schedulerLoading
-  } = useScheduler();
-  const { isAuthenticated } = useAuth();
-  
-  // Handle toggle change
-  const handleToggleScheduler = async () => {
-    const updatedSettings = { ...settings, autoSchedule: !settings.autoSchedule };
-    updateSetting('autoSchedule', !settings.autoSchedule);
-    await saveSettings(updatedSettings);
-    toggleScheduler();
+  const handleHidePosts = () => {
+    if (window.confirm("האם אתה בטוח שברצונך להסתיר את הפוסטים? פעולה זו תהפוך אותם לפרטיים.")) {
+      toast({
+        title: "מסתיר פוסטים...",
+        description: "מעדכן את הגדרות הפרטיות של הפוסטים",
+      });
+      
+      hidePosts(undefined, {
+        onSuccess: (data) => {
+          toast({
+            title: "הפוסטים הוסתרו בהצלחה",
+            description: `הוסתרו ${data.hiddenPosts} פוסטים`,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "שגיאה בהסתרת פוסטים",
+            description: error instanceof Error ? error.message : "אירעה שגיאה לא ידועה",
+            variant: "destructive",
+          });
+        }
+      });
+    }
   };
-  
-  // Format next hide/restore times
-  const formatNextHideTime = () => {
-    if (!nextHideTime) return '';
-    return `${DateTimeUtils.getHebrewDayName(nextHideTime)}, ${nextHideTime.getHours()}:${String(nextHideTime.getMinutes()).padStart(2, '0')}`;
+
+  const handleRestorePosts = () => {
+    if (window.confirm("האם אתה בטוח שברצונך לשחזר את הפוסטים? פעולה זו תהפוך אותם לציבוריים.")) {
+      toast({
+        title: "משחזר פוסטים...",
+        description: "מעדכן את הגדרות הפרטיות של הפוסטים",
+      });
+      
+      restorePosts(undefined, {
+        onSuccess: (data) => {
+          toast({
+            title: "הפוסטים שוחזרו בהצלחה",
+            description: `שוחזרו ${data.restoredPosts} פוסטים`,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "שגיאה בשחזור פוסטים",
+            description: error instanceof Error ? error.message : "אירעה שגיאה לא ידועה",
+            variant: "destructive",
+          });
+        }
+      });
+    }
   };
-  
-  const formatNextRestoreTime = () => {
-    if (!nextRestoreTime) return '';
-    return nextRestoreTime.getDay() === 6 ? `מוצ"ש, ${nextRestoreTime.getHours()}:${String(nextRestoreTime.getMinutes()).padStart(2, '0')}` : 
-      `${DateTimeUtils.getHebrewDayName(nextRestoreTime)}, ${nextRestoreTime.getHours()}:${String(nextRestoreTime.getMinutes()).padStart(2, '0')}`;
-  };
-  
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Development Mode Alert */}
-      {CONFIG.DEV_MODE && (
-        <div className="md:col-span-3">
-          <Alert variant="destructive" className="bg-amber-50 border-amber-300 text-amber-800">
-            <AlertTriangle className="h-5 w-5" />
-            <AlertDescription className="mr-2">
-              <strong>מצב פיתוח פעיל:</strong> האפליקציה פועלת במצב דמו ללא חיבור אמיתי לפייסבוק. פעולות הסתרה ושחזור הן לצורכי הדגמה בלבד.
+
+  // Render authentication state
+  if (!isAuthenticated) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>ברוכים הבאים לרובוט שבת</CardTitle>
+          <CardDescription>
+            אפליקציה להסתרה אוטומטית של תוכן ברשתות החברתיות בשבת
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>התחברות נדרשת</AlertTitle>
+            <AlertDescription>
+              יש להתחבר לפייסבוק כדי להשתמש באפליקציה זו
             </AlertDescription>
           </Alert>
-        </div>
-      )}
-      
-      {/* Status Card */}
-      <Card className="md:col-span-2">
-        <div className="bg-[#3466ad]/10 border-b border-[#3466ad]/30 px-4 py-3">
-          <h2 className="font-bold text-[#3466ad]">סטטוס מערכת</h2>
-        </div>
-        <CardContent className="p-4">
-          <div className="flex items-center mb-6">
-            <div className="flex-shrink-0 w-12 h-12 bg-[#3466ad]/10 rounded-full flex items-center justify-center">
-              <RotateCw className="h-6 w-6 text-[#3466ad]" />
-            </div>
-            <div className="mr-4 flex-grow">
-              <div className="flex justify-between items-center">
-                <h3 className="font-medium text-gray-700">תזמון אוטומטי</h3>
-                <Switch
-                  id="toggle-scheduler"
-                  checked={settings.autoSchedule}
-                  onCheckedChange={handleToggleScheduler}
-                />
-              </div>
-              <p className={`text-sm font-medium ${settings.autoSchedule ? 'text-green-600' : 'text-gray-500'}`}>
-                {settings.autoSchedule 
-                  ? 'המערכת פעילה ותסתיר תוכן באופן אוטומטי בכניסת השבת' 
-                  : 'המערכת לא תבצע פעולות אוטומטיות'}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <Sun className="h-5 w-5 text-amber-500" />
-                  <span className="mr-2 font-medium">הסתרת תוכן</span>
-                </div>
-                <span className="font-medium text-[#3466ad]">{formatNextHideTime()}</span>
-              </div>
-              <div className="mt-1 text-gray-500 text-sm">{timeToHide}</div>
-            </div>
-
-            <div className="bg-gray-50 p-3 rounded-lg shadow-sm">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <RotateCw className="h-5 w-5 text-green-600" />
-                  <span className="mr-2 font-medium">שחזור תוכן</span>
-                </div>
-                <span className="font-medium text-[#3466ad]">{formatNextRestoreTime()}</span>
-              </div>
-              <div className="mt-1 text-gray-500 text-sm">{timeToRestore}</div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex space-x-3 space-x-reverse">
+          <div className="flex items-center justify-center">
             <Button 
-              className="flex-1 bg-[#3466ad] hover:bg-[#3466ad]/90"
-              onClick={manualHide}
-              disabled={schedulerLoading}
+              onClick={startAuthFlow} 
+              disabled={isAuthenticating}
+              className="bg-[#1877F2] hover:bg-[#166FE5]"
             >
-              הסתרת תוכן
-            </Button>
-            <Button 
-              className="flex-1" 
-              variant="outline"
-              onClick={manualRestore}
-              disabled={schedulerLoading}
-            >
-              שחזור תוכן
+              <Facebook className="mr-2 h-4 w-4" />
+              {isAuthenticating ? "מתחבר..." : "התחבר עם פייסבוק"}
             </Button>
           </div>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Connected Platforms Card */}
-      <Card className="h-fit">
-        <div className="bg-[#3466ad]/10 border-b border-[#3466ad]/30 px-4 py-3">
-          <h2 className="font-bold text-[#3466ad]">פלטפורמות מחוברות</h2>
-        </div>
-        <CardContent className="p-4">
-          <ul className="space-y-3">
-            {/* Facebook */}
-            <li className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center">
-                <SocialPlatformIcon platform="facebook" size={20} className="w-8 h-8" />
-                <span className="mr-3 font-medium">פייסבוק</span>
+  return (
+    <div className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
+          <TabsTrigger value="posts">פוסטים ({posts.length})</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader>
+              <CardTitle>מצב נוכחי</CardTitle>
+              <CardDescription>
+                סקירה כללית של מצב חשבון הפייסבוק שלך
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
+                    <Facebook className="h-5 w-5 mr-2 text-[#1877F2]" />
+                    <span>חשבון פייסבוק</span>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">מחובר</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 mr-2" />
+                    <span>זמן הסתרה אוטומטי</span>
+                  </div>
+                  <span className="font-medium">{settings.hideTime}</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 mr-2" />
+                    <span>זמן שחזור אוטומטי</span>
+                  </div>
+                  <span className="font-medium">{settings.restoreTime}</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
+                    <Lock className="h-5 w-5 mr-2" />
+                    <span>הסתרה אוטומטית</span>
+                  </div>
+                  <Badge variant={settings.autoSchedule ? "default" : "secondary"}>
+                    {settings.autoSchedule ? "פעיל" : "לא פעיל"}
+                  </Badge>
+                </div>
               </div>
-              <span className={`text-sm font-medium px-2 py-1 ${
-                isAuthenticated('facebook') ? 'bg-green-600/10 text-green-600' : 'bg-red-600/10 text-red-600'
-              } rounded-full`}>
-                {isAuthenticated('facebook') ? 'מחובר' : 'לא מחובר'}
-              </span>
-            </li>
-
-            {/* Instagram */}
-            <li className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center">
-                <SocialPlatformIcon platform="instagram" size={20} className="w-8 h-8" />
-                <span className="mr-3 font-medium">אינסטגרם</span>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={logout}>התנתק מפייסבוק</Button>
+              <div className="space-x-2 flex flex-row-reverse">
+                <Button onClick={handleHidePosts} disabled={isHiding}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  הסתר כעת
+                </Button>
+                <Button variant="outline" onClick={handleRestorePosts} disabled={isRestoring}>
+                  <Unlock className="mr-2 h-4 w-4" />
+                  שחזר כעת
+                </Button>
               </div>
-              <span className={`text-sm font-medium px-2 py-1 ${
-                isAuthenticated('instagram') ? 'bg-green-600/10 text-green-600' : 'bg-red-600/10 text-red-600'
-              } rounded-full`}>
-                {isAuthenticated('instagram') ? 'מחובר' : 'לא מחובר'}
-              </span>
-            </li>
-
-            {/* YouTube */}
-            <li className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center">
-                <SocialPlatformIcon platform="youtube" size={20} className="w-8 h-8" />
-                <span className="mr-3 font-medium">יוטיוב</span>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="posts">
+          <Card>
+            <CardHeader>
+              <CardTitle>הפוסטים שלך</CardTitle>
+              <CardDescription>
+                רשימת הפוסטים מחשבון הפייסבוק שלך
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingPosts ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex flex-col space-y-2 border p-4 rounded-lg">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-10 w-full" />
+                      <div className="flex justify-between">
+                        <Skeleton className="h-4 w-1/4" />
+                        <Skeleton className="h-4 w-1/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : posts.length === 0 ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>אין פוסטים</AlertTitle>
+                  <AlertDescription>
+                    לא נמצאו פוסטים בחשבון הפייסבוק שלך
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <div key={post.id} className="border p-4 rounded-lg">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(post.created_time).toLocaleDateString('he-IL')}
+                        </span>
+                        <Badge variant={post.privacy.value === 'SELF' ? 'secondary' : 'outline'}>
+                          {post.privacy.value === 'SELF' ? 'מוסתר' : 'גלוי'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm mb-2">{post.message || "אין תוכן טקסט"}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <div className="text-sm text-muted-foreground">
+                סה"כ {posts.length} פוסטים
               </div>
-              <span className={`text-sm font-medium px-2 py-1 ${
-                isAuthenticated('youtube') ? 'bg-green-600/10 text-green-600' : 'bg-red-600/10 text-red-600'
-              } rounded-full`}>
-                {isAuthenticated('youtube') ? 'מחובר' : 'לא מחובר'}
-              </span>
-            </li>
-
-            {/* TikTok */}
-            <li className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center">
-                <SocialPlatformIcon platform="tiktok" size={20} className="w-8 h-8" />
-                <span className="mr-3 font-medium">טיקטוק</span>
+              <div className="space-x-2 flex flex-row-reverse">
+                <Button onClick={handleHidePosts} disabled={isHiding}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  הסתר הכל
+                </Button>
+                <Button variant="outline" onClick={handleRestorePosts} disabled={isRestoring}>
+                  <Unlock className="mr-2 h-4 w-4" />
+                  שחזר הכל
+                </Button>
               </div>
-              <span className={`text-sm font-medium px-2 py-1 ${
-                isAuthenticated('tiktok') ? 'bg-green-600/10 text-green-600' : 'bg-red-600/10 text-red-600'
-              } rounded-full`}>
-                {isAuthenticated('tiktok') ? 'מחובר' : 'לא מחובר'}
-              </span>
-            </li>
-          </ul>
-
-          <div className="mt-4">
-            <Button 
-              className="w-full border border-[#3466ad] text-[#3466ad] hover:bg-[#3466ad]/10 bg-transparent"
-              onClick={onShowSettings}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              הגדרת פלטפורמות
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

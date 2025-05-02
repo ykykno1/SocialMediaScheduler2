@@ -1,146 +1,157 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-interface FacebookAuthResponse {
-  access_token: string;
-  expires_in: number;
-  user_id: string;
-}
-
-interface AuthStatus {
-  isAuthenticated: boolean;
-  platform: string;
-  authTime: string | null;
-}
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 export default function useFacebookAuth() {
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [popupWindow, setPopupWindow] = useState<Window | null>(null);
 
-  // Check authentication status
-  const { data: authStatus, isLoading } = useQuery<AuthStatus>({
+  interface AuthStatus {
+    isAuthenticated: boolean;
+    platform: string;
+    authTime: string | null;
+  }
+
+  // Query for auth status
+  const { 
+    data: authStatus,
+    isLoading,
+    error
+  } = useQuery<AuthStatus>({
     queryKey: ['/api/auth-status'],
-    refetchOnWindowFocus: false,
+    refetchInterval: 60000, // Refetch every minute to check token expiration
   });
 
-  // Logout mutation
+  // Mutation for logging out
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to logout');
-      }
-      
-      return await response.json();
+      const res = await apiRequest('POST', '/api/logout');
+      return await res.json();
     },
     onSuccess: () => {
-      // Invalidate auth status after logout
       queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+      toast({
+        title: 'התנתקות בוצעה בהצלחה',
+        description: 'התנתקת בהצלחה מחשבון הפייסבוק שלך'
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'שגיאה בהתנתקות',
+        description: error instanceof Error ? error.message : 'אירעה שגיאה בהתנתקות מפייסבוק',
+        variant: 'destructive',
+      });
     }
   });
 
-  // Start Facebook authentication flow
-  const startAuthFlow = useCallback(async () => {
+  // Function to initiate Facebook login
+  const login = useCallback(async () => {
     try {
-      setIsAuthenticating(true);
+      // Get Facebook app configuration from server
+      const configRes = await fetch('/api/facebook-config');
       
-      // Get Facebook configuration from server
-      const configResponse = await fetch('/api/facebook-config');
-      
-      if (!configResponse.ok) {
+      if (!configRes.ok) {
         throw new Error('Failed to get Facebook configuration');
       }
       
-      const config = await configResponse.json();
+      const { appId, redirectUri } = await configRes.json();
       
-      if (!config.appId) {
-        throw new Error('Facebook App ID not configured');
-      }
-      
-      // Create login URL
-      const redirectUri = config.redirectUri;
+      // Construct Facebook OAuth URL
       const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
-        `client_id=${config.appId}&` +
+        `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=public_profile,email&` +
-        `state=facebook`;
+        `state=facebook&` +
+        `scope=public_profile,email,pages_manage_posts,pages_show_list,pages_read_engagement`;
       
-      // Open popup window for authentication
-      const authWindow = window.open(
+      // Open popup window
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
         authUrl,
-        'facebook-auth',
-        'width=600,height=600,location=yes,resizable=yes,scrollbars=yes'
+        'facebook-login',
+        `width=${width},height=${height},left=${left},top=${top}`
       );
       
-      if (!authWindow) {
-        throw new Error('Popup window was blocked. Please allow popups for this site.');
+      if (!popup) {
+        throw new Error('נחסם חלון קופץ. אנא אפשר חלונות קופצים ונסה שוב');
       }
       
-      // Listen for messages from auth window
-      const handleMessage = (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) {
-          return;
-        }
-        
-        const { platform, success, error } = event.data;
-        
-        if (error) {
-          console.error('Authentication error:', error);
-          setIsAuthenticating(false);
-          return;
-        }
-        
-        if (platform === 'facebook' && success) {
-          // Authentication successful, invalidate queries
-          queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
-          setIsAuthenticating(false);
-        }
-      };
-      
-      window.addEventListener('message', handleMessage);
-      
-      // Cleanup
-      const interval = setInterval(() => {
-        if (authWindow && authWindow.closed) {
-          window.removeEventListener('message', handleMessage);
-          clearInterval(interval);
-          setIsAuthenticating(false);
-        }
-      }, 1000);
-      
-      // Timeout after 5 minutes
-      setTimeout(() => {
-        if (authWindow && !authWindow.closed) {
-          authWindow.close();
-        }
-        window.removeEventListener('message', handleMessage);
-        clearInterval(interval);
-        setIsAuthenticating(false);
-      }, 300000);
-      
+      setPopupWindow(popup);
     } catch (error) {
-      console.error('Authentication error:', error);
-      setIsAuthenticating(false);
+      toast({
+        title: 'שגיאת התחברות',
+        description: error instanceof Error ? error.message : 'אירעה שגיאה בהתחברות לפייסבוק',
+        variant: 'destructive',
+      });
     }
-  }, [queryClient]);
+  }, [toast]);
 
-  // Handle logout
-  const logout = useCallback(() => {
-    logoutMutation.mutate();
-  }, [logoutMutation]);
+  // Handle message from popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Verify origin
+      if (event.origin !== window.location.origin) return;
+      
+      // Handle successful auth
+      if (event.data.success && event.data.platform === 'facebook') {
+        toast({
+          title: 'התחברות בוצעה בהצלחה',
+          description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
+        });
+        
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+      }
+      
+      // Handle auth error
+      if (event.data.error) {
+        toast({
+          title: 'שגיאת התחברות',
+          description: event.data.error,
+          variant: 'destructive',
+        });
+      }
+      
+      // Close popup
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
+      }
+      
+      setPopupWindow(null);
+    };
+    
+    window.addEventListener('message', handleMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [popupWindow, toast, queryClient]);
+
+  // Close popup on unmount
+  useEffect(() => {
+    return () => {
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
+      }
+    };
+  }, [popupWindow]);
 
   return {
-    isAuthenticated: authStatus?.isAuthenticated || false,
-    isAuthenticating,
+    isAuthenticated: (authStatus && authStatus.isAuthenticated) || false,
+    authTime: (authStatus && authStatus.authTime) ? new Date(authStatus.authTime) : null,
+    platform: authStatus?.platform || 'facebook',
     isLoading,
-    startAuthFlow,
-    logout,
+    error,
+    login,
+    logout: () => logoutMutation.mutate(),
+    isAuthenticating: !!popupWindow && !popupWindow.closed,
+    isLoggingOut: logoutMutation.isPending
   };
 }
