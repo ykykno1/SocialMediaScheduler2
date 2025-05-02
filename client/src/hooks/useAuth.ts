@@ -71,20 +71,32 @@ export function useAuth() {
     try {
       console.log(`Attempting to authenticate with ${platform}...`);
       
-      // For Facebook, use SDK or traditional auth based on availability
-      if (platform === 'facebook' && !CONFIG.DEV_MODE) {
-        if (fbSdkInitialized) {
-          // Use Facebook SDK
-          await FacebookSdkService.login();
-        } else {
-          // Use traditional OAuth flow
-          // First validate that platform has API key and secret
-          if (!settings.platforms[platform].apiKey) {
-            throw new Error(`נדרש להזין מפתח API ל${getPlatformDisplayName(platform)}`);
-          }
+      // For Facebook, always use direct SDK approach, which avoids domain restrictions
+      if (platform === 'facebook') {
+        // Make sure SDK is initialized
+        if (!fbSdkInitialized) {
+          // Try to initialize SDK first
+          try {
+            const response = await fetch('/api/facebook-config');
+            if (!response.ok) {
+              throw new Error('Failed to fetch Facebook configuration');
+            }
             
-          await AuthService.authenticate(platform);
+            const config = await response.json();
+            if (config?.appId) {
+              await FacebookSdkService.initialize(config.appId);
+              setFbSdkInitialized(true);
+            } else {
+              throw new Error('Failed to get Facebook App ID');
+            }
+          } catch (error) {
+            console.error('Failed to initialize Facebook SDK:', error);
+            throw new Error('לא ניתן לאתחל את SDK של פייסבוק. נסה שוב מאוחר יותר.');
+          }
         }
+        
+        // Use Facebook SDK directly
+        await FacebookSdkService.login();
       } else {
         // For other platforms, use traditional OAuth 
         // First validate that platform has API key and secret
