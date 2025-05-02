@@ -9,7 +9,7 @@ export const CONFIG = {
   APP_VERSION: '1.0.0',
   
   // Development mode flag - set to false to use real Facebook auth
-  DEV_MODE: false,
+  DEV_MODE: true,
   
   // Facebook Developer Credentials
   FACEBOOK: {
