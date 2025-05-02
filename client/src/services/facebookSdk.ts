@@ -130,6 +130,37 @@ export class FacebookSdkService {
         // Required permissions according to Facebook documentation
         const scope = 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts';
         
+        // Set up message event listener for callback from popup
+        const handleCallback = async (event: MessageEvent) => {
+          // Validate origin for security
+          if (event.origin !== window.location.origin) {
+            console.warn('Origin mismatch:', event.origin, window.location.origin);
+            return;
+          }
+          
+          if (event.data.fbAuthResponse && event.data.platform === 'facebook') {
+            Logger.info('Received Facebook SDK auth response from popup');
+            window.removeEventListener('message', handleCallback);
+            
+            // We don't need to do anything here, the auth-callback.html
+            // will handle the token storage and settings update
+            resolve(event.data.fbAuthResponse);
+          }
+        };
+        
+        window.addEventListener('message', handleCallback);
+        
+        // Open a popup for Facebook login
+        const callbackUrl = `${window.location.origin}/auth-callback.html`;
+        const popup = window.open(callbackUrl, 'facebook_login', 'width=600,height=700');
+        
+        if (!popup) {
+          reject(new Error('Failed to open popup window. Please check popup blocker settings.'));
+          window.removeEventListener('message', handleCallback);
+          return;
+        }
+        
+        // Use Facebook SDK for login in the popup
         window.FB.login((response) => {
           if (response.status === 'connected') {
             // User logged in and granted permissions
@@ -137,7 +168,12 @@ export class FacebookSdkService {
               userId: response.authResponse.userID
             });
             
-            // Save token
+            // Send the auth response to the popup window
+            const authResponseStr = encodeURIComponent(JSON.stringify(response.authResponse));
+            popup.location.href = `${callbackUrl}?fb_auth_response=${authResponseStr}`;
+            
+            // Save token locally as well - this is a backup and the main storage
+            // will happen through the auth-callback.html
             const tokenData = {
               accessToken: response.authResponse.accessToken,
               userId: response.authResponse.userID,
@@ -152,13 +188,25 @@ export class FacebookSdkService {
             settings.platforms.facebook.connected = true;
             StorageService.saveSettings(settings);
             
-            resolve(response);
+            // Note: We don't resolve here, we'll wait for the auth-callback to
+            // send us a message before resolving
           } else {
             // User either cancelled login or didn't authorize all scopes
             Logger.info('Facebook login failed or cancelled', { status: response.status });
+            window.removeEventListener('message', handleCallback);
+            popup.close();
             reject(new Error('Login failed or was cancelled'));
           }
         }, { scope: scope });
+        
+        // Set timeout in case callback never happens
+        setTimeout(() => {
+          window.removeEventListener('message', handleCallback);
+          if (!popup.closed) {
+            popup.close();
+          }
+          reject(new Error('Login timed out'));
+        }, 300000); // 5 minutes
       } catch (error) {
         Logger.error('Failed to initiate Facebook login', { error: (error as Error).message });
         reject(error);

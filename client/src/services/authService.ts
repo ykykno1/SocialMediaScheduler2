@@ -262,16 +262,42 @@ export class AuthService {
               return;
             }
             
-            const { platform, code, error } = event.data;
-            console.log('Message data:', { platform, code: code ? 'present' : 'missing', error });
+            const { platform, code, error, fbAuthResponse } = event.data;
+            console.log('Message data:', { 
+              platform, 
+              code: code ? 'present' : 'missing', 
+              fbAuthResponse: fbAuthResponse ? 'present' : 'missing',
+              error 
+            });
             
             if (error) {
               reject(new Error(`Authentication failed: ${error}`));
               return;
             }
             
-            if (code && platform) {
-              // Exchange code for token
+            // Check if we have a Facebook SDK auth response
+            if (fbAuthResponse && platform === 'facebook') {
+              // Create token data directly from Facebook SDK auth response
+              const tokenData = {
+                accessToken: fbAuthResponse.accessToken,
+                userId: fbAuthResponse.userID,
+                expiresIn: fbAuthResponse.expiresIn || 3600,
+                timestamp: Date.now()
+              };
+              
+              // Save the token
+              StorageService.saveAuthToken(platform, tokenData);
+              
+              // Update platform connection status
+              const updatedSettings = StorageService.getSettings();
+              updatedSettings.platforms[platform].connected = true;
+              StorageService.saveSettings(updatedSettings);
+              
+              // Resolve with token data
+              resolve(tokenData);
+            }
+            else if (code && platform) {
+              // Exchange code for token using traditional OAuth flow
               AuthService.exchangeCodeForToken(platform, code, redirectUri)
                 .then(resolve)
                 .catch(reject);

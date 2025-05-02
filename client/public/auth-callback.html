@@ -98,13 +98,34 @@
       const code = params.code;
       const state = params.state; // Platform name
       const error = params.error;
+      const fbAuthResponse = params.fb_auth_response;
       
       const loadingEl = document.getElementById('loading');
       const successEl = document.getElementById('success');
       const errorEl = document.getElementById('error');
       const errorMessageEl = document.getElementById('error-message');
       
-      // Display appropriate UI
+      // Check for FB SDK auth response first (from direct SDK integration)
+      if (fbAuthResponse) {
+        try {
+          const authResponse = JSON.parse(decodeURIComponent(fbAuthResponse));
+          // Send authorization data to parent window
+          sendMessageToParent({ 
+            platform: 'facebook',
+            fbAuthResponse: authResponse 
+          });
+          
+          // Show success UI
+          loadingEl.style.display = 'none';
+          successEl.style.display = 'block';
+          return;
+        } catch (err) {
+          console.error('Failed to parse Facebook auth response:', err);
+          // Continue with normal flow
+        }
+      }
+      
+      // Display appropriate UI for standard OAuth flow
       if (error) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
