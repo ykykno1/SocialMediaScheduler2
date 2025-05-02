@@ -24,7 +24,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Construct redirect URI based on environment
     let redirectUri;
     // Always provide a Facebook approved domain as a fallback
-    const fallbackUri = 'https://www.example.com/auth-callback.html';
+    // Replace this with a domain that's actually approved in your Facebook app
+    const fallbackUri = 'https://developers.facebook.com/auth-callback.html';
     
     if (process.env.REPL_ID && process.env.REPL_OWNER) {
       // In Replit, we need to use the Replit domain
