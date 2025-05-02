@@ -43,9 +43,9 @@ export const CONFIG = {
   // API endpoints
   API: {
     facebook: {
-      base: 'https://graph.facebook.com/v18.0',
-      auth: 'https://www.facebook.com/v18.0/dialog/oauth',
-      token: 'https://graph.facebook.com/v18.0/oauth/access_token',
+      base: 'https://graph.facebook.com/v19.0',
+      auth: 'https://www.facebook.com/v19.0/dialog/oauth',
+      token: 'https://graph.facebook.com/v19.0/oauth/access_token',
       posts: '/me/posts',
       updatePost: '/{post-id}'
     },

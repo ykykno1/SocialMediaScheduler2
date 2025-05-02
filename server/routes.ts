@@ -72,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Exchange code for token
-        const tokenUrl = 'https://graph.facebook.com/v18.0/oauth/access_token';
+        const tokenUrl = 'https://graph.facebook.com/v19.0/oauth/access_token';
         const params = new URLSearchParams({
           client_id: appId,
           client_secret: appSecret,
@@ -80,6 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           redirect_uri: redirectUri
         });
         
+        console.log(`Exchanging code for token with params: ${params.toString()}`);
         const response = await fetch(`${tokenUrl}?${params.toString()}`);
         
         if (!response.ok) {

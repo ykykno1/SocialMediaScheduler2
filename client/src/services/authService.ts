@@ -228,7 +228,8 @@ export class AuthService {
         
         // Get Facebook auth URL and credentials
         const authUrl = CONFIG.API.facebook.auth;
-        const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
+        // According to latest Facebook documentation
+        const scope = 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts';
         
         // Build the full auth URL with params - use App ID and redirectUri from server
         const urlParams = new URLSearchParams({
@@ -317,6 +318,8 @@ export class AuthService {
     }
     
     try {
+      console.log(`Exchanging code for token, redirectUri: ${redirectUri}`);
+      
       // Use server endpoint to exchange code for token
       const response = await fetch('/api/auth-callback', {
         method: 'POST',
