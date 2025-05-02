@@ -206,84 +206,102 @@ export class AuthService {
     }
     
     // Real authentication flow for production
+    console.log('Attempting to authenticate with facebook...');
+    
     // Set common redirect URI
     const redirectUri = `${window.location.origin}/auth-callback.html`;
     
-    // Get Facebook auth URL and credentials
-    const authUrl = CONFIG.API.facebook.auth;
-    const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
-    
-    // Build the full auth URL with params - use App ID from config
-    const urlParams = new URLSearchParams({
-      client_id: CONFIG.FACEBOOK.APP_ID,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: scope,
-      state: platform // Store platform in state to identify callback
-    });
-    
-    const fullAuthUrl = `${authUrl}?${urlParams.toString()}`;
-    console.log('Auth URL:', fullAuthUrl);
-    
-    // Open the auth window
-    return new Promise((resolve, reject) => {
-      const authWindow = window.open(fullAuthUrl, '_blank', 'width=600,height=700');
-      
-      if (!authWindow) {
-        reject(new Error('Failed to open authentication window. Please disable popup blocker.'));
-        return;
-      }
-      
-      // Set up message event listener for callback
-      const handleCallback = (event: MessageEvent) => {
-        console.log('Received message event:', event);
+    // Fetch Facebook App ID from server
+    return fetch('/api/facebook-config')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Error fetching Facebook config: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(config => {
+        console.log('Received config from server:', config.appId ? 'App ID present' : 'No App ID');
         
-        // Validate origin for security
-        if (event.origin !== window.location.origin) {
-          console.warn('Origin mismatch:', event.origin, window.location.origin);
-          return;
+        if (!config.appId) {
+          throw new Error('Facebook App ID not configured on server');
         }
         
-        const { platform, code, error } = event.data;
-        console.log('Message data:', { platform, code: code ? 'present' : 'missing', error });
+        // Get Facebook auth URL and credentials
+        const authUrl = CONFIG.API.facebook.auth;
+        const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
         
-        if (error) {
-          reject(new Error(`Authentication failed: ${error}`));
-          return;
-        }
+        // Build the full auth URL with params - use App ID from server
+        const urlParams = new URLSearchParams({
+          client_id: config.appId,
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope: scope,
+          state: platform // Store platform in state to identify callback
+        });
         
-        if (code && platform) {
-          // Exchange code for token
-          this.exchangeCodeForToken(platform, code, redirectUri)
-            .then(resolve)
-            .catch(reject);
-        }
+        const fullAuthUrl = `${authUrl}?${urlParams.toString()}`;
+        console.log('Auth URL:', fullAuthUrl);
         
-        // Clean up
-        window.removeEventListener('message', handleCallback);
-      };
-      
-      window.addEventListener('message', handleCallback);
-      
-      // Set up interval to check if auth window is closed
-      const checkClosed = setInterval(() => {
-        if (authWindow.closed) {
-          clearInterval(checkClosed);
-          window.removeEventListener('message', handleCallback);
-          reject(new Error('Authentication window was closed before completion'));
-        }
-      }, 1000);
-      
-      // Add a timeout of 5 minutes for the entire auth process
-      setTimeout(() => {
-        clearInterval(checkClosed);
-        window.removeEventListener('message', handleCallback);
-        if (!authWindow.closed) {
-          authWindow.close();
-        }
-        reject(new Error('Authentication timed out'));
-      }, 300000); // 5 minutes
-    });
+        // Open the auth window
+        return new Promise<any>((resolve, reject) => {
+          const authWindow = window.open(fullAuthUrl, '_blank', 'width=600,height=700');
+          
+          if (!authWindow) {
+            reject(new Error('Failed to open authentication window. Please disable popup blocker.'));
+            return;
+          }
+          
+          // Set up message event listener for callback
+          const handleCallback = (event: MessageEvent) => {
+            console.log('Received message event:', event);
+            
+            // Validate origin for security
+            if (event.origin !== window.location.origin) {
+              console.warn('Origin mismatch:', event.origin, window.location.origin);
+              return;
+            }
+            
+            const { platform, code, error } = event.data;
+            console.log('Message data:', { platform, code: code ? 'present' : 'missing', error });
+            
+            if (error) {
+              reject(new Error(`Authentication failed: ${error}`));
+              return;
+            }
+            
+            if (code && platform) {
+              // Exchange code for token
+              AuthService.exchangeCodeForToken(platform, code, redirectUri)
+                .then(resolve)
+                .catch(reject);
+            }
+            
+            // Clean up
+            window.removeEventListener('message', handleCallback);
+          };
+          
+          window.addEventListener('message', handleCallback);
+          
+          // Set up interval to check if auth window is closed
+          const checkClosed = setInterval(() => {
+            if (authWindow.closed) {
+              clearInterval(checkClosed);
+              window.removeEventListener('message', handleCallback);
+              reject(new Error('Authentication window was closed before completion'));
+            }
+          }, 1000);
+          
+          // Add a timeout of 5 minutes for the entire auth process
+          setTimeout(() => {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', handleCallback);
+            if (!authWindow.closed) {
+              authWindow.close();
+            }
+            reject(new Error('Authentication timed out'));
+          }, 300000); // 5 minutes
+        });
+      });
   }
   
   /**
@@ -298,27 +316,23 @@ export class AuthService {
       throw new Error(`Only Facebook is supported at this time`);
     }
     
-    let url, params;
-    
-    url = CONFIG.API.facebook.token;
-    params = {
-      client_id: CONFIG.FACEBOOK.APP_ID,
-      client_secret: CONFIG.FACEBOOK.APP_SECRET,
-      code: code,
-      redirect_uri: redirectUri
-    };
-    
     try {
-      const response = await fetch(url, {
+      // Use server endpoint to exchange code for token
+      const response = await fetch('/api/auth-callback', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/json'
         },
-        body: new URLSearchParams(params)
+        body: JSON.stringify({
+          platform,
+          code,
+          redirectUri
+        })
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error ${response.status}`);
       }
       
       const data = await response.json();
@@ -327,7 +341,8 @@ export class AuthService {
       const tokenData = {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
-        expiresIn: data.expires_in || 3600 // Default to 1 hour
+        expiresIn: data.expires_in || 3600, // Default to 1 hour
+        timestamp: Date.now()
       };
       
       // Save the token
