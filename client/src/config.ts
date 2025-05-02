@@ -8,14 +8,14 @@ export const CONFIG = {
   APP_NAME: 'רובוט שבת',
   APP_VERSION: '1.0.0',
   
-  // Development mode flag - MUST be false for real auth
-  DEV_MODE: false,
+  // Development mode flag - set to true for development without real Facebook auth
+  DEV_MODE: true,
   
   // Facebook Developer Credentials (Fixed)
   FACEBOOK: {
-    // Replace with your new App ID and Secret from the Facebook Developer portal
-    APP_ID: 'YOUR_NEW_APP_ID_HERE',
-    APP_SECRET: 'YOUR_NEW_APP_SECRET_HERE'
+    // These are placeholders since we're using DEV_MODE: true
+    APP_ID: '123456789012345',
+    APP_SECRET: 'dummy_secret_for_development_only'
   },
   
   // Default settings
