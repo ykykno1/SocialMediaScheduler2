@@ -8,8 +8,8 @@ export const CONFIG = {
   APP_NAME: 'רובוט שבת',
   APP_VERSION: '1.0.0',
   
-  // Development mode flag - set to false to use real Facebook auth
-  DEV_MODE: false,
+  // Development mode flag - set to true for development without real Facebook auth
+  DEV_MODE: true,
   
   // Facebook Developer Credentials
   FACEBOOK: {
