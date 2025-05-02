@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
-import { Sun, RotateCw } from 'lucide-react';
+import { Sun, RotateCw, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import DateTimeUtils from '../utils/dateTimeUtils';
 import SocialPlatformIcon from './SocialPlatformIcon';
 import useScheduler from '../hooks/useScheduler';
 import useAuth from '../hooks/useAuth';
 import useSettings from '../hooks/useSettings';
+import CONFIG from '../config';
 
 interface DashboardProps {
   onShowSettings: () => void;
@@ -50,6 +52,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onShowSettings }) => {
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Development Mode Alert */}
+      {CONFIG.DEV_MODE && (
+        <div className="md:col-span-3">
+          <Alert variant="destructive" className="bg-amber-50 border-amber-300 text-amber-800">
+            <AlertTriangle className="h-5 w-5" />
+            <AlertDescription className="mr-2">
+              <strong>מצב פיתוח פעיל:</strong> האפליקציה פועלת במצב דמו ללא חיבור אמיתי לפייסבוק. פעולות הסתרה ושחזור הן לצורכי הדגמה בלבד.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+      
       {/* Status Card */}
       <Card className="md:col-span-2">
         <div className="bg-[#3466ad]/10 border-b border-[#3466ad]/30 px-4 py-3">

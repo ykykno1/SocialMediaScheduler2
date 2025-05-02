@@ -142,28 +142,37 @@ export class ApiService {
       // Simulate a brief delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Return mock posts
+      // Get post visibility status from storage
+      const defaultStatuses = {
+        post1: { isHidden: false },
+        post2: { isHidden: false },
+        post3: { isHidden: false }
+      };
+      
+      const postStatuses = StorageService.get('mock_post_statuses', defaultStatuses) || defaultStatuses;
+      
+      // Return mock posts with current visibility status
       return {
         data: [
           {
             id: 'post1',
             message: 'שלום עולם! פוסט לדוגמה 1',
             created_time: '2023-04-28T10:00:00+0000',
-            privacy: { value: 'EVERYONE' },
+            privacy: { value: postStatuses.post1?.isHidden ? CONFIG.PRIVACY_SETTINGS.facebook.hide : CONFIG.PRIVACY_SETTINGS.facebook.restore },
             permalink_url: 'https://facebook.com/example/post1'
           },
           {
             id: 'post2',
             message: 'ברוכים הבאים לרובוט שבת! פוסט לדוגמה 2',
             created_time: '2023-04-29T14:30:00+0000',
-            privacy: { value: 'EVERYONE' },
+            privacy: { value: postStatuses.post2?.isHidden ? CONFIG.PRIVACY_SETTINGS.facebook.hide : CONFIG.PRIVACY_SETTINGS.facebook.restore },
             permalink_url: 'https://facebook.com/example/post2'
           },
           {
             id: 'post3',
             message: 'פוסט לדוגמה 3 עם תמונה',
             created_time: '2023-04-30T08:15:00+0000',
-            privacy: { value: 'EVERYONE' },
+            privacy: { value: postStatuses.post3?.isHidden ? CONFIG.PRIVACY_SETTINGS.facebook.hide : CONFIG.PRIVACY_SETTINGS.facebook.restore },
             permalink_url: 'https://facebook.com/example/post3'
           }
         ]
@@ -235,7 +244,23 @@ export class ApiService {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Create development mode history entry
+      // Update post visibility status in storage
+      const isHide = action === 'hide';
+      
+      // Get current post statuses
+      const defaultStatuses = {
+        post1: { isHidden: false },
+        post2: { isHidden: false },
+        post3: { isHidden: false }
+      };
+      
+      const postStatuses = StorageService.get('mock_post_statuses', defaultStatuses) || defaultStatuses;
+      
+      // Type-safe way to update post status
+      if (contentId === 'post1' || contentId === 'post2' || contentId === 'post3') {
+        postStatuses[contentId].isHidden = isHide;
+        StorageService.save('mock_post_statuses', postStatuses);
+      }
       
       // Add history entry
       const historyData = {
