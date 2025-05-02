@@ -280,9 +280,20 @@ export class AuthService {
           };
           
           // Try with the primary URI first
-          const authWindow = attemptAuth(redirectUri);
-          
-          if (!authWindow) {
+          let authWin;
+          try {
+            authWin = attemptAuth(redirectUri);
+            
+            if (!authWin) {
+              reject(new Error('Failed to open authentication window'));
+              return;
+            }
+            
+            // Add extra logging for debugging auth issues
+            console.log('Authentication window opened successfully with URI:', redirectUri);
+          } catch (err) {
+            console.error('Failed to open auth window:', err);
+            reject(new Error(`Failed to open auth window: ${err instanceof Error ? err.message : String(err)}`));
             return;
           }
           
@@ -349,7 +360,7 @@ export class AuthService {
           
           // Set up interval to check if auth window is closed
           let isRetrying = false;
-          let currentWindow = authWindow;
+          let currentWindow = authWin;
           
           const checkClosed = setInterval(() => {
             if (currentWindow.closed) {
