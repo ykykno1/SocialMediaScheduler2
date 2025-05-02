@@ -208,10 +208,7 @@ export class AuthService {
     // Real authentication flow for production
     console.log('Attempting to authenticate with facebook...');
     
-    // Set common redirect URI
-    const redirectUri = `${window.location.origin}/auth-callback.html`;
-    
-    // Fetch Facebook App ID from server
+    // Fetch Facebook App ID and redirect URI from server
     return fetch('/api/facebook-config')
       .then(response => {
         if (!response.ok) {
@@ -226,11 +223,14 @@ export class AuthService {
           throw new Error('Facebook App ID not configured on server');
         }
         
+        // Use the redirectUri from server which has the correct domain for Replit
+        const redirectUri = config.redirectUri;
+        
         // Get Facebook auth URL and credentials
         const authUrl = CONFIG.API.facebook.auth;
         const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,public_profile';
         
-        // Build the full auth URL with params - use App ID from server
+        // Build the full auth URL with params - use App ID and redirectUri from server
         const urlParams = new URLSearchParams({
           client_id: config.appId,
           redirect_uri: redirectUri,
