@@ -1,13 +1,51 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useToast } from './use-toast';
 import AuthService from '../services/authService';
 import StorageService from '../services/storageService';
+import FacebookSdkService from '../services/facebookSdk';
 import useSettings from './useSettings';
+import CONFIG from '../config';
 
 export function useAuth() {
   const [authenticating, setAuthenticating] = useState<Record<string, boolean>>({});
+  const [fbSdkInitialized, setFbSdkInitialized] = useState<boolean>(false);
   const { settings, saveSettings } = useSettings();
   const { toast } = useToast();
+  
+  // Initialize Facebook SDK on component mount
+  useEffect(() => {
+    if (CONFIG.DEV_MODE) {
+      // Skip in development mode
+      return;
+    }
+    
+    const initFacebookSdk = async () => {
+      try {
+        // Fetch app ID from server
+        const response = await fetch('/api/facebook-config');
+        if (!response.ok) {
+          throw new Error('Failed to fetch Facebook configuration');
+        }
+        
+        const config = await response.json();
+        if (config?.appId) {
+          await FacebookSdkService.initialize(config.appId);
+          setFbSdkInitialized(true);
+          
+          // Try to check login status
+          try {
+            await FacebookSdkService.checkLoginStatus();
+          } catch (err) {
+            console.warn('Failed to check Facebook login status:', err);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to initialize Facebook SDK:', error);
+      }
+    };
+    
+    initFacebookSdk();
+  }, []);
 
   // Check if platform is authenticated
   const isAuthenticated = useCallback((platform: string) => {
@@ -21,12 +59,29 @@ export function useAuth() {
     try {
       console.log(`Attempting to authenticate with ${platform}...`);
       
-      // First validate that platform has API key and secret
-      if (!settings.platforms[platform].apiKey || !settings.platforms[platform].apiSecret) {
-        throw new Error(`נדרש להזין מפתח API וסיסמת API ל${getPlatformDisplayName(platform)}`);
+      // For Facebook, use SDK or traditional auth based on availability
+      if (platform === 'facebook' && !CONFIG.DEV_MODE) {
+        if (fbSdkInitialized) {
+          // Use Facebook SDK
+          await FacebookSdkService.login();
+        } else {
+          // Use traditional OAuth flow
+          // First validate that platform has API key and secret
+          if (!settings.platforms[platform].apiKey) {
+            throw new Error(`נדרש להזין מפתח API ל${getPlatformDisplayName(platform)}`);
+          }
+            
+          await AuthService.authenticate(platform);
+        }
+      } else {
+        // For other platforms, use traditional OAuth 
+        // First validate that platform has API key and secret
+        if (!settings.platforms[platform].apiKey || !settings.platforms[platform].apiSecret) {
+          throw new Error(`נדרש להזין מפתח API וסיסמת API ל${getPlatformDisplayName(platform)}`);
+        }
+          
+        await AuthService.authenticate(platform);
       }
-      
-      await AuthService.authenticate(platform);
       
       // Update settings to reflect connected state
       const updatedSettings = { ...settings };
