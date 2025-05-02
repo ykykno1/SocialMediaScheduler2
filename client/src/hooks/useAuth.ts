@@ -150,7 +150,8 @@ export function useAuth() {
     isAuthenticated,
     connectPlatform,
     disconnectPlatform,
-    authenticating
+    authenticating,
+    fbSdkInitialized
   };
 }
 

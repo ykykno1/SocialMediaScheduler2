@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CONFIG from '../config';
 import { X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ interface SettingsProps {
 
 const Settings: React.FC<SettingsProps> = ({ onBackToDashboard }) => {
   const { settings, saveSettings, updateSetting, loading } = useSettings();
-  const { isAuthenticated, connectPlatform, disconnectPlatform, authenticating } = useAuth();
+  const { isAuthenticated, connectPlatform, disconnectPlatform, authenticating, fbSdkInitialized } = useAuth();
   const [formErrors, setFormErrors] = useState<Record<string, any>>({});
   
   const handleSubmit = async (e: React.FormEvent) => {
