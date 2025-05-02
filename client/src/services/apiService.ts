@@ -87,6 +87,25 @@ export class ApiService {
    * @returns {Promise} Promise resolving with user profile
    */
   static async getUserProfile(platform: string): Promise<any> {
+    // If in development mode, return mock user profile for Facebook
+    if (CONFIG.DEV_MODE && platform === 'facebook') {
+      console.log('Using development mode for user profile');
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 700));
+      
+      // Return mock user profile
+      return {
+        id: 'user123',
+        name: 'משתמש לדוגמה',
+        picture: {
+          data: {
+            url: 'https://via.placeholder.com/50'
+          }
+        }
+      };
+    }
+    
     let endpoint = '';
     
     switch (platform) {
@@ -216,19 +235,17 @@ export class ApiService {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Add update to history
-      const historyEntry = {
-        id: `history_${Date.now()}`,
-        timestamp: Date.now(),
+      // Create development mode history entry
+      
+      // Add history entry
+      const historyData = {
         platform: platform,
         action: action,
         itemCount: 1,
         status: CONFIG.STATUS.SUCCESS,
         details: `מצב פיתוח: ${action === 'hide' ? 'הסתרת' : 'שחזור'} פוסט בפלטפורמת ${this.getPlatformDisplayName(platform)}`
       };
-      
-      // Add history entry
-      StorageService.addHistoryEntry(historyEntry);
+      StorageService.addHistoryEntry(historyData);
       
       return { success: true };
     }
