@@ -1,103 +1,155 @@
-import useHistory from "@/hooks/useHistory";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle, XCircle, History as HistoryIcon, Lock, Unlock } from "lucide-react";
+import { Eye, EyeOff, Facebook, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-const formatDate = (dateString: string | Date) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('he-IL', {
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-  }).format(date);
-};
+import { HistoryEntry } from "@shared/schema";
 
 const History = () => {
-  const { historyEntries, isLoading } = useHistory();
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>היסטוריית פעולות</CardTitle>
-        <CardDescription>
-          תיעוד של פעולות שבוצעו באפליקציה
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
+  // Fetch history entries
+  const {
+    data: historyEntries = [],
+    isLoading,
+    error,
+  } = useQuery<HistoryEntry[]>({
+    queryKey: ['/api/history'],
+  });
+  
+  // Helper function to format dates
+  const formatDate = (date: Date): string => {
+    return new Intl.DateTimeFormat('he-IL', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+    }).format(new Date(date));
+  };
+  
+  // Render loading state
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>היסטוריה</CardTitle>
+          <CardDescription>רשימת פעולות הסתרה ושחזור אחרונות</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-2 p-4 border rounded-lg">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-4 w-full" />
+              <div key={i} className="flex items-center justify-between border p-4 rounded-lg">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[200px]" />
+                  <Skeleton className="h-4 w-[120px]" />
                 </div>
+                <Skeleton className="h-6 w-24" />
               </div>
             ))}
           </div>
-        ) : historyEntries.length === 0 ? (
-          <Alert>
-            <HistoryIcon className="h-4 w-4" />
-            <AlertTitle>אין היסטוריה</AlertTitle>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Render error state
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>היסטוריה</CardTitle>
+          <CardDescription>רשימת פעולות הסתרה ושחזור אחרונות</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>שגיאה בטעינת היסטוריה</AlertTitle>
             <AlertDescription>
-              עדיין לא בוצעו פעולות באפליקציה
+              {error instanceof Error ? error.message : 'אירעה שגיאה בטעינת נתוני ההיסטוריה'}
             </AlertDescription>
           </Alert>
-        ) : (
-          <ScrollArea className="h-[500px] pr-4">
-            <div className="space-y-4">
-              {historyEntries.map((entry) => (
-                <div key={entry.id} className="flex gap-4 p-4 border rounded-lg">
-                  <div className="shrink-0">
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Render empty state
+  if (historyEntries.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>היסטוריה</CardTitle>
+          <CardDescription>רשימת פעולות הסתרה ושחזור אחרונות</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>אין פעולות</AlertTitle>
+            <AlertDescription>
+              לא נמצאו פעולות הסתרה או שחזור בהיסטוריה
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>היסטוריה</CardTitle>
+        <CardDescription>רשימת פעולות הסתרה ושחזור אחרונות</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-4">
+            {historyEntries.map((entry) => (
+              <div key={entry.id} className="border p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
                     {entry.action === 'hide' ? (
-                      <Lock className={`h-6 w-6 ${entry.success ? 'text-primary' : 'text-destructive'}`} />
+                      <EyeOff className="h-4 w-4 mr-2 text-amber-500" />
                     ) : (
-                      <Unlock className={`h-6 w-6 ${entry.success ? 'text-primary' : 'text-destructive'}`} />
+                      <Eye className="h-4 w-4 mr-2 text-green-500" />
                     )}
+                    <span className="font-medium">
+                      {entry.action === 'hide' ? 'הסתרת תוכן' : 'שחזור תוכן'}
+                    </span>
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">
-                        {entry.action === 'hide' ? 'הסתרת תוכן' : 'שחזור תוכן'}
-                      </h4>
-                      <Badge variant={entry.success ? 'outline' : 'destructive'}>
-                        {entry.success ? (
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                        ) : (
-                          <XCircle className="h-3 w-3 mr-1" />
-                        )}
-                        {entry.success ? 'הצלחה' : 'שגיאה'}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      <span className="font-medium ml-1">זמן:</span>
-                      {formatDate(entry.timestamp)}
-                    </div>
-                    {entry.affectedItems > 0 && (
-                      <div className="text-sm text-muted-foreground">
-                        <span className="font-medium ml-1">פריטים:</span>
-                        {entry.affectedItems}
-                      </div>
-                    )}
-                    {entry.error && (
-                      <div className="text-sm text-destructive">
-                        <span className="font-medium ml-1">שגיאה:</span>
-                        {entry.error}
-                      </div>
-                    )}
-                  </div>
+                  <Badge
+                    variant={entry.success ? "default" : "destructive"}
+                  >
+                    {entry.success ? 'הצלחה' : 'כישלון'}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
+                
+                <div className="flex items-center mb-1">
+                  <Facebook className="h-4 w-4 mr-2 text-[#1877F2]" />
+                  <span className="text-sm">פייסבוק</span>
+                </div>
+                
+                <div className="text-sm text-muted-foreground mb-1">
+                  {formatDate(entry.timestamp)}
+                </div>
+                
+                {entry.affectedItems > 0 && (
+                  <div className="text-sm">
+                    {entry.action === 'hide' 
+                      ? `הוסתרו ${entry.affectedItems} פריטים`
+                      : `שוחזרו ${entry.affectedItems} פריטים`}
+                  </div>
+                )}
+                
+                {entry.error && (
+                  <div className="text-sm text-destructive mt-2">
+                    שגיאה: {entry.error}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

@@ -12,7 +12,7 @@ import { AlertCircle, Clock, Facebook, Lock, Unlock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
-  const { isAuthenticated, isAuthenticating, startAuthFlow, logout } = useFacebookAuth();
+  const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut } = useFacebookAuth();
   const { posts, isLoading: isLoadingPosts, hidePosts, isHiding, restorePosts, isRestoring } = useFacebookPosts();
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState("overview");
@@ -24,21 +24,7 @@ const Dashboard = () => {
         description: "מעדכן את הגדרות הפרטיות של הפוסטים",
       });
       
-      hidePosts(undefined, {
-        onSuccess: (data) => {
-          toast({
-            title: "הפוסטים הוסתרו בהצלחה",
-            description: `הוסתרו ${data.hiddenPosts} פוסטים`,
-          });
-        },
-        onError: (error) => {
-          toast({
-            title: "שגיאה בהסתרת פוסטים",
-            description: error instanceof Error ? error.message : "אירעה שגיאה לא ידועה",
-            variant: "destructive",
-          });
-        }
-      });
+      hidePosts();
     }
   };
 
@@ -49,21 +35,7 @@ const Dashboard = () => {
         description: "מעדכן את הגדרות הפרטיות של הפוסטים",
       });
       
-      restorePosts(undefined, {
-        onSuccess: (data) => {
-          toast({
-            title: "הפוסטים שוחזרו בהצלחה",
-            description: `שוחזרו ${data.restoredPosts} פוסטים`,
-          });
-        },
-        onError: (error) => {
-          toast({
-            title: "שגיאה בשחזור פוסטים",
-            description: error instanceof Error ? error.message : "אירעה שגיאה לא ידועה",
-            variant: "destructive",
-          });
-        }
-      });
+      restorePosts();
     }
   };
 
@@ -87,7 +59,7 @@ const Dashboard = () => {
           </Alert>
           <div className="flex items-center justify-center">
             <Button 
-              onClick={startAuthFlow} 
+              onClick={login} 
               disabled={isAuthenticating}
               className="bg-[#1877F2] hover:bg-[#166FE5]"
             >

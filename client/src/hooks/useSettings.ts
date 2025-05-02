@@ -1,58 +1,59 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings } from '@shared/schema';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+
+export interface Settings {
+  autoSchedule: boolean;
+  hideTime: string;
+  restoreTime: string;
+  timeZone: string;
+}
 
 export default function useSettings() {
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch settings
-  const { 
-    data: settings, 
-    isLoading, 
-    isError, 
-    error 
+  // Query to fetch settings
+  const {
+    data: settings = {
+      autoSchedule: false,
+      hideTime: '18:30',
+      restoreTime: '20:30',
+      timeZone: 'Asia/Jerusalem'
+    },
+    isLoading,
+    error,
   } = useQuery<Settings>({
     queryKey: ['/api/settings'],
-    refetchOnWindowFocus: false,
   });
 
-  // Update settings mutation
-  const updateMutation = useMutation({
-    mutationFn: async (newSettings: Settings) => {
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newSettings),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update settings');
-      }
-      
-      return await response.json();
+  // Mutation for updating settings
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (newSettings: Partial<Settings>) => {
+      const res = await apiRequest('POST', '/api/settings', newSettings);
+      return await res.json();
     },
-    onSuccess: (data) => {
-      // Update settings in cache
-      queryClient.setQueryData(['/api/settings'], data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+      toast({
+        title: 'הגדרות נשמרו',
+        description: 'ההגדרות שלך נשמרו בהצלחה',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'שגיאה בשמירת הגדרות',
+        description: error instanceof Error ? error.message : 'אירעה שגיאה בשמירת ההגדרות',
+        variant: 'destructive',
+      });
     }
   });
 
   return {
-    settings: settings || {
-      autoSchedule: true,
-      hideTime: '18:30',
-      restoreTime: '19:45',
-      timeZone: 'Asia/Jerusalem',
-      exceptedPostIds: [],
-      lastHideOperation: null,
-      lastRestoreOperation: null,
-    },
+    settings,
     isLoading,
-    isError,
     error,
-    updateSettings: updateMutation.mutate,
-    isUpdating: updateMutation.isPending,
-    updateError: updateMutation.error,
+    updateSettings: (newSettings: Partial<Settings>) => updateSettingsMutation.mutate(newSettings),
+    isUpdating: updateSettingsMutation.isPending,
   };
 }
