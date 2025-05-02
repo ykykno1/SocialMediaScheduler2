@@ -21,9 +21,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: 'Facebook App ID not configured' });
     }
     
+    // Construct redirect URI based on environment
+    let redirectUri;
+    if (process.env.REPL_ID && process.env.REPL_OWNER) {
+      // In Replit, we need to use the Replit domain
+      const replitDomain = `${process.env.REPL_ID}-00-${process.env.REPL_OWNER}.janeway.replit.dev`;
+      redirectUri = `https://${replitDomain}/auth-callback.html`;
+    } else {
+      // Local development
+      redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
+    }
+    
     res.json({
       appId: appId,
-      redirectUri: `${req.protocol}://${req.get('host')}/auth-callback.html`
+      redirectUri: redirectUri
     });
   });
   
