@@ -61,14 +61,14 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // התחברות עם ההרשאות שאומתו בGraph API Explorer
-      // לפי הבדיקה, רק ההרשאות הבאות זמינות: user_posts, email, public_profile
-      // הרשאות עמודים דורשות כנראה סקירה ואישור מיוחד של האפליקציה
+      // ניסיון התחברות עם מגוון הרשאות
+      // מנסים מספר אפשרויות של שמות הרשאות שעשויות לעבוד בגרסה 22.0
+      // כולל ניסיון לשימוש בהרשאות עמודים בפורמטים שונים
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,user_posts`;
+        `scope=public_profile,email,user_posts,pages_manage_metadata,pages_manage_posts,pages_read_engagement,pages_read_user_content,pages_show_list,manage_pages,read_page_mailboxes,publish_pages`;
       
       // Open popup window
       const width = 600;
