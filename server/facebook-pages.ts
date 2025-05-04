@@ -1,263 +1,285 @@
-import { storage } from "./storage";
-import { Express } from "express";
 import fetch from 'node-fetch';
-import { FacebookPage, FacebookAuth } from "@shared/schema";
+import type { FacebookAuth, FacebookPage } from '@shared/schema';
+import { storage } from './storage';
+import type { Express } from "express";
 
-export function registerFacebookPagesRoutes(app: Express) {
+const FACEBOOK_API_VERSION = 'v18.0';
+
+/**
+ * Get Facebook pages for a user
+ * @param auth Facebook auth data
+ * @returns Array of Facebook pages
+ */
+export const getUserPages = async (auth: FacebookAuth): Promise<FacebookPage[]> => {
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/accounts?fields=name,access_token,category,tasks&access_token=${auth.accessToken}`
+    );
+    
+    const data = await response.json() as { data?: FacebookPage[], error?: { message: string } };
+    
+    if (data.error) {
+      console.error('Error fetching Facebook pages:', data.error);
+      throw new Error(data.error.message);
+    }
+    
+    return (data.data || []).map(page => ({
+      ...page,
+      isHidden: false // Default state is visible/published
+    }));
+  } catch (error) {
+    console.error('Error fetching Facebook pages:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update the publishing status of a Facebook page
+ * @param auth Facebook auth data
+ * @param pageId Page ID to update
+ * @param pageToken Page access token
+ * @param isPublished Whether the page should be published (true) or unpublished (false)
+ * @returns Result of the operation
+ */
+export const updatePagePublishStatus = async (
+  auth: FacebookAuth,
+  pageId: string,
+  pageToken: string,
+  isPublished: boolean
+): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/${pageId}?access_token=${pageToken}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_published: isPublished,
+        }),
+      }
+    );
+    
+    const data = await response.json() as { success?: boolean; error?: { message: string } };
+    
+    if (data.error) {
+      console.error(`Error ${isPublished ? 'publishing' : 'unpublishing'} page:`, data.error);
+      return { success: false, message: data.error.message };
+    }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error(`Error ${isPublished ? 'publishing' : 'unpublishing'} page:`, error);
+    return { success: false, message: error.message };
+  }
+};
+
+/**
+ * Hide all Facebook pages (unpublish them)
+ * @param auth Facebook auth data
+ * @returns Result of the operation
+ */
+export const hideAllPages = async (auth: FacebookAuth): Promise<{ 
+  success: boolean; 
+  hiddenPages: number; 
+  message?: string 
+}> => {
+  try {
+    const pages = await getUserPages(auth);
+    
+    const results = await Promise.allSettled(
+      pages.map(page => 
+        updatePagePublishStatus(auth, page.id, page.access_token || '', false)
+      )
+    );
+    
+    const hiddenPages = results.filter(
+      result => result.status === 'fulfilled' && result.value.success
+    ).length;
+    
+    // If we couldn't hide any pages, consider it a failure
+    if (hiddenPages === 0 && pages.length > 0) {
+      const errors = results
+        .filter(result => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value.success))
+        .map(result => {
+          if (result.status === 'rejected') {
+            return result.reason.message;
+          } else {
+            return (result.value as any).message;
+          }
+        })
+        .join(', ');
+      
+      return { success: false, hiddenPages: 0, message: errors };
+    }
+    
+    return { success: true, hiddenPages };
+  } catch (error: any) {
+    console.error('Error hiding Facebook pages:', error);
+    return { success: false, hiddenPages: 0, message: error.message };
+  }
+};
+
+/**
+ * Restore all Facebook pages (publish them)
+ * @param auth Facebook auth data
+ * @returns Result of the operation
+ */
+export const restoreAllPages = async (auth: FacebookAuth): Promise<{ 
+  success: boolean; 
+  restoredPages: number; 
+  message?: string 
+}> => {
+  try {
+    const pages = await getUserPages(auth);
+    
+    const results = await Promise.allSettled(
+      pages.map(page => 
+        updatePagePublishStatus(auth, page.id, page.access_token || '', true)
+      )
+    );
+    
+    const restoredPages = results.filter(
+      result => result.status === 'fulfilled' && result.value.success
+    ).length;
+    
+    // If we couldn't restore any pages, consider it a failure
+    if (restoredPages === 0 && pages.length > 0) {
+      const errors = results
+        .filter(result => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value.success))
+        .map(result => {
+          if (result.status === 'rejected') {
+            return result.reason.message;
+          } else {
+            return (result.value as any).message;
+          }
+        })
+        .join(', ');
+      
+      return { success: false, restoredPages: 0, message: errors };
+    }
+    
+    return { success: true, restoredPages };
+  } catch (error: any) {
+    console.error('Error restoring Facebook pages:', error);
+    return { success: false, restoredPages: 0, message: error.message };
+  }
+};
+
+/**
+ * Register Facebook pages API routes
+ * @param app Express application
+ */
+export const registerFacebookPagesRoutes = (app: Express) => {
   // Get Facebook pages
-  app.get("/api/facebook/pages", async (req, res) => {
+  app.get('/api/facebook/pages', async (req, res) => {
     try {
       const auth = storage.getFacebookAuth();
       
       if (!auth) {
-        return res.status(401).json({ error: "Not authenticated with Facebook" });
+        return res.status(401).json({ error: 'Not authenticated with Facebook' });
       }
       
-      // Try to use cached pages first if available
-      const cachedPages = storage.getCachedPages ? storage.getCachedPages() : [];
-      if (cachedPages && cachedPages.length > 0) {
-        return res.json(cachedPages);
+      // Check if page access is authorized
+      if (!auth.pageAccess) {
+        return res.status(403).json({ 
+          error: 'Page access not authorized',
+          message: 'You need to authorize page management permissions'
+        });
       }
       
-      // Request pages from Facebook Graph API
-      console.log("Fetching pages from Facebook API...");
-      const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${auth.accessToken}`;
-      
-      const pagesResponse = await fetch(pagesUrl);
-      
-      if (!pagesResponse.ok) {
-        const errorData = await pagesResponse.json() as { error?: { code: number; message: string } };
-        console.error("Facebook pages fetch error:", errorData);
-        
-        if (errorData.error && (errorData.error.code === 190 || errorData.error.code === 104)) {
-          storage.removeFacebookAuth();
-          return res.status(401).json({ error: "Facebook authentication expired", details: errorData.error });
-        }
-        
-        return res.status(400).json({ error: "Failed to fetch Facebook pages", details: errorData });
-      }
-      
-      const pagesData = await pagesResponse.json() as { data: FacebookPage[] };
-      console.log("Got pages from Facebook API:", pagesData);
-      
-      if (!pagesData.data || !Array.isArray(pagesData.data)) {
-        return res.status(400).json({ error: "Invalid response format from Facebook" });
-      }
-      
-      // Add isHidden property to all pages
-      const pagesWithIsHidden = pagesData.data.map(page => ({
-        ...page,
-        isHidden: false // Initially not hidden
-      }));
-      
-      // Save pages to cache - if the function exists
-      if (storage.saveCachedPages) {
-        storage.saveCachedPages(pagesWithIsHidden);
-      }
-      
-      res.json(pagesWithIsHidden);
-    } catch (error) {
-      console.error("Facebook pages fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      const pages = await getUserPages(auth);
+      res.json(pages);
+    } catch (error: any) {
+      console.error('Error fetching Facebook pages:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch Facebook pages' });
     }
   });
-
+  
   // Hide Facebook pages
-  app.post("/api/facebook/hide-pages", async (req, res) => {
+  app.post('/api/facebook/hide-pages', async (req, res) => {
     try {
       const auth = storage.getFacebookAuth();
       
       if (!auth) {
-        return res.status(401).json({ error: "Not authenticated with Facebook" });
+        return res.status(401).json({ error: 'Not authenticated with Facebook' });
       }
       
-      const pages = storage.getCachedPages ? storage.getCachedPages() : [];
-      
-      if (!pages || pages.length === 0) {
-        return res.json({
-          success: true,
-          totalPages: 0,
-          hiddenPages: 0,
-          failedPages: 0,
-          manualInstructions: true,
-          message: "לא נמצאו דפים להסתרה."
+      // Check if page access is authorized
+      if (!auth.pageAccess) {
+        return res.status(403).json({ 
+          error: 'Page access not authorized',
+          message: 'You need to authorize page management permissions'
         });
       }
       
-      let successCount = 0;
-      let failureCount = 0;
-      let lastError = null;
+      const result = await hideAllPages(auth);
       
-      // Process each page - for pages we can actually update them
-      for (const page of pages) {
-        try {
-          // We'll use the page access token to unpublish the page
-          if (page.access_token) {
-            const updateUrl = `https://graph.facebook.com/v19.0/${page.id}?published=false&access_token=${page.access_token}`;
-            const updateResponse = await fetch(updateUrl, { method: 'POST' });
-            
-            if (updateResponse.ok) {
-              successCount++;
-            } else {
-              const errorData = await updateResponse.json() as { error?: { message: string } };
-              console.error(`Failed to hide page ${page.id}:`, errorData);
-              failureCount++;
-              lastError = errorData.error?.message || "Unknown error";
-            }
-          } else {
-            failureCount++;
-            lastError = "Missing page access token";
-          }
-        } catch (error) {
-          console.error(`Error hiding page ${page.id}:`, error);
-          failureCount++;
-          lastError = error instanceof Error ? error.message : "Unknown error";
-        }
-      }
-      
-      // Update cache to mark pages as hidden
-      if (successCount > 0 && storage.saveCachedPages) {
-        const updatedPages = pages.map(page => ({
-          ...page,
-          isHidden: true
-        }));
-        storage.saveCachedPages(updatedPages);
-      }
-      
-      // Record the operation in history
-      const historyEntry = storage.addHistoryEntry({
+      // Add to history
+      const settings = storage.getSettings();
+      storage.addHistoryEntry({
         timestamp: new Date(),
-        action: "hide",
-        platform: "facebook",
-        success: failureCount === 0 && successCount > 0,
-        affectedItems: successCount,
-        error: lastError || undefined
+        action: 'hide',
+        platform: 'facebook',
+        success: result.success,
+        affectedItems: result.hiddenPages,
+        error: result.success ? undefined : (result.message || 'Failed to hide pages')
       });
       
-      // Response to client
-      res.json({
-        success: failureCount === 0 && successCount > 0,
-        totalPages: pages.length,
-        hiddenPages: successCount,
-        failedPages: failureCount,
-        error: lastError,
-        manualInstructions: failureCount > 0,
-        message: failureCount > 0 
-          ? "לא ניתן להסתיר חלק מהדפים באופן אוטומטי. בדוק את ההרשאות או בצע הסתרה ידנית באתר פייסבוק."
-          : undefined
+      // Update settings
+      storage.saveSettings({
+        ...settings,
+        lastHideOperation: new Date()
       });
-    } catch (error) {
-      console.error("Hide pages error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error hiding Facebook pages:', error);
+      res.status(500).json({ error: error.message || 'Failed to hide Facebook pages' });
     }
   });
-
+  
   // Restore Facebook pages
-  app.post("/api/facebook/restore-pages", async (req, res) => {
+  app.post('/api/facebook/restore-pages', async (req, res) => {
     try {
       const auth = storage.getFacebookAuth();
       
       if (!auth) {
-        return res.status(401).json({ error: "Not authenticated with Facebook" });
+        return res.status(401).json({ error: 'Not authenticated with Facebook' });
       }
       
-      const pages = storage.getCachedPages ? storage.getCachedPages() : [];
-      
-      if (!pages || pages.length === 0) {
-        return res.json({
-          success: true,
-          totalPages: 0,
-          restoredPages: 0,
-          failedPages: 0,
-          manualInstructions: true,
-          message: "לא נמצאו דפים לשחזור."
+      // Check if page access is authorized
+      if (!auth.pageAccess) {
+        return res.status(403).json({ 
+          error: 'Page access not authorized',
+          message: 'You need to authorize page management permissions'
         });
       }
       
-      // Filter for hidden pages only
-      const pagesToRestore = pages.filter(page => page.isHidden);
+      const result = await restoreAllPages(auth);
       
-      if (pagesToRestore.length === 0) {
-        return res.json({
-          success: true,
-          totalPages: 0,
-          restoredPages: 0,
-          failedPages: 0,
-          manualInstructions: true,
-          message: "לא נמצאו דפים מוסתרים לשחזור."
-        });
-      }
-      
-      let successCount = 0;
-      let failureCount = 0;
-      let lastError = null;
-      
-      // Process each page
-      for (const page of pagesToRestore) {
-        try {
-          // We'll use the page access token to publish the page
-          if (page.access_token) {
-            const updateUrl = `https://graph.facebook.com/v19.0/${page.id}?published=true&access_token=${page.access_token}`;
-            const updateResponse = await fetch(updateUrl, { method: 'POST' });
-            
-            if (updateResponse.ok) {
-              successCount++;
-            } else {
-              const errorData = await updateResponse.json() as { error?: { message: string } };
-              console.error(`Failed to restore page ${page.id}:`, errorData);
-              failureCount++;
-              lastError = errorData.error?.message || "Unknown error";
-            }
-          } else {
-            failureCount++;
-            lastError = "Missing page access token";
-          }
-        } catch (error) {
-          console.error(`Error restoring page ${page.id}:`, error);
-          failureCount++;
-          lastError = error instanceof Error ? error.message : "Unknown error";
-        }
-      }
-      
-      // Update cache to mark pages as visible
-      if (successCount > 0 && storage.saveCachedPages) {
-        const updatedPages = pages.map(page => {
-          if (pagesToRestore.some(p => p.id === page.id)) {
-            return {
-              ...page,
-              isHidden: false
-            };
-          }
-          return page;
-        });
-        storage.saveCachedPages(updatedPages);
-      }
-      
-      // Record the operation in history
-      const historyEntry = storage.addHistoryEntry({
+      // Add to history
+      const settings = storage.getSettings();
+      storage.addHistoryEntry({
         timestamp: new Date(),
-        action: "restore",
-        platform: "facebook",
-        success: failureCount === 0 && successCount > 0,
-        affectedItems: successCount,
-        error: lastError || undefined
+        action: 'restore',
+        platform: 'facebook',
+        success: result.success,
+        affectedItems: result.restoredPages,
+        error: result.success ? undefined : (result.message || 'Failed to restore pages')
       });
       
-      // Response to client
-      res.json({
-        success: failureCount === 0 && successCount > 0,
-        totalPages: pagesToRestore.length,
-        restoredPages: successCount,
-        failedPages: failureCount,
-        error: lastError,
-        manualInstructions: failureCount > 0,
-        message: failureCount > 0 
-          ? "לא ניתן לשחזר חלק מהדפים באופן אוטומטי. בדוק את ההרשאות או בצע שחזור ידני באתר פייסבוק."
-          : undefined
+      // Update settings
+      storage.saveSettings({
+        ...settings,
+        lastRestoreOperation: new Date()
       });
-    } catch (error) {
-      console.error("Restore pages error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error restoring Facebook pages:', error);
+      res.status(500).json({ error: error.message || 'Failed to restore Facebook pages' });
     }
   });
-}
+};

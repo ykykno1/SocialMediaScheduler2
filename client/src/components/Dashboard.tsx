@@ -13,7 +13,7 @@ import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock } from "luc
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
-  const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut } = useFacebookAuth();
+  const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut, pageAccess } = useFacebookAuth();
   const { posts, isLoading: isLoadingPosts, hidePosts, isHiding, restorePosts, isRestoring } = useFacebookPosts();
   const { pages, isLoading: isLoadingPages, hidePages, isHiding: isHidingPages, restorePages, isRestoring: isRestoringPages } = useFacebookPages();
   const { settings } = useSettings();
@@ -38,6 +38,28 @@ const Dashboard = () => {
       });
       
       restorePosts();
+    }
+  };
+
+  const handleHidePages = () => {
+    if (window.confirm("האם אתה בטוח שברצונך להסתיר את העמודים? פעולה זו תהפוך אותם ללא מפורסמים.")) {
+      toast({
+        title: "מסתיר עמודים...",
+        description: "מעדכן את הגדרות הפרסום של העמודים",
+      });
+      
+      hidePages();
+    }
+  };
+
+  const handleRestorePages = () => {
+    if (window.confirm("האם אתה בטוח שברצונך לשחזר את העמודים? פעולה זו תפרסם אותם מחדש.")) {
+      toast({
+        title: "משחזר עמודים...",
+        description: "מעדכן את הגדרות הפרסום של העמודים",
+      });
+      
+      restorePages();
     }
   };
 
@@ -80,6 +102,7 @@ const Dashboard = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
           <TabsTrigger value="posts">פוסטים ({posts.length})</TabsTrigger>
+          <TabsTrigger value="pages">עמודים ({pages.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -125,19 +148,42 @@ const Dashboard = () => {
                     {settings.autoSchedule ? "פעיל" : "לא פעיל"}
                   </Badge>
                 </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2" />
+                    <span>עמודי פייסבוק</span>
+                  </div>
+                  <span className="font-medium">{pages.length}</span>
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline" onClick={logout}>התנתק מפייסבוק</Button>
-              <div className="space-x-2 flex flex-row-reverse">
-                <Button onClick={handleHidePosts} disabled={isHiding}>
-                  <Lock className="mr-2 h-4 w-4" />
-                  הסתר כעת
-                </Button>
-                <Button variant="outline" onClick={handleRestorePosts} disabled={isRestoring}>
-                  <Unlock className="mr-2 h-4 w-4" />
-                  שחזר כעת
-                </Button>
+              <div className="space-y-2">
+                <div className="space-x-2 flex flex-row-reverse">
+                  <Button onClick={handleHidePosts} disabled={isHiding}>
+                    <Lock className="mr-2 h-4 w-4" />
+                    הסתר פוסטים
+                  </Button>
+                  <Button variant="outline" onClick={handleRestorePosts} disabled={isRestoring}>
+                    <Unlock className="mr-2 h-4 w-4" />
+                    שחזר פוסטים
+                  </Button>
+                </div>
+                
+                {pages.length > 0 && pageAccess && (
+                  <div className="space-x-2 flex flex-row-reverse mt-2">
+                    <Button variant="secondary" onClick={handleHidePages} disabled={isHidingPages}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      הסתר עמודים
+                    </Button>
+                    <Button variant="outline" onClick={handleRestorePages} disabled={isRestoringPages}>
+                      <Globe className="mr-2 h-4 w-4" />
+                      פרסם עמודים
+                    </Button>
+                  </div>
+                )}
               </div>
               
               {/* Add note about Facebook API limitations */}
@@ -229,6 +275,106 @@ const Dashboard = () => {
                   >
                     פתח הגדרות פרטיות בפייסבוק
                   </a>
+                </AlertDescription>
+              </Alert>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="pages">
+          <Card>
+            <CardHeader>
+              <CardTitle>העמודים שלך</CardTitle>
+              <CardDescription>
+                רשימת עמודי הפייסבוק שאתה מנהל
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!pageAccess ? (
+                <Alert className="bg-amber-50">
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <AlertTitle>נדרשות הרשאות גישה</AlertTitle>
+                  <AlertDescription>
+                    כדי לנהל עמודי פייסבוק, יש לאפשר הרשאות גישה לעמודים.
+                    <Button 
+                      onClick={login} 
+                      variant="outline" 
+                      className="mt-2 w-full border-amber-300 text-amber-700"
+                    >
+                      <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" />
+                      התחבר מחדש עם הרשאות נוספות
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              ) : isLoadingPages ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="flex flex-col space-y-2 border p-4 rounded-lg">
+                      <Skeleton className="h-5 w-1/2" />
+                      <Skeleton className="h-3 w-1/4" />
+                      <div className="flex justify-between">
+                        <Skeleton className="h-4 w-1/4" />
+                        <Skeleton className="h-4 w-1/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : pages.length === 0 ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>אין עמודים</AlertTitle>
+                  <AlertDescription>
+                    לא נמצאו עמודי פייסבוק שאתה מנהל, או שלחשבונך אין הרשאות מנהל בעמודים כלשהם.
+                    
+                    <a 
+                      href="https://www.facebook.com/pages/?category=your_pages" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block mt-2 text-blue-600 hover:underline"
+                    >
+                      עבור לעמודי הפייסבוק שלך
+                    </a>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="space-y-4">
+                  {pages.map((page) => (
+                    <div key={page.id} className="border p-4 rounded-lg">
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium">{page.name}</span>
+                        <Badge variant={page.isHidden ? 'secondary' : 'outline'}>
+                          {page.isHidden ? 'מוסתר' : 'מפורסם'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm mb-2 text-muted-foreground">
+                        {page.category || "עמוד"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <div className="text-sm text-muted-foreground">
+                סה"כ {pages.length} עמודים
+              </div>
+              <div className="space-x-2 flex flex-row-reverse">
+                <Button onClick={handleHidePages} disabled={isHidingPages}>
+                  <Lock className="mr-2 h-4 w-4" />
+                  הסתר עמודים
+                </Button>
+                <Button variant="outline" onClick={handleRestorePages} disabled={isRestoringPages}>
+                  <Unlock className="mr-2 h-4 w-4" />
+                  פרסם עמודים
+                </Button>
+              </div>
+              
+              <Alert className="mt-4 text-sm bg-blue-50">
+                <Globe className="h-4 w-4 text-blue-600" />
+                <AlertTitle>מידע</AlertTitle>
+                <AlertDescription>
+                  הסתרת עמודי פייסבוק בשבת מסירה אותם זמנית מהתצוגה הציבורית. 
+                  לאחר השבת, הם יופיעו שוב באופן אוטומטי.
                 </AlertDescription>
               </Alert>
             </CardFooter>

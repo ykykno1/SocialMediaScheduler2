@@ -12,6 +12,7 @@ export default function useFacebookAuth() {
     isAuthenticated: boolean;
     platform: string;
     authTime: string | null;
+    pageAccess?: boolean;
   }
 
   // Query for auth status
@@ -33,6 +34,7 @@ export default function useFacebookAuth() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
       queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
       toast({
         title: 'התנתקות בוצעה בהצלחה',
         description: 'התנתקת בהצלחה מחשבון הפייסבוק שלך'
@@ -108,6 +110,7 @@ export default function useFacebookAuth() {
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
         queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
       }
       
       // Handle auth error
@@ -147,6 +150,7 @@ export default function useFacebookAuth() {
     isAuthenticated: (authStatus && authStatus.isAuthenticated) || false,
     authTime: (authStatus && authStatus.authTime) ? new Date(authStatus.authTime) : null,
     platform: authStatus?.platform || 'facebook',
+    pageAccess: authStatus?.pageAccess || false,
     isLoading,
     error,
     login,
