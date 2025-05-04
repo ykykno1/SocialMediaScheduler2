@@ -77,12 +77,29 @@ export function registerRoutes(app: Express): Server {
       
       const userData = await userResponse.json() as { id: string };
       
+      // Try to get page access information as well
+      let pageAccess = false;
+      try {
+        const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?access_token=${tokenData.access_token}`;
+        const pagesResponse = await fetch(pagesUrl);
+        if (pagesResponse.ok) {
+          const pagesData = await pagesResponse.json() as any;
+          if (pagesData.data && pagesData.data.length > 0) {
+            pageAccess = true;
+            console.log(`Found ${pagesData.data.length} Facebook pages for user`);
+          }
+        }
+      } catch (pagesError) {
+        console.error("Error fetching user pages:", pagesError);
+      }
+      
       // Save the auth token
       const auth = storage.saveFacebookAuth({
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now(),
-        userId: userData.id
+        userId: userData.id,
+        pageAccess
       });
       
       // Add a history entry for successful authentication
@@ -130,7 +147,8 @@ export function registerRoutes(app: Express): Server {
       isAuthenticated: !!auth,
       // Don't send the token to the client for security
       platform: "facebook",
-      authTime: auth ? new Date(auth.timestamp).toISOString() : null
+      authTime: auth ? new Date(auth.timestamp).toISOString() : null,
+      pageAccess: auth?.pageAccess || false
     });
   });
   
