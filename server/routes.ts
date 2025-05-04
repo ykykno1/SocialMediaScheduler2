@@ -16,8 +16,11 @@ export function registerRoutes(app: Express): Server {
     // Get domain from request
     const domain = req.headers.host;
     
-    // Create redirect URI for the current domain
+    // Use the domain from headers by default
     const redirectUri = `https://${domain}/auth-callback.html`;
+    
+    // Log the redirectUri for debugging
+    console.log(`Generated redirect URI: ${redirectUri}`);
     
     res.json({
       appId,
