@@ -125,6 +125,18 @@ const Dashboard = () => {
                 
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-[#1877F2]" />
+                    <span>גישה לעמודי פייסבוק</span>
+                  </div>
+                  {pageAccess ? (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">מאושר</Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-50">לא מאושר</Badge>
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
                     <Clock className="h-5 w-5 mr-2" />
                     <span>זמן הסתרה אוטומטי</span>
                   </div>
@@ -191,7 +203,16 @@ const Dashboard = () => {
                 <AlertCircle className="h-4 w-4 text-amber-500" />
                 <AlertTitle>שים לב</AlertTitle>
                 <AlertDescription>
-                  עקב מגבלות API של פייסבוק, יתכן שתצטרך להסתיר/לשחזר פוסטים באופן ידני באתר פייסבוק
+                  עקב מגבלות API של פייסבוק, לא ניתן להסתיר פוסטים אישיים באופן אוטומטי. 
+                  {!pageAccess ? (
+                    <span className="block mt-2">
+                      לחץ על לשונית "עמודים" כדי לנהל את עמודי הפייסבוק שלך בשבת.
+                    </span>
+                  ) : (
+                    <span className="block mt-2">
+                      השתמש בלשונית "עמודים" כדי לנהל את עמודי הפייסבוק שלך בשבת.
+                    </span>
+                  )}
                 </AlertDescription>
               </Alert>
             </CardFooter>
@@ -358,16 +379,20 @@ const Dashboard = () => {
               <div className="text-sm text-muted-foreground">
                 סה"כ {pages.length} עמודים
               </div>
-              <div className="space-x-2 flex flex-row-reverse">
-                <Button onClick={handleHidePages} disabled={isHidingPages}>
-                  <Lock className="mr-2 h-4 w-4" />
-                  הסתר עמודים
-                </Button>
-                <Button variant="outline" onClick={handleRestorePages} disabled={isRestoringPages}>
-                  <Unlock className="mr-2 h-4 w-4" />
-                  פרסם עמודים
-                </Button>
-              </div>
+              {pages.length > 0 && pageAccess ? (
+                <div className="space-x-2 flex flex-row-reverse">
+                  <Button onClick={handleHidePages} disabled={isHidingPages}>
+                    <Lock className="mr-2 h-4 w-4" />
+                    הסתר עמודים
+                  </Button>
+                  <Button variant="outline" onClick={handleRestorePages} disabled={isRestoringPages}>
+                    <Unlock className="mr-2 h-4 w-4" />
+                    פרסם עמודים
+                  </Button>
+                </div>
+              ) : (
+                <div></div>
+              )}
               
               <Alert className="mt-4 text-sm bg-blue-50">
                 <Globe className="h-4 w-4 text-blue-600" />

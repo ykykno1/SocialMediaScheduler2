@@ -3,7 +3,7 @@ import type { FacebookAuth, FacebookPage } from '@shared/schema';
 import { storage } from './storage';
 import type { Express } from "express";
 
-const FACEBOOK_API_VERSION = 'v18.0';
+const FACEBOOK_API_VERSION = 'v19.0';
 
 /**
  * Get Facebook pages for a user
