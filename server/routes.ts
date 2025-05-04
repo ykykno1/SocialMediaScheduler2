@@ -170,6 +170,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Request posts from Facebook Graph API
+      console.log("Fetching posts from Facebook API...");
       const postsUrl = `https://graph.facebook.com/v19.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
       
       const postsResponse = await fetch(postsUrl);
@@ -189,6 +190,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       const postsData = await postsResponse.json() as { data: FacebookPost[] };
+      console.log("Got posts from Facebook API:", postsData);
       
       if (!postsData.data || !Array.isArray(postsData.data)) {
         return res.status(400).json({ error: "Invalid response format from Facebook" });
