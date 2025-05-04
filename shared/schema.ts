@@ -31,7 +31,7 @@ export type FacebookPost = z.infer<typeof facebookPostSchema>;
 export const historyEntrySchema = z.object({
   id: z.string(),
   timestamp: z.date(),
-  action: z.enum(['hide', 'restore']),
+  action: z.enum(['hide', 'restore', 'manual_token']),
   platform: z.literal('facebook'),
   success: z.boolean(),
   affectedItems: z.number(),
@@ -47,6 +47,7 @@ export const facebookAuthSchema = z.object({
   timestamp: z.number(),
   userId: z.string().optional(),
   pageAccess: z.boolean().optional(),
+  isManualToken: z.boolean().optional(),
 });
 
 export type FacebookAuth = z.infer<typeof facebookAuthSchema>;

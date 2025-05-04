@@ -523,6 +523,105 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Register Facebook Pages routes
+  // Handle manual token input
+  app.post("/api/facebook/manual-token", (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ error: "Token is required" });
+      }
+      
+      // First validate the token by making a request to get user info
+      fetch(`https://graph.facebook.com/me?access_token=${token}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Invalid token");
+          }
+          return response.json();
+        })
+        .then((userData: {id: string, name?: string}) => {
+          // Check for page access with this token
+          return fetch(`https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token&access_token=${token}`)
+            .then(pagesResponse => {
+              let pageAccess = false;
+              
+              if (pagesResponse.ok) {
+                return pagesResponse.json().then((pagesData: {data?: {id: string, name: string, access_token?: string}[]}) => {
+                  if (pagesData.data && pagesData.data.length > 0) {
+                    pageAccess = true;
+                    console.log(`Manual token has access to ${pagesData.data.length} Facebook pages`);
+                  }
+                  
+                  // Save the manual token
+                  const auth = storage.saveFacebookAuth({
+                    accessToken: token,
+                    expiresIn: 5184000, // Set a long expiration (60 days) since we don't know the actual expiration
+                    timestamp: Date.now(),
+                    userId: userData.id,
+                    pageAccess,
+                    isManualToken: true
+                  });
+                  
+                  // Add a history entry
+                  storage.addHistoryEntry({
+                    timestamp: new Date(),
+                    action: "manual_token",
+                    platform: "facebook",
+                    success: true,
+                    affectedItems: 0,
+                    error: undefined
+                  });
+                  
+                  res.json({
+                    success: true,
+                    message: "טוקן נשמר בהצלחה",
+                    pageAccess
+                  });
+                });
+              } else {
+                console.log("No page access with manual token");
+                
+                // Still save the token even without page access
+                const auth = storage.saveFacebookAuth({
+                  accessToken: token,
+                  expiresIn: 5184000,
+                  timestamp: Date.now(),
+                  userId: userData.id,
+                  pageAccess: false,
+                  isManualToken: true
+                });
+                
+                storage.addHistoryEntry({
+                  timestamp: new Date(),
+                  action: "manual_token",
+                  platform: "facebook",
+                  success: true,
+                  affectedItems: 0,
+                  error: undefined
+                });
+                
+                res.json({
+                  success: true,
+                  message: "טוקן נשמר בהצלחה (ללא גישה לעמודים)",
+                  pageAccess: false
+                });
+              }
+            });
+        })
+        .catch(error => {
+          console.error("Error validating manual token:", error);
+          res.status(400).json({ 
+            error: "טוקן לא תקין או פג תוקף", 
+            message: error.message
+          });
+        });
+    } catch (error) {
+      console.error("Manual token error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
   registerFacebookPagesRoutes(app);
   
   const httpServer = createServer(app);
