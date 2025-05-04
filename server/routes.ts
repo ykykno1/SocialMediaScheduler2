@@ -219,10 +219,10 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid response format from Facebook" });
       }
       
-      // Add isHidden property to all posts
+      // Add isHidden property to all posts - checking for both SELF and ONLY_ME values
       const postsWithIsHidden = postsData.data.map(post => ({
         ...post,
-        isHidden: post.privacy && post.privacy.value === "SELF"
+        isHidden: post.privacy && (post.privacy.value === "SELF" || post.privacy.value === "ONLY_ME")
       }));
       
       // Save posts to cache
@@ -266,7 +266,7 @@ export function registerRoutes(app: Express): Server {
         
         posts = postsData.data.map(post => ({
           ...post,
-          isHidden: post.privacy && post.privacy.value === "SELF"
+          isHidden: post.privacy && (post.privacy.value === "SELF" || post.privacy.value === "ONLY_ME")
         }));
         storage.saveCachedPosts(posts);
       }
@@ -280,7 +280,8 @@ export function registerRoutes(app: Express): Server {
         !exceptedPostIds.includes(post.id) && 
         (!post.isHidden) && 
         post.privacy && 
-        post.privacy.value !== "SELF"
+        post.privacy.value !== "SELF" && 
+        post.privacy.value !== "ONLY_ME"
       );
       
       console.log(`Attempting to hide ${postsToHide.length} posts using direct API calls`);
@@ -295,8 +296,8 @@ export function registerRoutes(app: Express): Server {
         try {
           console.log(`Attempting to hide post ${post.id}`);
           
-          // Try to update privacy settings on the post
-          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}?privacy={"value":"SELF"}&access_token=${auth.accessToken}`;
+          // Try to update privacy settings on the post - using updated ONLY_ME value instead of SELF
+          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}?privacy={"value":"ONLY_ME"}&access_token=${auth.accessToken}`;
           const updateResponse = await fetch(updateUrl, { method: 'POST' });
           
           if (updateResponse.ok) {
@@ -323,7 +324,7 @@ export function registerRoutes(app: Express): Server {
           return {
             ...post,
             isHidden: true,
-            privacy: { value: "SELF", description: "רק אני" }
+            privacy: { value: "ONLY_ME", description: "רק אני" }
           };
         }
         return post;
@@ -401,16 +402,16 @@ export function registerRoutes(app: Express): Server {
         
         posts = postsData.data.map(post => ({
           ...post,
-          isHidden: post.privacy && post.privacy.value === "SELF"
+          isHidden: post.privacy && (post.privacy.value === "SELF" || post.privacy.value === "ONLY_ME")
         }));
         storage.saveCachedPosts(posts);
       }
       
-      // Find posts marked as hidden to restore
+      // Find posts marked as hidden to restore - using updated ONLY_ME value
       const postsToRestore = posts.filter(post => 
         post.isHidden && 
         post.privacy && 
-        post.privacy.value === "SELF"
+        (post.privacy.value === "SELF" || post.privacy.value === "ONLY_ME")
       );
       
       console.log(`Attempting to restore ${postsToRestore.length} posts using direct API calls`);

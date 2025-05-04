@@ -61,15 +61,14 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // Construct Facebook OAuth URL with basic permissions only
-      // NOTE: לפי מדיניות פייסבוק העדכנית, אין אפשרות להשתמש בהרשאות מתקדמות לניהול עמודים
-      // ללא אישור מיוחד של פייסבוק. לכן נשתמש בהרשאות בסיסיות והאפליקציה תספק מדריכים
-      // כיצד להסתיר תוכן באופן ידני.
+      // Construct Facebook OAuth URL with updated permissions for v22.0
+      // הרשאות מעודכנות עבור גרסה 22.0 של Facebook API
+      // אלו הן ההרשאות העדכניות לניהול עמודי פייסבוק
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email`;
+        `scope=pages_manage_posts,pages_read_engagement,pages_show_list,public_profile,email`;
       
       // Open popup window
       const width = 600;
