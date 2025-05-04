@@ -64,7 +64,7 @@ export default function useFacebookAuth() {
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,pages_manage_posts,pages_show_list,pages_read_engagement`;
+        `scope=public_profile,email,user_posts`;
       
       // Open popup window
       const width = 600;
