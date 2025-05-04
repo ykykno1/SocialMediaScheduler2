@@ -50,7 +50,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Exchange code for token
-      const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?` +
+      const tokenUrl = `https://graph.facebook.com/v22.0/oauth/access_token?` +
         `client_id=${fbAppId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `client_secret=${fbAppSecret}&` +
@@ -82,7 +82,7 @@ export function registerRoutes(app: Express): Server {
       let pageAccess = false;
       try {
         // Using the correct API version and endpoint per Claude's advice
-        const pagesUrl = `https://graph.facebook.com/v18.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
+        const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
         const pagesResponse = await fetch(pagesUrl);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as any;
@@ -194,7 +194,7 @@ export function registerRoutes(app: Express): Server {
       
       // Request posts from Facebook Graph API
       console.log("Fetching posts from Facebook API...");
-      const postsUrl = `https://graph.facebook.com/v18.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
+      const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
       
       const postsResponse = await fetch(postsUrl);
       
@@ -249,7 +249,7 @@ export function registerRoutes(app: Express): Server {
       
       if (posts.length === 0) {
         // Fetch posts if not in cache
-        const postsUrl = `https://graph.facebook.com/v18.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
+        const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
         const postsResponse = await fetch(postsUrl);
         
         if (!postsResponse.ok) {
@@ -296,7 +296,7 @@ export function registerRoutes(app: Express): Server {
           console.log(`Attempting to hide post ${post.id}`);
           
           // Try to update privacy settings on the post
-          const updateUrl = `https://graph.facebook.com/v18.0/${post.id}?privacy={"value":"SELF"}&access_token=${auth.accessToken}`;
+          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}?privacy={"value":"SELF"}&access_token=${auth.accessToken}`;
           const updateResponse = await fetch(updateUrl, { method: 'POST' });
           
           if (updateResponse.ok) {
@@ -384,7 +384,7 @@ export function registerRoutes(app: Express): Server {
       
       if (posts.length === 0) {
         // Fetch posts if not in cache
-        const postsUrl = `https://graph.facebook.com/v18.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
+        const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
         const postsResponse = await fetch(postsUrl);
         
         if (!postsResponse.ok) {
@@ -426,7 +426,7 @@ export function registerRoutes(app: Express): Server {
           console.log(`Attempting to restore post ${post.id}`);
           
           // Try to update privacy settings on the post to EVERYONE
-          const updateUrl = `https://graph.facebook.com/v18.0/${post.id}?privacy={"value":"EVERYONE"}&access_token=${auth.accessToken}`;
+          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}?privacy={"value":"EVERYONE"}&access_token=${auth.accessToken}`;
           const updateResponse = await fetch(updateUrl, { method: 'POST' });
           
           if (updateResponse.ok) {
