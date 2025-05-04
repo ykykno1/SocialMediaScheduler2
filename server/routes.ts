@@ -335,7 +335,7 @@ export function registerRoutes(app: Express): Server {
         platform: "facebook",
         success: successCount > 0,
         affectedItems: successCount,
-        error: failureCount > 0 ? lastError : undefined
+        error: failureCount > 0 ? (lastError || "שגיאה לא ידועה") : undefined
       });
       
       // Update settings to record last hide operation
@@ -465,7 +465,7 @@ export function registerRoutes(app: Express): Server {
         platform: "facebook",
         success: successCount > 0,
         affectedItems: successCount,
-        error: failureCount > 0 ? lastError : undefined
+        error: failureCount > 0 ? (lastError || "שגיאה לא ידועה") : undefined
       });
       
       // Update settings to record last restore operation
