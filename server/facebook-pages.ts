@@ -1,7 +1,7 @@
 import { storage } from "./storage";
 import { Express } from "express";
 import fetch from 'node-fetch';
-import { FacebookPage } from "@shared/schema";
+import { FacebookPage, FacebookAuth } from "@shared/schema";
 
 export function registerFacebookPagesRoutes(app: Express) {
   // Get Facebook pages

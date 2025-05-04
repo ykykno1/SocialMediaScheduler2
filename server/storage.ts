@@ -29,6 +29,11 @@ export interface IStorage {
   getCachedPosts(): FacebookPost[];
   saveCachedPosts(posts: FacebookPost[]): void;
   clearCachedPosts(): void;
+  
+  // Facebook pages cache
+  getCachedPages(): FacebookPage[];
+  saveCachedPages(pages: FacebookPage[]): void;
+  clearCachedPages(): void;
 }
 
 // In-memory storage implementation
@@ -37,6 +42,7 @@ export class MemStorage implements IStorage {
   private facebookAuth: FacebookAuth | null = null;
   private historyEntries: HistoryEntry[] = [];
   private cachedPosts: FacebookPost[] = [];
+  private cachedPages: FacebookPage[] = [];
   
   constructor() {
     // Initialize with default settings
@@ -99,6 +105,19 @@ export class MemStorage implements IStorage {
   
   clearCachedPosts(): void {
     this.cachedPosts = [];
+  }
+  
+  // Facebook pages cache
+  getCachedPages(): FacebookPage[] {
+    return this.cachedPages;
+  }
+  
+  saveCachedPages(pages: FacebookPage[]): void {
+    this.cachedPages = pages;
+  }
+  
+  clearCachedPages(): void {
+    this.cachedPages = [];
   }
 }
 

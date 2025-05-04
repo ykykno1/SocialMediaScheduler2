@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
 import { type FacebookPost } from "@shared/schema";
+import { registerFacebookPagesRoutes } from "./facebook-pages";
 
 export function registerRoutes(app: Express): Server {
   // Get Facebook app configuration
@@ -412,6 +413,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Register Facebook Pages routes
+  registerFacebookPagesRoutes(app);
+  
   const httpServer = createServer(app);
   return httpServer;
 }
