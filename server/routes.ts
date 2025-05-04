@@ -50,7 +50,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Exchange code for token
-      const tokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token?` +
+      const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?` +
         `client_id=${fbAppId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `client_secret=${fbAppSecret}&` +
@@ -81,14 +81,14 @@ export function registerRoutes(app: Express): Server {
       // Try to get page access information as well
       let pageAccess = false;
       try {
-        // The new URL now uses the updated API endpoints
-        const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
+        // Using the correct API version and endpoint per Claude's advice
+        const pagesUrl = `https://graph.facebook.com/v18.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
         const pagesResponse = await fetch(pagesUrl);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as any;
           if (pagesData.data && pagesData.data.length > 0) {
             pageAccess = true;
-            console.log(`Found ${pagesData.data.length} Facebook pages for user with the new permissions`);
+            console.log(`Found ${pagesData.data.length} Facebook pages for user with the correct permissions`);
           }
         } else {
           const errorData = await pagesResponse.json();
@@ -194,7 +194,7 @@ export function registerRoutes(app: Express): Server {
       
       // Request posts from Facebook Graph API
       console.log("Fetching posts from Facebook API...");
-      const postsUrl = `https://graph.facebook.com/v19.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
+      const postsUrl = `https://graph.facebook.com/v18.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
       
       const postsResponse = await fetch(postsUrl);
       

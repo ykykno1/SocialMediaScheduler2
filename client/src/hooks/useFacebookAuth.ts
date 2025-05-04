@@ -61,14 +61,13 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // Construct Facebook OAuth URL with basic permissions only
-      // Due to permission changes in Facebook API, we're using only basic permissions 
-      // that don't require app review
-      const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
+      // Construct Facebook OAuth URL with valid page management permissions
+      // According to latest information, these are the correct permissions to use
+      const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email`;
+        `scope=public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts`;
       
       // Open popup window
       const width = 600;
