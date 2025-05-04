@@ -231,7 +231,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Hide Facebook posts - Simulate success but instruct user how to hide posts
+  // Hide Facebook posts - Try to use real API for admin users
   app.post("/api/facebook/hide", async (req, res) => {
     try {
       const auth = storage.getFacebookAuth();
@@ -272,20 +272,54 @@ export function registerRoutes(app: Express): Server {
       const exceptedPostIds = settings.exceptedPostIds || [];
       
       // Filter posts to hide (exclude excepted posts)
-      const postsToHide = posts.filter(post => !exceptedPostIds.includes(post.id));
+      const postsToHide = posts.filter(post => 
+        !exceptedPostIds.includes(post.id) && 
+        (!post.isHidden) && 
+        post.privacy && 
+        post.privacy.value !== "SELF"
+      );
       
-      // For demonstration, we can't update posts due to API limitations
-      // Instead, we'll mark them as hidden in our local storage
-      let simulatedHidden = 0;
+      console.log(`Attempting to hide ${postsToHide.length} posts using direct API calls`);
       
-      // Mark posts as hidden in our local storage
+      // Attempt to actually update posts with the Facebook API
+      let successCount = 0;
+      let failureCount = 0;
+      let lastError = null;
+      
+      // Process each post
+      for (const post of postsToHide) {
+        try {
+          console.log(`Attempting to hide post ${post.id}`);
+          
+          // Try to update privacy settings on the post
+          const updateUrl = `https://graph.facebook.com/v19.0/${post.id}?privacy={"value":"SELF"}&access_token=${auth.accessToken}`;
+          const updateResponse = await fetch(updateUrl, { method: 'POST' });
+          
+          if (updateResponse.ok) {
+            // Success!
+            console.log(`Successfully hid post ${post.id}`);
+            successCount++;
+          } else {
+            // Failed to update post privacy
+            const errorData = await updateResponse.json() as { error?: { message: string; code: number } };
+            console.error(`Failed to hide post ${post.id}:`, errorData);
+            failureCount++;
+            lastError = errorData.error?.message || "Unknown error";
+          }
+        } catch (error) {
+          console.error(`Error hiding post ${post.id}:`, error);
+          failureCount++;
+          lastError = error instanceof Error ? error.message : "Unknown error";
+        }
+      }
+      
+      // Update our local cache to reflect changes
       const updatedPosts = posts.map(post => {
         if (postsToHide.some(p => p.id === post.id)) {
-          simulatedHidden++;
           return {
             ...post,
             isHidden: true,
-            privacy: { value: "SELF", description: "רק אני (מודרך)" }
+            privacy: { value: "SELF", description: "רק אני" }
           };
         }
         return post;
@@ -299,9 +333,9 @@ export function registerRoutes(app: Express): Server {
         timestamp: new Date(),
         action: "hide",
         platform: "facebook",
-        success: true,
-        affectedItems: simulatedHidden,
-        error: "הפוסטים הוסתרו בסימולציה בלבד עקב מגבלות API. הורך ידנית בפייסבוק"
+        success: successCount > 0,
+        affectedItems: successCount,
+        error: failureCount > 0 ? lastError : undefined
       });
       
       // Update settings to record last hide operation
@@ -310,14 +344,21 @@ export function registerRoutes(app: Express): Server {
         lastHideOperation: new Date()
       });
       
-      // Send response with guided instruction
+      const needsManualInstructions = failureCount > 0;
+      
+      // Send response based on results
       res.json({
-        success: true,
+        success: successCount > 0,
         totalPosts: postsToHide.length,
-        hiddenPosts: simulatedHidden,
-        failedPosts: 0,
-        manualInstructions: true,
-        message: "מגבלות API של פייסבוק אינן מאפשרות להסתיר פוסטים באופן אוטומטי. אנא הסתר את הפוסטים באופן ידני באתר פייסבוק."
+        hiddenPosts: successCount,
+        failedPosts: failureCount,
+        error: lastError,
+        manualInstructions: needsManualInstructions,
+        message: needsManualInstructions 
+          ? "חלק מהפוסטים הוסתרו אוטומטית, אך היו כאלה שנכשלו. אנא הסתר את שאר הפוסטים באופן ידני באתר פייסבוק."
+          : successCount > 0 
+            ? `${successCount} פוסטים הוסתרו בהצלחה באופן אוטומטי!`
+            : "לא נמצאו פוסטים להסתרה"
       });
     } catch (error) {
       console.error("Hide posts error:", error);
@@ -325,7 +366,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Restore Facebook posts - Simulate success but instruct user how to restore posts
+  // Restore Facebook posts - Try to use real API for admin users
   app.post("/api/facebook/restore", async (req, res) => {
     try {
       const auth = storage.getFacebookAuth();
@@ -361,18 +402,54 @@ export function registerRoutes(app: Express): Server {
         storage.saveCachedPosts(posts);
       }
       
-      // Find posts marked as hidden to "restore"
-      const postsToRestore = posts.filter(post => post.isHidden);
-      let simulatedRestored = 0;
+      // Find posts marked as hidden to restore
+      const postsToRestore = posts.filter(post => 
+        post.isHidden && 
+        post.privacy && 
+        post.privacy.value === "SELF"
+      );
       
-      // Mark them as visible in our local storage
+      console.log(`Attempting to restore ${postsToRestore.length} posts using direct API calls`);
+      
+      // Attempt to actually update posts with the Facebook API
+      let successCount = 0;
+      let failureCount = 0;
+      let lastError = null;
+      
+      // Process each post
+      for (const post of postsToRestore) {
+        try {
+          console.log(`Attempting to restore post ${post.id}`);
+          
+          // Try to update privacy settings on the post to EVERYONE
+          const updateUrl = `https://graph.facebook.com/v19.0/${post.id}?privacy={"value":"EVERYONE"}&access_token=${auth.accessToken}`;
+          const updateResponse = await fetch(updateUrl, { method: 'POST' });
+          
+          if (updateResponse.ok) {
+            // Success!
+            console.log(`Successfully restored post ${post.id}`);
+            successCount++;
+          } else {
+            // Failed to update post privacy
+            const errorData = await updateResponse.json() as { error?: { message: string; code: number } };
+            console.error(`Failed to restore post ${post.id}:`, errorData);
+            failureCount++;
+            lastError = errorData.error?.message || "Unknown error";
+          }
+        } catch (error) {
+          console.error(`Error restoring post ${post.id}:`, error);
+          failureCount++;
+          lastError = error instanceof Error ? error.message : "Unknown error";
+        }
+      }
+      
+      // Update our local cache to reflect changes
       const updatedPosts = posts.map(post => {
-        if (post.isHidden) {
-          simulatedRestored++;
+        if (postsToRestore.some(p => p.id === post.id)) {
           return {
             ...post,
             isHidden: false,
-            privacy: { value: "EVERYONE", description: "ציבורי (מודרך)" }
+            privacy: { value: "EVERYONE", description: "ציבורי" }
           };
         }
         return post;
@@ -386,9 +463,9 @@ export function registerRoutes(app: Express): Server {
         timestamp: new Date(),
         action: "restore",
         platform: "facebook",
-        success: true,
-        affectedItems: simulatedRestored,
-        error: "הפוסטים שוחזרו בסימולציה בלבד עקב מגבלות API. שחזר ידנית בפייסבוק"
+        success: successCount > 0,
+        affectedItems: successCount,
+        error: failureCount > 0 ? lastError : undefined
       });
       
       // Update settings to record last restore operation
@@ -398,14 +475,21 @@ export function registerRoutes(app: Express): Server {
         lastRestoreOperation: new Date()
       });
       
-      // Send response with guided instruction
+      const needsManualInstructions = failureCount > 0;
+      
+      // Send response based on results
       res.json({
-        success: true,
+        success: successCount > 0,
         totalPosts: postsToRestore.length,
-        restoredPosts: simulatedRestored,
-        failedPosts: 0,
-        manualInstructions: true,
-        message: "מגבלות API של פייסבוק אינן מאפשרות לשחזר פוסטים באופן אוטומטי. אנא שחזר את הפוסטים באופן ידני באתר פייסבוק."
+        restoredPosts: successCount,
+        failedPosts: failureCount,
+        error: lastError,
+        manualInstructions: needsManualInstructions,
+        message: needsManualInstructions 
+          ? "חלק מהפוסטים שוחזרו אוטומטית, אך היו כאלה שנכשלו. אנא שחזר את שאר הפוסטים באופן ידני באתר פייסבוק."
+          : successCount > 0 
+            ? `${successCount} פוסטים שוחזרו בהצלחה באופן אוטומטי!`
+            : "לא נמצאו פוסטים מוסתרים לשחזור"
       });
     } catch (error) {
       console.error("Restore posts error:", error);

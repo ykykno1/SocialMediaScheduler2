@@ -59,12 +59,12 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // Construct Facebook OAuth URL with basic permissions only
+      // Construct Facebook OAuth URL with expanded permissions for testing
       const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,user_posts`;
+        `scope=public_profile,email,user_posts,publish_actions,publish_pages,manage_pages`;
       
       // Open popup window
       const width = 600;
