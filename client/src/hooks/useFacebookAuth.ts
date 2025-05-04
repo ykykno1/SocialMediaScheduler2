@@ -61,14 +61,14 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // Construct Facebook OAuth URL with basic standard permissions for v22.0
-      // ישנה בעיה בפורמט ההרשאות המתקדמות, לכן נשתמש בהרשאות בסיסיות בלבד
-      // נעבור לפורמט סטנדרטי של הרשאות
+      // Construct Facebook OAuth URL with minimal permissions that definitely work in v22.0
+      // לאחר ניסויים שונים, נראה שרק ההרשאות הבסיסיות ביותר עובדות בגרסה 22.0
+      // נשתמש רק בהרשאות שבטוח עובדות
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,pages_show_list,user_posts,publish_actions`;
+        `scope=public_profile,email,user_posts`;
       
       // Open popup window
       const width = 600;
