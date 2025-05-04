@@ -7,11 +7,11 @@ import { type FacebookPost } from "@shared/schema";
 export function registerRoutes(app: Express): Server {
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
-    const appId = process.env.FACEBOOK_APP_ID;
+    // Use the new Facebook App ID directly
+    const appId = "1598261231562840";
     
-    if (!appId) {
-      return res.status(500).json({ error: "Facebook App ID not configured" });
-    }
+    // Log for debugging
+    console.log(`Using Facebook App ID: ${appId}, from env: ${process.env.FACEBOOK_APP_ID}`);
     
     // Get domain from request
     const domain = req.headers.host;
@@ -37,11 +37,15 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Missing code or redirectUri" });
       }
       
-      const fbAppId = process.env.FACEBOOK_APP_ID;
+      // Use the new Facebook App ID directly
+      const fbAppId = "1598261231562840";
       const fbAppSecret = process.env.FACEBOOK_APP_SECRET;
       
-      if (!fbAppId || !fbAppSecret) {
-        return res.status(500).json({ error: "Facebook App credentials not configured" });
+      // Log for debugging
+      console.log(`Using Facebook App ID: ${fbAppId} for token exchange`);
+      
+      if (!fbAppSecret) {
+        return res.status(500).json({ error: "Facebook App Secret not configured" });
       }
       
       // Exchange code for token
