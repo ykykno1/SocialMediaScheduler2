@@ -203,16 +203,16 @@ const Dashboard = () => {
                 <AlertCircle className="h-4 w-4 text-amber-500" />
                 <AlertTitle>שים לב</AlertTitle>
                 <AlertDescription>
-                  עקב מגבלות API של פייסבוק, לא ניתן להסתיר פוסטים אישיים באופן אוטומטי. 
-                  {!pageAccess ? (
-                    <span className="block mt-2">
-                      לחץ על לשונית "עמודים" כדי לנהל את עמודי הפייסבוק שלך בשבת.
-                    </span>
-                  ) : (
-                    <span className="block mt-2">
-                      השתמש בלשונית "עמודים" כדי לנהל את עמודי הפייסבוק שלך בשבת.
-                    </span>
-                  )}
+                  עקב שינויים חדשים בהרשאות API של פייסבוק, ישנן מגבלות כרגע:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>לא ניתן להסתיר פוסטים אישיים באופן אוטומטי</li>
+                    <li>גישה לניהול עמודי פייסבוק מוגבלת</li>
+                    <li>אפליקציות צד שלישי נדרשות לעבור תהליך סקירה מקיף של פייסבוק</li>
+                  </ul>
+                  <div className="p-3 mt-2 border border-amber-200 rounded-md bg-amber-50/70">
+                    <strong>המלצה:</strong> לניהול תוכן בשבת, מומלץ להשתמש בעמודי פייסבוק (לא פרופיל אישי) 
+                    ולהיכנס ישירות לממשק הניהול של פייסבוק לפני שבת כדי להגדיר תזמוני פרסום.
+                  </div>
                 </AlertDescription>
               </Alert>
             </CardFooter>
@@ -285,15 +285,19 @@ const Dashboard = () => {
               {/* Add note about Facebook API limitations */}
               <Alert className="mt-4 text-sm bg-amber-50">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
-                <AlertTitle>שים לב</AlertTitle>
+                <AlertTitle>מגבלות חשובות</AlertTitle>
                 <AlertDescription>
-                  עקב מגבלות API של פייסבוק, יתכן שתצטרך להסתיר/לשחזר פוסטים באופן ידני באתר פייסבוק.
+                  בשל שינויי מדיניות של פייסבוק, ה-API אינו מאפשר כיום לשנות הגדרות פרטיות של פוסטים באופן אוטומטי.
+                  <div className="p-3 mt-2 border border-amber-200 rounded-md bg-amber-50/70">
+                    <strong>פתרון חלופי:</strong> לפני שבת, יש לבצע הסתרת פוסטים באופן ידני דרך אתר פייסבוק בעצמו.
+                  </div>
                   <a 
                     href="https://www.facebook.com/settings?tab=privacy" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="block mt-1 text-blue-600 hover:underline"
+                    className="flex items-center justify-center w-full mt-2 px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
                   >
+                    <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" />
                     פתח הגדרות פרטיות בפייסבוק
                   </a>
                 </AlertDescription>
@@ -314,16 +318,21 @@ const Dashboard = () => {
               {!pageAccess ? (
                 <Alert className="bg-amber-50">
                   <AlertCircle className="h-4 w-4 text-amber-500" />
-                  <AlertTitle>נדרשות הרשאות גישה</AlertTitle>
+                  <AlertTitle>מגבלות גישה מפייסבוק</AlertTitle>
                   <AlertDescription>
-                    כדי לנהל עמודי פייסבוק, יש לאפשר הרשאות גישה לעמודים.
+                    עקב מגבלות בממשק של פייסבוק, כרגע לא ניתן לקבל הרשאות גישה לעמודים באופן אוטומטי. 
+                    אנחנו עדיין עובדים על פתרון לבעיה זו.
+                    <div className="mt-2 p-3 border border-amber-200 rounded-md bg-amber-50">
+                      <strong>הערה:</strong> האפליקציה מוגבלת כרגע רק להרשאות בסיסיות של פייסבוק.
+                      לניהול עמודי פייסבוק בזמן שבת, אנא השתמש במסך הניהול באתר פייסבוק עצמו.
+                    </div>
                     <Button 
                       onClick={login} 
                       variant="outline" 
                       className="mt-2 w-full border-amber-300 text-amber-700"
                     >
                       <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" />
-                      התחבר מחדש עם הרשאות נוספות
+                      התחבר מחדש לפייסבוק
                     </Button>
                   </AlertDescription>
                 </Alert>
@@ -396,10 +405,32 @@ const Dashboard = () => {
               
               <Alert className="mt-4 text-sm bg-blue-50">
                 <Globe className="h-4 w-4 text-blue-600" />
-                <AlertTitle>מידע</AlertTitle>
+                <AlertTitle>מידע על ניהול עמודים</AlertTitle>
                 <AlertDescription>
-                  הסתרת עמודי פייסבוק בשבת מסירה אותם זמנית מהתצוגה הציבורית. 
-                  לאחר השבת, הם יופיעו שוב באופן אוטומטי.
+                  <div className="space-y-2">
+                    <p>הסתרת עמודי פייסבוק בשבת מסירה אותם זמנית מהתצוגה הציבורית.</p>
+                    <p>עקב המגבלות הנוכחיות של פייסבוק, מומלץ לנהל את פרסום העמודים באופן ידני לפני כניסת השבת:</p>
+                    
+                    <div className="mt-2 border-t pt-2">
+                      <strong>דרך מומלצת לניהול עמודים בשבת:</strong>
+                      <ol className="list-decimal list-inside mt-1 space-y-1">
+                        <li>גש למנהל העמודים שלך בפייסבוק</li>
+                        <li>השתמש באפשרות "תזמון" כדי להגדיר מראש מתי העמוד יהיה מפורסם</li>
+                        <li>תזמן הפסקת פרסום לפני כניסת השבת</li>
+                        <li>תזמן חזרה לפרסום לאחר צאת השבת</li>
+                      </ol>
+                    </div>
+                    
+                    <a 
+                      href="https://www.facebook.com/pages/?category=your_pages" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center w-full mt-3 px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
+                    >
+                      <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" />
+                      פתח את מנהל העמודים שלך
+                    </a>
+                  </div>
                 </AlertDescription>
               </Alert>
             </CardFooter>
