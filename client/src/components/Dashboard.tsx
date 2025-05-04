@@ -201,17 +201,67 @@ const Dashboard = () => {
               {/* Add note about Facebook API limitations */}
               <Alert className="mt-4 text-sm bg-amber-50">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
-                <AlertTitle>שים לב</AlertTitle>
+                <AlertTitle>עדכון חשוב!</AlertTitle>
                 <AlertDescription>
-                  עקב שינויים חדשים בהרשאות API של פייסבוק, ישנן מגבלות כרגע:
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>לא ניתן להסתיר פוסטים אישיים באופן אוטומטי</li>
-                    <li>גישה לניהול עמודי פייסבוק מוגבלת</li>
-                    <li>אפליקציות צד שלישי נדרשות לעבור תהליך סקירה מקיף של פייסבוק</li>
-                  </ul>
-                  <div className="p-3 mt-2 border border-amber-200 rounded-md bg-amber-50/70">
-                    <strong>המלצה:</strong> לניהול תוכן בשבת, מומלץ להשתמש בעמודי פייסבוק (לא פרופיל אישי) 
-                    ולהיכנס ישירות לממשק הניהול של פייסבוק לפני שבת כדי להגדיר תזמוני פרסום.
+                  <div className="font-bold text-amber-800 mt-1 mb-3 text-base">
+                    לתשומת לבך: לא ניתן להסתיר פוסטים באופן אוטומטי עקב שינויים בפייסבוק
+                  </div>
+                  
+                  <p className="mb-2">פייסבוק שינתה לאחרונה את מדיניות האבטחה וההרשאות שלה באופן שמונע מאפליקציות כמו זו להסתיר או לשנות תוכן באופן אוטומטי.</p>
+                  
+                  <div className="p-3 mt-3 mb-3 border-2 border-amber-300 rounded-md bg-amber-50 shadow-sm">
+                    <div className="font-bold mb-2 text-center text-amber-800">מדריך מפורט להסתרת תוכן בפייסבוק</div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <div className="font-bold">עבור פוסטים אישיים:</div>
+                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
+                          <li>היכנסו לפרופיל האישי שלכם</li>
+                          <li>עברו לפוסט שתרצו להסתיר</li>
+                          <li>לחצו על שלוש הנקודות בפינה הימנית העליונה של הפוסט</li>
+                          <li>בחרו באפשרות "מי יכול לראות את זה?"</li>
+                          <li>שנו ל"רק אני"</li>
+                        </ol>
+                        <a 
+                          href="https://www.facebook.com/profile" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center w-full mt-2 px-3 py-1.5 text-sm border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
+                        >
+                          <Facebook className="mr-2 h-3 w-3 text-[#1877F2]" />
+                          פתח את הפרופיל שלך
+                        </a>
+                      </div>
+                      
+                      <div>
+                        <div className="font-bold">עבור עמודי פייסבוק:</div>
+                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
+                          <li>גשו ל"עמודים" בתפריט הצדדי של פייסבוק</li>
+                          <li>בחרו את העמוד שברצונכם להסתיר</li>
+                          <li>לחצו על "הגדרות" בפינה השמאלית התחתונה</li>
+                          <li>לחצו על "כללי" מהתפריט הצדדי</li>
+                          <li>תחת "נראות עמוד", כבו את האפשרות "פרסם את העמוד"</li>
+                        </ol>
+                        <a 
+                          href="https://www.facebook.com/pages/?category=your_pages" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center w-full mt-2 px-3 py-1.5 text-sm border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
+                        >
+                          <Facebook className="mr-2 h-3 w-3 text-[#1877F2]" />
+                          פתח את העמודים שלך
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="font-medium text-amber-800 mt-3">
+                    אנחנו ממשיכים לעבוד על פתרונות חלופיים, כולל:
+                    <ul className="list-disc list-inside mt-1 mr-2">
+                      <li>תזכורות לפני שבת</li>
+                      <li>מדריכים מפורטים לתזמון מראש</li>
+                      <li>ייעוץ לניהול התוכן שלך בצורה שומרת שבת</li>
+                    </ul>
                   </div>
                 </AlertDescription>
               </Alert>
@@ -283,23 +333,81 @@ const Dashboard = () => {
               </div>
               
               {/* Add note about Facebook API limitations */}
-              <Alert className="mt-4 text-sm bg-amber-50">
+              <Alert className="mt-4 bg-amber-50">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
-                <AlertTitle>מגבלות חשובות</AlertTitle>
+                <AlertTitle>מדריך מפורט להסתרת פוסטים</AlertTitle>
                 <AlertDescription>
-                  בשל שינויי מדיניות של פייסבוק, ה-API אינו מאפשר כיום לשנות הגדרות פרטיות של פוסטים באופן אוטומטי.
-                  <div className="p-3 mt-2 border border-amber-200 rounded-md bg-amber-50/70">
-                    <strong>פתרון חלופי:</strong> לפני שבת, יש לבצע הסתרת פוסטים באופן ידני דרך אתר פייסבוק בעצמו.
+                  <div className="space-y-2 text-sm">
+                    <div className="bg-white p-3 rounded-md border border-amber-200 shadow-sm mb-3">
+                      <div className="font-bold text-amber-800 mb-1">למה כפתורי ההסתרה לא עובדים?</div>
+                      <p>פייסבוק חסמה את האפשרות לאפליקציות צד שלישי לשנות הגדרות פרטיות של פוסטים ללא אישור מיוחד. לכן, עליך להסתיר את הפוסטים באופן ידני.</p>
+                    </div>
+                    
+                    <div className="border-2 border-amber-300 rounded-md p-3 bg-white">
+                      <div className="font-bold text-amber-800 mb-2">הסתרת פוסטים לשבת - מדריך צעד אחר צעד:</div>
+                      
+                      <ol className="list-decimal list-inside space-y-3 mr-2 text-gray-800">
+                        <li className="font-medium">גש לפרופיל הפייסבוק שלך
+                          <div className="text-gray-600 mr-5 mt-1">לחץ על השם שלך או על תמונת הפרופיל בתפריט העליון</div>
+                        </li>
+                        
+                        <li className="font-medium">מצא את הפוסטים שברצונך להסתיר
+                          <div className="flex flex-col mr-5 mt-1">
+                            <span className="text-gray-600">גלול דרך הפוסטים או השתמש בפילטר "נהל פוסטים" (ממנהל הפרופיל)</span>
+                            <a href="https://www.facebook.com/YOUR_USERNAME/allactivity/" 
+                               target="_blank" rel="noopener noreferrer"
+                               className="text-blue-600 hover:underline mt-1">או גש ישירות לרשימת הפעילות המלאה</a>
+                          </div>
+                        </li>
+                        
+                        <li className="font-medium">עבור כל פוסט שתרצה להסתיר:
+                          <div className="text-gray-600 space-y-2 mr-5 mt-1">
+                            <div className="flex items-start">
+                              <span className="min-w-[20px] text-center">א.</span>
+                              <span>לחץ על שלוש הנקודות (⋯) בפינה הימנית העליונה של הפוסט</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="min-w-[20px] text-center">ב.</span>
+                              <span>בחר באפשרות "מי יכול לראות את זה?" או "פרטיות"</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="min-w-[20px] text-center">ג.</span>
+                              <span>בחר באפשרות "רק אני"</span>
+                            </div>
+                          </div>
+                        </li>
+                        
+                        <li className="font-medium">לאחר השבת, חזור על התהליך אך בחר "ציבורי" או "חברים" במקום "רק אני"
+                        </li>
+                      </ol>
+                      
+                      <div className="bg-amber-50 p-2 rounded-md mt-3 border border-amber-200">
+                        <div className="font-medium">טיפ:</div>
+                        <p>שימוש ב"מנהל הפוסטים" של פייסבוק מאפשר לך לעדכן פרטיות של מספר פוסטים בבת אחת.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2 mt-3">
+                      <a 
+                        href="https://www.facebook.com/profile" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700"
+                      >
+                        <Facebook className="mr-2 h-4 w-4" />
+                        פתח את הפרופיל שלך
+                      </a>
+                      
+                      <a 
+                        href="https://www.facebook.com/settings?tab=privacy" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center px-4 py-2 rounded-md border border-amber-600 text-amber-700 hover:bg-amber-50"
+                      >
+                        פתח הגדרות פרטיות
+                      </a>
+                    </div>
                   </div>
-                  <a 
-                    href="https://www.facebook.com/settings?tab=privacy" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center w-full mt-2 px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
-                  >
-                    <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" />
-                    פתח הגדרות פרטיות בפייסבוק
-                  </a>
                 </AlertDescription>
               </Alert>
             </CardFooter>
@@ -403,33 +511,66 @@ const Dashboard = () => {
                 <div></div>
               )}
               
-              <Alert className="mt-4 text-sm bg-blue-50">
+              <Alert className="mt-4 bg-blue-50">
                 <Globe className="h-4 w-4 text-blue-600" />
-                <AlertTitle>מידע על ניהול עמודים</AlertTitle>
+                <AlertTitle>מדריך מפורט לניהול עמודים בשבת</AlertTitle>
                 <AlertDescription>
-                  <div className="space-y-2">
-                    <p>הסתרת עמודי פייסבוק בשבת מסירה אותם זמנית מהתצוגה הציבורית.</p>
-                    <p>עקב המגבלות הנוכחיות של פייסבוק, מומלץ לנהל את פרסום העמודים באופן ידני לפני כניסת השבת:</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="bg-white p-3 rounded-md border border-blue-200 shadow-sm mb-2">
+                      <div className="font-bold text-blue-800">למה האפליקציה לא יכולה להסתיר עמודים באופן אוטומטי?</div>
+                      <p className="mt-1">פייסבוק חסמה את האפשרות לאפליקציות צד שלישי לשנות פרטי עמודים ללא אישור מיוחד. כיום, רק היישום הרשמי של פייסבוק יכול לבצע זאת.</p>
+                    </div>
                     
-                    <div className="mt-2 border-t pt-2">
-                      <strong>דרך מומלצת לניהול עמודים בשבת:</strong>
-                      <ol className="list-decimal list-inside mt-1 space-y-1">
-                        <li>גש למנהל העמודים שלך בפייסבוק</li>
-                        <li>השתמש באפשרות "תזמון" כדי להגדיר מראש מתי העמוד יהיה מפורסם</li>
-                        <li>תזמן הפסקת פרסום לפני כניסת השבת</li>
-                        <li>תזמן חזרה לפרסום לאחר צאת השבת</li>
+                    <div className="mt-1 font-bold text-blue-800">תזמון אוטומטי באמצעות פייסבוק:</div>
+                    <div className="border-2 border-blue-300 rounded-md p-3 bg-white shadow-sm">
+                      <ol className="list-decimal list-inside mt-1 space-y-2 mr-2">
+                        <li className="font-medium">פתח את מנהל העמודים של פייסבוק
+                          <div className="text-gray-600 mr-5 mt-1">לחץ על "עמודים" בתפריט הראשי של פייסבוק</div>
+                        </li>
+                        <li className="font-medium">היכנס לעמוד שברצונך לנהל
+                          <div className="text-gray-600 mr-5 mt-1">בחר את העמוד מרשימת העמודים שלך</div>
+                        </li>
+                        <li className="font-medium">לחץ על "הגדרות" בתחתית התפריט השמאלי
+                          <div className="text-gray-600 mr-5 mt-1">האייקון נראה כמו גלגל שיניים</div>
+                        </li>
+                        <li className="font-medium">בחר ב"כללי" מהתפריט
+                          <div className="text-gray-600 mr-5 mt-1">זה בדרך כלל האפשרות הראשונה בתפריט</div>
+                        </li>
+                        <li className="font-medium">מצא את האפשרות "תזמון עמוד" תחת "נראות עמוד"
+                          <div className="text-gray-600 mr-5 mt-1">בחלק עליון של העמוד</div>
+                        </li>
+                        <li className="font-medium">הגדר תזמון להסתרת העמוד לפני שבת
+                          <div className="text-gray-600 mr-5 mt-1">בחר תאריך ושעה לפני כניסת השבת (לדוגמה: יום שישי 16:00)</div>
+                        </li>
+                        <li className="font-medium">הגדר תזמון לפרסום העמוד אחרי שבת
+                          <div className="text-gray-600 mr-5 mt-1">בחר תאריך ושעה אחרי צאת השבת (לדוגמה: מוצאי שבת 20:00)</div>
+                        </li>
+                        <li className="font-medium">שמור את השינויים
+                          <div className="text-gray-600 mr-5 mt-1">לחץ על "שמור שינויים" בתחתית העמוד</div>
+                        </li>
                       </ol>
                     </div>
                     
-                    <a 
-                      href="https://www.facebook.com/pages/?category=your_pages" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center w-full mt-3 px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
-                    >
-                      <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" />
-                      פתח את מנהל העמודים שלך
-                    </a>
+                    <div className="flex justify-center mt-4 space-x-2">
+                      <a 
+                        href="https://www.facebook.com/pages/?category=your_pages" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        <Facebook className="mr-2 h-4 w-4" />
+                        פתח את העמודים שלך
+                      </a>
+                      
+                      <a 
+                        href="https://www.facebook.com/business/help/2244749539166489" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center px-4 py-2 rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50"
+                      >
+                        מדריך פייסבוק הרשמי
+                      </a>
+                    </div>
                   </div>
                 </AlertDescription>
               </Alert>
