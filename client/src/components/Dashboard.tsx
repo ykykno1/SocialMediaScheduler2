@@ -9,8 +9,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock } from "lucide-react";
+import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const Dashboard = () => {
   const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut, pageAccess } = useFacebookAuth();
@@ -18,6 +21,46 @@ const Dashboard = () => {
   const { pages, isLoading: isLoadingPages, hidePages, isHiding: isHidingPages, restorePages, isRestoring: isRestoringPages } = useFacebookPages();
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState("overview");
+  const [manualToken, setManualToken] = useState("");
+  const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
+  
+  const handleManualTokenSubmit = async () => {
+    if (!manualToken) {
+      toast({
+        title: "שגיאה",
+        description: "נא להזין טוקן",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/facebook/manual-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: manualToken }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('לא ניתן לשמור את הטוקן');
+      }
+      
+      toast({
+        title: "נשמר בהצלחה",
+        description: "הטוקן נשמר בהצלחה. כעת תוכל לנסות להשתמש בפעולות ההסתרה.",
+      });
+      
+      setIsTokenDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: error instanceof Error ? error.message : 'אירעה שגיאה בשמירת הטוקן',
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleHidePosts = () => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר את הפוסטים? פעולה זו תהפוך אותם לפרטיים.")) {
@@ -171,7 +214,60 @@ const Dashboard = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={logout}>התנתק מפייסבוק</Button>
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={logout}>התנתק מפייסבוק</Button>
+                <Dialog open={isTokenDialogOpen} onOpenChange={setIsTokenDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary">
+                      <Key className="mr-2 h-4 w-4" />
+                      הזן טוקן ידני
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>הזנת טוקן גישה ידני לפייסבוק</DialogTitle>
+                      <DialogDescription>
+                        הזן טוקן גישה שיצרת ידנית ב-Graph API Explorer. טוקן זה יאפשר גישה מתקדמת לעמודים ופוסטים.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <Label htmlFor="token" className="text-right block">טוקן גישה</Label>
+                      <Input
+                        id="token"
+                        className="w-full"
+                        placeholder="EAABk..."
+                        value={manualToken}
+                        onChange={(e) => setManualToken(e.target.value)}
+                        dir="ltr"
+                      />
+                      <div className="text-sm border-t pt-2">
+                        <p className="font-medium mb-1">כיצד ליצור טוקן?</p>
+                        <ol className="list-decimal list-inside space-y-1 mr-4">
+                          <li>גש ל-Graph API Explorer</li>
+                          <li>בחר את האפליקציה שלך</li>
+                          <li>לחץ על "Get Token"</li>
+                          <li>בחר את כל ההרשאות הרלוונטיות</li>
+                          <li>לחץ על "Generate Access Token"</li>
+                          <li>העתק את הטוקן לכאן</li>
+                        </ol>
+                        <a 
+                          href="https://developers.facebook.com/tools/explorer/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline block mt-2"
+                        >
+                          פתח את Graph API Explorer
+                        </a>
+                      </div>
+                    </div>
+                    <DialogFooter className="mt-4">
+                      <Button type="button" onClick={handleManualTokenSubmit}>
+                        שמור טוקן
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
               <div className="space-y-2">
                 <div className="space-x-2 flex flex-row-reverse">
                   <Button onClick={handleHidePosts} disabled={isHiding}>
