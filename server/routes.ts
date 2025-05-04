@@ -81,14 +81,18 @@ export function registerRoutes(app: Express): Server {
       // Try to get page access information as well
       let pageAccess = false;
       try {
-        const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?access_token=${tokenData.access_token}`;
+        // The new URL now uses the updated API endpoints
+        const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
         const pagesResponse = await fetch(pagesUrl);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as any;
           if (pagesData.data && pagesData.data.length > 0) {
             pageAccess = true;
-            console.log(`Found ${pagesData.data.length} Facebook pages for user`);
+            console.log(`Found ${pagesData.data.length} Facebook pages for user with the new permissions`);
           }
+        } else {
+          const errorData = await pagesResponse.json();
+          console.error("Facebook pages API error:", errorData);
         }
       } catch (pagesError) {
         console.error("Error fetching user pages:", pagesError);

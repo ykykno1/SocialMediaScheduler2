@@ -13,7 +13,7 @@ const FACEBOOK_API_VERSION = 'v19.0';
 export const getUserPages = async (auth: FacebookAuth): Promise<FacebookPage[]> => {
   try {
     const response = await fetch(
-      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/accounts?fields=name,access_token,category,tasks&access_token=${auth.accessToken}`
+      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/accounts?fields=name,access_token,category,tasks,is_published&access_token=${auth.accessToken}`
     );
     
     const data = await response.json() as { data?: FacebookPage[], error?: { message: string } };
