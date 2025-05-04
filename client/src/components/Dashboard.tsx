@@ -310,7 +310,25 @@ const Dashboard = () => {
                     
                     <div className="space-y-4">
                       <div>
-                        <div className="font-bold">עבור פוסטים אישיים:</div>
+                        <div className="font-bold">עבור פוסטים אישיים - הסתרה באמצעות ארכיון:</div>
+                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
+                          <li>היכנסו לפרופיל האישי שלכם בפייסבוק</li>
+                          <li>מצאו את הפוסט שתרצו להעביר לארכיון</li>
+                          <li>לחצו על שלוש הנקודות (...) בפינה הימנית העליונה של הפוסט</li>
+                          <li>בחרו באפשרות "העבר לארכיון" (Move to archive)</li>
+                          <li>הפוסט יוסתר מהפרופיל שלכם אך יישמר בארכיון</li>
+                        </ol>
+                        
+                        <div className="font-bold mt-3">שחזור פוסטים מהארכיון:</div>
+                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
+                          <li>בפרופיל שלכם, לחצו על שלוש הנקודות (...) ליד "עריכת פרופיל"</li>
+                          <li>בחרו באפשרות "ארכיון פעילות" (Activity log)</li>
+                          <li>בצד ימין, בחרו "פריטים בארכיון" (Archived items)</li>
+                          <li>מצאו את הפוסט ולחצו על שלוש הנקודות לידו</li>
+                          <li>בחרו באפשרות "שחזר" (Restore)</li>
+                        </ol>
+                        
+                        <div className="font-bold mt-3">שיטה חלופית - שינוי פרטיות:</div>
                         <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
                           <li>היכנסו לפרופיל האישי שלכם</li>
                           <li>עברו לפוסט שתרצו להסתיר</li>

@@ -540,14 +540,18 @@ export function registerRoutes(app: Express): Server {
           }
           return response.json();
         })
-        .then((userData: {id: string, name?: string}) => {
+        .then((userData: any) => {
+          if (!userData.id) {
+            throw new Error("Token response missing user ID");
+          }
+          
           // Check for page access with this token
           return fetch(`https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token&access_token=${token}`)
             .then(pagesResponse => {
               let pageAccess = false;
               
               if (pagesResponse.ok) {
-                return pagesResponse.json().then((pagesData: {data?: {id: string, name: string, access_token?: string}[]}) => {
+                return pagesResponse.json().then((pagesData: any) => {
                   if (pagesData.data && pagesData.data.length > 0) {
                     pageAccess = true;
                     console.log(`Manual token has access to ${pagesData.data.length} Facebook pages`);
