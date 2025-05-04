@@ -296,9 +296,19 @@ export function registerRoutes(app: Express): Server {
         try {
           console.log(`Attempting to hide post ${post.id}`);
           
-          // Try to update privacy settings on the post - using updated ONLY_ME value instead of SELF
-          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}?privacy={"value":"ONLY_ME"}&access_token=${auth.accessToken}`;
-          const updateResponse = await fetch(updateUrl, { method: 'POST' });
+          // שיטה מעודכנת לעדכון פרטיות לפי API של פייסבוק v22.0
+          const privacyObject = { value: 'ONLY_ME' };  
+          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}`;
+          const updateResponse = await fetch(updateUrl, { 
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              privacy: privacyObject,
+              access_token: auth.accessToken
+            })
+          });
           
           if (updateResponse.ok) {
             // Success!
@@ -426,9 +436,19 @@ export function registerRoutes(app: Express): Server {
         try {
           console.log(`Attempting to restore post ${post.id}`);
           
-          // Try to update privacy settings on the post to EVERYONE
-          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}?privacy={"value":"EVERYONE"}&access_token=${auth.accessToken}`;
-          const updateResponse = await fetch(updateUrl, { method: 'POST' });
+          // שיטה מעודכנת לשחזור פרטיות לפי API של פייסבוק v22.0
+          const privacyObject = { value: 'EVERYONE' };  
+          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}`;
+          const updateResponse = await fetch(updateUrl, { 
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              privacy: privacyObject,
+              access_token: auth.accessToken
+            })
+          });
           
           if (updateResponse.ok) {
             // Success!
