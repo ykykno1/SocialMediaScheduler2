@@ -46,6 +46,19 @@ export const facebookAuthSchema = z.object({
   expiresIn: z.number(),
   timestamp: z.number(),
   userId: z.string().optional(),
+  pageAccess: z.boolean().optional(),
 });
 
 export type FacebookAuth = z.infer<typeof facebookAuthSchema>;
+
+// Facebook page schema
+export const facebookPageSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  access_token: z.string().optional(),
+  category: z.string().optional(),
+  tasks: z.array(z.string()).optional(),
+  isHidden: z.boolean().optional().default(false)
+});
+
+export type FacebookPage = z.infer<typeof facebookPageSchema>;
