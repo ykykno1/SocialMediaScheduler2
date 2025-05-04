@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useFacebookAuth from "@/hooks/useFacebookAuth";
 import useFacebookPosts from "@/hooks/useFacebookPosts";
+import useFacebookPages from "@/hooks/useFacebookPages";
 import useSettings from "@/hooks/useSettings";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Clock, Facebook, Lock, Unlock } from "lucide-react";
+import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut } = useFacebookAuth();
   const { posts, isLoading: isLoadingPosts, hidePosts, isHiding, restorePosts, isRestoring } = useFacebookPosts();
+  const { pages, isLoading: isLoadingPages, hidePages, isHiding: isHidingPages, restorePages, isRestoring: isRestoringPages } = useFacebookPages();
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState("overview");
 

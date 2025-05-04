@@ -1,155 +1,85 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { toast } from "@/hooks/use-toast";
-import useFacebookAuth from "./useFacebookAuth";
-
-interface FacebookPage {
-  id: string;
-  name: string;
-  access_token?: string;
-  category?: string;
-  tasks?: string[];
-  isHidden?: boolean;
-}
-
-interface PageHideResponse {
-  success: boolean;
-  totalPages: number;
-  hiddenPages: number;
-  failedPages: number;
-  error?: string;
-  manualInstructions?: boolean;
-  message?: string;
-}
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import type { FacebookPage } from '@shared/schema';
 
 export default function useFacebookPages() {
-  const { isAuthenticated } = useFacebookAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Query to get user's Facebook pages
-  const { 
-    data: pages = [], 
-    isLoading,
-    error
-  } = useQuery<FacebookPage[]>({
-    queryKey: ['/api/facebook/pages'],
-    enabled: isAuthenticated,
-  });
-  
-  // Mutation to hide pages
-  const hideMutation = useMutation<PageHideResponse, Error, void>({
-    mutationFn: async () => {
-      const res = await fetch('/api/facebook/hide-pages', {
-        method: 'POST',
-      });
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'שגיאה בהסתרת דפים');
-      }
-      
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (data.manualInstructions) {
-        toast({
-          title: 'הסתרת דפים',
-          description: data.message || 'הדפים סומנו להסתרה. יש להשלים את הפעולות באתר פייסבוק.',
-        });
-      } else {
-        toast({
-          title: data.success ? 'הצלחה' : 'הסתרה חלקית',
-          description: `הוסתרו ${data.hiddenPages} מתוך ${data.totalPages} דפים${data.error ? `. שגיאה: ${data.error}` : ''}`,
-          variant: data.success ? 'default' : 'destructive',
-        });
-      }
-      
-      // Refresh pages data
-      queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
-    },
-    onError: (error) => {
-      toast({
-        title: 'שגיאה',
-        description: `שגיאה בהסתרת דפים: ${error.message}`,
-        variant: 'destructive',
-      });
-    }
-  });
-  
-  // Mutation to restore pages
-  const restoreMutation = useMutation<PageHideResponse, Error, void>({
-    mutationFn: async () => {
-      const res = await fetch('/api/facebook/restore-pages', {
-        method: 'POST',
-      });
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'שגיאה בשחזור דפים');
-      }
-      
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (data.manualInstructions) {
-        toast({
-          title: 'שחזור דפים',
-          description: data.message || 'הדפים סומנו לשחזור. יש להשלים את הפעולות באתר פייסבוק.',
-        });
-      } else {
-        toast({
-          title: data.success ? 'הצלחה' : 'שחזור חלקי',
-          description: `שוחזרו ${data.hiddenPages} מתוך ${data.totalPages} דפים${data.error ? `. שגיאה: ${data.error}` : ''}`,
-          variant: data.success ? 'default' : 'destructive',
-        });
-      }
-      
-      // Refresh pages data
-      queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
-    },
-    onError: (error) => {
-      toast({
-        title: 'שגיאה',
-        description: `שגיאה בשחזור דפים: ${error.message}`,
-        variant: 'destructive',
-      });
-    }
-  });
-  
-  // Function to call hide pages
-  const hidePages = () => {
-    if (pages.length === 0) {
-      toast({
-        title: 'אין דפים',
-        description: 'לא נמצאו דפים להסתרה',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    hideMutation.mutate();
-  };
-  
-  // Function to call restore pages
-  const restorePages = () => {
-    if (pages.length === 0) {
-      toast({
-        title: 'אין דפים',
-        description: 'לא נמצאו דפים לשחזור',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    restoreMutation.mutate();
-  };
-  
-  return {
-    pages,
+  // Query to fetch Facebook pages
+  const {
+    data: pages = [],
     isLoading,
     error,
-    hidePages,
-    restorePages,
-    isHiding: hideMutation.isPending,
-    isRestoring: restoreMutation.isPending
+    refetch,
+  } = useQuery<FacebookPage[]>({
+    queryKey: ['/api/facebook/pages'],
+    retry: 1, // Only retry once since this might fail if not authenticated
+  });
+
+  // Mutation for hiding pages
+  const hidePagesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/facebook/hide-pages');
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/history'] });
+      
+      toast({
+        title: 'עמודים הוסתרו בהצלחה',
+        description: `הוסתרו ${data.hiddenPages} עמודים בהצלחה`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'שגיאה בהסתרת עמודים',
+        description: error instanceof Error ? error.message : 'אירעה שגיאה בהסתרת עמודים',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Mutation for restoring pages
+  const restorePagesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/facebook/restore-pages');
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/history'] });
+      
+      toast({
+        title: 'עמודים שוחזרו בהצלחה',
+        description: `שוחזרו ${data.restoredPages} עמודים בהצלחה`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'שגיאה בשחזור עמודים',
+        description: error instanceof Error ? error.message : 'אירעה שגיאה בשחזור עמודים',
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Get hidden and visible pages
+  const hiddenPages = pages.filter(page => page.isHidden === true) || [];
+  const visiblePages = pages.filter(page => page.isHidden !== true) || [];
+
+  return {
+    pages,
+    hiddenPages,
+    visiblePages,
+    isLoading,
+    error,
+    refetch,
+    hidePages: () => hidePagesMutation.mutate(),
+    restorePages: () => restorePagesMutation.mutate(),
+    isHiding: hidePagesMutation.isPending,
+    isRestoring: restorePagesMutation.isPending,
   };
 }
