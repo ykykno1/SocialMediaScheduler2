@@ -137,6 +137,15 @@ const Dashboard = () => {
                   שחזר כעת
                 </Button>
               </div>
+              
+              {/* Add note about Facebook API limitations */}
+              <Alert className="mt-4 text-sm bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <AlertTitle>שים לב</AlertTitle>
+                <AlertDescription>
+                  עקב מגבלות API של פייסבוק, יתכן שתצטרך להסתיר/לשחזר פוסטים באופן ידני באתר פייסבוק
+                </AlertDescription>
+              </Alert>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -203,6 +212,23 @@ const Dashboard = () => {
                   שחזר הכל
                 </Button>
               </div>
+              
+              {/* Add note about Facebook API limitations */}
+              <Alert className="mt-4 text-sm bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <AlertTitle>שים לב</AlertTitle>
+                <AlertDescription>
+                  עקב מגבלות API של פייסבוק, יתכן שתצטרך להסתיר/לשחזר פוסטים באופן ידני באתר פייסבוק.
+                  <a 
+                    href="https://www.facebook.com/settings?tab=privacy" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block mt-1 text-blue-600 hover:underline"
+                  >
+                    פתח הגדרות פרטיות בפייסבוק
+                  </a>
+                </AlertDescription>
+              </Alert>
             </CardFooter>
           </Card>
         </TabsContent>
