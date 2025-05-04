@@ -3,6 +3,7 @@ import {
   type FacebookAuth,
   type HistoryEntry,
   type FacebookPost,
+  type FacebookPage,
   settingsSchema,
   facebookAuthSchema,
   historyEntrySchema
