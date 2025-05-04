@@ -66,9 +66,9 @@ export default function useFacebookPosts() {
     }
   });
 
-  // Get hidden and visible posts
-  const hiddenPosts = posts.filter(post => post.privacy?.value === 'SELF') || [];
-  const visiblePosts = posts.filter(post => post.privacy?.value !== 'SELF') || [];
+  // Get hidden and visible posts - including both SELF and ONLY_ME values for hidden posts
+  const hiddenPosts = posts.filter(post => post.privacy?.value === 'SELF' || post.privacy?.value === 'ONLY_ME') || [];
+  const visiblePosts = posts.filter(post => post.privacy?.value !== 'SELF' && post.privacy?.value !== 'ONLY_ME') || [];
 
   return {
     posts,
