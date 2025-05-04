@@ -307,8 +307,8 @@ const Dashboard = () => {
                         <span className="text-sm text-muted-foreground">
                           {new Date(post.created_time).toLocaleDateString('he-IL')}
                         </span>
-                        <Badge variant={post.privacy.value === 'SELF' ? 'secondary' : 'outline'}>
-                          {post.privacy.value === 'SELF' ? 'מוסתר' : 'גלוי'}
+                        <Badge variant={post.privacy.value === 'SELF' || post.privacy.value === 'ONLY_ME' ? 'secondary' : 'outline'}>
+                          {post.privacy.value === 'SELF' || post.privacy.value === 'ONLY_ME' ? 'מוסתר' : 'גלוי'}
                         </Badge>
                       </div>
                       <p className="text-sm mb-2">{post.message || "אין תוכן טקסט"}</p>
@@ -340,7 +340,7 @@ const Dashboard = () => {
                   <div className="space-y-2 text-sm">
                     <div className="bg-white p-3 rounded-md border border-amber-200 shadow-sm mb-3">
                       <div className="font-bold text-amber-800 mb-1">למה כפתורי ההסתרה לא עובדים?</div>
-                      <p>פייסבוק חסמה את האפשרות לאפליקציות צד שלישי לשנות הגדרות פרטיות של פוסטים ללא אישור מיוחד. לכן, עליך להסתיר את הפוסטים באופן ידני.</p>
+                      <p>בגרסה החדשה של Facebook API (v22.0), חל שינוי בהרשאות ובדרך שבה ניתן לעדכן פרטיות של פוסטים. פייסבוק חסמה את האפשרות לאפליקציות צד שלישי לשנות הגדרות פרטיות של פוסטים ללא הרשאות מיוחדות וללא אישור מיוחד. לכן, עליך להסתיר את הפוסטים באופן ידני באמצעות הדרכים הבאות.</p>
                     </div>
                     
                     <div className="border-2 border-amber-300 rounded-md p-3 bg-white">
@@ -518,7 +518,7 @@ const Dashboard = () => {
                   <div className="space-y-2 text-sm">
                     <div className="bg-white p-3 rounded-md border border-blue-200 shadow-sm mb-2">
                       <div className="font-bold text-blue-800">למה האפליקציה לא יכולה להסתיר עמודים באופן אוטומטי?</div>
-                      <p className="mt-1">פייסבוק חסמה את האפשרות לאפליקציות צד שלישי לשנות פרטי עמודים ללא אישור מיוחד. כיום, רק היישום הרשמי של פייסבוק יכול לבצע זאת.</p>
+                      <p className="mt-1">בגרסה החדשה של Facebook API (v22.0), פייסבוק שינתה את מדיניות ההרשאות ומגבילה עוד יותר אפליקציות צד שלישי. כרגע אין אפשרות לשנות פרטי עמודים ללא אישור מיוחד ותהליך סקירה מחמיר שנערך על ידי פייסבוק. לכן, הדרך הבטוחה ביותר היא להשתמש בממשק הרשמי של פייסבוק.</p>
                     </div>
                     
                     <div className="mt-1 font-bold text-blue-800">תזמון אוטומטי באמצעות פייסבוק:</div>
