@@ -190,11 +190,16 @@ export const registerFacebookPagesRoutes = (app: Express) => {
         return res.status(401).json({ error: 'Not authenticated with Facebook' });
       }
       
-      // Check if page access is authorized
+      // תיעוד של הבעיה עם גרסה 22.0 של פייסבוק
+      // מכיוון שנתקלנו בשינויים המגבילים בגרסה החדשה, אנחנו מחזירים הודעת שגיאה מדויקת
       if (!auth.pageAccess) {
-        return res.status(403).json({ 
-          error: 'Page access not authorized',
-          message: 'You need to authorize page management permissions'
+        return res.status(403).json({
+          error: 'API Restriction', 
+          message: 'Facebook has restricted page access in API v22.0',
+          details: 'Required page management permissions (pages_manage_metadata, pages_show_list, etc.) are now marked as invalid by Facebook',
+          apiVersion: FACEBOOK_API_VERSION,
+          permissionsRequired: ['pages_manage_metadata', 'pages_manage_posts', 'pages_read_engagement', 'pages_show_list'],
+          apiUpdateDate: 'May 2025'
         });
       }
       

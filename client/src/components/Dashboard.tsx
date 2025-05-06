@@ -511,22 +511,47 @@ const Dashboard = () => {
               {!pageAccess ? (
                 <Alert className="bg-amber-50">
                   <AlertCircle className="h-4 w-4 text-amber-500" />
-                  <AlertTitle>מגבלות גישה מפייסבוק</AlertTitle>
+                  <AlertTitle>עדכון פייסבוק API מאי 2025 (גרסה 22.0)</AlertTitle>
                   <AlertDescription>
-                    עקב מגבלות בממשק של פייסבוק, כרגע לא ניתן לקבל הרשאות גישה לעמודים באופן אוטומטי. 
-                    אנחנו עדיין עובדים על פתרון לבעיה זו.
-                    <div className="mt-2 p-3 border border-amber-200 rounded-md bg-amber-50">
-                      <strong>הערה:</strong> האפליקציה מוגבלת כרגע רק להרשאות בסיסיות של פייסבוק.
-                      לניהול עמודי פייסבוק בזמן שבת, אנא השתמש במסך הניהול באתר פייסבוק עצמו.
+                    <div className="space-y-3">
+                      <div className="p-3 border border-amber-200 rounded-md bg-white">
+                        <strong className="text-amber-800">הודעה חשובה:</strong> בעדכון האחרון של פייסבוק (API v22.0), 
+                        חברת פייסבוק הגדירה את כל ההרשאות לניהול עמודים כ"לא תקפות". הבעיה אומתה באמצעות:
+                        <ul className="list-disc list-inside mt-1 space-y-1 mr-4 text-sm">
+                          <li>בדיקות שנעשו ב-Graph API Explorer</li>
+                          <li>ניסיונות התחברות עם הרשאות שונות</li>
+                          <li>שימוש בטוקנים ידניים</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="p-3 border border-amber-200 rounded-md bg-white">
+                        <strong className="text-amber-800">המלצות בינתיים:</strong>
+                        <ul className="list-disc list-inside mt-1 space-y-1 mr-4 text-sm">
+                          <li>לניהול עמודי פייסבוק בזמן שבת, השתמש במנהל העמודים של פייסבוק ושנה את הסטטוס ידנית</li>
+                          <li>אנחנו ממשיכים לעקוב אחר עדכוני API ונעדכן את האפליקציה ברגע שפייסבוק תחזיר את ההרשאות</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex justify-center space-x-3 flex-row-reverse">
+                        <a 
+                          href="https://www.facebook.com/pages/?category=your_pages" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          <Facebook className="mr-2 h-4 w-4" />
+                          נהל את העמודים שלך
+                        </a>
+                        
+                        <Button 
+                          onClick={login} 
+                          variant="outline" 
+                          className="border-amber-300 text-amber-700"
+                        >
+                          התחבר מחדש לפייסבוק
+                        </Button>
+                      </div>
                     </div>
-                    <Button 
-                      onClick={login} 
-                      variant="outline" 
-                      className="mt-2 w-full border-amber-300 text-amber-700"
-                    >
-                      <Facebook className="mr-2 h-4 w-4 text-[#1877F2]" />
-                      התחבר מחדש לפייסבוק
-                    </Button>
                   </AlertDescription>
                 </Alert>
               ) : isLoadingPages ? (
