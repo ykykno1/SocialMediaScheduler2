@@ -295,86 +295,57 @@ const Dashboard = () => {
               </div>
               
               {/* Add note about Facebook API limitations */}
-              <Alert className="mt-4 text-sm bg-amber-50">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
-                <AlertTitle>עדכון חשוב!</AlertTitle>
+              <Alert className="mt-4 text-sm bg-green-50">
+                <AlertCircle className="h-4 w-4 text-green-500" />
+                <AlertTitle>חדשות טובות!</AlertTitle>
                 <AlertDescription>
-                  <div className="font-bold text-amber-800 mt-1 mb-3 text-base">
-                    לתשומת לבך: לא ניתן להסתיר פוסטים באופן אוטומטי עקב שינויים בפייסבוק
+                  <div className="font-bold text-green-800 mt-1 mb-3 text-base">
+                    ניתן להסתיר את עמודי הפייסבוק שלך באופן אוטומטי
                   </div>
                   
-                  <p className="mb-2">פייסבוק שינתה לאחרונה את מדיניות האבטחה וההרשאות שלה באופן שמונע מאפליקציות כמו זו להסתיר או לשנות תוכן באופן אוטומטי.</p>
+                  <p className="mb-2">הפתרון שלנו מאפשר להסתיר ולהציג עמודי פייסבוק באופן אוטומטי בזמני שבת. במקום להסתיר פוסטים בודדים, האפליקציה מסתירה את העמודים עצמם עד לסיום השבת.</p>
                   
-                  <div className="p-3 mt-3 mb-3 border-2 border-amber-300 rounded-md bg-amber-50 shadow-sm">
-                    <div className="font-bold mb-2 text-center text-amber-800">מדריך מפורט להסתרת תוכן בפייסבוק</div>
+                  <div className="p-3 mt-3 mb-3 border-2 border-green-300 rounded-md bg-green-50 shadow-sm">
+                    <div className="font-bold mb-2 text-center text-green-800">יתרונות מרכזיים</div>
                     
                     <div className="space-y-4">
                       <div>
-                        <div className="font-bold">עבור פוסטים אישיים - הסתרה באמצעות ארכיון:</div>
-                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
-                          <li>היכנסו לפרופיל האישי שלכם בפייסבוק</li>
-                          <li>מצאו את הפוסט שתרצו להעביר לארכיון</li>
-                          <li>לחצו על שלוש הנקודות (...) בפינה הימנית העליונה של הפוסט</li>
-                          <li>בחרו באפשרות "העבר לארכיון" (Move to archive)</li>
-                          <li>הפוסט יוסתר מהפרופיל שלכם אך יישמר בארכיון</li>
-                        </ol>
-                        
-                        <div className="font-bold mt-3">שחזור פוסטים מהארכיון:</div>
-                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
-                          <li>בפרופיל שלכם, לחצו על שלוש הנקודות (...) ליד "עריכת פרופיל"</li>
-                          <li>בחרו באפשרות "ארכיון פעילות" (Activity log)</li>
-                          <li>בצד ימין, בחרו "פריטים בארכיון" (Archived items)</li>
-                          <li>מצאו את הפוסט ולחצו על שלוש הנקודות לידו</li>
-                          <li>בחרו באפשרות "שחזר" (Restore)</li>
-                        </ol>
-                        
-                        <div className="font-bold mt-3">שיטה חלופית - שינוי פרטיות:</div>
-                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
-                          <li>היכנסו לפרופיל האישי שלכם</li>
-                          <li>עברו לפוסט שתרצו להסתיר</li>
-                          <li>לחצו על שלוש הנקודות בפינה הימנית העליונה של הפוסט</li>
-                          <li>בחרו באפשרות "מי יכול לראות את זה?"</li>
-                          <li>שנו ל"רק אני"</li>
-                        </ol>
-                        <a 
-                          href="https://www.facebook.com/profile" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center w-full mt-2 px-3 py-1.5 text-sm border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
-                        >
-                          <Facebook className="mr-2 h-3 w-3 text-[#1877F2]" />
-                          פתח את הפרופיל שלך
-                        </a>
+                        <div className="font-bold">הסתרה אוטומטית של עמודים:</div>
+                        <ul className="list-disc list-inside mt-1 space-y-1 mr-2">
+                          <li>עמודי הפייסבוק שלך יוסתרו לגמרי בזמן שבת</li>
+                          <li>האפליקציה משנה את סטטוס העמוד ל"לא מפורסם" (unpublished)</li>
+                          <li>כל התוכן בעמוד נשאר ללא שינוי - רק הנראות משתנה</li>
+                          <li>אחרי השבת, העמודים יוחזרו אוטומטית לסטטוס "מפורסם"</li>
+                          <li>כל הפעולות נרשמות בהיסטוריה לתיעוד וניטור</li>
+                        </ul>
                       </div>
                       
                       <div>
-                        <div className="font-bold">עבור עמודי פייסבוק:</div>
-                        <ol className="list-decimal list-inside mt-1 space-y-1 mr-2">
-                          <li>גשו ל"עמודים" בתפריט הצדדי של פייסבוק</li>
-                          <li>בחרו את העמוד שברצונכם להסתיר</li>
-                          <li>לחצו על "הגדרות" בפינה השמאלית התחתונה</li>
-                          <li>לחצו על "כללי" מהתפריט הצדדי</li>
-                          <li>תחת "נראות עמוד", כבו את האפשרות "פרסם את העמוד"</li>
-                        </ol>
+                        <div className="font-bold">שים לב:</div>
+                        <ul className="list-disc list-inside mt-1 space-y-1 mr-2">
+                          <li>האפליקציה פועלת רק על עמודי פייסבוק, לא על פרופילים אישיים</li>
+                          <li>פוסטים אישיים בפרופיל שלך נדרשים להסתרה ידנית</li>
+                          <li>ניתן לבחור אילו עמודים להסתיר בהגדרות</li>
+                        </ul>
                         <a 
-                          href="https://www.facebook.com/pages/?category=your_pages" 
+                          href="https://www.facebook.com/pages/?category=your_pages"
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex items-center justify-center w-full mt-2 px-3 py-1.5 text-sm border border-blue-500 text-blue-600 hover:bg-blue-50 rounded-md"
                         >
                           <Facebook className="mr-2 h-3 w-3 text-[#1877F2]" />
-                          פתח את העמודים שלך
+                          צפה בעמודי הפייסבוק שלך
                         </a>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="font-medium text-amber-800 mt-3">
-                    אנחנו ממשיכים לעבוד על פתרונות חלופיים, כולל:
+                  <div className="font-medium text-green-800 mt-3">
+                    פיצ'רים נוספים שנוספו לאחרונה:
                     <ul className="list-disc list-inside mt-1 mr-2">
-                      <li>תזכורות לפני שבת</li>
-                      <li>מדריכים מפורטים לתזמון מראש</li>
-                      <li>ייעוץ לניהול התוכן שלך בצורה שומרת שבת</li>
+                      <li>תזמון אוטומטי לפי זמני שבת</li>
+                      <li>ניטור היסטוריית פעילות להסתרה ושחזור</li>
+                      <li>התראות בזמן אמת על שינויי מצב</li>
                     </ul>
                   </div>
                 </AlertDescription>
