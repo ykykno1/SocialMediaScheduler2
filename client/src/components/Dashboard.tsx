@@ -299,24 +299,23 @@ const Dashboard = () => {
                 <AlertCircle className="h-4 w-4 text-green-500" />
                 <AlertTitle>חדשות טובות!</AlertTitle>
                 <AlertDescription>
-                  <div className="font-bold text-green-800 mt-1 mb-3 text-base">
-                    ניתן להסתיר את עמודי הפייסבוק שלך באופן אוטומטי
+                  <div className="font-bold text-amber-800 mt-1 mb-3 text-base">
+                    עדכון: מגבלות חדשות בפייסבוק בגרסה API 22.0
                   </div>
                   
-                  <p className="mb-2">הפתרון שלנו מאפשר להסתיר ולהציג עמודי פייסבוק באופן אוטומטי בזמני שבת. במקום להסתיר פוסטים בודדים, האפליקציה מסתירה את העמודים עצמם עד לסיום השבת.</p>
+                  <p className="mb-2">בגרסה החדשה של ה-API של פייסבוק (22.0), נוספו מגבלות על ניהול עמודים. פייסבוק חסמה את האפשרות לאפליקציות לנהל עמודים ללא אישור מיוחד וסקירה.</p>
                   
-                  <div className="p-3 mt-3 mb-3 border-2 border-green-300 rounded-md bg-green-50 shadow-sm">
-                    <div className="font-bold mb-2 text-center text-green-800">יתרונות מרכזיים</div>
+                  <div className="p-3 mt-3 mb-3 border-2 border-amber-300 rounded-md bg-amber-50 shadow-sm">
+                    <div className="font-bold mb-2 text-center text-amber-800">המצב העדכני</div>
                     
                     <div className="space-y-4">
                       <div>
-                        <div className="font-bold">הסתרה אוטומטית של עמודים:</div>
+                        <div className="font-bold">עדכון מהפיתוח:</div>
                         <ul className="list-disc list-inside mt-1 space-y-1 mr-2">
-                          <li>עמודי הפייסבוק שלך יוסתרו לגמרי בזמן שבת</li>
-                          <li>האפליקציה משנה את סטטוס העמוד ל"לא מפורסם" (unpublished)</li>
-                          <li>כל התוכן בעמוד נשאר ללא שינוי - רק הנראות משתנה</li>
-                          <li>אחרי השבת, העמודים יוחזרו אוטומטית לסטטוס "מפורסם"</li>
-                          <li>כל הפעולות נרשמות בהיסטוריה לתיעוד וניטור</li>
+                          <li>בגרסה 22.0 של API של פייסבוק, כל ההרשאות לניהול עמודים הוגדרו כלא תקפות</li>
+                          <li>גם עם טוקן ידני, פייסבוק לא מאפשרת גישה לניהול עמודים כרגע</li>
+                          <li>הסיבה: פייסבוק עברה למדיניות מחמירה יותר לגבי אפליקציות שמנהלות עמודים</li>
+                          <li>אנחנו ממשיכים לעקוב אחר השינויים ולחפש פתרונות חלופיים</li>
                         </ul>
                       </div>
                       

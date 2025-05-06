@@ -7,19 +7,28 @@ const FACEBOOK_API_VERSION = 'v22.0';
 
 /**
  * Get Facebook pages for a user
+ * עם השינויים בגרסה v22.0 של פייסבוק, אנחנו מבקשים רק נתונים בסיסיים שלא דורשים הרשאות מיוחדות
  * @param auth Facebook auth data
  * @returns Array of Facebook pages
  */
 export const getUserPages = async (auth: FacebookAuth): Promise<FacebookPage[]> => {
   try {
+    // בהתבסס על הניסיון שלנו, פייסבוק API גרסה 22.0 מגדירה את ההרשאות המתקדמות כלא תקפות
+    // אנחנו מנסים לבקש רק מידע בסיסי בלי הרשאות מיוחדות
     const response = await fetch(
-      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/accounts?fields=name,access_token,category,tasks,is_published&access_token=${auth.accessToken}`
+      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/accounts?fields=id,name,category,is_published,picture&access_token=${auth.accessToken}`
     );
     
-    const data = await response.json() as { data?: FacebookPage[], error?: { message: string } };
+    const data = await response.json() as { data?: FacebookPage[], error?: { message: string, code?: number, type?: string } };
     
     if (data.error) {
       console.error('Error fetching Facebook pages:', data.error);
+      
+      // לוג מפורט יותר כדי להבין את הבעיה
+      if (data.error.code === 190 || data.error.code === 200) {
+        console.log('Facebook permission issue detected. Error code:', data.error.code, 'Type:', data.error.type);
+      }
+      
       throw new Error(data.error.message);
     }
     
