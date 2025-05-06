@@ -35,6 +35,11 @@ const Dashboard = () => {
     }
     
     try {
+      toast({
+        title: "בודק טוקן...",
+        description: "מתחבר לפייסבוק ובודק את תקפות הטוקן",
+      });
+      
       const response = await fetch('/api/facebook/manual-token', {
         method: 'POST',
         headers: {
@@ -44,18 +49,31 @@ const Dashboard = () => {
       });
       
       if (!response.ok) {
-        throw new Error('לא ניתן לשמור את הטוקן');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'לא ניתן לשמור את הטוקן');
       }
+      
+      const result = await response.json();
       
       toast({
         title: "נשמר בהצלחה",
-        description: "הטוקן נשמר בהצלחה. כעת תוכל לנסות להשתמש בפעולות ההסתרה.",
+        description: result.pageAccess 
+          ? "הטוקן נשמר בהצלחה עם גישה לעמודים! כעת תוכל להשתמש בפעולות ניהול העמודים." 
+          : "הטוקן נשמר בהצלחה, אך ללא גישה לעמודים. בדוק את ההרשאות בטוקן.",
+        variant: result.pageAccess ? "default" : "secondary",
       });
       
       setIsTokenDialogOpen(false);
+      setManualToken("");
+      
+      // רענון העמוד כדי לטעון את הנתונים מחדש עם הטוקן החדש
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
+      console.error("Error saving token:", error);
       toast({
-        title: "שגיאה",
+        title: "שגיאה בשמירת הטוקן",
         description: error instanceof Error ? error.message : 'אירעה שגיאה בשמירת הטוקן',
         variant: "destructive",
       });
