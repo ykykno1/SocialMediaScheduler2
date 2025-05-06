@@ -60,7 +60,6 @@ const Dashboard = () => {
         description: result.pageAccess 
           ? "הטוקן נשמר בהצלחה עם גישה לעמודים! כעת תוכל להשתמש בפעולות ניהול העמודים." 
           : "הטוקן נשמר בהצלחה, אך ללא גישה לעמודים. בדוק את ההרשאות בטוקן.",
-        variant: result.pageAccess ? "default" : "secondary",
       });
       
       setIsTokenDialogOpen(false);
@@ -264,14 +263,14 @@ const Dashboard = () => {
                           <li>גש ל-Graph API Explorer</li>
                           <li>בחר את האפליקציה שלך</li>
                           <li>לחץ על "Get Token" → "Get User Access Token"</li>
-                          <li>בחר את ההרשאות הבאות:
+                          <li>בחר את כל ההרשאות הזמינות:
                             <ul className="list-disc list-inside mr-6 mt-1 text-xs">
-                              <li>public_profile</li>
                               <li>email</li>
-                              <li>pages_show_list</li>
-                              <li>pages_read_engagement</li>
-                              <li>pages_manage_metadata</li>
-                              <li>pages_manage_posts</li>
+                              <li>user_likes</li>
+                              <li>user_link</li>
+                              <li>user_photos</li>
+                              <li>user_posts</li>
+                              <li>user_videos</li>
                             </ul>
                           </li>
                           <li>לחץ על "Generate Access Token"</li>
@@ -280,8 +279,9 @@ const Dashboard = () => {
                         </ol>
 
                         <div className="bg-amber-50 p-2 rounded-md border border-amber-200 text-xs">
-                          <p className="font-medium text-amber-800">שים לב:</p>
-                          <p>גם אם פייסבוק מסמנת חלק מההרשאות כ"לא תקפות", המשך בתהליך. במצב פיתוח, ייתכן שחלק מההרשאות יעבדו עבור משתמשי האפליקציה.</p>
+                          <p className="font-medium text-amber-800">עדכון חשוב ממפתחי האפליקציה:</p>
+                          <p>בדקנו את המגבלות החדשות של פייסבוק וגילינו שהרשאות הגישה לעמודים הוגבלו מאוד בגרסה 22.0. כרגע אין אפשרות לגשת לעמודים או לנהל אותם דרך API ללא אישור מיוחד מפייסבוק.</p>
+                          <p className="mt-1">גם עם טוקן ידני, פייסבוק מחזירה שגיאת API Restriction. האפליקציה עדיין יכולה לגשת לפוסטים אישיים.</p>
                         </div>
                         
                         <a 
