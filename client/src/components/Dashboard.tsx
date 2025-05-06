@@ -2,6 +2,7 @@ import { useState } from "react";
 import useFacebookAuth from "@/hooks/useFacebookAuth";
 import useFacebookPosts from "@/hooks/useFacebookPosts";
 import useFacebookPages from "@/hooks/useFacebookPages";
+import useYouTubeAuth from "@/hooks/useYouTubeAuth";
 import useSettings from "@/hooks/useSettings";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,16 +10,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key, ExternalLink } from "lucide-react";
+import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key, ExternalLink, Youtube } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import YouTubeAuth from "@/components/YouTubeAuth";
+import YouTubeVideos from "@/components/YouTubeVideos";
 
 const Dashboard = () => {
   const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut, pageAccess } = useFacebookAuth();
   const { posts, isLoading: isLoadingPosts, hidePosts, isHiding, restorePosts, isRestoring } = useFacebookPosts();
   const { pages, isLoading: isLoadingPages, hidePages, isHiding: isHidingPages, restorePages, isRestoring: isRestoringPages } = useFacebookPages();
+  const { isAuthenticated: isYouTubeAuthenticated } = useYouTubeAuth();
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState("overview");
   const [manualToken, setManualToken] = useState("");
@@ -158,6 +162,11 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-4">
+      {/* YouTube Integration Section */}
+      <YouTubeAuth />
+      
+      {isYouTubeAuthenticated && <YouTubeVideos />}
+      
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="overview">סקירה כללית</TabsTrigger>

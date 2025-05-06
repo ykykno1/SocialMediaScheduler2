@@ -45,6 +45,20 @@ export const youtubeVideoSchema = z.object({
 
 export type YouTubeVideo = z.infer<typeof youtubeVideoSchema>;
 
+// YouTube auth schema
+export const youtubeAuthSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string().optional(),
+  expiresIn: z.number().optional(),
+  expiresAt: z.number().optional(),
+  timestamp: z.number(),
+  channelId: z.string().optional(),
+  channelTitle: z.string().optional(),
+  profilePictureUrl: z.string().optional()
+});
+
+export type YouTubeAuth = z.infer<typeof youtubeAuthSchema>;
+
 // Generic content type for unified handling
 export const contentItemSchema = z.object({
   id: z.string(),
