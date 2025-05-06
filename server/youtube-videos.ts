@@ -2,10 +2,13 @@ import type { Express } from "express";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
 import { AuthToken, YouTubeVideo, SupportedPlatform, PrivacyStatus } from "@shared/schema";
-import { google, youtube_v3 } from 'googleapis';
+import { google } from 'googleapis';
+
+// Define a more specific type to help with TypeScript errors
+type PrivacyStatusType = 'public' | 'private' | 'unlisted';
 
 // Get YouTube client with authenticated credentials
-const getYouTubeClient = async (): Promise<youtube_v3.Youtube> => {
+const getYouTubeClient = async () => {
   const authToken = storage.getAuthToken('youtube');
   
   if (!authToken) {
@@ -22,7 +25,7 @@ const getYouTubeClient = async (): Promise<youtube_v3.Youtube> => {
   auth.setCredentials({
     access_token: authToken.accessToken,
     refresh_token: authToken.refreshToken,
-    expiry_date: authToken.expiresAt
+    expiry_date: authToken.expiresAt || undefined
   });
   
   // Setup token refresh callback
@@ -33,7 +36,7 @@ const getYouTubeClient = async (): Promise<youtube_v3.Youtube> => {
         ...authToken,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token || authToken.refreshToken,
-        expiresAt: tokens.expiry_date,
+        expiresAt: tokens.expiry_date || undefined,
         timestamp: Date.now()
       };
       

@@ -2,8 +2,9 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
-import { type FacebookPost } from "@shared/schema";
+import { type FacebookPost, SupportedPlatform } from "@shared/schema";
 import { registerFacebookPagesRoutes } from "./facebook-pages";
+import { registerYouTubeRoutes } from "./youtube-videos";
 
 export function registerRoutes(app: Express): Server {
   // Get Facebook app configuration
@@ -273,7 +274,7 @@ export function registerRoutes(app: Express): Server {
       
       // Get excepted post IDs from settings
       const settings = storage.getSettings();
-      const exceptedPostIds = settings.exceptedPostIds || [];
+      const exceptedPostIds = settings.exceptedContentIds?.facebook || [];
       
       // Filter posts to hide (exclude excepted posts)
       const postsToHide = posts.filter(post => 
@@ -626,7 +627,47 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
+  // Register Facebook Pages routes
   registerFacebookPagesRoutes(app);
+  
+  // Register YouTube routes
+  registerYouTubeRoutes(app);
+  
+  // Get auth status for all platforms (replacing the Facebook-specific one)
+  app.get("/api/auth-status", (req, res) => {
+    // Get all platform auth statuses
+    const facebookAuth = storage.getAuthToken('facebook');
+    const youtubeAuth = storage.getAuthToken('youtube');
+    
+    // Return the first authorized platform or facebook as default
+    let platform: SupportedPlatform = 'facebook';
+    let isAuthenticated = false;
+    let authTime = null;
+    let additionalData = {};
+    
+    if (facebookAuth) {
+      platform = 'facebook';
+      isAuthenticated = true;
+      authTime = new Date(facebookAuth.timestamp).toISOString();
+      additionalData = {
+        pageAccess: facebookAuth.additionalData?.pageAccess || false
+      };
+    } else if (youtubeAuth) {
+      platform = 'youtube';
+      isAuthenticated = true;
+      authTime = new Date(youtubeAuth.timestamp).toISOString();
+      additionalData = {
+        channelTitle: youtubeAuth.additionalData?.channelTitle || null
+      };
+    }
+    
+    res.json({
+      isAuthenticated,
+      platform,
+      authTime,
+      ...additionalData
+    });
+  });
   
   const httpServer = createServer(app);
   return httpServer;
