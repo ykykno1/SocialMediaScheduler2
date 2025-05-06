@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key } from "lucide-react";
+import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -240,22 +240,39 @@ const Dashboard = () => {
                         onChange={(e) => setManualToken(e.target.value)}
                         dir="ltr"
                       />
-                      <div className="text-sm border-t pt-2">
-                        <p className="font-medium mb-1">כיצד ליצור טוקן?</p>
+                      <div className="text-sm border-t pt-2 space-y-2">
+                        <p className="font-medium mb-1">כיצד ליצור טוקן עם הרשאות מתקדמות?</p>
                         <ol className="list-decimal list-inside space-y-1 mr-4">
                           <li>גש ל-Graph API Explorer</li>
                           <li>בחר את האפליקציה שלך</li>
-                          <li>לחץ על "Get Token"</li>
-                          <li>בחר את כל ההרשאות הרלוונטיות</li>
+                          <li>לחץ על "Get Token" → "Get User Access Token"</li>
+                          <li>בחר את ההרשאות הבאות:
+                            <ul className="list-disc list-inside mr-6 mt-1 text-xs">
+                              <li>public_profile</li>
+                              <li>email</li>
+                              <li>pages_show_list</li>
+                              <li>pages_read_engagement</li>
+                              <li>pages_manage_metadata</li>
+                              <li>pages_manage_posts</li>
+                            </ul>
+                          </li>
                           <li>לחץ על "Generate Access Token"</li>
+                          <li>אשר את הבקשה בחשבון הפייסבוק שלך</li>
                           <li>העתק את הטוקן לכאן</li>
                         </ol>
+
+                        <div className="bg-amber-50 p-2 rounded-md border border-amber-200 text-xs">
+                          <p className="font-medium text-amber-800">שים לב:</p>
+                          <p>גם אם פייסבוק מסמנת חלק מההרשאות כ"לא תקפות", המשך בתהליך. במצב פיתוח, ייתכן שחלק מההרשאות יעבדו עבור משתמשי האפליקציה.</p>
+                        </div>
+                        
                         <a 
                           href="https://developers.facebook.com/tools/explorer/" 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline block mt-2"
+                          className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 inline-flex items-center justify-center w-full mt-2"
                         >
+                          <ExternalLink className="mr-2 h-4 w-4" />
                           פתח את Graph API Explorer
                         </a>
                       </div>
@@ -532,7 +549,22 @@ const Dashboard = () => {
                         </ul>
                       </div>
                       
-                      <div className="flex justify-center space-x-3 flex-row-reverse">
+                      <div className="p-3 border border-blue-300 rounded-md bg-blue-50 mt-3">
+                        <strong className="text-blue-800">אפשרות לפיתוח ובדיקות:</strong>
+                        <p className="mt-1 text-sm">ניתן להשתמש בטוקן גישה מותאם אישית ישירות מ-Graph API Explorer לצורך פיתוח ובדיקות.</p>
+                        <div className="flex justify-center mt-2">
+                          <Button 
+                            onClick={() => setIsTokenDialogOpen(true)} 
+                            variant="outline" 
+                            className="border-blue-300 text-blue-700"
+                          >
+                            <Key className="mr-2 h-4 w-4" />
+                            הזן טוקן גישה ידני
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-center space-x-3 flex-row-reverse mt-3">
                         <a 
                           href="https://www.facebook.com/pages/?category=your_pages" 
                           target="_blank" 
