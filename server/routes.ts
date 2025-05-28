@@ -285,6 +285,12 @@ export function registerRoutes(app: Express): Server {
         post.privacy.value !== "ONLY_ME"
       );
       
+      console.log(`Posts status breakdown:`, posts.map(p => ({
+        id: p.id,
+        privacy: p.privacy?.value,
+        isHidden: p.isHidden,
+        willBeHidden: postsToHide.some(ph => ph.id === p.id)
+      })));
       console.log(`Attempting to hide ${postsToHide.length} posts using direct API calls`);
       
       // Attempt to actually update posts with the Facebook API
