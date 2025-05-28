@@ -664,6 +664,158 @@ export function registerRoutes(app: Express): Server {
   // Register YouTube routes
   registerYouTubeRoutes(app);
   
+  // Instagram Routes
+  app.get("/api/instagram/auth-status", (req, res) => {
+    const auth = storage.getAuthToken('instagram');
+    
+    if (!auth) {
+      return res.json({ 
+        isAuthenticated: false, 
+        platform: 'instagram' 
+      });
+    }
+    
+    res.json({
+      isAuthenticated: true,
+      platform: 'instagram',
+      user: auth.additionalData?.user || null
+    });
+  });
+  
+  app.get("/api/instagram/auth", async (req, res) => {
+    try {
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
+      
+      // Instagram OAuth URL
+      const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile,user_media&response_type=code&state=instagram`;
+      
+      res.json({ authUrl: instagramAuthUrl });
+    } catch (error) {
+      console.error("Instagram auth error:", error);
+      res.status(500).json({ error: "Failed to generate Instagram auth URL" });
+    }
+  });
+  
+  app.post("/api/instagram/disconnect", (req, res) => {
+    storage.removeAuthToken('instagram');
+    res.json({ success: true });
+  });
+  
+  app.get("/api/instagram/posts", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('instagram');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with Instagram" });
+      }
+      
+      // Get Instagram media
+      const mediaUrl = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp,like_count,comments_count&access_token=${auth.accessToken}`;
+      const response = await fetch(mediaUrl);
+      
+      if (!response.ok) {
+        const errorData = await response.json() as { error?: { message: string } };
+        return res.status(400).json({ error: errorData.error?.message || "Failed to fetch Instagram posts" });
+      }
+      
+      const data = await response.json() as { data: any[] };
+      
+      res.json({
+        posts: data.data || []
+      });
+    } catch (error) {
+      console.error("Instagram posts error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  app.post("/api/instagram/posts/:postId/hide", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('instagram');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with Instagram" });
+      }
+      
+      // Note: Instagram doesn't have a direct "hide" API
+      // This would require archiving or deleting the post
+      // For now, we'll simulate the action
+      res.json({ success: true, message: "Post hidden (simulation)" });
+    } catch (error) {
+      console.error("Instagram hide post error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  app.post("/api/instagram/posts/:postId/show", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('instagram');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with Instagram" });
+      }
+      
+      // Note: Instagram doesn't have a direct "show" API for archived posts
+      // This would require unarchiving the post
+      // For now, we'll simulate the action
+      res.json({ success: true, message: "Post shown (simulation)" });
+    } catch (error) {
+      console.error("Instagram show post error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  app.post("/api/instagram/posts/hide-all", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('instagram');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with Instagram" });
+      }
+      
+      // Get all posts first
+      const mediaUrl = `https://graph.instagram.com/me/media?fields=id&access_token=${auth.accessToken}`;
+      const response = await fetch(mediaUrl);
+      
+      if (!response.ok) {
+        return res.status(400).json({ error: "Failed to fetch Instagram posts" });
+      }
+      
+      const data = await response.json() as { data: any[] };
+      
+      // Simulate hiding all posts
+      res.json({ 
+        success: true, 
+        hidden: data.data?.length || 0,
+        message: "All posts hidden (simulation)" 
+      });
+    } catch (error) {
+      console.error("Instagram hide all error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  app.post("/api/instagram/posts/show-all", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('instagram');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with Instagram" });
+      }
+      
+      // Simulate showing all posts
+      res.json({ 
+        success: true, 
+        shown: 0,
+        message: "All posts shown (simulation)" 
+      });
+    } catch (error) {
+      console.error("Instagram show all error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
   // Get auth status for all platforms (replacing the Facebook-specific one)
   app.get("/api/auth-status", (req, res) => {
     // Get all platform auth statuses

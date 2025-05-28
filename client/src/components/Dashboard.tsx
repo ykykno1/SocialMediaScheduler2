@@ -749,6 +749,13 @@ const Dashboard = () => {
             </CardFooter>
           </Card>
         </TabsContent>
+        
+        <TabsContent value="instagram">
+          <div className="space-y-4">
+            <InstagramAuth />
+            <InstagramPosts />
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
