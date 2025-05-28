@@ -187,10 +187,15 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
       }
       
-      // Try to use cached posts first if available
-      const cachedPosts = storage.getCachedPosts();
-      if (cachedPosts.length > 0) {
-        return res.json(cachedPosts);
+      // Check if refresh parameter is present to bypass cache
+      const refresh = req.query.refresh;
+      
+      // Try to use cached posts first if available (unless refresh requested)
+      if (!refresh) {
+        const cachedPosts = storage.getCachedPosts();
+        if (cachedPosts.length > 0) {
+          return res.json(cachedPosts);
+        }
       }
       
       // Request posts from Facebook Graph API with more comprehensive parameters
