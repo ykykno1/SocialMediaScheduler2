@@ -298,17 +298,20 @@ export function registerRoutes(app: Express): Server {
           console.log(`Attempting to hide post ${post.id}`);
           
           // שיטה מעודכנת לעדכון פרטיות לפי API של פייסבוק v22.0
-          const privacyObject = { value: 'ONLY_ME' };  
           const updateUrl = `https://graph.facebook.com/v22.0/${post.id}`;
+          const formData = new URLSearchParams({
+            privacy: JSON.stringify({ value: 'ONLY_ME' }),
+            access_token: auth.accessToken
+          });
+          
+          console.log(`Sending privacy update for post ${post.id} with data:`, formData.toString());
+          
           const updateResponse = await fetch(updateUrl, { 
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({
-              privacy: privacyObject,
-              access_token: auth.accessToken
-            })
+            body: formData
           });
           
           if (updateResponse.ok) {
