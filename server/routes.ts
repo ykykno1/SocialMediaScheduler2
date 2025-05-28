@@ -305,20 +305,42 @@ export function registerRoutes(app: Express): Server {
           
           // שיטה מעודכנת לעדכון פרטיות לפי API של פייסבוק v22.0
           const updateUrl = `https://graph.facebook.com/v22.0/${post.id}`;
-          const formData = new URLSearchParams({
-            privacy: JSON.stringify({ value: 'ONLY_ME' }),
-            access_token: auth.accessToken
-          });
           
-          console.log(`Sending privacy update for post ${post.id} with data:`, formData.toString());
+          // נסיון עם פורמטים שונים של privacy
+          const privacyFormats = [
+            '{"value":"ONLY_ME"}',
+            'ONLY_ME',
+            '{"value":"SELF"}',
+            'SELF'
+          ];
           
-          const updateResponse = await fetch(updateUrl, { 
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData
-          });
+          let updateResponse = null;
+          let formatWorked = false;
+          
+          for (const privacyFormat of privacyFormats) {
+            console.log(`Trying privacy format: ${privacyFormat} for post ${post.id}`);
+            
+            const formData = new URLSearchParams();
+            formData.append('privacy', privacyFormat);
+            formData.append('access_token', auth.accessToken);
+            
+            updateResponse = await fetch(updateUrl, { 
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: formData.toString()
+            });
+            
+            if (updateResponse.ok) {
+              console.log(`SUCCESS! Privacy format ${privacyFormat} worked for post ${post.id}`);
+              formatWorked = true;
+              break;
+            } else {
+              const errorData = await updateResponse.json().catch(() => ({}));
+              console.log(`Format ${privacyFormat} failed:`, errorData);
+            }
+          }
           
           if (updateResponse.ok) {
             // Success!
