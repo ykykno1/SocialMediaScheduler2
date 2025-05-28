@@ -193,9 +193,9 @@ export function registerRoutes(app: Express): Server {
         return res.json(cachedPosts);
       }
       
-      // Request posts from Facebook Graph API
+      // Request posts from Facebook Graph API with more comprehensive parameters
       console.log("Fetching posts from Facebook API...");
-      const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy&access_token=${auth.accessToken}`;
+      const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy&limit=100&access_token=${auth.accessToken}`;
       
       const postsResponse = await fetch(postsUrl);
       
