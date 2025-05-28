@@ -721,7 +721,21 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with Instagram or Facebook" });
       }
       
-      // First, get the Instagram Business Account ID through Facebook
+      // First, check basic user info
+      console.log("Checking basic user info...");
+      const userInfoUrl = `https://graph.facebook.com/v22.0/me?access_token=${accessToken}`;
+      const userInfoResponse = await fetch(userInfoUrl);
+      const userInfoData = await userInfoResponse.json();
+      console.log("User info:", JSON.stringify(userInfoData, null, 2));
+      
+      // Check permissions we have
+      console.log("Checking Facebook permissions...");
+      const permissionsUrl = `https://graph.facebook.com/v22.0/me/permissions?access_token=${accessToken}`;
+      const permissionsResponse = await fetch(permissionsUrl);
+      const permissionsData = await permissionsResponse.json();
+      console.log("Current permissions:", JSON.stringify(permissionsData, null, 2));
+      
+      // Then get the Instagram Business Account ID through Facebook
       console.log("Fetching Instagram Business Account...");
       const businessAccountUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=instagram_business_account&access_token=${accessToken}`;
       console.log("Request URL:", businessAccountUrl);
