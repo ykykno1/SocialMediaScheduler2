@@ -687,8 +687,8 @@ export function registerRoutes(app: Express): Server {
       const domain = req.headers.host;
       const redirectUri = `https://${domain}/auth-callback.html`;
       
-      // Instagram OAuth URL
-      const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile,user_media&response_type=code&state=instagram`;
+      // Instagram Business requires different scopes through Facebook
+      const instagramAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=pages_read_engagement,pages_show_list,instagram_basic,instagram_manage_insights&response_type=code&state=instagram`;
       
       res.json({ authUrl: instagramAuthUrl });
     } catch (error) {
@@ -724,7 +724,12 @@ export function registerRoutes(app: Express): Server {
       // First, get the Instagram Business Account ID through Facebook
       console.log("Fetching Instagram Business Account...");
       const businessAccountUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=instagram_business_account&access_token=${accessToken}`;
+      console.log("Request URL:", businessAccountUrl);
       const businessResponse = await fetch(businessAccountUrl);
+      const businessData = await businessResponse.json();
+      
+      console.log("Facebook pages response status:", businessResponse.status);
+      console.log("Facebook pages response:", JSON.stringify(businessData, null, 2));
       
       if (!businessResponse.ok) {
         console.log("No Facebook pages with Instagram business accounts found, trying direct Instagram API...");
@@ -748,12 +753,12 @@ export function registerRoutes(app: Express): Server {
         });
       }
       
-      const businessData = await businessResponse.json() as { data: any[] };
-      console.log("Facebook pages response:", businessData);
+      console.log("Facebook pages response (second check):", businessData);
       
       // Find a page with Instagram business account
       let instagramBusinessId = null;
-      for (const page of businessData.data || []) {
+      const pages = (businessData as any)?.data || [];
+      for (const page of pages) {
         if (page.instagram_business_account?.id) {
           instagramBusinessId = page.instagram_business_account.id;
           break;
