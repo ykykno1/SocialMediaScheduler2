@@ -10,13 +10,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key, ExternalLink, Youtube } from "lucide-react";
+import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key, ExternalLink, Youtube, Instagram } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import YouTubeAuth from "@/components/YouTubeAuth";
 import YouTubeVideos from "@/components/YouTubeVideos";
+import { InstagramAuth } from "@/components/InstagramAuth";
+import { InstagramPosts } from "@/components/InstagramPosts";
 
 const Dashboard = () => {
   const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut, pageAccess } = useFacebookAuth();
@@ -172,6 +174,7 @@ const Dashboard = () => {
           <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
           <TabsTrigger value="posts">פוסטים ({posts.length})</TabsTrigger>
           <TabsTrigger value="pages">עמודים ({pages.length})</TabsTrigger>
+          <TabsTrigger value="instagram">אינסטגרם</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
