@@ -687,8 +687,8 @@ export function registerRoutes(app: Express): Server {
       const domain = req.headers.host;
       const redirectUri = `https://${domain}/auth-callback.html`;
       
-      // Instagram Business requires different scopes through Facebook
-      const instagramAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=pages_read_engagement,pages_show_list,instagram_basic,instagram_manage_insights&response_type=code&state=instagram`;
+      // Try Instagram Basic Display API (simpler approach)
+      const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile,user_media&response_type=code&state=instagram_basic`;
       
       res.json({ authUrl: instagramAuthUrl });
     } catch (error) {
