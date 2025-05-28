@@ -713,7 +713,7 @@ export function registerRoutes(app: Express): Server {
         const facebookAuth = storage.getFacebookAuth();
         if (facebookAuth) {
           accessToken = facebookAuth.accessToken;
-          console.log("Using Facebook token for Instagram Business API");
+          console.log("Trying Instagram Basic Display API directly...");
         }
       }
       
@@ -739,39 +739,38 @@ export function registerRoutes(app: Express): Server {
       console.log("Fetching Instagram Business Account...");
       const businessAccountUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=instagram_business_account&access_token=${accessToken}`;
       console.log("Request URL:", businessAccountUrl);
-      const businessResponse = await fetch(businessAccountUrl);
-      const businessData = await businessResponse.json();
+      const pagesResponse = await fetch(businessAccountUrl);
+      const pagesData = await pagesResponse.json();
       
-      console.log("Facebook pages response status:", businessResponse.status);
-      console.log("Facebook pages response:", JSON.stringify(businessData, null, 2));
+      console.log("Facebook pages response status:", pagesResponse.status);
+      console.log("Facebook pages response:", JSON.stringify(pagesData, null, 2));
       
-      if (!businessResponse.ok) {
-        console.log("No Facebook pages with Instagram business accounts found, trying direct Instagram API...");
-        
-        // Try direct Instagram Basic Display API
-        const mediaUrl = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp&access_token=${accessToken}`;
-        const response = await fetch(mediaUrl);
-        
-        if (!response.ok) {
-          const errorData = await response.json() as { error?: { message: string } };
-          return res.status(400).json({ 
-            error: errorData.error?.message || "Failed to fetch Instagram posts",
-            suggestion: "Make sure your Instagram account is connected to a Facebook page for business features"
-          });
-        }
-        
+      // Skip Facebook Business complications and try Instagram Basic API directly
+      console.log("Trying Instagram Basic Display API directly...");
+      const mediaUrl = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp&access_token=${accessToken}`;
+      const response = await fetch(mediaUrl);
+      
+      console.log("Instagram Basic API response status:", response.status);
+      
+      if (response.ok) {
         const data = await response.json() as { data: any[] };
+        console.log("Instagram Basic API success:", data);
         return res.json({
           posts: data.data || [],
           source: "instagram_basic"
         });
       }
       
-      console.log("Facebook pages response (second check):", businessData);
+      const errorData = await response.json() as { error?: { message: string } };
+      console.log("Instagram Basic API error:", errorData);
+      
+      // If basic API doesn't work, fall back to trying Facebook Business
+      
+      console.log("Facebook pages response (second check):", pagesData);
       
       // Find a page with Instagram business account
       let instagramBusinessId = null;
-      const pages = (businessData as any)?.data || [];
+      const pages = (pagesData as any)?.data || [];
       for (const page of pages) {
         if (page.instagram_business_account?.id) {
           instagramBusinessId = page.instagram_business_account.id;
@@ -789,15 +788,15 @@ export function registerRoutes(app: Express): Server {
       console.log(`Found Instagram Business Account: ${instagramBusinessId}`);
       
       // Get Instagram media using Instagram Graph API
-      const mediaUrl = `https://graph.facebook.com/v22.0/${instagramBusinessId}/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp,like_count,comments_count&access_token=${accessToken}`;
-      const response = await fetch(mediaUrl);
+      const businessMediaUrl = `https://graph.facebook.com/v22.0/${instagramBusinessId}/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp,like_count,comments_count&access_token=${accessToken}`;
+      const businessResponse = await fetch(businessMediaUrl);
       
-      if (!response.ok) {
-        const errorData = await response.json() as { error?: { message: string } };
+      if (!businessResponse.ok) {
+        const errorData = await businessResponse.json() as { error?: { message: string } };
         return res.status(400).json({ error: errorData.error?.message || "Failed to fetch Instagram posts" });
       }
       
-      const data = await response.json() as { data: any[] };
+      const data = await businessResponse.json() as { data: any[] };
       
       res.json({
         posts: data.data || [],
