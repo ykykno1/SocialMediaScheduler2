@@ -231,8 +231,8 @@ export class AuthService {
         
         // Get Facebook auth URL and credentials
         const authUrl = CONFIG.API.facebook.auth;
-        // Using only basic permissions that don't require approval
-        const scope = 'public_profile,email';
+        // Using permissions needed for Facebook Pages and Instagram access
+        const scope = 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts';
         
         // Store both URIs for use in the error handler
         const uriOptions = {
