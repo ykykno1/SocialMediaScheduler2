@@ -15,7 +15,7 @@ export function InstagramPosts() {
   // קבלת פוסטים
   const { data: postsData, isLoading, error } = useQuery({
     queryKey: ["/api/instagram/posts"],
-    refetchInterval: 10000,
+    enabled: false, // נעצור את הקריאות האוטומטיות
   });
 
   // הסתרת פוסט יחיד
