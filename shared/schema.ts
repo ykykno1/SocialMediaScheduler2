@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Supported platforms enum
-export const SupportedPlatform = z.enum(['facebook', 'youtube', 'tiktok']);
+export const SupportedPlatform = z.enum(['facebook', 'youtube', 'tiktok', 'instagram']);
 export type SupportedPlatform = z.infer<typeof SupportedPlatform>;
 
 // User settings schema

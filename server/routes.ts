@@ -704,14 +704,73 @@ export function registerRoutes(app: Express): Server {
   
   app.get("/api/instagram/posts", async (req, res) => {
     try {
-      const auth = storage.getAuthToken('instagram');
+      // Try Instagram auth first, then fall back to Facebook auth for business accounts
+      let auth = storage.getAuthToken('instagram');
+      let accessToken = auth?.accessToken;
       
-      if (!auth) {
-        return res.status(401).json({ error: "Not authenticated with Instagram" });
+      if (!accessToken) {
+        // Try using Facebook token for Instagram Business account
+        const facebookAuth = storage.getFacebookAuth();
+        if (facebookAuth) {
+          accessToken = facebookAuth.accessToken;
+          console.log("Using Facebook token for Instagram Business API");
+        }
       }
       
-      // Get Instagram media
-      const mediaUrl = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp,like_count,comments_count&access_token=${auth.accessToken}`;
+      if (!accessToken) {
+        return res.status(401).json({ error: "Not authenticated with Instagram or Facebook" });
+      }
+      
+      // First, get the Instagram Business Account ID through Facebook
+      console.log("Fetching Instagram Business Account...");
+      const businessAccountUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=instagram_business_account&access_token=${accessToken}`;
+      const businessResponse = await fetch(businessAccountUrl);
+      
+      if (!businessResponse.ok) {
+        console.log("No Facebook pages with Instagram business accounts found, trying direct Instagram API...");
+        
+        // Try direct Instagram Basic Display API
+        const mediaUrl = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp&access_token=${accessToken}`;
+        const response = await fetch(mediaUrl);
+        
+        if (!response.ok) {
+          const errorData = await response.json() as { error?: { message: string } };
+          return res.status(400).json({ 
+            error: errorData.error?.message || "Failed to fetch Instagram posts",
+            suggestion: "Make sure your Instagram account is connected to a Facebook page for business features"
+          });
+        }
+        
+        const data = await response.json() as { data: any[] };
+        return res.json({
+          posts: data.data || [],
+          source: "instagram_basic"
+        });
+      }
+      
+      const businessData = await businessResponse.json() as { data: any[] };
+      console.log("Facebook pages response:", businessData);
+      
+      // Find a page with Instagram business account
+      let instagramBusinessId = null;
+      for (const page of businessData.data || []) {
+        if (page.instagram_business_account?.id) {
+          instagramBusinessId = page.instagram_business_account.id;
+          break;
+        }
+      }
+      
+      if (!instagramBusinessId) {
+        return res.status(400).json({ 
+          error: "No Instagram Business Account found",
+          suggestion: "Connect your Instagram business account to a Facebook page"
+        });
+      }
+      
+      console.log(`Found Instagram Business Account: ${instagramBusinessId}`);
+      
+      // Get Instagram media using Instagram Graph API
+      const mediaUrl = `https://graph.facebook.com/v22.0/${instagramBusinessId}/media?fields=id,caption,media_type,media_url,thumbnail_url,timestamp,like_count,comments_count&access_token=${accessToken}`;
       const response = await fetch(mediaUrl);
       
       if (!response.ok) {
@@ -722,7 +781,9 @@ export function registerRoutes(app: Express): Server {
       const data = await response.json() as { data: any[] };
       
       res.json({
-        posts: data.data || []
+        posts: data.data || [],
+        source: "instagram_business",
+        businessAccountId: instagramBusinessId
       });
     } catch (error) {
       console.error("Instagram posts error:", error);
