@@ -11,7 +11,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
       
       // Use the correct Replit domain for redirect
-      const redirectUri = `https://workspace.ykykyair.repl.co/auth-callback.html`;
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
       
       if (!clientId || !clientSecret) {
         return res.status(500).json({ error: "Google credentials not configured" });
@@ -52,7 +52,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
 
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-      const redirectUri = `https://workspace.ykykyair.repl.co/auth-callback.html`;
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
       
       const oauth2Client = new google.auth.OAuth2(
         clientId,
