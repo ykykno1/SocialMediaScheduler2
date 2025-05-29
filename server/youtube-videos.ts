@@ -23,10 +23,9 @@ export const registerYouTubeRoutes = (app: Express): void => {
         redirectUri
       );
       
-      // Generate auth URL with required scopes
+      // Generate auth URL with basic scopes first
       const scopes = [
-        'https://www.googleapis.com/auth/youtube.readonly',
-        'https://www.googleapis.com/auth/youtube.force-ssl'
+        'https://www.googleapis.com/auth/youtube.readonly'
       ];
       
       const authUrl = oauth2Client.generateAuthUrl({
