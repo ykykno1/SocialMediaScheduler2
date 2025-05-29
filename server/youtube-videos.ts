@@ -180,6 +180,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
         description: item.snippet?.description,
         publishedAt: item.snippet?.publishedAt,
         thumbnails: item.snippet?.thumbnails,
+        thumbnailUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url,
         privacyStatus: 'public' // Default, we'll get actual status separately if needed
       })) || [];
       

@@ -7,16 +7,18 @@ export default function useYouTubeVideos() {
 
   // Get all videos
   const { 
-    data: videos = [],
+    data: videosResponse,
     isLoading,
     error,
     refetch
-  } = useQuery<YouTubeVideo[]>({
+  } = useQuery<{videos: YouTubeVideo[]}>({
     queryKey: ['/api/youtube/videos'],
     refetchOnWindowFocus: false,
     retry: 1,
     enabled: true
   });
+
+  const videos = videosResponse?.videos || [];
 
   // Hide a single video
   const hideVideoMutation = useMutation({
