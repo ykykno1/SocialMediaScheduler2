@@ -175,15 +175,47 @@ export const registerYouTubeRoutes = (app: Express): void => {
         maxResults: 50
       });
       
-      const videos = videosResponse.data.items?.map(item => ({
-        id: item.snippet?.resourceId?.videoId,
-        title: item.snippet?.title,
-        description: item.snippet?.description,
-        publishedAt: item.snippet?.publishedAt,
-        thumbnails: item.snippet?.thumbnails,
-        thumbnailUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url,
-        privacyStatus: 'public' // Default, we'll get actual status separately if needed
-      })) || [];
+      const videoItems = videosResponse.data.items || [];
+      const videos = [];
+      
+      // Get detailed info for each video including privacy status
+      for (const item of videoItems) {
+        const videoId = item.snippet?.resourceId?.videoId;
+        if (videoId) {
+          try {
+            // Get video details including status
+            const videoDetailsResponse = await youtube.videos.list({
+              part: ['snippet', 'status'],
+              id: [videoId]
+            });
+            
+            const videoDetails = videoDetailsResponse.data.items?.[0];
+            if (videoDetails) {
+              videos.push({
+                id: videoId,
+                title: videoDetails.snippet?.title,
+                description: videoDetails.snippet?.description,
+                publishedAt: videoDetails.snippet?.publishedAt,
+                thumbnails: videoDetails.snippet?.thumbnails,
+                thumbnailUrl: videoDetails.snippet?.thumbnails?.medium?.url || videoDetails.snippet?.thumbnails?.default?.url,
+                privacyStatus: videoDetails.status?.privacyStatus || 'unknown'
+              });
+            }
+          } catch (videoError) {
+            console.error(`Failed to get details for video ${videoId}:`, videoError);
+            // Fallback to basic info without privacy status
+            videos.push({
+              id: videoId,
+              title: item.snippet?.title,
+              description: item.snippet?.description,
+              publishedAt: item.snippet?.publishedAt,
+              thumbnails: item.snippet?.thumbnails,
+              thumbnailUrl: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url,
+              privacyStatus: 'unknown'
+            });
+          }
+        }
+      }
       
       res.json({ videos });
       
