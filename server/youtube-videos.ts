@@ -16,9 +16,9 @@ const getYouTubeClient = async () => {
   }
   
   const auth = new google.auth.OAuth2(
-    process.env.YOUTUBE_CLIENT_ID,
-    process.env.YOUTUBE_CLIENT_SECRET,
-    process.env.YOUTUBE_REDIRECT_URI
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    undefined // redirect URI not needed for API calls
   );
   
   // Set credentials
@@ -52,16 +52,17 @@ export const registerYouTubeRoutes = (app: Express): void => {
   // Get YouTube auth URL for login
   app.get("/api/youtube/auth-url", (req, res) => {
     try {
-      const clientId = process.env.YOUTUBE_CLIENT_ID;
-      const redirectUri = process.env.YOUTUBE_REDIRECT_URI;
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
       
-      if (!clientId || !redirectUri) {
-        return res.status(500).json({ error: "YouTube client configuration is missing" });
+      if (!clientId || !clientSecret) {
+        return res.status(500).json({ error: "Google credentials not configured" });
       }
       
       const oauth2Client = new google.auth.OAuth2(
         clientId,
-        process.env.YOUTUBE_CLIENT_SECRET,
+        clientSecret,
         redirectUri
       );
       
@@ -94,9 +95,9 @@ export const registerYouTubeRoutes = (app: Express): void => {
       }
       
       const oauth2Client = new google.auth.OAuth2(
-        process.env.YOUTUBE_CLIENT_ID,
-        process.env.YOUTUBE_CLIENT_SECRET,
-        process.env.YOUTUBE_REDIRECT_URI
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        `${req.protocol}://${req.get('host')}/auth-callback.html`
       );
       
       // Exchange code for tokens
