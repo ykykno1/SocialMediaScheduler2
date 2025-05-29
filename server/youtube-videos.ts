@@ -192,6 +192,225 @@ export const registerYouTubeRoutes = (app: Express): void => {
     }
   });
 
+  // Update video privacy
+  app.post("/api/youtube/videos/:videoId/privacy", async (req, res) => {
+    try {
+      const { videoId } = req.params;
+      const { privacyStatus } = req.body;
+      
+      const auth = storage.getAuthToken('youtube');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
+      
+      const oauth2Client = new google.auth.OAuth2(
+        clientId,
+        clientSecret,
+        redirectUri
+      );
+      
+      oauth2Client.setCredentials({
+        access_token: auth.accessToken,
+        refresh_token: auth.refreshToken
+      });
+
+      const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+      
+      // Update video privacy status
+      await youtube.videos.update({
+        part: ['status'],
+        requestBody: {
+          id: videoId,
+          status: {
+            privacyStatus: privacyStatus
+          }
+        }
+      });
+      
+      res.json({ 
+        success: true, 
+        message: `Video privacy updated to ${privacyStatus}` 
+      });
+      
+    } catch (error) {
+      console.error('YouTube privacy update error:', error);
+      res.status(500).json({ error: "Failed to update video privacy" });
+    }
+  });
+
+  // Hide all videos
+  app.post("/api/youtube/videos/hide-all", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('youtube');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
+      
+      const oauth2Client = new google.auth.OAuth2(
+        clientId,
+        clientSecret,
+        redirectUri
+      );
+      
+      oauth2Client.setCredentials({
+        access_token: auth.accessToken,
+        refresh_token: auth.refreshToken
+      });
+
+      const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+      
+      // Get all videos first
+      const channelsResponse = await youtube.channels.list({
+        part: ['contentDetails'],
+        mine: true
+      });
+      
+      if (!channelsResponse.data.items || channelsResponse.data.items.length === 0) {
+        return res.json({ hiddenCount: 0, message: "No videos found" });
+      }
+      
+      const uploadsPlaylistId = channelsResponse.data.items[0].contentDetails?.relatedPlaylists?.uploads;
+      
+      if (!uploadsPlaylistId) {
+        return res.json({ hiddenCount: 0, message: "No uploads playlist found" });
+      }
+      
+      const videosResponse = await youtube.playlistItems.list({
+        part: ['snippet'],
+        playlistId: uploadsPlaylistId,
+        maxResults: 50
+      });
+      
+      const videos = videosResponse.data.items || [];
+      let hiddenCount = 0;
+      
+      // Hide each public video
+      for (const item of videos) {
+        const videoId = item.snippet?.resourceId?.videoId;
+        if (videoId) {
+          try {
+            await youtube.videos.update({
+              part: ['status'],
+              requestBody: {
+                id: videoId,
+                status: {
+                  privacyStatus: 'private'
+                }
+              }
+            });
+            hiddenCount++;
+          } catch (videoError) {
+            console.error(`Failed to hide video ${videoId}:`, videoError);
+          }
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        hiddenCount,
+        message: `${hiddenCount} videos hidden` 
+      });
+      
+    } catch (error) {
+      console.error('YouTube hide all error:', error);
+      res.status(500).json({ error: "Failed to hide videos" });
+    }
+  });
+
+  // Restore all videos
+  app.post("/api/youtube/videos/restore-all", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('youtube');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
+      
+      const oauth2Client = new google.auth.OAuth2(
+        clientId,
+        clientSecret,
+        redirectUri
+      );
+      
+      oauth2Client.setCredentials({
+        access_token: auth.accessToken,
+        refresh_token: auth.refreshToken
+      });
+
+      const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+      
+      // Get all videos first
+      const channelsResponse = await youtube.channels.list({
+        part: ['contentDetails'],
+        mine: true
+      });
+      
+      if (!channelsResponse.data.items || channelsResponse.data.items.length === 0) {
+        return res.json({ restoredCount: 0, message: "No videos found" });
+      }
+      
+      const uploadsPlaylistId = channelsResponse.data.items[0].contentDetails?.relatedPlaylists?.uploads;
+      
+      if (!uploadsPlaylistId) {
+        return res.json({ restoredCount: 0, message: "No uploads playlist found" });
+      }
+      
+      const videosResponse = await youtube.playlistItems.list({
+        part: ['snippet'],
+        playlistId: uploadsPlaylistId,
+        maxResults: 50
+      });
+      
+      const videos = videosResponse.data.items || [];
+      let restoredCount = 0;
+      
+      // Restore each private video to public
+      for (const item of videos) {
+        const videoId = item.snippet?.resourceId?.videoId;
+        if (videoId) {
+          try {
+            await youtube.videos.update({
+              part: ['status'],
+              requestBody: {
+                id: videoId,
+                status: {
+                  privacyStatus: 'public'
+                }
+              }
+            });
+            restoredCount++;
+          } catch (videoError) {
+            console.error(`Failed to restore video ${videoId}:`, videoError);
+          }
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        restoredCount,
+        message: `${restoredCount} videos restored` 
+      });
+      
+    } catch (error) {
+      console.error('YouTube restore all error:', error);
+      res.status(500).json({ error: "Failed to restore videos" });
+    }
+  });
+
   // YouTube logout
   app.post("/api/youtube/logout", (req, res) => {
     storage.removeAuthToken('youtube');
