@@ -74,6 +74,7 @@ export default function useYouTubeAuth() {
   });
 
   const login = () => {
+    console.log('YouTube login clicked');
     setIsAuthenticating(true);
     authUrlMutation.mutate();
   };
