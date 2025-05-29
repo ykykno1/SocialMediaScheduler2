@@ -29,6 +29,8 @@ export default function useYouTubeAuth() {
     },
     onSuccess: (data) => {
       // Redirect to YouTube auth page
+      console.log('Got auth URL:', data.authUrl);
+      console.log('Redirecting to Google...');
       window.location.href = data.authUrl;
       setIsAuthenticating(true);
     },
