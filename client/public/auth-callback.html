@@ -63,9 +63,14 @@
     const error = urlParams.get('error');
     const state = urlParams.get('state');
     
-    if (code && state === 'facebook') {
-      // Process the Facebook auth callback
-      processCallback();
+    if (code) {
+      // Check if this is YouTube or Facebook callback
+      if (state === 'facebook') {
+        processCallback('facebook');
+      } else {
+        // Assume YouTube if no state
+        processCallback('youtube');
+      }
     } else if (error) {
       // Show error
       document.getElementById('error-message').style.display = 'block';
@@ -80,13 +85,16 @@
       }, 3000);
     }
     
-    async function processCallback() {
+    async function processCallback(platform) {
       try {
         // Get the redirect URI that was used
         const redirectUri = window.location.href.split('?')[0];
         
+        // Choose the correct endpoint based on platform
+        const endpoint = platform === 'youtube' ? '/api/youtube-auth-callback' : '/api/auth-callback';
+        
         // Exchange code for token via the server
-        const response = await fetch('/api/auth-callback', {
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -94,7 +102,7 @@
           body: JSON.stringify({
             code,
             redirectUri,
-            platform: 'facebook'
+            platform
           })
         });
         
@@ -106,7 +114,7 @@
         
         // Post message back to opener window
         window.opener.postMessage({
-          platform: 'facebook',
+          platform: platform,
           success: true,
           ...data
         }, window.location.origin);

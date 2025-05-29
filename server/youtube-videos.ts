@@ -54,7 +54,9 @@ export const registerYouTubeRoutes = (app: Express): void => {
     try {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-      const redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
+      // Use the correct Replit domain for redirect
+      const host = req.get('host') || 'localhost:5000';
+      const redirectUri = `https://${host}/auth-callback.html`;
       
       if (!clientId || !clientSecret) {
         return res.status(500).json({ error: "Google credentials not configured" });
@@ -124,8 +126,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
         platform: 'youtube',
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token || '',
-        expiresAt: tokens.expiry_date,
-        expiresIn: tokens.expires_in,
+        expiresAt: tokens.expiry_date ? Number(tokens.expiry_date) : undefined,
         timestamp: Date.now(),
         userId,
         additionalData: {
