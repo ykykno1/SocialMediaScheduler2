@@ -28,11 +28,56 @@ export default function useYouTubeAuth() {
       return await response.json();
     },
     onSuccess: (data) => {
-      // Redirect to YouTube auth page
+      // Open YouTube auth page in popup
       console.log('Got auth URL:', data.authUrl);
-      console.log('Redirecting to Google...');
-      window.location.href = data.authUrl;
+      console.log('Opening Google auth in popup...');
+      
+      const popup = window.open(
+        data.authUrl,
+        'google-auth',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+      
+      // Listen for messages from the popup
+      const messageListener = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data.platform === 'youtube' && event.data.success) {
+          console.log('YouTube auth successful');
+          popup?.close();
+          window.removeEventListener('message', messageListener);
+          queryClient.invalidateQueries({ queryKey: ['/api/youtube/auth-status'] });
+          setIsAuthenticating(false);
+          
+          toast({
+            title: "התחברות הצליחה",
+            description: "התחברת בהצלחה לחשבון YouTube",
+          });
+        } else if (event.data.error) {
+          console.error('YouTube auth error:', event.data.error);
+          popup?.close();
+          window.removeEventListener('message', messageListener);
+          setIsAuthenticating(false);
+          
+          toast({
+            title: "שגיאה בהתחברות",
+            description: event.data.error,
+            variant: "destructive",
+          });
+        }
+      };
+      
+      window.addEventListener('message', messageListener);
       setIsAuthenticating(true);
+      
+      // Check if popup was closed manually
+      const checkClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkClosed);
+          window.removeEventListener('message', messageListener);
+          setIsAuthenticating(false);
+        }
+      }, 1000);
     },
     onError: (error) => {
       toast({
