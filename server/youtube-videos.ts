@@ -125,6 +125,72 @@ export const registerYouTubeRoutes = (app: Express): void => {
     });
   });
 
+  // Get YouTube videos
+  app.get("/api/youtube/videos", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('youtube');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
+      
+      const oauth2Client = new google.auth.OAuth2(
+        clientId,
+        clientSecret,
+        redirectUri
+      );
+      
+      oauth2Client.setCredentials({
+        access_token: auth.accessToken,
+        refresh_token: auth.refreshToken
+      });
+
+      const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+      
+      // Get user's uploaded videos
+      const channelsResponse = await youtube.channels.list({
+        part: ['contentDetails'],
+        mine: true
+      });
+      
+      if (!channelsResponse.data.items || channelsResponse.data.items.length === 0) {
+        return res.json({ videos: [] });
+      }
+      
+      const uploadsPlaylistId = channelsResponse.data.items[0].contentDetails?.relatedPlaylists?.uploads;
+      
+      if (!uploadsPlaylistId) {
+        return res.json({ videos: [] });
+      }
+      
+      // Get videos from uploads playlist
+      const videosResponse = await youtube.playlistItems.list({
+        part: ['snippet'],
+        playlistId: uploadsPlaylistId,
+        maxResults: 50
+      });
+      
+      const videos = videosResponse.data.items?.map(item => ({
+        id: item.snippet?.resourceId?.videoId,
+        title: item.snippet?.title,
+        description: item.snippet?.description,
+        publishedAt: item.snippet?.publishedAt,
+        thumbnails: item.snippet?.thumbnails,
+        privacyStatus: 'public' // Default, we'll get actual status separately if needed
+      })) || [];
+      
+      res.json({ videos });
+      
+    } catch (error) {
+      console.error('YouTube videos error:', error);
+      res.status(500).json({ error: "Failed to fetch videos" });
+    }
+  });
+
   // YouTube logout
   app.post("/api/youtube/logout", (req, res) => {
     storage.removeAuthToken('youtube');
