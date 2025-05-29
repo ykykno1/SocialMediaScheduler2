@@ -38,6 +38,17 @@ export default function useYouTubeAuth() {
         'width=500,height=600,scrollbars=yes,resizable=yes'
       );
       
+      if (!popup) {
+        console.error('Popup blocked by browser');
+        setIsAuthenticating(false);
+        toast({
+          title: "שגיאה",
+          description: "הדפדפן חסם את חלון ההתחברות. אנא אפשר popups ונסה שוב.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Listen for messages from the popup
       const messageListener = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;

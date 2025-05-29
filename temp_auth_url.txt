@@ -1,0 +1,1 @@
+https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fyoutube.readonly&prompt=consent&response_type=code&client_id=351828412701-rt3ts08rsials5q7tmqr9prdjtu7qdke.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fauth-callback.html
