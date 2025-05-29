@@ -129,47 +129,40 @@ const Dashboard = () => {
     }
   };
 
-  // Render authentication state
-  if (!isAuthenticated) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>ברוכים הבאים לרובוט שבת</CardTitle>
-          <CardDescription>
-            אפליקציה להסתרה אוטומטית של תוכן ברשתות החברתיות בשבת
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>התחברות נדרשת</AlertTitle>
-            <AlertDescription>
-              יש להתחבר לפייסבוק כדי להשתמש באפליקציה זו
-            </AlertDescription>
-          </Alert>
-          <div className="flex items-center justify-center">
-            <Button 
-              onClick={login} 
-              disabled={isAuthenticating}
-              className="bg-[#1877F2] hover:bg-[#166FE5]"
-            >
-              <Facebook className="mr-2 h-4 w-4" />
-              {isAuthenticating ? "מתחבר..." : "התחבר עם פייסבוק"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      {/* YouTube Integration Section */}
+      {/* YouTube Integration Section - Always visible */}
       <YouTubeAuth />
       
       {isYouTubeAuthenticated && <YouTubeVideos />}
       
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      {/* Facebook Section */}
+      {!isAuthenticated ? (
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>פייסבוק</CardTitle>
+            <CardDescription>
+              התחבר לפייסבוק כדי לנהל פוסטים ועמודים
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center">
+              <Button 
+                onClick={login} 
+                disabled={isAuthenticating}
+                className="bg-[#1877F2] hover:bg-[#166FE5]"
+              >
+                <Facebook className="mr-2 h-4 w-4" />
+                {isAuthenticating ? "מתחבר..." : "התחבר עם פייסבוק"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Facebook content when authenticated */}
+      {isAuthenticated && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
           <TabsTrigger value="posts">פוסטים ({posts.length})</TabsTrigger>
@@ -757,6 +750,7 @@ const Dashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
+      )}
     </div>
   );
 };
