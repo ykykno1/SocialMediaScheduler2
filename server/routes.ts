@@ -686,6 +686,53 @@ export function registerRoutes(app: Express): Server {
       user: auth.additionalData?.user || null
     });
   });
+
+  // Manual Instagram token setup
+  app.post("/api/instagram/manual-token", async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ error: "טוקן נדרש" });
+      }
+
+      console.log("Testing Instagram token...");
+      
+      // Test the token with Instagram API
+      const testResponse = await fetch(`https://graph.facebook.com/v18.0/me?access_token=${token}&fields=id,name,account_type`);
+      
+      if (!testResponse.ok) {
+        const errorData = await testResponse.json();
+        console.error("Instagram token test failed:", errorData);
+        return res.status(400).json({ 
+          error: "טוקן לא תקין",
+          details: errorData.error?.message || "Unknown error"
+        });
+      }
+
+      const userData = await testResponse.json();
+      console.log("Instagram token test successful:", userData);
+      
+      // Save the Instagram token
+      storage.saveAuthToken('instagram', {
+        accessToken: token,
+        expiresIn: 7200, // 2 hours for testing
+        timestamp: Date.now(),
+        additionalData: {
+          user: userData
+        }
+      });
+
+      res.json({
+        success: true,
+        message: "טוקן אינסטגרם נשמר בהצלחה",
+        user: userData
+      });
+    } catch (error) {
+      console.error("Instagram manual token error:", error);
+      res.status(500).json({ error: "שגיאה פנימית" });
+    }
+  });
   
   app.get("/api/instagram/auth", async (req, res) => {
     try {
