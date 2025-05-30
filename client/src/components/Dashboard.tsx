@@ -92,10 +92,33 @@ const Dashboard = () => {
                 )}
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div className="text-sm text-gray-600">
-                  פוסטים: {posts.length} | עמודים: {pages.length}
+                  פוסטים: {posts?.length || 0} | עמודים: {pages?.length || 0}
                 </div>
+                
+                {/* Display Posts */}
+                {isLoadingPosts ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : posts && posts.length > 0 ? (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    <h4 className="font-medium text-sm">הפוסטים שלך:</h4>
+                    {posts.slice(0, 5).map((post) => (
+                      <div key={post.id} className="p-2 bg-gray-50 rounded text-xs">
+                        <div className="font-medium">{post.message || 'פוסט ללא טקסט'}</div>
+                        <div className="text-gray-500">{new Date(post.created_time).toLocaleDateString('he-IL')}</div>
+                      </div>
+                    ))}
+                    {posts.length > 5 && (
+                      <div className="text-xs text-gray-500">ועוד {posts.length - 5} פוסטים...</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">לא נמצאו פוסטים</div>
+                )}
                 
                 <div className="flex space-x-2">
                   <Button 
