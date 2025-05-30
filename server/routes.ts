@@ -715,6 +715,7 @@ export function registerRoutes(app: Express): Server {
       
       // Save the Instagram token
       const authData = {
+        platform: 'instagram' as const,
         accessToken: token,
         expiresIn: 7200, // 2 hours for testing
         timestamp: Date.now(),
@@ -722,7 +723,7 @@ export function registerRoutes(app: Express): Server {
           user: userData
         }
       };
-      storage.saveAuthToken('instagram', authData);
+      storage.saveAuthToken(authData);
 
       res.json({
         success: true,
