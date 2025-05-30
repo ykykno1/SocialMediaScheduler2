@@ -2,6 +2,8 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
+import bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { 
   type FacebookPost, 
   SupportedPlatform,
