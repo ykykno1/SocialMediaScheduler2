@@ -41,6 +41,33 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Auto-setup Instagram token
+  const { storage } = await import("./storage");
+  
+  const INSTAGRAM_TOKEN = "EAAWtnDD3MFgBOzmzKeUlAl58CxZBJCcJrB69lLbPNkf0I54wqTHssELlWaxErhH9kt0zsZBgWvMN8ZBakjqZCnrXZAdAf1wPgYuHZAdwYmmmhHmBTX2IMsM7eqkRNbZA5Bx5YvMkL86AygoR2UVEMnkIYVZCyZAEQWAFfPySZBzQdTUNgZC3SKetw33CIjZAJ3xKzFtaFqsoZCMwZBHzZAvHCMZBom71XpgS0gZDZD";
+
+  try {
+    if (!storage.getAuthToken('instagram')) {
+      console.log('Auto-setting Instagram token...');
+      
+      const authData = {
+        platform: 'instagram' as const,
+        accessToken: INSTAGRAM_TOKEN,
+        expiresIn: 86400 * 30, // 30 days
+        timestamp: Date.now(),
+        isManualToken: true,
+        additionalData: {
+          user: { id: '122100808994860326', name: 'יאיר קרני' }
+        }
+      };
+      
+      storage.saveAuthToken(authData);
+      console.log('Instagram token set automatically');
+    }
+  } catch (error) {
+    console.log('Could not auto-set Instagram token:', error);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
