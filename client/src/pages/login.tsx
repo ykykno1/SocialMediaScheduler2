@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, LogIn, Calendar, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 
 type LoginData = {
@@ -28,15 +27,7 @@ export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      setLocation("/");
-    }
-  }, [isAuthenticated, setLocation]);
 
   const {
     register: loginRegister,
@@ -57,7 +48,8 @@ export default function LoginPage() {
       const result = await response.json();
       
       if (result.success) {
-        login(result.user);
+        // Save user to localStorage for simple auth
+        localStorage.setItem('shabbat-robot-user', JSON.stringify(result.user));
         toast({
           title: "התחברת בהצלחה!",
           description: `ברוך הבא, ${result.user.firstName || result.user.username}`,
@@ -82,12 +74,13 @@ export default function LoginPage() {
       const result = await response.json();
       
       if (result.success) {
+        // Save user to localStorage for simple auth
+        localStorage.setItem('shabbat-robot-user', JSON.stringify(result.user));
         toast({
           title: "נרשמת בהצלחה!",
           description: `ברוך הבא לשבת רובוט, ${result.user.firstName || result.user.username}`,
         });
-        // בהמשך נוסיף ניתוב לדף הבית
-        window.location.reload();
+        setLocation("/");
       }
     } catch (error: any) {
       toast({
