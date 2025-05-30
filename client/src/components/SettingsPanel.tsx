@@ -6,11 +6,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Save, Instagram } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const SettingsPanel = () => {
   const { settings, updateSettings, isUpdating } = useSettings();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Local state to track form values
   const [localSettings, setLocalSettings] = useState<Settings>({
@@ -18,6 +22,32 @@ const SettingsPanel = () => {
     hideTime: settings.hideTime,
     restoreTime: settings.restoreTime,
     timeZone: settings.timeZone
+  });
+
+  // Instagram token state
+  const [instagramToken, setInstagramToken] = useState("");
+
+  // Instagram token mutation
+  const instagramTokenMutation = useMutation({
+    mutationFn: async (token: string) => {
+      const res = await apiRequest("POST", "/api/instagram/manual-token", { token });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "הצלחה!",
+        description: `טוקן אינסטגרם נשמר. משתמש: ${data.user?.name || 'לא ידוע'}`,
+      });
+      setInstagramToken("");
+      queryClient.invalidateQueries({ queryKey: ["/api/instagram/auth-status"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "שגיאה",
+        description: error.message || "לא ניתן לשמור את הטוקן",
+        variant: "destructive",
+      });
+    },
   });
   
   // Handle changes to form inputs
@@ -60,16 +90,70 @@ const SettingsPanel = () => {
     // Save settings
     updateSettings(localSettings);
   };
+
+  // Handle Instagram token submission
+  const handleInstagramToken = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (instagramToken.trim()) {
+      instagramTokenMutation.mutate(instagramToken.trim());
+    }
+  };
   
   return (
-    <form onSubmit={handleSubmit}>
+    <div className="space-y-6">
+      {/* Instagram Token Setup */}
       <Card>
         <CardHeader>
-          <CardTitle>הגדרות</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Instagram className="h-5 w-5" />
+            הגדרת טוקן אינסטגרם
+          </CardTitle>
           <CardDescription>
-            הגדר את זמני ההסתרה והשחזור האוטומטיים עבור שבת
+            הזן טוקן גישה לאינסטגרם למטרות בדיקה
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <form onSubmit={handleInstagramToken} className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="instagram-token">טוקן גישה לאינסטגרם</Label>
+              <Textarea
+                id="instagram-token"
+                placeholder="הדבק כאן את הטוקן מ-Meta Graph Explorer..."
+                value={instagramToken}
+                onChange={(e) => setInstagramToken(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <Button 
+              type="submit" 
+              disabled={!instagramToken.trim() || instagramTokenMutation.isPending}
+              className="w-full"
+            >
+              {instagramTokenMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  בודק טוקן...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  שמור טוקן
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Settings Form */}
+      <form onSubmit={handleSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>הגדרות</CardTitle>
+            <CardDescription>
+              הגדר את זמני ההסתרה והשחזור האוטומטיים עבור שבת
+            </CardDescription>
+          </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <Label htmlFor="auto-schedule" className="flex flex-col">
@@ -139,8 +223,9 @@ const SettingsPanel = () => {
             )}
           </Button>
         </CardFooter>
-      </Card>
-    </form>
+        </Card>
+      </form>
+    </div>
   );
 };
 
