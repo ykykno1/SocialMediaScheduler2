@@ -102,23 +102,30 @@ const Dashboard = () => {
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
+                    <div className="text-xs text-gray-500">טוען פוסטים...</div>
                   </div>
                 ) : posts && posts.length > 0 ? (
                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                    <h4 className="font-medium text-sm">הפוסטים שלך:</h4>
+                    <h4 className="font-medium text-sm">הפוסטים שלך ({posts.length}):</h4>
                     {posts.slice(0, 5).map((post) => (
                       <div key={post.id} className="p-2 bg-gray-50 rounded text-xs">
                         <div className="font-medium">{post.message || 'פוסט ללא טקסט'}</div>
                         <div className="text-gray-500">{new Date(post.created_time).toLocaleDateString('he-IL')}</div>
+                        <div className="text-xs text-gray-400">Privacy: {post.privacy?.value || 'לא ידוע'}</div>
                       </div>
                     ))}
                     {posts.length > 5 && (
                       <div className="text-xs text-gray-500">ועוד {posts.length - 5} פוסטים...</div>
                     )}
                   </div>
-                ) : (
-                  <div className="text-sm text-gray-500">לא נמצאו פוסטים</div>
-                )}
+                ) : isAuthenticated ? (
+                  <div className="text-sm text-gray-500">
+                    לא נמצאו פוסטים
+                    <div className="text-xs text-gray-400 mt-1">
+                      Debug: posts={JSON.stringify(posts)}, loading={isLoadingPosts}
+                    </div>
+                  </div>
+                ) : null}
                 
                 <div className="flex space-x-2">
                   <Button 
