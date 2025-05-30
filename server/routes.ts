@@ -1238,6 +1238,54 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Privacy status management endpoints
+  
+  // Update privacy status for content
+  app.post('/api/privacy-status', async (req, res) => {
+    try {
+      const { platform, contentId, originalStatus, currentStatus, wasHiddenByUser } = req.body;
+      
+      storage.updatePrivacyStatus(platform, contentId, {
+        originalStatus,
+        currentStatus,
+        wasHiddenByUser: wasHiddenByUser || false,
+        timestamp: Date.now()
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating privacy status:', error);
+      res.status(500).json({ error: 'Failed to update privacy status' });
+    }
+  });
+
+  // Toggle content lock to prevent automatic restoration
+  app.post('/api/toggle-content-lock', async (req, res) => {
+    try {
+      const { platform, contentId } = req.body;
+      
+      const isLocked = storage.toggleContentLock(platform, contentId);
+      
+      res.json({ success: true, isLocked });
+    } catch (error) {
+      console.error('Error toggling content lock:', error);
+      res.status(500).json({ error: 'Failed to toggle content lock' });
+    }
+  });
+
+  // Get privacy statuses for a platform
+  app.get('/api/privacy-status/:platform', async (req, res) => {
+    try {
+      const platform = req.params.platform as SupportedPlatform;
+      const statuses = storage.getPrivacyStatuses(platform);
+      
+      res.json(statuses);
+    } catch (error) {
+      console.error('Error getting privacy statuses:', error);
+      res.status(500).json({ error: 'Failed to get privacy statuses' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

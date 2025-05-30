@@ -245,6 +245,51 @@ export class MemStorage implements IStorage {
     this.privacyStatuses[platform] = [];
   }
   
+  // Update or add a single privacy status
+  updatePrivacyStatus(platform: SupportedPlatform, contentId: string, updates: Partial<PrivacyStatus>): void {
+    const statuses = this.getPrivacyStatuses(platform);
+    const existingIndex = statuses.findIndex(s => s.contentId === contentId);
+    
+    if (existingIndex >= 0) {
+      statuses[existingIndex] = { ...statuses[existingIndex], ...updates, lastModified: Date.now() };
+    } else {
+      const newStatus: PrivacyStatus = {
+        platform,
+        contentId,
+        originalStatus: 'public',
+        currentStatus: 'public',
+        wasHiddenByUser: false,
+        isLockedByUser: false,
+        timestamp: Date.now(),
+        ...updates
+      };
+      statuses.push(newStatus);
+    }
+    
+    this.privacyStatuses[platform] = statuses;
+  }
+  
+  // Toggle lock status for a specific piece of content
+  toggleContentLock(platform: SupportedPlatform, contentId: string): boolean {
+    const statuses = this.getPrivacyStatuses(platform);
+    const status = statuses.find(s => s.contentId === contentId);
+    
+    if (status) {
+      status.isLockedByUser = !status.isLockedByUser;
+      status.lastModified = Date.now();
+      this.privacyStatuses[platform] = statuses;
+      return status.isLockedByUser;
+    }
+    
+    return false;
+  }
+  
+  // Get a specific privacy status
+  getPrivacyStatus(platform: SupportedPlatform, contentId: string): PrivacyStatus | null {
+    const statuses = this.getPrivacyStatuses(platform);
+    return statuses.find(s => s.contentId === contentId) || null;
+  }
+  
   // User operations
   createUser(userData: RegisterData): User {
     const userId = nanoid();

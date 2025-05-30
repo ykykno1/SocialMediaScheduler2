@@ -324,13 +324,46 @@ export const registerYouTubeRoutes = (app: Express): void => {
         maxResults: 50
       });
       
-      const videos = videosResponse.data.items || [];
-      let hiddenCount = 0;
+      const videoItems = videosResponse.data.items || [];
       
-      // Hide each public video
-      for (const item of videos) {
-        const videoId = item.snippet?.resourceId?.videoId;
-        if (videoId) {
+      // Get detailed video info including privacy status
+      const videoIds = videoItems.map(item => item.snippet?.resourceId?.videoId).filter(Boolean) as string[];
+      const videosDetails = await youtube.videos.list({
+        part: ['snippet', 'status'],
+        id: videoIds
+      });
+      
+      const videos = videosDetails.data.items || [];
+      let hiddenCount = 0;
+      let skippedCount = 0;
+      
+      // Process each video and save its original state
+      for (const video of videos) {
+        const videoId = video.id!;
+        const currentStatus = video.status?.privacyStatus || 'public';
+        
+        // Check if we already have this video's status saved
+        let existingStatus = storage.getPrivacyStatus('youtube', videoId);
+        
+        if (!existingStatus) {
+          // First time we see this video - save its original state
+          const wasAlreadyHidden = currentStatus === 'private';
+          storage.updatePrivacyStatus('youtube', videoId, {
+            originalStatus: currentStatus,
+            currentStatus: currentStatus,
+            wasHiddenByUser: wasAlreadyHidden,
+            isLockedByUser: false,
+            timestamp: Date.now()
+          });
+          existingStatus = storage.getPrivacyStatus('youtube', videoId);
+        }
+        
+        // Only hide videos that are currently public/unlisted and not locked/already private
+        const shouldHide = (currentStatus === 'public' || currentStatus === 'unlisted') && 
+                          !existingStatus?.isLockedByUser &&
+                          !existingStatus?.wasHiddenByUser;
+        
+        if (shouldHide) {
           try {
             await youtube.videos.update({
               part: ['status'],
@@ -341,10 +374,18 @@ export const registerYouTubeRoutes = (app: Express): void => {
                 }
               }
             });
+            
+            // Update current status
+            storage.updatePrivacyStatus('youtube', videoId, {
+              currentStatus: 'private'
+            });
+            
             hiddenCount++;
           } catch (videoError) {
             console.error(`Failed to hide video ${videoId}:`, videoError);
           }
+        } else {
+          skippedCount++;
         }
       }
       

@@ -131,7 +131,11 @@ export const privacyStatusSchema = z.object({
   platform: SupportedPlatform,
   contentId: z.string(),
   originalStatus: z.string(),
-  timestamp: z.number()
+  currentStatus: z.string(),
+  wasHiddenByUser: z.boolean().default(false), // Was already hidden before our app touched it
+  isLockedByUser: z.boolean().default(false), // User manually locked this post
+  timestamp: z.number(),
+  lastModified: z.number().optional()
 });
 
 export type PrivacyStatus = z.infer<typeof privacyStatusSchema>;
