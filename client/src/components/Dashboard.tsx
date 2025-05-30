@@ -10,9 +10,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key, ExternalLink, Youtube, Instagram } from "lucide-react";
+import { AlertCircle, Clock, Facebook, FileText, Globe, Lock, Unlock, Key, ExternalLink, Youtube, Instagram, Crown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import AccountStatus from "./AccountStatus";
+import PremiumFeature from "./PremiumFeature";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import YouTubeAuth from "@/components/YouTubeAuth";
@@ -32,6 +34,9 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-4">
+      {/* Account Status Section */}
+      <AccountStatus />
+      
       {/* YouTube Integration Section - Always visible */}
       <Card className="w-full">
         <CardHeader>
@@ -49,18 +54,23 @@ const Dashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Facebook Section */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Facebook className="mr-2 h-5 w-5 text-[#1877F2]" />
-            פייסבוק
-          </CardTitle>
-          <CardDescription>
-            נהל פוסטים ועמודים בפייסבוק
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Facebook Section - Premium Only */}
+      <PremiumFeature 
+        featureName="פייסבוק" 
+        description="נהל פוסטים ועמודים בפייסבוק - הסתר והצג תוכן בזמן שבת"
+        icon={<Facebook className="h-5 w-5 text-[#1877F2]" />}
+      >
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Facebook className="mr-2 h-5 w-5 text-[#1877F2]" />
+              פייסבוק
+            </CardTitle>
+            <CardDescription>
+              נהל פוסטים ועמודים בפייסבוק
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
           {!isAuthenticated ? (
             <div className="text-center">
               <Alert className="mb-4">
@@ -161,24 +171,31 @@ const Dashboard = () => {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </PremiumFeature>
 
-      {/* Instagram Section */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Instagram className="mr-2 h-5 w-5 text-pink-600" />
-            אינסטגרם
-          </CardTitle>
-          <CardDescription>
-            נהל פוסטים באינסטגרם
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InstagramAuth />
-          <InstagramPosts />
-        </CardContent>
-      </Card>
+      {/* Instagram Section - Premium Only */}
+      <PremiumFeature 
+        featureName="אינסטגרם" 
+        description="נהל פוסטים באינסטגרם - הסתר והצג תוכן בזמן שבת"
+        icon={<Instagram className="h-5 w-5 text-pink-600" />}
+      >
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Instagram className="mr-2 h-5 w-5 text-pink-600" />
+              אינסטגרם
+            </CardTitle>
+            <CardDescription>
+              נהל פוסטים באינסטגרם
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InstagramAuth />
+            <InstagramPosts />
+          </CardContent>
+        </Card>
+      </PremiumFeature>
     </div>
   );
 };
