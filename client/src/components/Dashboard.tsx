@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Youtube, Facebook, Instagram, Crown } from "lucide-react";
 import AccountStatus from "./AccountStatus";
 import PremiumFeature from "./PremiumFeature";
+import FacebookSection from "./FacebookSection";
 import YouTubeAuth from "@/components/YouTubeAuth";
 import YouTubeVideos from "@/components/YouTubeVideos";
 
@@ -37,10 +38,10 @@ const Dashboard = () => {
       {/* Facebook Section - Premium Only */}
       <PremiumFeature 
         featureName="פייסבוק" 
-        description="נהל פוסטים ועמודים בפייסבוק - הסתר והצג תוכן בזמן שבת"
+        description="נהל פוסטים ועמודים בפייסבוק - הסתר והצג תוכן בזמת שבת"
         icon={<Facebook className="h-5 w-5 text-[#1877F2]" />}
       >
-        <div></div>
+        <FacebookSection />
       </PremiumFeature>
 
       {/* Instagram Section - Premium Only */}

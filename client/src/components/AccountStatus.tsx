@@ -41,10 +41,16 @@ export default function AccountStatus() {
   };
 
   const handleUpgrade = () => {
-    toast({
-      title: "שדרוג לפרימיום",
-      description: "תכונה זו תהיה זמינה בקרוב עם אינטגרציית Stripe",
-    });
+    // Demo upgrade - simulate successful payment
+    if (user) {
+      const upgradedUser = { ...user, accountType: 'premium' as const };
+      setUser(upgradedUser);
+      localStorage.setItem('shabbat-robot-user', JSON.stringify(upgradedUser));
+      toast({
+        title: "שדרוג הושלם בהצלחה!",
+        description: "ברוך הבא לחשבון פרימיום. כעת יש לך גישה לכל הרשתות החברתיות",
+      });
+    }
   };
 
   if (!user) {

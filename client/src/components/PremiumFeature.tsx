@@ -36,10 +36,21 @@ export default function PremiumFeature({
   }, []);
 
   const handleUpgrade = () => {
-    toast({
-      title: "שדרוג נדרש",
-      description: `${featureName} זמין רק לחשבונות פרימיום`,
-    });
+    // Demo upgrade - simulate successful payment
+    if (user) {
+      const upgradedUser = { ...user, accountType: 'premium' as const };
+      setUser(upgradedUser);
+      localStorage.setItem('shabbat-robot-user', JSON.stringify(upgradedUser));
+      toast({
+        title: "שדרוג הושלם בהצלחה!",
+        description: `כעת יש לך גישה ל${featureName} ולכל הרשתות החברתיות`,
+      });
+    } else {
+      toast({
+        title: "שדרוג נדרש",
+        description: `${featureName} זמין רק לחשבונות פרימיום`,
+      });
+    }
   };
 
   // If user is premium, show the feature
