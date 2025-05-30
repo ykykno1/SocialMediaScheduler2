@@ -135,3 +135,74 @@ export const privacyStatusSchema = z.object({
 });
 
 export type PrivacyStatus = z.infer<typeof privacyStatusSchema>;
+
+// User account schemas
+export const userSchema = z.object({
+  id: z.string(), // UUID
+  email: z.string().email(),
+  username: z.string().min(3).max(50),
+  password: z.string().optional(), // Optional for Google auth users
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  profileImageUrl: z.string().optional(),
+  accountType: z.enum(['free', 'premium']).default('free'),
+  subscriptionId: z.string().optional(), // Stripe subscription ID
+  location: z.object({
+    city: z.string(),
+    country: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    timezone: z.string()
+  }).optional(),
+  shabbatSettings: z.object({
+    autoHide: z.boolean().default(false),
+    candleLightingOffset: z.number().default(-18), // minutes before sunset
+    havdalahOffset: z.number().default(42), // minutes after sunset
+    enabledPlatforms: z.array(SupportedPlatform).default([])
+  }).optional(),
+  googleId: z.string().optional(), // For Google OAuth
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+  lastLogin: z.date().optional()
+});
+
+export type User = z.infer<typeof userSchema>;
+
+// Insert schemas
+export const insertUserSchema = userSchema.omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// Login schemas
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6)
+});
+
+export type LoginData = z.infer<typeof loginSchema>;
+
+// Registration schema
+export const registerSchema = z.object({
+  email: z.string().email(),
+  username: z.string().min(3).max(50),
+  password: z.string().min(6),
+  firstName: z.string().optional(),
+  lastName: z.string().optional()
+});
+
+export type RegisterData = z.infer<typeof registerSchema>;
+
+// Shabbat times schema
+export const shabbatTimesSchema = z.object({
+  date: z.string(),
+  candleLighting: z.string(), // ISO datetime
+  havdalah: z.string(), // ISO datetime
+  location: z.string(),
+  timezone: z.string()
+});
+
+export type ShabbatTimes = z.infer<typeof shabbatTimesSchema>;
