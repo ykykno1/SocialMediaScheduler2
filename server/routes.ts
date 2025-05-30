@@ -692,9 +692,18 @@ export function registerRoutes(app: Express): Server {
       const domain = req.headers.host;
       const redirectUri = `https://${domain}/auth-callback.html`;
       
-      // Try Instagram Basic Display API (simpler approach)
-      const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile,user_media&response_type=code&state=instagram_basic`;
+      // Check if Instagram app ID is configured
+      if (!process.env.FACEBOOK_APP_ID) {
+        return res.status(400).json({ 
+          error: "Instagram app not configured",
+          message: "לא הוגדר App ID לאינסטגרם"
+        });
+      }
       
+      // Try with minimal scopes first
+      const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user_profile&response_type=code&state=instagram_basic`;
+      
+      console.log("Generated Instagram auth URL:", instagramAuthUrl);
       res.json({ authUrl: instagramAuthUrl });
     } catch (error) {
       console.error("Instagram auth error:", error);
