@@ -2,7 +2,12 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
-import { type FacebookPost, SupportedPlatform } from "@shared/schema";
+import { 
+  type FacebookPost, 
+  SupportedPlatform,
+  registerSchema,
+  loginSchema
+} from "@shared/schema";
 import { registerFacebookPagesRoutes } from "./facebook-pages";
 import { registerYouTubeRoutes } from "./youtube-videos";
 
@@ -1108,6 +1113,129 @@ export function registerRoutes(app: Express): Server {
     });
   });
   
+  // User authentication routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const userData = registerSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = storage.getUserByEmail(userData.email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User already exists with this email" });
+      }
+      
+      const user = storage.createUser(userData);
+      
+      // Don't return password in response
+      const { password, ...userResponse } = user;
+      
+      res.status(201).json({
+        success: true,
+        user: userResponse
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(400).json({ error: "Invalid registration data" });
+    }
+  });
+  
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = loginSchema.parse(req.body);
+      
+      const user = storage.verifyPassword(email, password);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+      
+      // Update last login
+      const updatedUser = storage.updateUser(user.id, { lastLogin: new Date() });
+      
+      // Don't return password in response
+      const { password: _, ...userResponse } = updatedUser;
+      
+      res.json({
+        success: true,
+        user: userResponse
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(400).json({ error: "Invalid login data" });
+    }
+  });
+  
+  app.get("/api/auth/user/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = storage.getUserById(id);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Don't return password in response
+      const { password, ...userResponse } = user;
+      
+      res.json(userResponse);
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  app.put("/api/auth/user/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Don't allow updating password through this endpoint
+      delete updates.password;
+      delete updates.id;
+      
+      const updatedUser = storage.updateUser(id, updates);
+      
+      // Don't return password in response
+      const { password, ...userResponse } = updatedUser;
+      
+      res.json({
+        success: true,
+        user: userResponse
+      });
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(400).json({ error: "Failed to update user" });
+    }
+  });
+  
+  // Shabbat times route
+  app.get("/api/shabbat-times", async (req, res) => {
+    try {
+      const { latitude, longitude } = req.query;
+      
+      if (!latitude || !longitude) {
+        return res.status(400).json({ error: "Latitude and longitude are required" });
+      }
+      
+      const lat = parseFloat(latitude as string);
+      const lng = parseFloat(longitude as string);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ error: "Invalid coordinates" });
+      }
+      
+      const shabbatTimes = await storage.getShabbatTimes(lat, lng);
+      
+      if (!shabbatTimes) {
+        return res.status(404).json({ error: "Could not fetch Shabbat times for this location" });
+      }
+      
+      res.json(shabbatTimes);
+    } catch (error) {
+      console.error("Shabbat times error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
