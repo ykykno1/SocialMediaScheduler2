@@ -4,13 +4,14 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import LoginPage from "@/pages/login";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
 import { Button } from "@/components/ui/button";
-import { Home, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
+import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Custom navbar component directly in App.tsx
@@ -32,6 +33,11 @@ function Navbar() {
       label: "היסטוריה",
       href: "/history",
       icon: <HistoryIcon className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "כניסה",
+      href: "/login",
+      icon: <LogIn className="h-4 w-4 mr-2" />,
     },
   ];
 
@@ -71,6 +77,7 @@ function Router() {
       <main className="flex-1 py-4">
         <Switch>
           <Route path="/" component={Dashboard} />
+          <Route path="/login" component={LoginPage} />
           <Route path="/settings" component={Settings} />
           <Route path="/history" component={History} />
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
