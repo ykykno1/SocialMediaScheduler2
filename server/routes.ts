@@ -698,8 +698,8 @@ export function registerRoutes(app: Express): Server {
 
       console.log("Testing Instagram token...");
       
-      // Test the token with Instagram API
-      const testResponse = await fetch(`https://graph.facebook.com/v18.0/me?access_token=${token}&fields=id,name,account_type`);
+      // Test the token with Facebook API first
+      const testResponse = await fetch(`https://graph.facebook.com/v18.0/me?access_token=${token}&fields=id,name`);
       
       if (!testResponse.ok) {
         const errorData = await testResponse.json();
@@ -714,14 +714,15 @@ export function registerRoutes(app: Express): Server {
       console.log("Instagram token test successful:", userData);
       
       // Save the Instagram token
-      storage.saveAuthToken('instagram', {
+      const authData = {
         accessToken: token,
         expiresIn: 7200, // 2 hours for testing
         timestamp: Date.now(),
         additionalData: {
           user: userData
         }
-      });
+      };
+      storage.saveAuthToken('instagram', authData);
 
       res.json({
         success: true,
