@@ -7,6 +7,8 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
+import PrivacyPolicyPage from "@/pages/privacy-policy";
+import DataDeletionPage from "@/pages/data-deletion";
 import { Button } from "@/components/ui/button";
 import { Home, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -71,6 +73,8 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/settings" component={Settings} />
           <Route path="/history" component={History} />
+          <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+          <Route path="/data-deletion" component={DataDeletionPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
