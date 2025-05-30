@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import YouTubeAuth from "@/components/YouTubeAuth";
 import YouTubeVideos from "@/components/YouTubeVideos";
 import { InstagramAuth } from "@/components/InstagramAuth";
-import { InstagramPosts } from "@/components/InstagramPosts";
+import InstagramPosts from "@/components/InstagramPosts";
 
 const Dashboard = () => {
   const { isAuthenticated, isAuthenticating, login, logout, isLoggingOut, pageAccess } = useFacebookAuth();

@@ -735,6 +735,56 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: "שגיאה פנימית" });
     }
   });
+
+  // Instagram posts endpoint
+  app.get("/api/instagram/posts", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('instagram');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with Instagram" });
+      }
+
+      console.log("Fetching Instagram media...");
+      
+      // Get Instagram Business Account ID first
+      const accountResponse = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${auth.accessToken}`);
+      
+      if (!accountResponse.ok) {
+        const errorData = await accountResponse.json();
+        console.error("Failed to get Instagram accounts:", errorData);
+        return res.status(500).json({ error: "Failed to fetch Instagram accounts" });
+      }
+
+      const accountData = await accountResponse.json();
+      console.log("Instagram account data:", accountData);
+
+      // Try to get Instagram media directly from user
+      const mediaResponse = await fetch(`https://graph.facebook.com/v18.0/me?fields=id,name&access_token=${auth.accessToken}`);
+      
+      if (!mediaResponse.ok) {
+        const errorData = await mediaResponse.json();
+        console.error("Failed to get Instagram media:", errorData);
+        return res.status(500).json({ error: "Failed to fetch Instagram media" });
+      }
+
+      const mediaData = await mediaResponse.json();
+      console.log("Instagram media data:", mediaData);
+
+      // For now, return basic info since we need proper Instagram Business Account setup
+      res.json([{
+        id: mediaData.id,
+        caption: "חשבון אינסטגרם מחובר",
+        timestamp: new Date().toISOString(),
+        media_type: "IMAGE",
+        permalink: "#"
+      }]);
+
+    } catch (error) {
+      console.error("Instagram posts error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
   
   app.get("/api/instagram/auth", async (req, res) => {
     try {
