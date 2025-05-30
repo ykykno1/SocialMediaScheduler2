@@ -389,10 +389,21 @@ export const registerYouTubeRoutes = (app: Express): void => {
         }
       }
       
+      // Add history entry
+      storage.addHistoryEntry({
+        platform: 'youtube',
+        action: 'hide',
+        affectedItems: hiddenCount,
+        success: true,
+        timestamp: new Date()
+      });
+
       res.json({ 
         success: true, 
         hiddenCount,
-        message: `${hiddenCount} videos hidden` 
+        skippedCount,
+        totalVideos: videos.length,
+        message: `${hiddenCount} סרטונים הוסתרו, ${skippedCount} נדלגו` 
       });
       
     } catch (error) {
@@ -449,34 +460,81 @@ export const registerYouTubeRoutes = (app: Express): void => {
         maxResults: 50
       });
       
-      const videos = videosResponse.data.items || [];
-      let restoredCount = 0;
+      const videoItems = videosResponse.data.items || [];
       
-      // Restore each private video to public
-      for (const item of videos) {
-        const videoId = item.snippet?.resourceId?.videoId;
-        if (videoId) {
-          try {
-            await youtube.videos.update({
-              part: ['status'],
-              requestBody: {
-                id: videoId,
-                status: {
-                  privacyStatus: 'public'
+      // Get detailed video info including privacy status
+      const videoIds = videoItems.map(item => item.snippet?.resourceId?.videoId).filter(Boolean) as string[];
+      const videosDetails = await youtube.videos.list({
+        part: ['snippet', 'status'],
+        id: videoIds
+      });
+      
+      const videos = videosDetails.data.items || [];
+      let restoredCount = 0;
+      let skippedCount = 0;
+      
+      // Restore videos based on their original state
+      for (const video of videos) {
+        const videoId = video.id!;
+        const currentStatus = video.status?.privacyStatus || 'public';
+        
+        // Get saved privacy status
+        const privacyStatus = storage.getPrivacyStatus('youtube', videoId);
+        
+        if (privacyStatus) {
+          // Only restore if:
+          // 1. Video is currently private
+          // 2. It wasn't originally private (wasHiddenByUser = false)
+          // 3. It's not locked by user
+          const shouldRestore = currentStatus === 'private' && 
+                               !privacyStatus.wasHiddenByUser && 
+                               !privacyStatus.isLockedByUser;
+          
+          if (shouldRestore) {
+            try {
+              await youtube.videos.update({
+                part: ['status'],
+                requestBody: {
+                  id: videoId,
+                  status: {
+                    privacyStatus: privacyStatus.originalStatus as any
+                  }
                 }
-              }
-            });
-            restoredCount++;
-          } catch (videoError) {
-            console.error(`Failed to restore video ${videoId}:`, videoError);
+              });
+              
+              // Update current status
+              storage.updatePrivacyStatus('youtube', videoId, {
+                currentStatus: privacyStatus.originalStatus
+              });
+              
+              restoredCount++;
+            } catch (videoError) {
+              console.error(`Failed to restore video ${videoId}:`, videoError);
+            }
+          } else {
+            skippedCount++;
           }
+        } else if (currentStatus === 'private') {
+          // Video with no saved state - skip it (was probably private before we touched it)
+          skippedCount++;
         }
       }
       
+      // Add history entry
+      storage.addHistoryEntry({
+        platform: 'youtube',
+        action: 'restore',
+        affectedItems: restoredCount,
+        success: true,
+        timestamp: new Date()
+      });
+
       res.json({ 
         success: true, 
         restoredCount,
-        message: `${restoredCount} videos restored` 
+        skippedCount,
+        totalVideos: videos.length,
+        message: `${restoredCount} סרטונים שוחזרו, ${skippedCount} נדלגו` 
       });
       
     } catch (error) {
