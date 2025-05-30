@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Instagram, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Instagram, ExternalLink, EyeOff, Eye } from "lucide-react";
 import useInstagramPosts from "@/hooks/useInstagramPosts";
 
 export default function InstagramPosts() {
-  const { data: posts, isLoading, error } = useInstagramPosts();
+  const { data: posts, isLoading, error, hidePosts, isHiding, restorePosts, isRestoring } = useInstagramPosts();
 
   if (isLoading) {
     return (
@@ -67,8 +68,46 @@ export default function InstagramPosts() {
           <Instagram className="h-5 w-5" />
           פוסטים באינסטגרם
         </CardTitle>
-        <CardDescription>
-          {posts.length} פוסטים זמינים
+        <CardDescription className="flex items-center justify-between">
+          <span>{posts.length} פוסטים זמינים</span>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => hidePosts()}
+              disabled={isHiding || isRestoring}
+              size="sm"
+              variant="outline"
+            >
+              {isHiding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  מסתיר...
+                </>
+              ) : (
+                <>
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  הסתר הכל
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={() => restorePosts()}
+              disabled={isHiding || isRestoring}
+              size="sm"
+              variant="outline"
+            >
+              {isRestoring ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  משחזר...
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  שחזר הכל
+                </>
+              )}
+            </Button>
+          </div>
         </CardDescription>
       </CardHeader>
       <CardContent>
