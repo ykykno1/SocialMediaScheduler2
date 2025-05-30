@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Eye, EyeOff, RefreshCw, Youtube, AlertCircle } from "lucide-react";
 import useYouTubeVideos from '@/hooks/useYouTubeVideos';
+import ContentLockButton from './ContentLockButton';
 import { formatDistanceToNow } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 
@@ -186,6 +187,7 @@ const YouTubeVideos = () => {
                   <TableHead>סרטון</TableHead>
                   <TableHead>פרסום</TableHead>
                   <TableHead>תאריך פרסום</TableHead>
+                  <TableHead>מנעול</TableHead>
                   <TableHead>פעולות</TableHead>
                 </TableRow>
               </TableHeader>
@@ -233,6 +235,13 @@ const YouTubeVideos = () => {
                         addSuffix: true,
                         locale: he
                       })}
+                    </TableCell>
+                    <TableCell>
+                      <ContentLockButton 
+                        platform="youtube" 
+                        contentId={video.id}
+                        size="sm"
+                      />
                     </TableCell>
                     <TableCell>
                       {video.privacyStatus === "public" ? (
