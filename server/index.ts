@@ -44,7 +44,7 @@ app.use((req, res, next) => {
   // Auto-setup Instagram token
   const { storage } = await import("./storage");
   
-  const INSTAGRAM_TOKEN = "EAAWtnDD3MFgBOzmzKeUlAl58CxZBJCcJrB69lLbPNkf0I54wqTHssELlWaxErhH9kt0zsZBgWvMN8ZBakjqZCnrXZAdAf1wPgYuHZAdwYmmmhHmBTX2IMsM7eqkRNbZA5Bx5YvMkL86AygoR2UVEMnkIYVZCyZAEQWAFfPySZBzQdTUNgZC3SKetw33CIjZAJ3xKzFtaFqsoZCMwZBHzZAvHCMZBom71XpgS0gZDZD";
+  const INSTAGRAM_TOKEN = "EAAWtnDD3MFgBO88vrSIDAsRkYte02YZB7Vwav5QA3jyMPYrFTGXOa99tqbhperJhaq7ddUNwJXUWdZBfc7ZB87qKlZAKwWRV0DO7Vq2QFkJ4wQa5qR9nqgSCZAfkV9sd4qjaNIshTY9tROeRAhpNOMWG9S0w60WOsoD6Bzokq9aZCWuTJZAZAkVkfSZAiUBZCJ1nDcIyfOggWPxlJt4K1wwDkmQRxgNsOZAuW4v4ZBYRsGkJwgDfjpiGsWzebrjTZAVDf";
 
   try {
     if (!storage.getAuthToken('instagram')) {
