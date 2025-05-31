@@ -143,6 +143,15 @@ const YouTubeVideos = () => {
         <CardDescription>ניהול הסרטונים בערוץ YouTube שלך</CardDescription>
       </CardHeader>
       <CardContent>
+        <Alert className="mb-4 bg-blue-50 border-blue-200">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-800">הגנה על תוכן קיים</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            סרטונים שהיו פרטיים כבר מלכתחילה מסומנים כ"מוסתר מלכתחילה" ולא ישוחזרו אוטומטית.
+            ניתן לנעול סרטונים נוספים כדי למנוע שחזור אוטומטי בסוף שבת.
+          </AlertDescription>
+        </Alert>
+        
         <div className="flex justify-between mb-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
@@ -240,6 +249,7 @@ const YouTubeVideos = () => {
                       <ContentLockButton 
                         platform="youtube" 
                         contentId={video.id}
+                        currentPrivacyStatus={video.privacyStatus}
                         size="sm"
                       />
                     </TableCell>
