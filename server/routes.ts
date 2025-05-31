@@ -1286,6 +1286,59 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Create demo user endpoint
+  app.post('/api/create-demo-user', async (req, res) => {
+    try {
+      // Create demo user with fixed credentials
+      const demoUser = {
+        email: 'demo@shabbat-robot.com',
+        username: 'demo',
+        password: '123456',
+        firstName: 'משתמש',
+        lastName: 'דמו'
+      };
+      
+      // Check if demo user already exists
+      const existingUser = storage.getUserByEmail(demoUser.email);
+      if (existingUser) {
+        // User exists, just return success
+        res.json({ 
+          success: true, 
+          user: {
+            id: existingUser.id,
+            email: existingUser.email,
+            username: existingUser.username,
+            firstName: existingUser.firstName,
+            lastName: existingUser.lastName,
+            accountType: existingUser.accountType
+          },
+          message: 'משתמש דמו קיים כבר' 
+        });
+        return;
+      }
+      
+      // Create new demo user
+      const user = storage.createUser(demoUser);
+      
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          accountType: user.accountType
+        },
+        message: 'משתמש דמו נוצר בהצלחה' 
+      });
+      
+    } catch (error) {
+      console.error('Error creating demo user:', error);
+      res.status(500).json({ error: 'Failed to create demo user' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
