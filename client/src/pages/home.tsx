@@ -120,8 +120,8 @@ export default function HomePage() {
         setSubscription(sub);
       }
 
-      // Load Shabbat times
-      const timesResponse = await apiRequest('GET', '/api/shabbat-times');
+      // Load Shabbat times with default location (Jerusalem)
+      const timesResponse = await apiRequest('GET', '/api/shabbat-times?latitude=31.7683&longitude=35.2137');
       if (timesResponse.ok) {
         const times = await timesResponse.json();
         setShabbatTimes(times);
@@ -151,6 +151,30 @@ export default function HomePage() {
       toast({
         title: 'פלטפורמה לא נתמכת',
         description: `${platform} עדיין לא נתמך`,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDisconnectPlatform = async (platform: string) => {
+    if (!window.confirm(`האם אתה בטוח שברצונך להתנתק מ${getPlatformName(platform)}?`)) {
+      return;
+    }
+
+    try {
+      const response = await apiRequest('POST', `/api/${platform}/logout`);
+      if (response.ok) {
+        toast({
+          title: 'התנתקות הצליחה',
+          description: `התנתקת בהצלחה מ${getPlatformName(platform)}`,
+        });
+        // Reload data to update UI
+        loadUserData();
+      }
+    } catch (error: any) {
+      toast({
+        title: 'שגיאה בהתנתקות',
+        description: error.message || 'שגיאה לא ידועה',
         variant: 'destructive'
       });
     }
@@ -317,11 +341,21 @@ export default function HomePage() {
                                   <div className="text-xs text-gray-600">
                                     {connectedAccount?.platformUsername}
                                   </div>
-                                  <Link href={`/platform/${platform}`}>
-                                    <Button size="sm" variant="outline" className="text-xs">
-                                      נהל תוכן
+                                  <div className="flex flex-col space-y-1">
+                                    <Link href={`/platform/${platform}`}>
+                                      <Button size="sm" variant="outline" className="text-xs w-full">
+                                        נהל תוכן
+                                      </Button>
+                                    </Link>
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
+                                      onClick={() => handleDisconnectPlatform(platform)}
+                                    >
+                                      התנתק
                                     </Button>
-                                  </Link>
+                                  </div>
                                 </div>
                               ) : (
                                 <Button 
