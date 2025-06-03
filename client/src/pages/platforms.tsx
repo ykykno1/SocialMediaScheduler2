@@ -235,7 +235,7 @@ export default function PlatformsPage() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="w-full"
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                           onClick={() => handleDisconnect(platform.platform)}
                         >
                           נתק חשבון

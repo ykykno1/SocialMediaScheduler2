@@ -89,7 +89,7 @@ export default function HomePage() {
             }
           }
         } catch (error) {
-          console.error(`Failed to check ${platform} auth:`, error);
+          // Silent fail for platforms that aren't connected
         }
       }
       
@@ -128,7 +128,7 @@ export default function HomePage() {
       }
 
     } catch (error) {
-      console.error('Failed to load user data:', error);
+      // Silent fail for initial load
     } finally {
       setIsLoading(false);
     }
@@ -257,6 +257,32 @@ export default function HomePage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Shabbat Times Banner */}
+        {shabbatTimes && (
+          <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+            <CardContent className="p-4">
+              <div className="text-center space-y-2">
+                <h2 className="text-lg font-semibold text-purple-900">
+                  שבת פרשת נשא, י"א בסיוון ה'תשפ"ה
+                </h2>
+                <div className="flex justify-center items-center space-x-8 space-x-reverse text-sm">
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <Calendar className="h-4 w-4 text-purple-600" />
+                    <span className="text-purple-800">כניסת שבת:</span>
+                    <span className="font-semibold text-purple-900">{shabbatTimes.candleLighting}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <Clock className="h-4 w-4 text-purple-600" />
+                    <span className="text-purple-800">צאת השבת:</span>
+                    <span className="font-semibold text-purple-900">{shabbatTimes.havdalah}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Main Content */}
