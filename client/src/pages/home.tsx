@@ -70,48 +70,13 @@ export default function HomePage() {
       const parsedUser = JSON.parse(userData) as User;
       setUser(parsedUser);
 
-      // Check existing auth tokens using the original system
-      const platforms = ['youtube', 'facebook', 'instagram'];
-      const connectedPlatforms = [];
-      
-      for (const platform of platforms) {
-        try {
-          const response = await apiRequest('GET', `/api/${platform}/auth-status`);
-          if (response.ok) {
-            const status = await response.json();
-            if (status.isAuthenticated) {
-              connectedPlatforms.push({
-                id: platform,
-                platform,
-                platformUsername: status.platformUsername || status.username || 'Connected',
-                isActive: true
-              });
-            }
-          }
-        } catch (error) {
-          // Silent fail for platforms that aren't connected
-        }
+      // Load connected accounts
+      const accountsResponse = await apiRequest('GET', `/api/users/${parsedUser.id}/connected-accounts`);
+      if (accountsResponse.ok) {
+        const accounts = await accountsResponse.json();
+        setConnectedAccounts(accounts);
+        setEnabledPlatforms(accounts.map((acc: ConnectedAccount) => acc.platform));
       }
-      
-      // Convert to proper ConnectedAccount format
-      const properConnectedAccounts = connectedPlatforms.map(platform => ({
-        id: platform.id,
-        userId: parsedUser.id,
-        platform: platform.platform as any,
-        platformUserId: platform.id,
-        platformUsername: platform.platformUsername,
-        profilePictureUrl: undefined,
-        accessToken: 'connected',
-        refreshToken: undefined,
-        expiresAt: undefined,
-        isActive: platform.isActive,
-        lastSync: undefined,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }));
-      
-      setConnectedAccounts(properConnectedAccounts);
-      setEnabledPlatforms(properConnectedAccounts.map(acc => acc.platform));
 
       // Load subscription
       const subResponse = await apiRequest('GET', `/api/users/${parsedUser.id}/subscription`);
@@ -120,15 +85,15 @@ export default function HomePage() {
         setSubscription(sub);
       }
 
-      // Load Shabbat times with default location (Jerusalem)
-      const timesResponse = await apiRequest('GET', '/api/shabbat-times?latitude=31.7683&longitude=35.2137');
+      // Load Shabbat times
+      const timesResponse = await apiRequest('GET', '/api/shabbat-times');
       if (timesResponse.ok) {
         const times = await timesResponse.json();
         setShabbatTimes(times);
       }
 
     } catch (error) {
-      // Silent fail for initial load
+      console.error('Failed to load user data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -139,81 +104,9 @@ export default function HomePage() {
     setLocation('/login');
   };
 
-  const handleConnectPlatform = async (platform: string) => {
-    try {
-      if (platform === 'youtube') {
-        // Get auth URL from server and redirect to Google
-        const response = await apiRequest('GET', '/api/youtube/auth');
-        if (response.ok) {
-          const data = await response.json();
-          window.location.href = data.authUrl;
-        } else {
-          throw new Error('Failed to get YouTube auth URL');
-        }
-      } else if (platform === 'facebook') {
-        // Get auth URL from server and redirect to Facebook
-        const response = await apiRequest('GET', '/api/facebook/auth');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authUrl) {
-            window.location.href = data.authUrl;
-          } else {
-            window.location.href = '/api/facebook/auth';
-          }
-        } else {
-          throw new Error('Failed to get Facebook auth URL');
-        }
-      } else if (platform === 'instagram') {
-        // Get auth URL from server and redirect to Instagram
-        const response = await apiRequest('GET', '/api/instagram/auth');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authUrl) {
-            window.location.href = data.authUrl;
-          } else {
-            window.location.href = '/api/instagram/auth';
-          }
-        } else {
-          throw new Error('Failed to get Instagram auth URL');
-        }
-      } else {
-        toast({
-          title: 'פלטפורמה לא נתמכת',
-          description: `${platform} עדיין לא נתמך`,
-          variant: 'destructive'
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: 'שגיאה בחיבור',
-        description: error.message || 'שגיאה לא ידועה',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleDisconnectPlatform = async (platform: string) => {
-    if (!window.confirm(`האם אתה בטוח שברצונך להתנתק מ${getPlatformName(platform)}?`)) {
-      return;
-    }
-
-    try {
-      const response = await apiRequest('POST', `/api/${platform}/logout`);
-      if (response.ok) {
-        toast({
-          title: 'התנתקות הצליחה',
-          description: `התנתקת בהצלחה מ${getPlatformName(platform)}`,
-        });
-        // Reload data to update UI
-        loadUserData();
-      }
-    } catch (error: any) {
-      toast({
-        title: 'שגיאה בהתנתקות',
-        description: error.message || 'שגיאה לא ידועה',
-        variant: 'destructive'
-      });
-    }
+  const handleConnectPlatform = (platform: string) => {
+    // This will redirect to the platform's OAuth flow
+    setLocation(`/platforms/${platform}`);
   };
 
   const togglePlatform = (platform: string, enabled: boolean) => {
@@ -377,21 +270,11 @@ export default function HomePage() {
                                   <div className="text-xs text-gray-600">
                                     {connectedAccount?.platformUsername}
                                   </div>
-                                  <div className="flex flex-col space-y-1">
-                                    <Link href={`/platform/${platform}`}>
-                                      <Button size="sm" variant="outline" className="text-xs w-full">
-                                        נהל תוכן
-                                      </Button>
-                                    </Link>
-                                    <Button 
-                                      size="sm" 
-                                      variant="ghost" 
-                                      className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 w-full"
-                                      onClick={() => handleDisconnectPlatform(platform)}
-                                    >
-                                      התנתק
+                                  <Link href={`/platform/${platform}`}>
+                                    <Button size="sm" variant="outline" className="text-xs">
+                                      נהל תוכן
                                     </Button>
-                                  </div>
+                                  </Link>
                                 </div>
                               ) : (
                                 <Button 
@@ -472,79 +355,53 @@ export default function HomePage() {
               </Card>
             )}
 
+            {/* No Connected Accounts */}
+            {connectedAccounts.length === 0 && (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    התחל על ידי חיבור חשבון
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    חבר לפחות חשבון אחד ברשתות החברתיות כדי להפעיל את מצב השבת
+                  </p>
+                  <Button onClick={() => handleConnectPlatform('youtube')}>
+                    <Youtube className="h-4 w-4 mr-2" />
+                    חבר YouTube
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
             
-            {/* Shabbat Times */}
-            {shabbatTimes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-right flex items-center">
-                    <Calendar className="h-5 w-5 ml-2" />
-                    זמני שבת
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-center">
-                    <h3 className="font-medium text-sm mb-2">שבת פרשת נשא</h3>
-                    <p className="text-xs text-gray-600">י"א בסיוון ה'תשפ"ה</p>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">הדלקת נרות:</span>
-                      <div className="flex items-center text-sm">
-                        <Clock className="h-3 w-3 ml-1" />
-                        {new Date(shabbatTimes.candleLighting).toLocaleTimeString('he-IL', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">הבדלה:</span>
-                      <div className="flex items-center text-sm">
-                        <Clock className="h-3 w-3 ml-1" />
-                        {new Date(shabbatTimes.havdalah).toLocaleTimeString('he-IL', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Subscription Status */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-right">סטטוס מנוי</CardTitle>
+                <CardTitle className="text-right text-sm">מנוי</CardTitle>
               </CardHeader>
               <CardContent>
                 {subscription ? (
                   <div className="space-y-2">
                     <Badge className="bg-green-100 text-green-800">
-                      {subscription.plan === 'youtube_only' ? 'YouTube בלבד' : 'כל הרשתות'}
+                      פעיל
                     </Badge>
-                    <p className="text-sm text-gray-600">
-                      ₪{subscription.price} לחודש
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      מנוי פעיל עד {subscription.endDate && new Date(subscription.endDate).toLocaleDateString('he-IL')}
+                    <p className="text-xs text-gray-600">
+                      {subscription.planType} - {subscription.status}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm text-gray-600">לא פעיל</p>
+                    <p className="text-sm text-gray-600">
+                      אין מנוי פעיל
+                    </p>
                     <Link href="/pricing">
                       <Button size="sm" className="w-full">
-                        שדרג למנוי פרימיום
+                        <Crown className="h-3 w-3 mr-2" />
+                        שדרג לפרימיום
                       </Button>
                     </Link>
                   </div>
@@ -552,6 +409,22 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right text-sm">סטטיסטיקות</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span>חשבונות מחוברים</span>
+                  <span className="font-medium">{connectedAccounts.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>פלטפורמות מופעלות</span>
+                  <span className="font-medium">{enabledPlatforms.length}</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
