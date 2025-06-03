@@ -37,9 +37,9 @@ export default function ContentLockButton({
   if (wasHidden || probablyOriginallyPrivate) {
     return (
       <div className="flex items-center space-x-1">
-        <Badge variant="secondary" className="bg-orange-500 text-white border-orange-600">
+        <Badge variant="secondary" className="bg-gray-500 text-white">
           <EyeOff className="h-3 w-3 mr-1" />
-          לא ישוחזר
+          מוסתר מלכתחילה
         </Badge>
       </div>
     );

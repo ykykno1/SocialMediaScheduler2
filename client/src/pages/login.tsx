@@ -9,7 +9,6 @@ import { UserPlus, LogIn, Calendar, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import GoogleAuth from "@/components/GoogleAuth";
 
 type LoginData = {
   email: string;
@@ -87,31 +86,6 @@ export default function LoginPage() {
       toast({
         title: "שגיאה ברישום",
         description: error.message || "לא ניתן ליצור את החשבון",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCreateDemoUser = async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiRequest("POST", "/api/create-demo-user");
-      const result = await response.json();
-      
-      if (result.success) {
-        localStorage.setItem('shabbat-robot-user', JSON.stringify(result.user));
-        toast({
-          title: "משתמש דמו נוצר!",
-          description: `ברוך הבא לשבת רובוט, ${result.user.firstName}`,
-        });
-        setLocation("/");
-      }
-    } catch (error: any) {
-      toast({
-        title: "שגיאה ביצירת משתמש דמו",
-        description: error.message || "לא ניתן ליצור משתמש דמו",
         variant: "destructive",
       });
     } finally {
@@ -218,35 +192,6 @@ export default function LoginPage() {
                       {isLoading ? "מתחבר..." : "התחבר"}
                     </Button>
                   </form>
-                  
-                  <div className="mt-4 pt-4 border-t space-y-3">
-                    <GoogleAuth 
-                      isLoading={isLoading} 
-                      onLoadingChange={setIsLoading}
-                    />
-                    
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">או</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="w-full" 
-                      disabled={isLoading}
-                      onClick={handleCreateDemoUser}
-                    >
-                      צור משתמש דמו
-                    </Button>
-                    <p className="text-xs text-gray-500 mt-2 text-center">
-                      ייצור משתמש עם הפרטים: demo@shabbat-robot.com / 123456
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -325,22 +270,6 @@ export default function LoginPage() {
                       {isLoading ? "נרשם..." : "הירשם עכשיו"}
                     </Button>
                   </form>
-                  
-                  <div className="mt-4 pt-4 border-t space-y-3">
-                    <GoogleAuth 
-                      isLoading={isLoading} 
-                      onLoadingChange={setIsLoading}
-                    />
-                    
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">או</span>
-                      </div>
-                    </div>
-                  </div>
                   
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-800 text-center">
