@@ -55,7 +55,8 @@ export const registerYouTubeRoutes = (app: Express): void => {
 
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
       
       const oauth2Client = new google.auth.OAuth2(
         clientId,
