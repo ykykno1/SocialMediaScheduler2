@@ -1,146 +1,155 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>רובוט שבת - אימות מתבצע</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f7f7f7;
-      direction: rtl;
-    }
-    .container {
-      text-align: center;
-      padding: 2rem;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      max-width: 500px;
-    }
-    h1 {
-      color: #4285f4;
-    }
-    .loader {
-      margin: 2rem auto;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #4285f4;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .error {
-      color: #ea4335;
-      margin-top: 1rem;
-      display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מתחבר לחשבון...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        .success {
+            color: #51cf66;
+            background: rgba(81, 207, 102, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>אימות מתבצע</h1>
-    <p>אנא המתן בזמן שאנחנו מסיימים את תהליך האימות...</p>
-    <div class="loader"></div>
-    <div class="error" id="error-message">
-      <p>אירעה שגיאה בתהליך האימות. אנא נסה שוב.</p>
+    <div class="container">
+        <div class="spinner"></div>
+        <div class="status" id="status">מתחבר לחשבון...</div>
+        <div id="message"></div>
     </div>
-  </div>
 
-  <script>
-    // Parse query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
-    const state = urlParams.get('state');
-    
-    if (code) {
-      // Check if this is YouTube or Facebook callback
-      if (state === 'facebook') {
-        processCallback('facebook');
-      } else {
-        // Assume YouTube if no state
-        processCallback('youtube');
-      }
-    } else if (error) {
-      // Show error
-      document.getElementById('error-message').style.display = 'block';
-      document.querySelector('.loader').style.display = 'none';
-      
-      // Send error message to parent
-      window.opener.postMessage({ error }, window.location.origin);
-      
-      // Close after a delay
-      setTimeout(() => {
-        window.close();
-      }, 3000);
-    }
-    
-    async function processCallback(platform) {
-      try {
-        // Get the redirect URI that was used
-        const redirectUri = window.location.href.split('?')[0];
-        
-        // Choose the correct endpoint based on platform
-        const endpoint = platform === 'youtube' ? '/api/youtube-auth-callback' : '/api/auth-callback';
-        
-        // Exchange code for token via the server
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            code,
-            redirectUri,
-            platform
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to exchange code for token');
+    <script>
+        async function handleAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+            const state = urlParams.get('state');
+            
+            const statusEl = document.getElementById('status');
+            const messageEl = document.getElementById('message');
+            
+            if (error) {
+                statusEl.textContent = 'החיבור נכשל';
+                messageEl.innerHTML = `<div class="error">שגיאה: ${error}</div>`;
+                setTimeout(() => {
+                    window.close();
+                    window.location.href = '/platform';
+                }, 3000);
+                return;
+            }
+            
+            if (!code) {
+                statusEl.textContent = 'קוד אימות חסר';
+                messageEl.innerHTML = '<div class="error">לא התקבל קוד אימות</div>';
+                setTimeout(() => {
+                    window.close();
+                    window.location.href = '/platform';
+                }, 3000);
+                return;
+            }
+            
+            try {
+                let platform = 'facebook';
+                if (state) {
+                    if (state.includes('youtube')) platform = 'youtube';
+                    else if (state.includes('instagram')) platform = 'instagram';
+                }
+                
+                statusEl.textContent = `מחבר ל${platform === 'youtube' ? 'יוטיוב' : platform === 'instagram' ? 'אינסטגרם' : 'פייסבוק'}...`;
+                
+                let endpoint = '/api/facebook/auth-callback';
+                if (platform === 'youtube') {
+                    endpoint = '/api/youtube-auth-callback';
+                } else if (platform === 'instagram') {
+                    endpoint = '/api/instagram/auth-callback';
+                }
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        redirectUri: window.location.origin + '/auth-callback.html'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.access_token) {
+                    statusEl.textContent = 'החיבור הושלם בהצלחה!';
+                    messageEl.innerHTML = '<div class="success">החשבון חובר בהצלחה. מעביר אותך לדף הפלטפורמות...</div>';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/platform';
+                    }, 2000);
+                } else {
+                    statusEl.textContent = 'החיבור נכשל';
+                    messageEl.innerHTML = `<div class="error">${result.error || 'שגיאה לא ידועה'}</div>`;
+                    setTimeout(() => {
+                        window.location.href = '/platform';
+                    }, 3000);
+                }
+                
+            } catch (error) {
+                console.error('Auth callback error:', error);
+                statusEl.textContent = 'שגיאת חיבור';
+                messageEl.innerHTML = '<div class="error">שגיאה בחיבור לשרת</div>';
+                setTimeout(() => {
+                    window.location.href = '/platform';
+                }, 3000);
+            }
         }
         
-        const data = await response.json();
-        
-        // Post message back to opener window
-        window.opener.postMessage({
-          platform: platform,
-          success: true,
-          ...data
-        }, window.location.origin);
-        
-        // Close this window after a short delay
-        setTimeout(() => {
-          window.close();
-        }, 1000);
-      } catch (error) {
-        console.error('Auth callback error:', error);
-        
-        // Show error message
-        document.getElementById('error-message').style.display = 'block';
-        document.querySelector('.loader').style.display = 'none';
-        
-        // Send error to parent
-        window.opener.postMessage({
-          error: error.message || 'Authentication failed'
-        }, window.location.origin);
-        
-        // Close after a delay
-        setTimeout(() => {
-          window.close();
-        }, 3000);
-      }
-    }
-  </script>
+        // Start the auth process when page loads
+        handleAuthCallback();
+    </script>
 </body>
 </html>
