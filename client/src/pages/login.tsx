@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, LogIn, Calendar, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 type LoginData = {
   email: string;
@@ -157,6 +157,13 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-3">
+            <div className="flex items-center justify-center lg:justify-end space-x-2 space-x-reverse">
+              <Link href="/admin">
+                <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:text-gray-700">
+                  כניסת מנהל
+                </Button>
+              </Link>
+            </div>
             <div className="flex items-center justify-center lg:justify-end space-x-2 space-x-reverse">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
               <span className="text-sm text-gray-600">יוטיוב - פעיל ועובד במלואו</span>

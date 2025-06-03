@@ -70,13 +70,48 @@ export default function HomePage() {
       const parsedUser = JSON.parse(userData) as User;
       setUser(parsedUser);
 
-      // Load connected accounts
-      const accountsResponse = await apiRequest('GET', `/api/users/${parsedUser.id}/connected-accounts`);
-      if (accountsResponse.ok) {
-        const accounts = await accountsResponse.json();
-        setConnectedAccounts(accounts);
-        setEnabledPlatforms(accounts.map((acc: ConnectedAccount) => acc.platform));
+      // Check existing auth tokens using the original system
+      const platforms = ['youtube', 'facebook', 'instagram'];
+      const connectedPlatforms = [];
+      
+      for (const platform of platforms) {
+        try {
+          const response = await apiRequest('GET', `/api/${platform}/auth-status`);
+          if (response.ok) {
+            const status = await response.json();
+            if (status.isAuthenticated) {
+              connectedPlatforms.push({
+                id: platform,
+                platform,
+                platformUsername: status.platformUsername || status.username || 'Connected',
+                isActive: true
+              });
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to check ${platform} auth:`, error);
+        }
       }
+      
+      // Convert to proper ConnectedAccount format
+      const properConnectedAccounts = connectedPlatforms.map(platform => ({
+        id: platform.id,
+        userId: parsedUser.id,
+        platform: platform.platform as any,
+        platformUserId: platform.id,
+        platformUsername: platform.platformUsername,
+        profilePictureUrl: undefined,
+        accessToken: 'connected',
+        refreshToken: undefined,
+        expiresAt: undefined,
+        isActive: platform.isActive,
+        lastSync: undefined,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }));
+      
+      setConnectedAccounts(properConnectedAccounts);
+      setEnabledPlatforms(properConnectedAccounts.map(acc => acc.platform));
 
       // Load subscription
       const subResponse = await apiRequest('GET', `/api/users/${parsedUser.id}/subscription`);
@@ -105,8 +140,20 @@ export default function HomePage() {
   };
 
   const handleConnectPlatform = (platform: string) => {
-    // Redirect to platform connection
-    window.location.href = `/api/${platform}/auth`;
+    // Redirect to platform connection - using existing working routes
+    if (platform === 'youtube') {
+      window.location.href = '/api/youtube/auth';
+    } else if (platform === 'facebook') {
+      window.location.href = '/api/facebook/auth';
+    } else if (platform === 'instagram') {
+      window.location.href = '/api/instagram/auth';
+    } else {
+      toast({
+        title: 'פלטפורמה לא נתמכת',
+        description: `${platform} עדיין לא נתמך`,
+        variant: 'destructive'
+      });
+    }
   };
 
   const togglePlatform = (platform: string, enabled: boolean) => {
