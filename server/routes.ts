@@ -952,6 +952,25 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Facebook auth URL
+  app.get("/api/facebook/auth", (req, res) => {
+    try {
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
+      
+      if (!process.env.FACEBOOK_APP_ID) {
+        return res.status(500).json({ error: "Facebook credentials not configured" });
+      }
+      
+      const facebookAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=pages_read_engagement,pages_manage_posts,pages_show_list&response_type=code&state=facebook_auth`;
+      
+      res.json({ authUrl: facebookAuthUrl });
+    } catch (error) {
+      console.error("Facebook auth error:", error);
+      res.status(500).json({ error: "Failed to generate Facebook auth URL" });
+    }
+  });
+
   // Register Facebook Pages routes
   // Handle manual token input
   app.post("/api/facebook/manual-token", (req, res) => {

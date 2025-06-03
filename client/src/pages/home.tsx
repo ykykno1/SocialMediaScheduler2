@@ -151,9 +151,31 @@ export default function HomePage() {
           throw new Error('Failed to get YouTube auth URL');
         }
       } else if (platform === 'facebook') {
-        window.location.href = '/api/facebook/auth';
+        // Get auth URL from server and redirect to Facebook
+        const response = await apiRequest('GET', '/api/facebook/auth');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authUrl) {
+            window.location.href = data.authUrl;
+          } else {
+            window.location.href = '/api/facebook/auth';
+          }
+        } else {
+          throw new Error('Failed to get Facebook auth URL');
+        }
       } else if (platform === 'instagram') {
-        window.location.href = '/api/instagram/auth';
+        // Get auth URL from server and redirect to Instagram
+        const response = await apiRequest('GET', '/api/instagram/auth');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authUrl) {
+            window.location.href = data.authUrl;
+          } else {
+            window.location.href = '/api/instagram/auth';
+          }
+        } else {
+          throw new Error('Failed to get Instagram auth URL');
+        }
       } else {
         toast({
           title: 'פלטפורמה לא נתמכת',
