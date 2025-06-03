@@ -379,6 +379,10 @@ export class MemStorage implements IStorage {
     return null;
   }
   
+  getAllUsers(): User[] {
+    return Array.from(this.users.values());
+  }
+  
   // Shabbat times operations
   async getShabbatTimes(latitude: number, longitude: number): Promise<ShabbatTimes | null> {
     const cacheKey = `${latitude},${longitude}`;
@@ -468,6 +472,7 @@ export class MemStorage implements IStorage {
       return this.createAdmin({
         username: 'admin',
         password: '1234',
+        role: 'admin',
         lastLogin: new Date()
       });
     }
