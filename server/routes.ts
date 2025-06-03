@@ -14,6 +14,332 @@ import { registerFacebookPagesRoutes } from "./facebook-pages";
 import { registerYouTubeRoutes } from "./youtube-videos";
 
 export function registerRoutes(app: Express): Server {
+  
+  // ===== NEW AUTHENTICATION ROUTES =====
+  
+  // User registration
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const userData = registerSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = storage.getUserByEmail(userData.email);
+      if (existingUser) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "משתמש עם כתובת אימייל זו כבר קיים" 
+        });
+      }
+      
+      // Hash password (simple for demo)
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      // Create user
+      const user = storage.createUser({
+        ...userData,
+        password: hashedPassword
+      });
+      
+      // Remove password from response
+      const { password, ...userResponse } = user;
+      
+      res.json({ success: true, user: userResponse });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // User login
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const loginData = loginSchema.parse(req.body);
+      
+      const user = storage.getUserByEmail(loginData.email);
+      if (!user || !user.password) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "אימייל או סיסמה שגויים" 
+        });
+      }
+      
+      // Verify password
+      const isValid = await bcrypt.compare(loginData.password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "אימייל או סיסמה שגויים" 
+        });
+      }
+      
+      // Update last login
+      storage.updateUser(user.id, { lastLogin: new Date() });
+      
+      // Remove password from response
+      const { password, ...userResponse } = user;
+      
+      res.json({ success: true, user: userResponse });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // Create demo user
+  app.post("/api/create-demo-user", (req, res) => {
+    try {
+      const demoUser = storage.createUser({
+        email: "demo@shabbat-robot.com",
+        username: "demo_user",
+        password: "123456",
+        firstName: "משתמש",
+        lastName: "דמו"
+      });
+      
+      const { password, ...userResponse } = demoUser;
+      res.json({ success: true, user: userResponse });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // ===== ADMIN ROUTES =====
+  
+  // Admin login
+  app.post("/api/admin/login", (req, res) => {
+    try {
+      const { code } = req.body;
+      const admin = storage.getAdminByCode(code);
+      
+      if (!admin) {
+        return res.status(401).json({ success: false, error: "קוד שגוי" });
+      }
+      
+      storage.updateAdminLastLogin(admin.id);
+      res.json({ success: true, admin });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // Get all users (admin only)
+  app.get("/api/admin/users", (req, res) => {
+    try {
+      const users = storage.getAllUsers().map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      res.json(users);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all subscriptions (admin only)
+  app.get("/api/admin/subscriptions", (req, res) => {
+    try {
+      const subscriptions = storage.getAllSubscriptions();
+      res.json(subscriptions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get admin stats
+  app.get("/api/admin/stats", (req, res) => {
+    try {
+      const users = storage.getAllUsers();
+      const subscriptions = storage.getAllSubscriptions();
+      
+      const totalUsers = users.length;
+      const paidUsers = subscriptions.filter(s => s.status === 'active').length;
+      const freeUsers = totalUsers - paidUsers;
+      const monthlyRevenue = subscriptions
+        .filter(s => s.status === 'active')
+        .reduce((sum, s) => sum + s.price, 0);
+      
+      res.json({
+        totalUsers,
+        paidUsers,
+        freeUsers,
+        totalRevenue: monthlyRevenue,
+        monthlyRevenue
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Mark user as paid (admin only)
+  app.post("/api/admin/mark-paid", (req, res) => {
+    try {
+      const { userId, plan, price } = req.body;
+      
+      const subscription = storage.createSubscription({
+        userId,
+        plan,
+        status: 'active',
+        price,
+        startDate: new Date(),
+        paymentMethod: 'manual',
+        autoRenew: true
+      });
+      
+      // Update user account type
+      storage.updateUser(userId, { accountType: 'premium' });
+      
+      res.json({ success: true, subscription });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // Update subscription status (admin only)
+  app.patch("/api/admin/subscriptions/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      const subscription = storage.updateSubscription(id, { status });
+      
+      // Update user account type
+      if (status === 'cancelled') {
+        storage.updateUser(subscription.userId, { accountType: 'free' });
+      } else if (status === 'active') {
+        storage.updateUser(subscription.userId, { accountType: 'premium' });
+      }
+      
+      res.json({ success: true, subscription });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // ===== SUBSCRIPTION ROUTES =====
+  
+  // Get user subscription
+  app.get("/api/users/:userId/subscription", (req, res) => {
+    try {
+      const { userId } = req.params;
+      const subscription = storage.getSubscriptionByUserId(userId);
+      
+      if (!subscription) {
+        return res.status(404).json({ error: "מנוי לא נמצא" });
+      }
+      
+      res.json(subscription);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create subscription
+  app.post("/api/create-subscription", (req, res) => {
+    try {
+      const { userId, plan, price } = req.body;
+      
+      // Check if user already has subscription
+      const existingSubscription = storage.getSubscriptionByUserId(userId);
+      if (existingSubscription && existingSubscription.status === 'active') {
+        return res.json({ 
+          success: false, 
+          error: "כבר יש לך מנוי פעיל" 
+        });
+      }
+      
+      // For demo purposes, create active subscription immediately
+      const subscription = storage.createSubscription({
+        userId,
+        plan,
+        status: 'active',
+        price,
+        startDate: new Date(),
+        paymentMethod: 'manual', // Will be 'stripe' in production
+        autoRenew: true
+      });
+      
+      // Update user account type
+      storage.updateUser(userId, { accountType: 'premium' });
+      
+      res.json({ 
+        success: true, 
+        subscription,
+        requiresPayment: false // Set to true for real Stripe integration
+      });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // ===== CONNECTED ACCOUNTS ROUTES =====
+  
+  // Get user connected accounts
+  app.get("/api/users/:userId/connected-accounts", (req, res) => {
+    try {
+      const { userId } = req.params;
+      const accounts = storage.getConnectedAccountsByUserId(userId);
+      res.json(accounts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== SHABBAT TIMES ROUTES =====
+  
+  // Get Shabbat times
+  app.get("/api/shabbat-times", async (req, res) => {
+    try {
+      // Default to Jerusalem coordinates
+      const latitude = 31.7683;
+      const longitude = 35.2137;
+      
+      const shabbatTimes = await storage.getShabbatTimes(latitude, longitude);
+      
+      if (!shabbatTimes) {
+        return res.status(404).json({ error: "לא ניתן לטעון זמני שבת" });
+      }
+      
+      res.json(shabbatTimes);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== SHABBAT MODE ACTIVATION =====
+  
+  // Activate Shabbat mode
+  app.post("/api/activate-shabbat-mode", async (req, res) => {
+    try {
+      const { enabledPlatforms, userId } = req.body;
+      
+      // Check if user has subscription
+      const subscription = storage.getSubscriptionByUserId(userId);
+      if (!subscription || subscription.status !== 'active') {
+        return res.status(403).json({ 
+          success: false, 
+          error: "נדרש מנוי פעיל להפעלת מצב שבת" 
+        });
+      }
+      
+      // Update user settings with enabled platforms
+      storage.updateUser(userId, {
+        shabbatSettings: {
+          autoHide: true,
+          enabledPlatforms,
+          candleLightingOffset: -18,
+          havdalahOffset: 42
+        }
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "מצב שבת הופעל בהצלחה",
+        enabledPlatforms 
+      });
+    } catch (error: any) {
+      res.status(400).json({ success: false, error: error.message });
+    }
+  });
+
+  // ===== EXISTING ROUTES CONTINUE BELOW =====
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
     // Use the new Facebook App ID directly

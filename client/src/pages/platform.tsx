@@ -199,7 +199,7 @@ export default function PlatformPage() {
         // Update local state
         setContent(prev => prev.map(item => 
           item.id === contentId 
-            ? { ...item, privacyStatus: result.isLocked ? 'locked' : item.originalPrivacyStatus }
+            ? { ...item, privacyStatus: result.isLocked ? 'locked' : (item.originalPrivacyStatus || 'public') }
             : item
         ));
         
