@@ -139,18 +139,32 @@ export default function HomePage() {
     setLocation('/login');
   };
 
-  const handleConnectPlatform = (platform: string) => {
-    // Redirect to platform connection - using existing working routes
-    if (platform === 'youtube') {
-      window.location.href = '/api/youtube/auth';
-    } else if (platform === 'facebook') {
-      window.location.href = '/api/facebook/auth';
-    } else if (platform === 'instagram') {
-      window.location.href = '/api/instagram/auth';
-    } else {
+  const handleConnectPlatform = async (platform: string) => {
+    try {
+      if (platform === 'youtube') {
+        // Get auth URL from server and redirect to Google
+        const response = await apiRequest('GET', '/api/youtube/auth');
+        if (response.ok) {
+          const data = await response.json();
+          window.location.href = data.authUrl;
+        } else {
+          throw new Error('Failed to get YouTube auth URL');
+        }
+      } else if (platform === 'facebook') {
+        window.location.href = '/api/facebook/auth';
+      } else if (platform === 'instagram') {
+        window.location.href = '/api/instagram/auth';
+      } else {
+        toast({
+          title: 'פלטפורמה לא נתמכת',
+          description: `${platform} עדיין לא נתמך`,
+          variant: 'destructive'
+        });
+      }
+    } catch (error: any) {
       toast({
-        title: 'פלטפורמה לא נתמכת',
-        description: `${platform} עדיין לא נתמך`,
+        title: 'שגיאה בחיבור',
+        description: error.message || 'שגיאה לא ידועה',
         variant: 'destructive'
       });
     }

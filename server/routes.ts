@@ -1267,6 +1267,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
+  app.post("/api/instagram/logout", (req, res) => {
+    storage.removeAuthToken('instagram');
+    res.json({ success: true });
+  });
+  
   app.post("/api/instagram/disconnect", (req, res) => {
     storage.removeAuthToken('instagram');
     res.json({ success: true });
