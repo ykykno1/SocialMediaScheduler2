@@ -5,7 +5,7 @@ import { AuthToken } from "@shared/schema";
 
 export const registerYouTubeRoutes = (app: Express): void => {
   // Get YouTube auth URL for login
-  app.get("/api/youtube/auth-url", (req, res) => {
+  app.get("/api/youtube/auth", (req, res) => {
     try {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;

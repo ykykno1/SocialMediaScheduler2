@@ -1725,6 +1725,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Register platform-specific routes
+  registerFacebookPagesRoutes(app);
+  registerYouTubeRoutes(app);
+
   const httpServer = createServer(app);
   return httpServer;
 }
