@@ -1314,7 +1314,7 @@ export function registerRoutes(app: Express): Server {
       // Use same credentials as YouTube
       const clientId = '351828412701-rt3ts08rsialis5q7tmqr9prdjtu7qdke.apps.googleusercontent.com';
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET; // This should be available
-      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
+      const redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
       
       if (!clientSecret) {
         return res.status(500).json({ error: 'Google client secret not configured' });
