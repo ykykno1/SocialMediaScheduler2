@@ -1286,15 +1286,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Google OAuth routes
+  // Google OAuth routes  
   app.get('/api/auth/google/url', async (req, res) => {
     try {
-      const clientId = process.env.GOOGLE_CLIENT_ID;
+      // Use same client ID as YouTube (already working)
+      const clientId = '351828412701-rt3ts08rsials5q7tmqr9prdjtu7qdke.apps.googleusercontent.com';
       const redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
-      
-      if (!clientId) {
-        return res.status(500).json({ error: 'Google OAuth not configured' });
-      }
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}&` +
@@ -1314,12 +1311,13 @@ export function registerRoutes(app: Express): Server {
   app.post('/api/auth/google/callback', async (req, res) => {
     try {
       const { code } = req.body;
-      const clientId = process.env.GOOGLE_CLIENT_ID;
-      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-      const redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
+      // Use same credentials as YouTube
+      const clientId = '351828412701-rt3ts08rsialis5q7tmqr9prdjtu7qdke.apps.googleusercontent.com';
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET; // This should be available
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
       
-      if (!clientId || !clientSecret) {
-        return res.status(500).json({ error: 'Google OAuth not configured' });
+      if (!clientSecret) {
+        return res.status(500).json({ error: 'Google client secret not configured' });
       }
       
       // Exchange code for token
