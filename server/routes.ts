@@ -955,8 +955,9 @@ export function registerRoutes(app: Express): Server {
   // Facebook auth URL
   app.get("/api/facebook/auth", (req, res) => {
     try {
-      const domain = req.headers.host;
-      const redirectUri = `https://${domain}/auth-callback.html`;
+      const domain = req.headers.host || 'localhost:5000';
+      const protocol = domain.includes('localhost') ? 'http' : 'https';
+      const redirectUri = `${protocol}://${domain}/auth-callback.html`;
       
       if (!process.env.FACEBOOK_APP_ID) {
         return res.status(500).json({ error: "Facebook credentials not configured" });
@@ -1264,8 +1265,9 @@ export function registerRoutes(app: Express): Server {
   
   app.get("/api/instagram/auth", async (req, res) => {
     try {
-      const domain = req.headers.host;
-      const redirectUri = `https://${domain}/auth-callback.html`;
+      const domain = req.headers.host || 'localhost:5000';
+      const protocol = domain.includes('localhost') ? 'http' : 'https';
+      const redirectUri = `${protocol}://${domain}/auth-callback.html`;
       
       // Check if Instagram app ID is configured
       if (!process.env.FACEBOOK_APP_ID) {

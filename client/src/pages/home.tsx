@@ -141,16 +141,11 @@ export default function HomePage() {
 
   const handleConnectPlatform = async (platform: string) => {
     try {
-      console.log(`Connecting to platform: ${platform}`);
       if (platform === 'youtube') {
         // Get auth URL from server and redirect to Google
-        console.log('Fetching YouTube auth URL...');
         const response = await apiRequest('GET', '/api/youtube/auth');
-        console.log('YouTube auth response:', response.status, response.ok);
         if (response.ok) {
           const data = await response.json();
-          console.log('YouTube auth data:', data);
-          console.log('Redirecting to:', data.authUrl);
           window.location.href = data.authUrl;
         } else {
           throw new Error('Failed to get YouTube auth URL');

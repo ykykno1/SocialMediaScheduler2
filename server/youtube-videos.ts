@@ -10,9 +10,10 @@ export const registerYouTubeRoutes = (app: Express): void => {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
       
-      // Use dynamic domain for redirect
-      const domain = req.headers.host;
-      const redirectUri = `https://${domain}/auth-callback.html`;
+      // Use dynamic domain for redirect - handle both localhost and replit domains
+      const domain = req.headers.host || 'localhost:5000';
+      const protocol = domain.includes('localhost') ? 'http' : 'https';
+      const redirectUri = `${protocol}://${domain}/auth-callback.html`;
       
       if (!clientId || !clientSecret) {
         return res.status(500).json({ error: "Google credentials not configured" });
