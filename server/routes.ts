@@ -1380,6 +1380,48 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Payment creation endpoint
+  app.post('/api/create-payment', async (req, res) => {
+    try {
+      const { planType, amount } = req.body;
+      
+      // Check if Stripe is configured
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.json({
+          error: 'תשלומים לא זמינים כרגע',
+          message: 'מערכת התשלומים בהקמה - אנא נסה שוב מאוחר יותר'
+        });
+      }
+
+      // Here we would create actual Stripe payment intent
+      // For now, return demo response
+      res.json({
+        success: false,
+        error: 'מערכת התשלומים בהקמה',
+        message: `תוכנית ${planType === 'youtube' ? 'יוטיוב' : 'פרימיום'} (${amount} ש"ח) תהיה זמינה בקרוב`
+      });
+      
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      res.status(500).json({ error: 'שגיאה ביצירת תשלום' });
+    }
+  });
+
+  // Payment success callback
+  app.post('/api/payment-success', async (req, res) => {
+    try {
+      const { sessionId, planType } = req.body;
+      
+      // Here we would verify payment with Stripe and update user
+      // For now, just return success
+      res.json({ success: true });
+      
+    } catch (error) {
+      console.error('Error processing payment success:', error);
+      res.status(500).json({ error: 'שגיאה בעיבוד התשלום' });
+    }
+  });
+
   // Create demo user endpoint
   app.post('/api/create-demo-user', async (req, res) => {
     try {

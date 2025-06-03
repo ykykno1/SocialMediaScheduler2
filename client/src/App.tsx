@@ -13,7 +13,7 @@ import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
 import { Button } from "@/components/ui/button";
-import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn } from "lucide-react";
+import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Custom navbar component directly in App.tsx
@@ -35,6 +35,11 @@ function Navbar() {
       label: "היסטוריה",
       href: "/history",
       icon: <HistoryIcon className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "מחירים",
+      href: "/pricing",
+      icon: <CreditCard className="h-4 w-4 mr-2" />,
     },
     {
       label: "כניסה",
@@ -80,6 +85,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/login" component={LoginPage} />
+          <Route path="/pricing" component={PricingPage} />
           <Route path="/settings" component={Settings} />
           <Route path="/history" component={History} />
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
