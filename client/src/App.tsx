@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 // Removed auth for now - will add simple version
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
+import PricingPage from "@/pages/pricing";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
