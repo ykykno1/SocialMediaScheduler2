@@ -9,6 +9,7 @@ import HomePage from "@/pages/home";
 import PricingPage from "@/pages/pricing";
 import AdminPage from "@/pages/admin";
 import PlatformPage from "@/pages/platform";
+import PlatformsPage from "@/pages/platforms";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
 
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/platform" component={PlatformsPage} />
       <Route path="/platform/:platform" component={PlatformPage} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/data-deletion" component={DataDeletionPage} />
