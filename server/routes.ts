@@ -101,6 +101,34 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Google OAuth routes
+  app.get("/api/auth/google", (req, res) => {
+    // For demo purposes, redirect to a mock Google OAuth flow
+    // In production, this would redirect to actual Google OAuth
+    const mockGoogleUser = {
+      googleId: "google_" + Math.random().toString(36).substr(2, 9),
+      email: "user@gmail.com",
+      name: "משתמש Google",
+      picture: "https://via.placeholder.com/150",
+      givenName: "משתמש",
+      familyName: "Google"
+    };
+    
+    // Create or update user from Google data
+    const user = storage.createOrUpdateUserFromGoogle(mockGoogleUser);
+    
+    // In a real implementation, you would redirect back with a token
+    // For now, we'll simulate a successful OAuth flow
+    res.redirect(`/?google_auth_success=true&user=${encodeURIComponent(JSON.stringify(user))}`);
+  });
+
+  // Google OAuth callback
+  app.get("/api/auth/google/callback", (req, res) => {
+    // Handle Google OAuth callback
+    // This would normally exchange the authorization code for tokens
+    res.redirect('/');
+  });
+
   // ===== ADMIN ROUTES =====
   
   // Admin login

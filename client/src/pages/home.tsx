@@ -35,6 +35,26 @@ export default function HomePage() {
   const [isActivating, setIsActivating] = useState(false);
 
   useEffect(() => {
+    // Check for Google OAuth success in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleAuthSuccess = urlParams.get('google_auth_success');
+    const userParam = urlParams.get('user');
+    
+    if (googleAuthSuccess && userParam) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userParam));
+        localStorage.setItem('shabbat-robot-user', JSON.stringify(user));
+        toast({
+          title: 'התחברת בהצלחה עם Google!',
+          description: `ברוך הבא ${user.firstName}`
+        });
+        // Clean URL
+        window.history.replaceState({}, document.title, '/');
+      } catch (error) {
+        console.error('Failed to parse Google auth user:', error);
+      }
+    }
+    
     loadUserData();
   }, []);
 
@@ -174,6 +194,12 @@ export default function HomePage() {
               <span className="text-sm text-gray-600">
                 שלום {user?.firstName || user?.username}
               </span>
+              <Link href="/admin">
+                <Button variant="ghost" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  מנהל
+                </Button>
+              </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 יציאה
