@@ -5,15 +5,13 @@ import { AuthToken } from "@shared/schema";
 
 export const registerYouTubeRoutes = (app: Express): void => {
   // Get YouTube auth URL for login
-  app.get("/api/youtube/auth", (req, res) => {
+  app.get("/api/youtube/auth-url", (req, res) => {
     try {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
       
-      // Use dynamic domain for redirect - handle both localhost and replit domains
-      const domain = req.headers.host || 'localhost:5000';
-      const protocol = domain.includes('localhost') ? 'http' : 'https';
-      const redirectUri = `${protocol}://${domain}/auth-callback.html`;
+      // Use the correct Replit domain for redirect
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
       
       if (!clientId || !clientSecret) {
         return res.status(500).json({ error: "Google credentials not configured" });
@@ -34,8 +32,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
       const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: scopes,
-        prompt: 'consent',
-        state: 'youtube_auth'
+        prompt: 'consent'
       });
       
       res.json({ authUrl });
@@ -56,8 +53,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
 
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-      const domain = req.headers.host;
-      const redirectUri = `https://${domain}/auth-callback.html`;
+      const redirectUri = `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html`;
       
       const oauth2Client = new google.auth.OAuth2(
         clientId,
