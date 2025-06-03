@@ -273,14 +273,14 @@ export function registerRoutes(app: Express): Server {
         });
       }
       
-      // For demo purposes, create active subscription immediately
+      // For now, create active subscription immediately (will be replaced with Stripe)
       const subscription = storage.createSubscription({
         userId,
         plan,
         status: 'active',
         price,
         startDate: new Date(),
-        paymentMethod: 'manual', // Will be 'stripe' in production
+        paymentMethod: 'manual',
         autoRenew: true
       });
       
@@ -290,7 +290,7 @@ export function registerRoutes(app: Express): Server {
       res.json({ 
         success: true, 
         subscription,
-        requiresPayment: false // Set to true for real Stripe integration
+        requiresPayment: false
       });
     } catch (error: any) {
       res.status(400).json({ success: false, error: error.message });
