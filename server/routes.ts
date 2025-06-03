@@ -1286,6 +1286,100 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Google OAuth routes
+  app.get('/api/auth/google/url', async (req, res) => {
+    try {
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
+      
+      if (!clientId) {
+        return res.status(500).json({ error: 'Google OAuth not configured' });
+      }
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=openid email profile&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+      
+      res.json({ authUrl });
+    } catch (error) {
+      console.error('Error generating Google auth URL:', error);
+      res.status(500).json({ error: 'Failed to generate auth URL' });
+    }
+  });
+
+  app.post('/api/auth/google/callback', async (req, res) => {
+    try {
+      const { code } = req.body;
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = `${req.protocol}://${req.get('host')}/auth-callback.html`;
+      
+      if (!clientId || !clientSecret) {
+        return res.status(500).json({ error: 'Google OAuth not configured' });
+      }
+      
+      // Exchange code for token
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code'
+        })
+      });
+      
+      const tokens = await tokenResponse.json();
+      
+      if (!tokens.access_token) {
+        return res.status(400).json({ error: 'Failed to get access token' });
+      }
+      
+      // Get user info from Google
+      const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${tokens.access_token}` }
+      });
+      
+      const googleUser = await userResponse.json();
+      
+      // Check if user exists
+      let user = storage.getUserByEmail(googleUser.email);
+      
+      if (!user) {
+        // Create new user
+        user = storage.createUser({
+          email: googleUser.email,
+          username: googleUser.name || googleUser.email.split('@')[0],
+          password: 'google-oauth', // Placeholder for OAuth users
+          firstName: googleUser.given_name || '',
+          lastName: googleUser.family_name || ''
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          accountType: user.accountType
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error in Google OAuth callback:', error);
+      res.status(500).json({ error: 'OAuth authentication failed' });
+    }
+  });
+
   // Create demo user endpoint
   app.post('/api/create-demo-user', async (req, res) => {
     try {
