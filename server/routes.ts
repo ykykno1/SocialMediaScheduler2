@@ -496,6 +496,38 @@ export function registerRoutes(app: Express): Server {
     res.json(settings);
   });
   
+  // ===== PLATFORM DISCONNECT ROUTES =====
+  
+  // Disconnect YouTube
+  app.post('/api/youtube/disconnect', (req, res) => {
+    try {
+      storage.removeAuthToken('youtube');
+      res.json({ success: true, message: 'YouTube disconnected successfully' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Disconnect Facebook
+  app.post('/api/facebook/disconnect', (req, res) => {
+    try {
+      storage.removeAuthToken('facebook');
+      res.json({ success: true, message: 'Facebook disconnected successfully' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Disconnect Instagram
+  app.post('/api/instagram/disconnect', (req, res) => {
+    try {
+      storage.removeAuthToken('instagram');
+      res.json({ success: true, message: 'Instagram disconnected successfully' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Save user settings
   app.post("/api/settings", (req, res) => {
     try {
