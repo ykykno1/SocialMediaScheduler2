@@ -401,7 +401,7 @@ export function registerRoutes(app: Express): Server {
           ...post,
           isHidden: post.privacy && (post.privacy.value === "SELF" || post.privacy.value === "ONLY_ME")
         }));
-        storage.saveCachedPosts(posts);
+        storage.saveCachedPosts(posts, req.user?.id);
       }
       
       // Get excepted post IDs from settings
