@@ -57,12 +57,21 @@ export default function YouTubeOAuthPage() {
 
         // Listen for popup messages
         const handleMessage = async (event: MessageEvent) => {
-          if (event.data?.type === 'YOUTUBE_AUTH_SUCCESS' && event.data?.code) {
+          if (event.data?.code && event.data?.platform === 'youtube') {
             popup?.close();
             window.removeEventListener('message', handleMessage);
             
             // Process the authorization code
             await processAuthCode(event.data.code);
+          } else if (event.data?.error) {
+            popup?.close();
+            window.removeEventListener('message', handleMessage);
+            toast({
+              title: "שגיאה בהתחברות",
+              description: event.data.error,
+              variant: "destructive",
+            });
+            setLoading(false);
           }
         };
 
