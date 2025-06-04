@@ -7,6 +7,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import PricingPage from "@/pages/pricing";
+import YouTubePage from "@/pages/youtube";
+import FacebookPage from "@/pages/facebook";
+import InstagramPage from "@/pages/instagram";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
@@ -86,6 +89,9 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/login" component={LoginPage} />
           <Route path="/pricing" component={PricingPage} />
+          <Route path="/youtube" component={YouTubePage} />
+          <Route path="/facebook" component={FacebookPage} />
+          <Route path="/instagram" component={InstagramPage} />
           <Route path="/settings" component={Settings} />
           <Route path="/history" component={History} />
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
