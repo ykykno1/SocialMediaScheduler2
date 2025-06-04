@@ -36,7 +36,7 @@ export function registerRoutes(app: Express): Server {
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
   app.get("/api/youtube/auth-status", (req, res) => {
-    const auth = storage.getAuthToken('youtube');
+    const auth = storage.getAuthToken('youtube', 'global-user');
     
     if (!auth) {
       return res.json({ 
@@ -120,7 +120,7 @@ export function registerRoutes(app: Express): Server {
         refreshToken: tokenData.refresh_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now()
-      });
+      }, 'global-user');
 
       res.json({ 
         success: true,
