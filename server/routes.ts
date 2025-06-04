@@ -1,4 +1,8 @@
 import type { Express, Request, Response } from "express";
+
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
@@ -114,8 +118,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Middleware to check authentication
-  const requireAuth = (req: any, res: any, next: any) => {
-    const session = req.session;
+  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
+    const session = (req as any).session;
     
     if (!session || !session.userId) {
       return res.status(401).json({ error: "Authentication required" });
@@ -270,8 +274,8 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Get auth status
-  app.get("/api/auth-status", requireAuth, (req, res) => {
-    const auth = storage.getFacebookAuth(req.user.id);
+  app.get("/api/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
+    const auth = storage.getFacebookAuth(req.user?.id);
     res.json({
       isAuthenticated: !!auth,
       // Don't send the token to the client for security
@@ -282,8 +286,8 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Logout/disconnect
-  app.post("/api/logout", requireAuth, (req, res) => {
-    storage.removeFacebookAuth(req.user.id);
+  app.post("/api/logout", requireAuth, (req: AuthenticatedRequest, res) => {
+    storage.removeFacebookAuth(req.user?.id);
     storage.addHistoryEntry({
       timestamp: new Date(),
       action: "restore", // Same as auth since this is disabling automation
@@ -291,20 +295,20 @@ export function registerRoutes(app: Express): Server {
       success: true,
       affectedItems: 0,
       error: undefined
-    }, req.user.id);
+    }, req.user?.id);
     res.json({ success: true });
   });
   
   // Get history entries
-  app.get("/api/history", requireAuth, (req, res) => {
-    const history = storage.getHistoryEntries(undefined, req.user.id);
+  app.get("/api/history", requireAuth, (req: AuthenticatedRequest, res) => {
+    const history = storage.getHistoryEntries(undefined, req.user?.id);
     res.json(history);
   });
   
   // Get Facebook posts
-  app.get("/api/facebook/posts", async (req, res) => {
+  app.get("/api/facebook/posts", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getFacebookAuth();
+      const auth = storage.getFacebookAuth(req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
@@ -354,8 +358,8 @@ export function registerRoutes(app: Express): Server {
         isHidden: post.privacy && (post.privacy.value === "SELF" || post.privacy.value === "ONLY_ME")
       }));
       
-      // Save posts to cache
-      storage.saveCachedPosts(postsWithIsHidden);
+      // Save posts to cache (user-specific)
+      storage.saveCachedPosts(postsWithIsHidden, req.user?.id);
       
       res.json(postsWithIsHidden);
     } catch (error) {
@@ -365,16 +369,16 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Hide Facebook posts - Try to use real API for admin users
-  app.post("/api/facebook/hide", async (req, res) => {
+  app.post("/api/facebook/hide", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getFacebookAuth();
+      const auth = storage.getFacebookAuth(req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
       }
       
-      // Get cached posts or fetch if empty
-      let posts = storage.getCachedPosts();
+      // Get cached posts or fetch if empty (user-specific)
+      let posts = storage.getCachedPosts(req.user?.id);
       
       if (posts.length === 0) {
         // Fetch posts if not in cache
