@@ -984,13 +984,33 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
-      // To actually hide/show videos, we need specific YouTube API permissions
-      // For now, we'll simulate the action and store the state locally
-      console.log(`Hiding video ${videoId}`);
+      // Update video privacy status to private using YouTube Data API
+      const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: videoId,
+          status: {
+            privacyStatus: 'private'
+          }
+        })
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        console.error("YouTube API error:", errorData);
+        return res.status(400).json({ 
+          error: errorData.error?.message || "Failed to hide video" 
+        });
+      }
+
+      console.log(`Video ${videoId} set to private`);
       
       res.json({ 
         success: true,
-        message: "סרטון הוסתר בהצלחה (סימולציה)",
+        message: "סרטון הוסתר בהצלחה",
         videoId 
       });
     } catch (error) {
@@ -1008,13 +1028,33 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
-      // To actually hide/show videos, we need specific YouTube API permissions
-      // For now, we'll simulate the action and store the state locally
-      console.log(`Showing video ${videoId}`);
+      // Update video privacy status to public using YouTube Data API
+      const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: videoId,
+          status: {
+            privacyStatus: 'public'
+          }
+        })
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        console.error("YouTube API error:", errorData);
+        return res.status(400).json({ 
+          error: errorData.error?.message || "Failed to show video" 
+        });
+      }
+
+      console.log(`Video ${videoId} set to public`);
       
       res.json({ 
         success: true,
-        message: "סרטון הוצג בהצלחה (סימולציה)",
+        message: "סרטון הוצג בהצלחה",
         videoId 
       });
     } catch (error) {
@@ -1032,12 +1072,67 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
-      console.log("Hiding all videos (simulation)");
+      // First get all videos
+      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${auth.accessToken}`);
       
+      if (!channelResponse.ok) {
+        return res.status(400).json({ error: "Failed to fetch YouTube channel" });
+      }
+
+      const channelData = await channelResponse.json();
+      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+
+      if (!uploadsPlaylistId) {
+        return res.json({ success: true, message: "אין סרטונים להסתרה", hiddenCount: 0 });
+      }
+
+      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${auth.accessToken}`);
+      
+      if (!videosResponse.ok) {
+        return res.status(400).json({ error: "Failed to fetch YouTube videos" });
+      }
+
+      const videosData = await videosResponse.json();
+      const videos = videosData.items || [];
+      
+      let hiddenCount = 0;
+      let errors = [];
+
+      // Hide each video
+      for (const item of videos) {
+        const videoId = item.snippet.resourceId.videoId;
+        
+        try {
+          const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: videoId,
+              status: {
+                privacyStatus: 'private'
+              }
+            })
+          });
+
+          if (updateResponse.ok) {
+            hiddenCount++;
+          } else {
+            const errorData = await updateResponse.json();
+            errors.push({ videoId, error: errorData.error?.message });
+          }
+        } catch (error) {
+          errors.push({ videoId, error: error.message });
+        }
+      }
+
       res.json({ 
         success: true,
-        message: "כל הסרטונים הוסתרו (סימולציה - דורש הרשאות מיוחדות)",
-        count: 0 
+        message: `הוסתרו ${hiddenCount} סרטונים בהצלחה`,
+        hiddenCount,
+        totalVideos: videos.length,
+        errors: errors.length > 0 ? errors : undefined
       });
     } catch (error) {
       console.error("YouTube hide all error:", error);
@@ -1054,12 +1149,67 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
-      console.log("Showing all videos (simulation)");
+      // First get all videos
+      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${auth.accessToken}`);
       
+      if (!channelResponse.ok) {
+        return res.status(400).json({ error: "Failed to fetch YouTube channel" });
+      }
+
+      const channelData = await channelResponse.json();
+      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+
+      if (!uploadsPlaylistId) {
+        return res.json({ success: true, message: "אין סרטונים להצגה", shownCount: 0 });
+      }
+
+      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${auth.accessToken}`);
+      
+      if (!videosResponse.ok) {
+        return res.status(400).json({ error: "Failed to fetch YouTube videos" });
+      }
+
+      const videosData = await videosResponse.json();
+      const videos = videosData.items || [];
+      
+      let shownCount = 0;
+      let errors = [];
+
+      // Show each video
+      for (const item of videos) {
+        const videoId = item.snippet.resourceId.videoId;
+        
+        try {
+          const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: videoId,
+              status: {
+                privacyStatus: 'public'
+              }
+            })
+          });
+
+          if (updateResponse.ok) {
+            shownCount++;
+          } else {
+            const errorData = await updateResponse.json();
+            errors.push({ videoId, error: errorData.error?.message });
+          }
+        } catch (error) {
+          errors.push({ videoId, error: error.message });
+        }
+      }
+
       res.json({ 
         success: true,
-        message: "כל הסרטונים הוצגו (סימולציה - דורש הרשאות מיוחדות)",
-        count: 0 
+        message: `הוצגו ${shownCount} סרטונים בהצלחה`,
+        shownCount,
+        totalVideos: videos.length,
+        errors: errors.length > 0 ? errors : undefined
       });
     } catch (error) {
       console.error("YouTube show all error:", error);
