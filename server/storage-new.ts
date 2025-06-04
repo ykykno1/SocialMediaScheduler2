@@ -314,7 +314,7 @@ export class SecureMemoryStorage implements ISecureStorage {
     const now = new Date();
     let upcoming: ShabbatSchedule | undefined;
 
-    for (const schedule of userSchedules.values()) {
+    for (const [_, schedule] of Array.from(userSchedules.entries())) {
       if (schedule.shabbatEnter > now) {
         if (!upcoming || schedule.shabbatEnter < upcoming.shabbatEnter) {
           upcoming = schedule;

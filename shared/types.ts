@@ -3,6 +3,7 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  password: string;
   accountType: 'free' | 'youtube_pro' | 'premium';
   createdAt: Date;
   lastActive?: Date;
