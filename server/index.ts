@@ -14,15 +14,16 @@ app.use(express.urlencoded({ extended: false }));
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-here-shabbat-robot-2024',
-  resave: false,
+  resave: true,
   saveUninitialized: true,
-  name: 'shabbat.robot.session',
+  name: 'connect.sid',
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: false,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 1000,
     sameSite: 'lax'
-  }
+  },
+  rolling: true
 }));
 
 app.use((req, res, next) => {

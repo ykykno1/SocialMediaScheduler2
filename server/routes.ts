@@ -47,16 +47,23 @@ export function registerRoutes(app: Express): Server {
       // Set session
       (req as any).session.userId = user.id;
       
-      // Debug session
-      console.log('Registration - Session set:', {
-        sessionId: (req as any).sessionID,
-        userId: user.id,
-        sessionExists: !!(req as any).session
+      // Save session explicitly
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+        }
+        
+        // Debug session
+        console.log('Registration - Session set:', {
+          sessionId: (req as any).sessionID,
+          userId: user.id,
+          sessionExists: !!(req as any).session
+        });
+        
+        // Return user without password
+        const { password: _, ...userResponse } = user;
+        res.json(userResponse);
       });
-      
-      // Return user without password
-      const { password: _, ...userResponse } = user;
-      res.json(userResponse);
       
     } catch (error) {
       console.error("Registration error:", error);
@@ -87,19 +94,26 @@ export function registerRoutes(app: Express): Server {
       // Set session
       (req as any).session.userId = user.id;
       
-      // Debug session
-      console.log('Login - Session set:', {
-        sessionId: (req as any).sessionID,
-        userId: user.id,
-        sessionExists: !!(req as any).session
+      // Save session explicitly
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+        }
+        
+        // Debug session
+        console.log('Login - Session set:', {
+          sessionId: (req as any).sessionID,
+          userId: user.id,
+          sessionExists: !!(req as any).session
+        });
+        
+        // Update last active
+        storage.updateUser(user.id, { lastActive: new Date() });
+        
+        // Return user without password
+        const { password: _, ...userResponse } = user;
+        res.json(userResponse);
       });
-      
-      // Update last active
-      storage.updateUser(user.id, { lastActive: new Date() });
-      
-      // Return user without password
-      const { password: _, ...userResponse } = user;
-      res.json(userResponse);
       
     } catch (error) {
       console.error("Login error:", error);
