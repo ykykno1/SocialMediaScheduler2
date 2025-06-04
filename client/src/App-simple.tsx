@@ -3,7 +3,7 @@ import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
-import AuthPage from "@/pages/auth-new";
+import AuthPage from "@/pages/auth-simple";
 import HomePage from "@/pages/home-simple";
 
 function App() {
