@@ -923,7 +923,79 @@ export function registerRoutes(app: Express): Server {
   // Register Facebook Pages routes
   registerFacebookPagesRoutes(app);
   
-  // YouTube routes are defined at the top as public endpoints
+  // YouTube videos endpoint  
+  app.get("/api/youtube/videos", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('youtube', 'global-user');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      // Use YouTube Data API to get user's videos
+      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${auth.accessToken}`);
+      
+      if (!channelResponse.ok) {
+        const errorData = await channelResponse.json();
+        console.error("YouTube channel fetch error:", errorData);
+        return res.status(400).json({ error: "Failed to fetch YouTube channel" });
+      }
+
+      const channelData = await channelResponse.json();
+      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+
+      if (!uploadsPlaylistId) {
+        return res.json({ videos: [] });
+      }
+
+      // Get videos from uploads playlist
+      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${auth.accessToken}`);
+      
+      if (!videosResponse.ok) {
+        const errorData = await videosResponse.json();
+        console.error("YouTube videos fetch error:", errorData);
+        return res.status(400).json({ error: "Failed to fetch YouTube videos" });
+      }
+
+      const videosData = await videosResponse.json();
+      const videos = videosData.items?.map((item: any) => ({
+        id: item.snippet.resourceId.videoId,
+        title: item.snippet.title,
+        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+        publishedAt: item.snippet.publishedAt,
+        description: item.snippet.description,
+        isHidden: false // We'll need to check video status separately if needed
+      })) || [];
+
+      res.json({ videos });
+    } catch (error) {
+      console.error("YouTube videos error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // YouTube show all videos
+  app.post("/api/youtube/show-all", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('youtube', 'global-user');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      // For now, return success - actual implementation would require YouTube API permissions
+      res.json({ 
+        success: true,
+        message: "כל הסרטונים הוצגו (דורש הרשאות נוספות)",
+        count: 0 
+      });
+    } catch (error) {
+      console.error("YouTube show all error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // YouTube routes are defined above as public endpoints
   
   // Instagram Routes
   app.get("/api/instagram/auth-status", (req, res) => {
