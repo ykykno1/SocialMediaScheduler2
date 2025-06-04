@@ -216,27 +216,11 @@ export default function YouTubeSimplePage() {
             <CardHeader>
               <CardTitle>התחבר ל-YouTube</CardTitle>
               <CardDescription>
-                התחבר לחשבון YouTube שלך כדי לנהל את הסרטונים
+                הזן את מפתח ה-API של YouTube כדי לנהל את הסרטונים שלך
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                onClick={connectToYouTube} 
-                disabled={loading}
-                className="w-full"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    מתחבר...
-                  </>
-                ) : (
-                  <>
-                    <Youtube className="ml-2 h-4 w-4" />
-                    התחבר ל-YouTube
-                  </>
-                )}
-              </Button>
+              <YouTubeConnectionForm onConnect={connectToYouTube} loading={loading} />
             </CardContent>
           </Card>
         ) : (
@@ -329,6 +313,78 @@ export default function YouTubeSimplePage() {
                 </CardContent>
               </Card>
             )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function YouTubeConnectionForm({ onConnect, loading }: { onConnect: (apiKey: string) => Promise<void>; loading: boolean }) {
+  const [apiKey, setApiKey] = useState('');
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (apiKey.trim()) {
+      await onConnect(apiKey.trim());
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">מפתח API של YouTube</label>
+          <input
+            type="password"
+            required
+            placeholder="הזן את מפתח ה-API שלך"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            disabled={loading}
+          />
+        </div>
+        
+        <Button type="submit" disabled={loading || !apiKey.trim()} className="w-full">
+          {loading ? (
+            <>
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              מתחבר...
+            </>
+          ) : (
+            <>
+              <Youtube className="ml-2 h-4 w-4" />
+              התחבר ל-YouTube
+            </>
+          )}
+        </Button>
+      </form>
+
+      <div className="space-y-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowInstructions(!showInstructions)}
+          className="w-full"
+        >
+          {showInstructions ? 'הסתר הוראות' : 'איך להשיג מפתח API?'}
+        </Button>
+        
+        {showInstructions && (
+          <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-md space-y-2">
+            <p className="font-semibold">כדי להשיג מפתח API של YouTube:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>עבור לקונסול Google Cloud Console</li>
+              <li>צור פרויקט חדש או בחר פרויקט קיים</li>
+              <li>הפעל את YouTube Data API v3</li>
+              <li>צור מפתח API בלשונית "Credentials"</li>
+              <li>העתק את המפתח והדבק אותו כאן</li>
+            </ol>
+            <p className="text-xs text-gray-500 mt-2">
+              שים לב: המפתח נשמר באופן מאובטח ומשמש לקריאת מידע על הסרטונים שלך בלבד
+            </p>
           </div>
         )}
       </div>
