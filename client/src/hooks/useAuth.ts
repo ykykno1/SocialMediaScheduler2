@@ -8,21 +8,16 @@ type UserWithoutPassword = Omit<User, 'password'>;
 export function useAuth() {
   const { toast } = useToast();
 
-  // Get current user
+  // Get current user - only if token exists
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  
   const { data: user, isLoading, error } = useQuery<UserWithoutPassword>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      try {
-        const res = await apiRequest("GET", "/api/user");
-        return res.json();
-      } catch (error) {
-        // If no token or authentication fails, return null instead of throwing
-        if (error instanceof Error && error.message.includes("401")) {
-          return null;
-        }
-        throw error;
-      }
+      const res = await apiRequest("GET", "/api/user");
+      return res.json();
     },
+    enabled: !!token, // Only run query if token exists
     retry: false,
   });
 
