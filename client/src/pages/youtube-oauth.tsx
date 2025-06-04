@@ -28,14 +28,12 @@ export default function YouTubeOAuthPage() {
 
   const checkConnectionStatus = async () => {
     try {
-      const response = await fetch('/api/youtube/auth-status');
-      if (response.ok) {
-        const data = await response.json();
-        setIsConnected(data.isAuthenticated);
-        setChannelTitle(data.channelTitle || '');
-        if (data.isAuthenticated) {
-          loadVideos();
-        }
+      const response = await apiRequest('GET', '/api/youtube/auth-status');
+      const data = await response.json();
+      setIsConnected(data.isAuthenticated);
+      setChannelTitle(data.channelTitle || '');
+      if (data.isAuthenticated) {
+        loadVideos();
       }
     } catch (error) {
       console.error('Failed to check YouTube status:', error);
@@ -130,13 +128,9 @@ export default function YouTubeOAuthPage() {
   const loadVideos = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/youtube/videos');
-      if (response.ok) {
-        const data = await response.json();
-        setVideos(data.videos || []);
-      } else {
-        throw new Error('שגיאה בטעינת הסרטונים');
-      }
+      const response = await apiRequest('GET', '/api/youtube/videos');
+      const data = await response.json();
+      setVideos(data.videos || []);
     } catch (error: any) {
       toast({
         title: "שגיאה בטעינת סרטונים",
