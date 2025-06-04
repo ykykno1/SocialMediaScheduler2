@@ -7,6 +7,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import { 
   type FacebookPost, 
@@ -16,6 +17,21 @@ import {
 } from "@shared/schema";
 import { registerFacebookPagesRoutes } from "./facebook-pages";
 import { registerYouTubeRoutes } from "./youtube-videos";
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
+
+// JWT helper functions
+const generateToken = (userId: string) => {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
+};
+
+const verifyToken = (token: string) => {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: string };
+  } catch (error) {
+    return null;
+  }
+};
 
 export function registerRoutes(app: Express): Server {
   
@@ -44,25 +60,14 @@ export function registerRoutes(app: Express): Server {
         username: email.split('@')[0] // Use email prefix as username
       });
       
-      // Set session
-      (req as any).session.userId = user.id;
+      // Generate JWT token
+      const token = generateToken(user.id);
       
-      // Save session explicitly
-      (req as any).session.save((err: any) => {
-        if (err) {
-          console.error('Session save error:', err);
-        }
-        
-        // Debug session
-        console.log('Registration - Session set:', {
-          sessionId: (req as any).sessionID,
-          userId: user.id,
-          sessionExists: !!(req as any).session
-        });
-        
-        // Return user without password
-        const { password: _, ...userResponse } = user;
-        res.json(userResponse);
+      // Return user without password and include token
+      const { password: _, ...userResponse } = user;
+      res.json({
+        ...userResponse,
+        token
       });
       
     } catch (error) {
@@ -91,28 +96,17 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Invalid credentials" });
       }
       
-      // Set session
-      (req as any).session.userId = user.id;
+      // Generate JWT token
+      const token = generateToken(user.id);
       
-      // Save session explicitly
-      (req as any).session.save((err: any) => {
-        if (err) {
-          console.error('Session save error:', err);
-        }
-        
-        // Debug session
-        console.log('Login - Session set:', {
-          sessionId: (req as any).sessionID,
-          userId: user.id,
-          sessionExists: !!(req as any).session
-        });
-        
-        // Update last active
-        storage.updateUser(user.id, { lastActive: new Date() });
-        
-        // Return user without password
-        const { password: _, ...userResponse } = user;
-        res.json(userResponse);
+      // Update last active
+      storage.updateUser(user.id, { lastActive: new Date() });
+      
+      // Return user without password and include token
+      const { password: _, ...userResponse } = user;
+      res.json({
+        ...userResponse,
+        token
       });
       
     } catch (error) {
@@ -127,21 +121,19 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/user", (req, res) => {
-    const session = (req as any).session;
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
     
-    // Debug session data
-    console.log('GET /api/user - Session debug:', {
-      sessionExists: !!session,
-      sessionId: (req as any).sessionID,
-      userId: session?.userId,
-      sessionData: session
-    });
-    
-    if (!session || !session.userId) {
+    if (!token) {
       return res.status(401).json({ error: "Not authenticated" });
     }
     
-    const user = storage.getUserById(session.userId);
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    
+    const user = storage.getUserById(decoded.userId);
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }
@@ -153,13 +145,19 @@ export function registerRoutes(app: Express): Server {
 
   // Middleware to check authentication
   const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    const session = (req as any).session;
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
     
-    if (!session || !session.userId) {
+    if (!token) {
       return res.status(401).json({ error: "Authentication required" });
     }
     
-    const user = storage.getUserById(session.userId);
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    
+    const user = storage.getUserById(decoded.userId);
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }
