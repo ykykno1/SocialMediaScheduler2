@@ -12,7 +12,7 @@ function App() {
 
   useEffect(() => {
     // Check authentication status on app load
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
     if (token) {
       // Test token validity
       fetch('/api/user', {
@@ -21,11 +21,11 @@ function App() {
         if (res.ok) {
           setIsAuthenticated(true);
         } else {
-          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
           setIsAuthenticated(false);
         }
       }).catch(() => {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
         setIsAuthenticated(false);
       }).finally(() => {
         setIsLoading(false);

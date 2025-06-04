@@ -262,7 +262,7 @@ export class YouTubeService {
    * Hide videos (make them private)
    */
   async hideVideos(userId: string, videoIds: string[]): Promise<void> {
-    const user = await storage.getUser(userId);
+    const user = secureStorage.getUserById(userId);
     if (!user || !user.youtubeAccessToken) {
       throw new Error('User not connected to YouTube');
     }
@@ -276,7 +276,7 @@ export class YouTubeService {
    * Restore videos (make them public)
    */
   async restoreVideos(userId: string, videoIds: string[]): Promise<void> {
-    const user = await storage.getUser(userId);
+    const user = secureStorage.getUserById(userId);
     if (!user || !user.youtubeAccessToken) {
       throw new Error('User not connected to YouTube');
     }

@@ -16,7 +16,7 @@ export default function HomePage({ onLogout }: HomePageProps) {
 
   useEffect(() => {
     // Fetch user data
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('token');
     if (token) {
       fetch('/api/user', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -38,7 +38,7 @@ export default function HomePage({ onLogout }: HomePageProps) {
   }, [onLogout]);
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
     toast({
       title: "התנתקת בהצלחה",
       description: "להתראות!",
@@ -120,8 +120,12 @@ export default function HomePage({ onLogout }: HomePageProps) {
             </CardHeader>
             <CardContent>
               <Badge variant="outline" className="mb-3">לא מחובר</Badge>
-              <Button className="w-full" variant="outline">
-                התחבר ליוטיוב
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => window.location.href = '/youtube'}
+              >
+                נהל YouTube
               </Button>
             </CardContent>
           </Card>
