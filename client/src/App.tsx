@@ -1,9 +1,9 @@
 import { Switch, Route, Link, useLocation } from "wouter";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-// Removed auth for now - will add simple version
+import { useToast } from "@/hooks/use-toast";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import PricingPage from "@/pages/pricing";
@@ -19,13 +19,63 @@ import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
 import { Button } from "@/components/ui/button";
-import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, CreditCard, Youtube, Facebook, Instagram } from "lucide-react";
+import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram } from "lucide-react";
 import { cn } from "@/lib/utils";
-import UserProfile from "@/components/UserProfile";
+import { Loader2 } from "lucide-react";
+
+// Hook for authentication
+function useAuth() {
+  const { toast } = useToast();
+  
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["/api/user"],
+    queryFn: async () => {
+      const response = await fetch("/api/user");
+      if (response.status === 401) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error("Failed to fetch user");
+      }
+      return response.json();
+    },
+    retry: false,
+  });
+
+  const logout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+      queryClient.setQueryData(["/api/user"], null);
+      queryClient.clear();
+      toast({
+        title: "התנתקת בהצלחה",
+        description: "להתראות!",
+      });
+    } catch (error) {
+      toast({
+        title: "שגיאה בהתנתקות",
+        description: "נסה שוב",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return {
+    user: user || null,
+    isLoading,
+    isAuthenticated: !!user,
+    logout,
+  };
+}
 
 // Custom navbar component directly in App.tsx
 function Navbar() {
   const [location] = useLocation();
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return null; // Don't show navigation if not authenticated
+  }
 
   const navItems = [
     {
@@ -87,6 +137,38 @@ function Navbar() {
         </Button>
       ))}
     </nav>
+  );
+}
+
+// User profile component with login/logout
+function UserProfile() {
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  if (!isAuthenticated || !user) {
+    return (
+      <Button variant="outline" size="sm" asChild>
+        <Link href="/auth">
+          <LogIn className="h-4 w-4 mr-2" />
+          התחבר
+        </Link>
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">
+        שלום, {user.username || user.email}
+      </span>
+      <Button variant="outline" size="sm" onClick={handleLogout}>
+        <LogOut className="h-4 w-4 mr-2" />
+        התנתק
+      </Button>
+    </div>
   );
 }
 
