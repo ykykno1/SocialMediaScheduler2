@@ -54,7 +54,11 @@ export function useAuth() {
       return await response.json();
     },
     onSuccess: (userData) => {
+      if (userData.token) {
+        localStorage.setItem('authToken', userData.token);
+      }
       queryClient.setQueryData(['/api/user'], userData);
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: 'התחברות בוצעה בהצלחה',
         description: 'ברוך הבא בחזרה!'
@@ -80,7 +84,11 @@ export function useAuth() {
       return await response.json();
     },
     onSuccess: (userData) => {
+      if (userData.token) {
+        localStorage.setItem('authToken', userData.token);
+      }
       queryClient.setQueryData(['/api/user'], userData);
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: 'הרשמה בוצעה בהצלחה',
         description: 'ברוך הבא לרובוט שבת!'
@@ -102,6 +110,7 @@ export function useAuth() {
       return response;
     },
     onSuccess: () => {
+      localStorage.removeItem('authToken');
       queryClient.setQueryData(['/api/user'], null);
       queryClient.clear();
       toast({
