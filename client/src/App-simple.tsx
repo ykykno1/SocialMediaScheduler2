@@ -5,7 +5,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import AuthPage from "@/pages/auth-simple";
 import HomePage from "@/pages/home-simple";
-import YouTubePage from "@/pages/youtube";
+import YouTubePage from "@/pages/youtube-new";
 import OAuthSetupPage from "@/pages/oauth-setup";
 
 function App() {

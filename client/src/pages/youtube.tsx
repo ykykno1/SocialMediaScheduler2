@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Youtube, Play, Eye, EyeOff, ExternalLink, Unlink } from 'lucide-react';
+import { Youtube, Play, Eye, EyeOff, ExternalLink, Unlink, Loader2 } from 'lucide-react';
+import useYouTubeAuth from '@/hooks/useYouTubeAuth';
 
 interface YouTubeVideo {
   id: string;
@@ -16,16 +17,19 @@ interface YouTubeVideo {
 }
 
 export default function YouTubePage() {
-  const [isConnected, setIsConnected] = useState(false);
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    checkConnection();
-  }, []);
+  
+  const { 
+    isAuthenticated, 
+    isAuthenticating, 
+    isLoading, 
+    login, 
+    logout, 
+    isLoggingOut, 
+    channelTitle 
+  } = useYouTubeAuth();
 
   const checkConnection = async () => {
     try {
