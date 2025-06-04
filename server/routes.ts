@@ -1023,6 +1023,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // YouTube hide all videos
+  app.post("/api/youtube/hide-all", async (req, res) => {
+    try {
+      const auth = storage.getAuthToken('youtube', 'global-user');
+      
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      console.log("Hiding all videos (simulation)");
+      
+      res.json({ 
+        success: true,
+        message: "כל הסרטונים הוסתרו (סימולציה - דורש הרשאות מיוחדות)",
+        count: 0 
+      });
+    } catch (error) {
+      console.error("YouTube hide all error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // YouTube show all videos
   app.post("/api/youtube/show-all", async (req, res) => {
     try {
@@ -1032,10 +1054,11 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
-      // For now, return success - actual implementation would require YouTube API permissions
+      console.log("Showing all videos (simulation)");
+      
       res.json({ 
         success: true,
-        message: "כל הסרטונים הוצגו (דורש הרשאות נוספות)",
+        message: "כל הסרטונים הוצגו (סימולציה - דורש הרשאות מיוחדות)",
         count: 0 
       });
     } catch (error) {
