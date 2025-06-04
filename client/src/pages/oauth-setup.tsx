@@ -115,6 +115,31 @@ export default function OAuthSetupPage() {
               <div className="flex items-start gap-3">
                 <Badge variant="outline" className="mt-1">5</Badge>
                 <div>
+                  <h3 className="font-medium">הוסף Authorized JavaScript origins</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    בחלק "Authorized JavaScript origins", הוסף את הכתובת הבאה:
+                  </p>
+                  <div className="bg-gray-100 p-3 rounded-md border">
+                    <div className="flex items-center justify-between">
+                      <code className="text-sm font-mono break-all">
+                        https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigator.clipboard.writeText('https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev')}
+                        className="ml-2"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Badge variant="outline" className="mt-1">6</Badge>
+                <div>
                   <h3 className="font-medium">הוסף Authorized redirect URI</h3>
                   <p className="text-sm text-muted-foreground mb-3">
                     בחלק "Authorized redirect URIs", הוסף את הכתובת הבאה:
@@ -142,7 +167,7 @@ export default function OAuthSetupPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <Badge variant="outline" className="mt-1">6</Badge>
+                <Badge variant="outline" className="mt-1">7</Badge>
                 <div>
                   <h3 className="font-medium">שמור את השינויים</h3>
                   <p className="text-sm text-muted-foreground">
@@ -152,7 +177,7 @@ export default function OAuthSetupPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <Badge variant="outline" className="mt-1">7</Badge>
+                <Badge variant="outline" className="mt-1">8</Badge>
                 <div>
                   <h3 className="font-medium">חזור לאפליקציה ונסה שוב</h3>
                   <p className="text-sm text-muted-foreground">
