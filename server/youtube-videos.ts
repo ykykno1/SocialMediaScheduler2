@@ -298,9 +298,9 @@ export const registerYouTubeRoutes = (app: Express): void => {
   });
 
   // Hide all videos
-  app.post("/api/youtube/videos/hide-all", async (req, res) => {
+  app.post("/api/youtube/videos/hide-all", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -434,9 +434,9 @@ export const registerYouTubeRoutes = (app: Express): void => {
   });
 
   // Restore all videos
-  app.post("/api/youtube/videos/restore-all", async (req, res) => {
+  app.post("/api/youtube/videos/restore-all", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -565,8 +565,8 @@ export const registerYouTubeRoutes = (app: Express): void => {
   });
 
   // YouTube logout
-  app.post("/api/youtube/logout", (req, res) => {
-    storage.removeAuthToken('youtube');
+  app.post("/api/youtube/logout", requireAuth, (req: AuthenticatedRequest, res) => {
+    storage.removeAuthToken('youtube', req.user?.id);
     res.json({ success: true });
   });
 };
