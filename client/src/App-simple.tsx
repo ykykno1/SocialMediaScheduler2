@@ -5,6 +5,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import AuthPage from "@/pages/auth-simple";
 import HomePage from "@/pages/home-simple";
+import YouTubePage from "@/pages/youtube";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -53,6 +54,9 @@ function App() {
         <Switch>
           <Route path="/">
             {isAuthenticated ? <HomePage onLogout={() => setIsAuthenticated(false)} /> : <AuthPage onLogin={() => setIsAuthenticated(true)} />}
+          </Route>
+          <Route path="/youtube">
+            {isAuthenticated ? <YouTubePage /> : <AuthPage onLogin={() => setIsAuthenticated(true)} />}
           </Route>
         </Switch>
         <Toaster />
