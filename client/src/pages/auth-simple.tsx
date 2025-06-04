@@ -15,7 +15,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
   const { toast } = useToast();
   
   const [loginForm, setLoginForm] = useState({
-    username: "",
+    email: "",
     password: ""
   });
   
@@ -56,7 +56,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
       }
       
       const data = await response.json();
-      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('token', data.token);
       
       toast({
         title: "התחברות הושלמה בהצלחה",
@@ -108,7 +108,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
       }
       
       const data = await response.json();
-      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('token', data.token);
       
       toast({
         title: "רישום הושלם בהצלחה",
@@ -177,12 +177,12 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-username">שם משתמש</Label>
+                    <Label htmlFor="login-email">אימייל</Label>
                     <Input
-                      id="login-username"
-                      type="text"
-                      value={loginForm.username}
-                      onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                      id="login-email"
+                      type="email"
+                      value={loginForm.email}
+                      onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
                       required
                       disabled={isLoading.login}
                     />
