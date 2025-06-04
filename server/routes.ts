@@ -16,7 +16,6 @@ import {
   loginSchema
 } from "@shared/schema";
 import { registerFacebookPagesRoutes } from "./facebook-pages";
-import { registerYouTubeRoutes } from "./youtube-videos";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
@@ -871,8 +870,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Register YouTube routes (protected endpoints)
-  registerYouTubeRoutes(app);
+  // YouTube routes are defined above as public endpoints
   
   // Instagram Routes
   app.get("/api/instagram/auth-status", (req, res) => {
