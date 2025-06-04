@@ -1058,14 +1058,35 @@ export function registerRoutes(app: Express): Server {
       }
 
       const videosData = await videosResponse.json();
-      const videos = videosData.items?.map((item: any) => ({
-        id: item.snippet.resourceId.videoId,
-        title: item.snippet.title,
-        thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-        publishedAt: item.snippet.publishedAt,
-        description: item.snippet.description,
-        isHidden: false // We'll need to check video status separately if needed
-      })) || [];
+      
+      // Get detailed video information including privacy status
+      const videoIds = videosData.items?.map((item: any) => item.snippet.resourceId.videoId).join(',') || '';
+      const detailedResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${videoIds}&access_token=${auth.accessToken}`);
+      
+      let detailedVideos = [];
+      if (detailedResponse.ok) {
+        const detailedData = await detailedResponse.json();
+        detailedVideos = detailedData.items || [];
+      }
+      
+      const videos = videosData.items?.map((item: any) => {
+        const videoId = item.snippet.resourceId.videoId;
+        const detailedVideo = detailedVideos.find((v: any) => v.id === videoId);
+        const currentPrivacyStatus = detailedVideo?.status?.privacyStatus || 'unknown';
+        const hasOriginalStatus = storage.getVideoOriginalStatus(videoId) !== null;
+        
+        return {
+          id: videoId,
+          title: item.snippet.title,
+          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+          publishedAt: item.snippet.publishedAt,
+          description: item.snippet.description,
+          privacyStatus: currentPrivacyStatus,
+          isHidden: currentPrivacyStatus === 'private',
+          isProtected: currentPrivacyStatus === 'private' && !hasOriginalStatus, // Was private before our system touched it
+          canBeRestored: hasOriginalStatus // Can be restored by our system
+        };
+      }) || [];
 
       res.json({ videos });
     } catch (error) {
@@ -1332,7 +1353,7 @@ export function registerRoutes(app: Express): Server {
         success: true,
         message: `הוצגו ${shownCount} סרטונים בהצלחה`,
         shownCount,
-        totalVideos: videos.length,
+        totalVideos: videoIds.length,
         errors: errors.length > 0 ? errors : undefined
       });
     } catch (error) {
