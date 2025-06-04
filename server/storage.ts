@@ -29,10 +29,10 @@ export interface IStorage {
   getSettings(): Settings;
   saveSettings(settings: Settings): Settings;
   
-  // Generic auth token operations
-  getAuthToken(platform: SupportedPlatform): AuthToken | null;
-  saveAuthToken(token: AuthToken): AuthToken;
-  removeAuthToken(platform: SupportedPlatform): void;
+  // Generic auth token operations (user-specific)
+  getAuthToken(platform: SupportedPlatform, userId: string): AuthToken | null;
+  saveAuthToken(token: AuthToken, userId: string): AuthToken;
+  removeAuthToken(platform: SupportedPlatform, userId: string): void;
   
   // Legacy Facebook-specific auth (kept for backward compatibility)
   getFacebookAuth(): FacebookAuth | null;
@@ -124,14 +124,12 @@ export class MemStorage implements IStorage {
   }
   
   // Generic auth token operations (user-specific)
-  getAuthToken(platform: SupportedPlatform, userId?: string): AuthToken | null {
-    if (!userId) return null;
+  getAuthToken(platform: SupportedPlatform, userId: string): AuthToken | null {
     const userTokens = this.userAuthTokens.get(userId);
     return userTokens?.[platform] || null;
   }
   
-  saveAuthToken(token: AuthToken, userId?: string): AuthToken {
-    if (!userId) throw new Error('User ID required for saving auth token');
+  saveAuthToken(token: AuthToken, userId: string): AuthToken {
     
     const validatedToken = authSchema.parse(token);
     
@@ -156,9 +154,7 @@ export class MemStorage implements IStorage {
     return validatedToken;
   }
   
-  removeAuthToken(platform: SupportedPlatform, userId?: string): void {
-    if (!userId) return;
-    
+  removeAuthToken(platform: SupportedPlatform, userId: string): void {
     const userTokens = this.userAuthTokens.get(userId);
     if (userTokens) {
       userTokens[platform] = null;
