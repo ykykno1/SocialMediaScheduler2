@@ -41,7 +41,28 @@ declare module 'express-session' {
 
 export function registerRoutes(app: Express): Server {
   
-
+  // Middleware to check authentication
+  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    
+    const user = storage.getUserById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    
+    req.user = user;
+    next();
+  };
 
   // User registration and login endpoints
   app.post("/api/register", async (req, res) => {
@@ -330,29 +351,6 @@ export function registerRoutes(app: Express): Server {
     const { password: _, ...userResponse } = user;
     res.json(userResponse);
   });
-
-  // Middleware to check authentication
-  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-    
-    const user = storage.getUserById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
-    
-    req.user = user;
-    next();
-  };
 
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
@@ -1289,7 +1287,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube show all videos
-  app.post("/api/youtube/show-all", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/show-all", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       
@@ -2128,7 +2126,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube OAuth - secure token exchange
-  app.post("/api/youtube/token", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/token", requireAuth, async (req: any, res) => {
     try {
       const { code } = req.body;
       
