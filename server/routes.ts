@@ -41,17 +41,7 @@ declare module 'express-session' {
 
 export function registerRoutes(app: Express): Server {
   
-  // Authentication middleware
-  const authMiddleware = (req: any, res: any, next: any) => {
-    if (req.session.userId) {
-      const user = storage.getUser(req.session.userId);
-      if (user) {
-        req.user = user;
-        return next();
-      }
-    }
-    return res.status(401).json({ error: "Not authenticated" });
-  };
+
 
   // User registration and login endpoints
   app.post("/api/register", async (req, res) => {
@@ -116,7 +106,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/user", authMiddleware, (req: any, res) => {
+  app.get("/api/user", requireAuth, (req: any, res) => {
     res.json({
       id: req.user.id,
       email: req.user.email,
@@ -1024,7 +1014,7 @@ export function registerRoutes(app: Express): Server {
   registerFacebookPagesRoutes(app);
   
   // YouTube videos endpoint  
-  app.get("/api/youtube/videos", authMiddleware, async (req: any, res) => {
+  app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       
@@ -1096,7 +1086,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide/show individual video
-  app.post("/api/youtube/videos/:videoId/hide", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/videos/:videoId/hide", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
@@ -1153,7 +1143,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/youtube/videos/:videoId/show", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/videos/:videoId/show", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
@@ -1205,7 +1195,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide all videos
-  app.post("/api/youtube/hide-all", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/hide-all", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       
