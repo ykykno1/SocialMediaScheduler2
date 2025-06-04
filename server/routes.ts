@@ -825,7 +825,53 @@ export function registerRoutes(app: Express): Server {
   // Register Facebook Pages routes
   registerFacebookPagesRoutes(app);
   
-  // Register YouTube routes
+  // YouTube auth status (public endpoint - moved here to override the protected one)
+  app.get("/api/youtube/auth-status", (req, res) => {
+    const auth = storage.getAuthToken('youtube');
+    
+    if (!auth) {
+      return res.json({ 
+        isAuthenticated: false, 
+        platform: 'youtube' 
+      });
+    }
+    
+    res.json({ 
+      isAuthenticated: true, 
+      platform: 'youtube',
+      channelTitle: auth.additionalData?.channelTitle || 'Unknown Channel'
+    });
+  });
+
+  // YouTube auth URL (public endpoint)
+  app.get("/api/youtube/auth-url", (req, res) => {
+    try {
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
+      
+      if (!clientId || !clientSecret) {
+        return res.status(500).json({ error: "Google credentials not configured" });
+      }
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent('https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube')}&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+      
+      res.json({ authUrl });
+    } catch (error) {
+      console.error('Error generating YouTube auth URL:', error);
+      res.status(500).json({ error: "Failed to generate auth URL" });
+    }
+  });
+
+  // Register YouTube routes (protected endpoints)
   registerYouTubeRoutes(app);
   
   // Instagram Routes
