@@ -163,6 +163,29 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
+  // YouTube auth status endpoint
+  app.get('/api/youtube/auth-status', requireAuth, async (req: any, res: Response) => {
+    try {
+      const user = users.find(u => u.id === req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const isAuthenticated = !!(user.youtubeAccessToken && 
+        user.youtubeTokenExpiresAt && 
+        new Date(user.youtubeTokenExpiresAt) > new Date());
+
+      res.json({
+        isAuthenticated,
+        channelTitle: user.youtubeChannelTitle || null
+      });
+    } catch (error) {
+      console.error('Error checking YouTube auth status:', error);
+      res.status(500).json({ error: 'Failed to check auth status' });
+    }
+  });
+
   // YouTube OAuth - Get auth URL
   app.get('/api/youtube/auth-url', requireAuth, (req: any, res: Response) => {
     try {
@@ -186,7 +209,7 @@ export function registerRoutes(app: Express): Server {
         response_type: 'code',
         access_type: 'offline',
         prompt: 'consent',
-        state: req.userId
+        state: req.user.id
       });
 
       const authUrl = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
@@ -250,7 +273,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Update user with YouTube tokens
-      const user = users.find(u => u.id === userId);
+      const user = users.find(u => u.id === req.user.id);
       if (user) {
         user.youtubeAccessToken = tokens.access_token;
         user.youtubeRefreshToken = tokens.refresh_token;

@@ -12,13 +12,28 @@ export default function useYouTubeAuth() {
     isLoading
   } = useQuery({
     queryKey: ['/api/youtube/auth-status'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/youtube/auth-status', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get auth status');
+      }
+      
+      return response.json();
+    },
     refetchOnWindowFocus: false
   });
 
   // Get auth URL for login
   const authUrlMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/youtube/auth-url');
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/youtube/auth-url', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -99,8 +114,10 @@ export default function useYouTubeAuth() {
   // Logout from YouTube
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/youtube/logout', {
-        method: 'POST'
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       
       if (!response.ok) {
@@ -130,10 +147,12 @@ export default function useYouTubeAuth() {
   // Process YouTube auth code
   const processYouTubeCode = async (code: string) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/youtube/process-auth', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           code
