@@ -11,16 +11,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Session configuration
+// Session configuration - persistent sessions
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-here-shabbat-robot-2024',
-  resave: true,
-  saveUninitialized: true,
-  name: 'connect.sid',
+  resave: false,
+  saveUninitialized: false,
+  name: 'shabbat.sid',
   cookie: {
     secure: false,
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     sameSite: 'lax'
   },
   rolling: true

@@ -32,7 +32,107 @@ const verifyToken = (token: string) => {
   }
 };
 
+// Extend Express Request type to include session
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+  }
+}
+
 export function registerRoutes(app: Express): Server {
+  
+  // Authentication middleware
+  const authMiddleware = (req: any, res: any, next: any) => {
+    if (req.session.userId) {
+      const user = storage.getUser(req.session.userId);
+      if (user) {
+        req.user = user;
+        return next();
+      }
+    }
+    return res.status(401).json({ error: "Not authenticated" });
+  };
+
+  // User registration and login endpoints
+  app.post("/api/register", async (req, res) => {
+    try {
+      const { email, password, username } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+
+      // Check if user exists
+      const existingUser = storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User already exists" });
+      }
+
+      // Create user
+      const user = storage.createUser({
+        email,
+        password, // In real app, hash this
+        username: username || email.split('@')[0]
+      });
+
+      // Set session
+      req.session.userId = user.id;
+
+      res.json({
+        id: user.id,
+        email: user.email,
+        username: user.username
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ error: "Registration failed" });
+    }
+  });
+
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+
+      const user = storage.getUserByEmail(email);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+
+      res.json({
+        id: user.id,
+        email: user.email,
+        username: user.username
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.get("/api/user", authMiddleware, (req: any, res) => {
+    res.json({
+      id: req.user.id,
+      email: req.user.email,
+      username: req.user.username
+    });
+  });
+
+  app.post("/api/logout", (req, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      res.clearCookie('shabbat.sid');
+      res.json({ success: true });
+    });
+  });
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
   app.get("/api/youtube/auth-status", (req, res) => {

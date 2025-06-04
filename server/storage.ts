@@ -65,6 +65,7 @@ export interface IStorage {
   // User operations
   createUser(userData: RegisterData): User;
   getUserByEmail(email: string): User | null;
+  getUser(id: string): User | null;
   getUserById(id: string): User | null;
   updateUser(id: string, updates: Partial<User>): User;
   verifyPassword(email: string, password: string): User | null;
@@ -382,6 +383,10 @@ export class MemStorage implements IStorage {
   }
   
   getUserById(id: string): User | null {
+    return this.users.get(id) || null;
+  }
+
+  getUser(id: string): User | null {
     return this.users.get(id) || null;
   }
   
