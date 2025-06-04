@@ -34,6 +34,105 @@ const verifyToken = (token: string) => {
 
 export function registerRoutes(app: Express): Server {
   
+  // YouTube OAuth - Public endpoints (must be before any auth middleware)
+  app.get("/api/youtube/auth-status", (req, res) => {
+    const auth = storage.getAuthToken('youtube');
+    
+    if (!auth) {
+      return res.json({ 
+        isAuthenticated: false, 
+        platform: 'youtube' 
+      });
+    }
+    
+    res.json({ 
+      isAuthenticated: true, 
+      platform: 'youtube',
+      channelTitle: auth.additionalData?.channelTitle || 'Unknown Channel'
+    });
+  });
+
+  app.get("/api/youtube/auth-url", (req, res) => {
+    try {
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
+      
+      if (!clientId || !clientSecret) {
+        return res.status(500).json({ error: "Google credentials not configured" });
+      }
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent('https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube')}&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+      
+      res.json({ authUrl });
+    } catch (error) {
+      console.error('Error generating YouTube auth URL:', error);
+      res.status(500).json({ error: "Failed to generate auth URL" });
+    }
+  });
+
+  app.post("/api/youtube/token", async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: "Authorization code required" });
+      }
+
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
+
+      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: process.env.GOOGLE_CLIENT_ID!,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+          code: code,
+          grant_type: "authorization_code",
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      const tokens = await tokenResponse.json();
+      
+      if (!tokenResponse.ok) {
+        console.error("Token exchange failed:", tokens);
+        return res.status(400).json({ 
+          error: (tokens as any).error_description || (tokens as any).error || "Token exchange failed" 
+        });
+      }
+
+      const tokenData = tokens as any;
+      storage.saveAuthToken({
+        platform: 'youtube',
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        expiresIn: tokenData.expires_in,
+        timestamp: Date.now()
+      });
+
+      res.json({ 
+        success: true,
+        message: "YouTube connected successfully"
+      });
+      
+    } catch (error) {
+      console.error("YouTube token exchange error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
   // Authentication routes
   app.post("/api/register", async (req, res) => {
     try {
@@ -824,53 +923,7 @@ export function registerRoutes(app: Express): Server {
   // Register Facebook Pages routes
   registerFacebookPagesRoutes(app);
   
-  // YouTube auth status (public endpoint - moved here to override the protected one)
-  app.get("/api/youtube/auth-status", (req, res) => {
-    const auth = storage.getAuthToken('youtube');
-    
-    if (!auth) {
-      return res.json({ 
-        isAuthenticated: false, 
-        platform: 'youtube' 
-      });
-    }
-    
-    res.json({ 
-      isAuthenticated: true, 
-      platform: 'youtube',
-      channelTitle: auth.additionalData?.channelTitle || 'Unknown Channel'
-    });
-  });
-
-  // YouTube auth URL (public endpoint)
-  app.get("/api/youtube/auth-url", (req, res) => {
-    try {
-      const clientId = process.env.GOOGLE_CLIENT_ID;
-      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-      
-      const domain = req.headers.host;
-      const redirectUri = `https://${domain}/auth-callback.html`;
-      
-      if (!clientId || !clientSecret) {
-        return res.status(500).json({ error: "Google credentials not configured" });
-      }
-      
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${encodeURIComponent(clientId)}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent('https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube')}&` +
-        `access_type=offline&` +
-        `prompt=consent`;
-      
-      res.json({ authUrl });
-    } catch (error) {
-      console.error('Error generating YouTube auth URL:', error);
-      res.status(500).json({ error: "Failed to generate auth URL" });
-    }
-  });
-
-  // YouTube routes are defined above as public endpoints
+  // YouTube routes are defined at the top as public endpoints
   
   // Instagram Routes
   app.get("/api/instagram/auth-status", (req, res) => {
