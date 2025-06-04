@@ -8,7 +8,24 @@ interface AuthenticatedRequest extends Request {
 }
 
 export const registerYouTubeRoutes = (app: Express): void => {
-  // Get YouTube auth URL for login
+  // Middleware to check authentication
+  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
+    const session = (req as any).session;
+    
+    if (!session || !session.userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    const user = storage.getUserById(session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    
+    req.user = user;
+    next();
+  };
+
+  // Get YouTube auth URL for login  
   app.get("/api/youtube/auth-url", (req, res) => {
     try {
       const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -45,23 +62,6 @@ export const registerYouTubeRoutes = (app: Express): void => {
       res.status(500).json({ error: "Failed to generate auth URL" });
     }
   });
-
-  // Middleware to check authentication
-  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    const session = (req as any).session;
-    
-    if (!session || !session.userId) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    
-    const user = storage.getUserById(session.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
-    
-    req.user = user;
-    next();
-  };
 
   // Handle YouTube auth callback
   app.post("/api/youtube-auth-callback", requireAuth, async (req: AuthenticatedRequest, res) => {
