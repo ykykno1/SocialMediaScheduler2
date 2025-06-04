@@ -8,7 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useLocation } from "wouter";
 
-export default function AuthPage() {
+interface AuthPageProps {
+  onLogin?: () => void;
+}
+
+export default function AuthPage({ onLogin }: AuthPageProps) {
   const [_, setLocation] = useLocation();
   const { user, isAuthenticated, loginMutation, registerMutation } = useAuth();
   

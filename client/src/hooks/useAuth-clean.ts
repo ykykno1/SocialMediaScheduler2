@@ -1,33 +1,54 @@
-import { useQuery, useMutation, type UseMutationResult } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { User, AuthResponse, RegisterRequest, LoginRequest } from "../../../shared/types";
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import type { User, RegisterRequest, LoginRequest, AuthResponse } from "@shared/types";
 
 type UserWithoutPassword = Omit<User, 'password'>;
 
 export function useAuth() {
   const { toast } = useToast();
+  const [isTokenChecked, setIsTokenChecked] = useState(false);
+  
+  // Clear any invalid token on mount
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      // Test if token is valid by making a quick request
+      fetch('/api/user', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(res => {
+        if (!res.ok) {
+          localStorage.removeItem('auth_token');
+        }
+      }).catch(() => {
+        localStorage.removeItem('auth_token');
+      }).finally(() => {
+        setIsTokenChecked(true);
+      });
+    } else {
+      setIsTokenChecked(true);
+    }
+  }, []);
 
-  // Get current user - only if token exists
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   
-  const { data: user, isLoading, error } = useQuery<UserWithoutPassword>({
+  const { data: user, isLoading } = useQuery<UserWithoutPassword | null>({
     queryKey: ["/api/user"],
     queryFn: async () => {
+      if (!token) return null;
+      
       try {
         const res = await apiRequest("GET", "/api/user");
         return res.json();
       } catch (error) {
-        // If token is invalid, clear it and return null
-        if (error instanceof Error && (error.message.includes("401") || error.message.includes("INVALID_TOKEN"))) {
-          localStorage.removeItem('auth_token');
-          return null;
-        }
-        throw error;
+        localStorage.removeItem('auth_token');
+        return null;
       }
     },
-    enabled: !!token, // Only run query if token exists
+    enabled: isTokenChecked && !!token,
     retry: false,
+    refetchOnWindowFocus: false,
   });
 
   // Register mutation
@@ -37,15 +58,11 @@ export function useAuth() {
       return res.json();
     },
     onSuccess: (response: AuthResponse) => {
-      // Store JWT token
-      localStorage.setItem("auth_token", response.token);
-      
-      // Update query cache
+      localStorage.setItem('auth_token', response.token);
       queryClient.setQueryData(["/api/user"], response.user);
-      
       toast({
-        title: "ברוך הבא!",
-        description: "חשבונך נוצר בהצלחה",
+        title: "רישום הושלם בהצלחה",
+        description: `ברוך הבא ${response.user.username}!`,
       });
     },
     onError: (error: Error) => {
@@ -64,15 +81,11 @@ export function useAuth() {
       return res.json();
     },
     onSuccess: (response: AuthResponse) => {
-      // Store JWT token
-      localStorage.setItem("auth_token", response.token);
-      
-      // Update query cache
+      localStorage.setItem('auth_token', response.token);
       queryClient.setQueryData(["/api/user"], response.user);
-      
       toast({
-        title: "ברוך השב!",
-        description: "התחברת בהצלחה",
+        title: "התחברות הושלמה בהצלחה",
+        description: `ברוך הבא ${response.user.username}!`,
       });
     },
     onError: (error: Error) => {
@@ -86,38 +99,33 @@ export function useAuth() {
 
   // Logout mutation
   const logoutMutation = useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async () => {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      // Remove JWT token
-      localStorage.removeItem("auth_token");
-      
-      // Clear query cache
+      localStorage.removeItem('auth_token');
       queryClient.setQueryData(["/api/user"], null);
-      
+      queryClient.clear();
       toast({
         title: "התנתקת בהצלחה",
-        description: "שבת שלום!",
+        description: "להתראות!",
       });
     },
     onError: (error: Error) => {
-      // Even if logout fails on server, clear local storage
-      localStorage.removeItem("auth_token");
+      // Even if logout fails on server, clear local data
+      localStorage.removeItem('auth_token');
       queryClient.setQueryData(["/api/user"], null);
-      
-      toast({
-        title: "התנתקות",
-        description: "התנתקת מהמערכת",
-      });
+      queryClient.clear();
     },
   });
 
+  const isAuthenticated = !!user && !!token;
+  const isLoadingAuth = !isTokenChecked || (isTokenChecked && !!token && isLoading);
+
   return {
-    user: user || null,
-    isLoading,
-    error,
-    isAuthenticated: !!user,
+    user,
+    isAuthenticated,
+    isLoading: isLoadingAuth,
     registerMutation,
     loginMutation,
     logoutMutation,
