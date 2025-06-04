@@ -59,27 +59,7 @@ app.use((req, res, next) => {
   
   const INSTAGRAM_TOKEN = "EAAWtnDD3MFgBO88vrSIDAsRkYte02YZB7Vwav5QA3jyMPYrFTGXOa99tqbhperJhaq7ddUNwJXUWdZBfc7ZB87qKlZAKwWRV0DO7Vq2QFkJ4wQa5qR9nqgSCZAfkV9sd4qjaNIshTY9tROeRAhpNOMWG9S0w60WOsoD6Bzokq9aZCWuTJZAZAkVkfSZAiUBZCJ1nDcIyfOggWPxlJt4K1wwDkmQRxgNsOZAuW4v4ZBYRsGkJwgDfjpiGsWzebrjTZAVDf";
 
-  try {
-    if (!storage.getAuthToken('instagram')) {
-      console.log('Auto-setting Instagram token...');
-      
-      const authData = {
-        platform: 'instagram' as const,
-        accessToken: INSTAGRAM_TOKEN,
-        expiresIn: 86400 * 30, // 30 days
-        timestamp: Date.now(),
-        isManualToken: true,
-        additionalData: {
-          user: { id: '122100808994860326', name: 'יאיר קרני' }
-        }
-      };
-      
-      storage.saveAuthToken(authData);
-      console.log('Instagram token set automatically');
-    }
-  } catch (error) {
-    console.log('Could not auto-set Instagram token:', error);
-  }
+  // Security fix: Removed auto-token setting to prevent data mixing between users
 
   const server = await registerRoutes(app);
 

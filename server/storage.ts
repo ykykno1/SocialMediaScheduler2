@@ -162,16 +162,25 @@ export class MemStorage implements IStorage {
     }
   }
   
-  // Legacy Facebook-specific auth (kept for backward compatibility)
-  getFacebookAuth(): FacebookAuth | null {
-    return this.facebookAuth;
+  // Legacy Facebook-specific auth (user-specific)
+  getFacebookAuth(userId?: string): FacebookAuth | null {
+    if (!userId) return null;
+    return this.userFacebookAuth.get(userId) || null;
   }
   
-  saveFacebookAuth(token: FacebookAuth): FacebookAuth {
-    this.facebookAuth = facebookAuthSchema.parse(token);
+  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth {
+    if (!userId) throw new Error('User ID required for saving Facebook auth');
+    
+    const validatedToken = facebookAuthSchema.parse(token);
+    this.userFacebookAuth.set(userId, validatedToken);
     
     // Sync with generic auth
-    this.authTokens.facebook = {
+    let userTokens = this.userAuthTokens.get(userId);
+    if (!userTokens) {
+      userTokens = { facebook: null, youtube: null, tiktok: null, instagram: null };
+      this.userAuthTokens.set(userId, userTokens);
+    }
+    userTokens.facebook = {
       platform: 'facebook',
       accessToken: token.accessToken,
       expiresIn: token.expiresIn,
@@ -180,62 +189,79 @@ export class MemStorage implements IStorage {
       isManualToken: token.isManualToken
     };
     
-    return this.facebookAuth;
+    return validatedToken;
   }
   
-  removeFacebookAuth(): void {
-    this.facebookAuth = null;
-    this.authTokens.facebook = null;
+  removeFacebookAuth(userId?: string): void {
+    if (!userId) return;
+    this.userFacebookAuth.set(userId, null);
+    
+    const userTokens = this.userAuthTokens.get(userId);
+    if (userTokens) {
+      userTokens.facebook = null;
+    }
   }
   
-  // History operations
-  getHistoryEntries(platform?: SupportedPlatform): HistoryEntry[] {
+  // History operations (user-specific)
+  getHistoryEntries(platform?: SupportedPlatform, userId?: string): HistoryEntry[] {
+    if (!userId) return [];
+    const userHistory = this.userHistoryEntries.get(userId) || [];
     if (!platform) {
-      return this.historyEntries;
+      return userHistory;
     }
     
-    return this.historyEntries.filter(entry => entry.platform === platform);
+    return userHistory.filter(entry => entry.platform === platform);
   }
   
-  addHistoryEntry(entry: Omit<HistoryEntry, 'id'>): HistoryEntry {
+  addHistoryEntry(entry: Omit<HistoryEntry, 'id'>, userId?: string): HistoryEntry {
+    if (!userId) throw new Error('User ID required for adding history entry');
+    
     const newEntry: HistoryEntry = {
       ...entry,
       id: nanoid()
     };
     
-    this.historyEntries.unshift(newEntry); // Add to beginning for newest first
+    let userHistory = this.userHistoryEntries.get(userId) || [];
+    userHistory.unshift(newEntry); // Add to beginning for newest first
     
-    // Keep only the last 100 entries
-    if (this.historyEntries.length > 100) {
-      this.historyEntries = this.historyEntries.slice(0, 100);
+    // Keep only the last 100 entries per user
+    if (userHistory.length > 100) {
+      userHistory = userHistory.slice(0, 100);
     }
     
+    this.userHistoryEntries.set(userId, userHistory);
     return newEntry;
   }
   
-  // Facebook content operations (for backward compatibility)
-  getCachedPosts(): FacebookPost[] {
-    return this.cachedPosts;
+  // Facebook content operations (user-specific)
+  getCachedPosts(userId?: string): FacebookPost[] {
+    if (!userId) return [];
+    return this.userCachedPosts.get(userId) || [];
   }
   
-  saveCachedPosts(posts: FacebookPost[]): void {
-    this.cachedPosts = posts;
+  saveCachedPosts(posts: FacebookPost[], userId?: string): void {
+    if (!userId) return;
+    this.userCachedPosts.set(userId, posts);
   }
   
-  clearCachedPosts(): void {
-    this.cachedPosts = [];
+  clearCachedPosts(userId?: string): void {
+    if (!userId) return;
+    this.userCachedPosts.set(userId, []);
   }
   
-  getCachedPages(): FacebookPage[] {
-    return this.cachedPages;
+  getCachedPages(userId?: string): FacebookPage[] {
+    if (!userId) return [];
+    return this.userCachedPages.get(userId) || [];
   }
   
-  saveCachedPages(pages: FacebookPage[]): void {
-    this.cachedPages = pages;
+  saveCachedPages(pages: FacebookPage[], userId?: string): void {
+    if (!userId) return;
+    this.userCachedPages.set(userId, pages);
   }
   
-  clearCachedPages(): void {
-    this.cachedPages = [];
+  clearCachedPages(userId?: string): void {
+    if (!userId) return;
+    this.userCachedPages.set(userId, []);
   }
   
   // YouTube content operations
