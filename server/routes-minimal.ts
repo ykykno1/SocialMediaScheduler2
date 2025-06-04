@@ -197,6 +197,9 @@ export function registerRoutes(app: Express): Server {
       // Use the correct Replit domain for OAuth callback
       const host = req.get('host');
       const redirectUri = `https://${host}/auth-callback.html`;
+      console.log('YouTube OAuth - Host:', host);
+      console.log('YouTube OAuth - Redirect URI:', redirectUri);
+      console.log('YouTube OAuth - Client ID:', clientId);
       const scopes = [
         'https://www.googleapis.com/auth/youtube',
         'https://www.googleapis.com/auth/youtube.force-ssl'
