@@ -42,6 +42,11 @@ export interface ISecureStorage {
   saveUserSettings(userId: string, settings: UserSettings): void;
   getUserSettings(userId: string): UserSettings | undefined;
 
+  // YouTube integration - user-isolated
+  saveYouTubeTokens(userId: string, accessToken: string, refreshToken: string, expiresAt: Date): void;
+  updateYouTubeChannel(userId: string, channelId: string, channelTitle: string): void;
+  clearYouTubeConnection(userId: string): void;
+
   // Admin functions - with proper security checks
   getAllUsers(): User[]; // Admin only
   getUserStats(): { totalUsers: number; activeUsers: number; premiumUsers: number }; // Admin only
@@ -332,6 +337,42 @@ export class SecureMemoryStorage implements ISecureStorage {
 
   getUserSettings(userId: string): UserSettings | undefined {
     return this.userSettings.get(userId);
+  }
+
+  // YouTube integration - user-isolated
+  saveYouTubeTokens(userId: string, accessToken: string, refreshToken: string, expiresAt: Date): void {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    user.youtubeAccessToken = accessToken;
+    user.youtubeRefreshToken = refreshToken;
+    user.youtubeTokenExpiresAt = expiresAt;
+    user.lastActive = new Date();
+  }
+
+  updateYouTubeChannel(userId: string, channelId: string, channelTitle: string): void {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    user.youtubeChannelId = channelId;
+    user.youtubeChannelTitle = channelTitle;
+  }
+
+  clearYouTubeConnection(userId: string): void {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    user.youtubeAccessToken = undefined;
+    user.youtubeRefreshToken = undefined;
+    user.youtubeTokenExpiresAt = undefined;
+    user.youtubeChannelId = undefined;
+    user.youtubeChannelTitle = undefined;
   }
 
   // Admin functions - with proper security checks

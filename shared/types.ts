@@ -10,6 +10,12 @@ export interface User {
   hideCount: number;
   maxHides: number;
   settings?: UserSettings;
+  // YouTube integration
+  youtubeAccessToken?: string;
+  youtubeRefreshToken?: string;
+  youtubeTokenExpiresAt?: Date;
+  youtubeChannelId?: string;
+  youtubeChannelTitle?: string;
 }
 
 export interface UserSettings {

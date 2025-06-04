@@ -1,248 +1,299 @@
-import { google, youtube_v3 } from 'googleapis';
-import type { PlatformToken } from '../../shared/types';
+import { secureStorage } from "../storage-new";
 
-class YouTubeService {
-  private oauth2Client: any;
-  
+export interface YouTubeVideo {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  publishedAt: string;
+  privacyStatus: 'public' | 'private' | 'unlisted';
+  viewCount?: string;
+  likeCount?: string;
+}
+
+export interface YouTubeChannel {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  subscriberCount?: string;
+  videoCount?: string;
+}
+
+export class YouTubeService {
+  private readonly apiKey: string;
+  private readonly clientId: string;
+  private readonly clientSecret: string;
+
   constructor() {
-    this.oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      // Dynamic redirect URI will be set per request
-    );
+    this.apiKey = process.env.YOUTUBE_API_KEY || '';
+    this.clientId = process.env.GOOGLE_CLIENT_ID || '';
+    this.clientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
   }
 
-  getAuthUrl(redirectUri?: string): string {
-    // Use the domain from the current request for redirect URI
-    const actualRedirectUri = redirectUri || `${process.env.BASE_URL || 'https://localhost:5000'}/auth-callback.html`;
-    
-    this.oauth2Client.redirectUri = actualRedirectUri;
+  /**
+   * Get OAuth URL for YouTube authentication
+   */
+  getAuthUrl(userId: string, redirectUri: string): string {
+    if (!this.clientId) {
+      throw new Error('Google Client ID not configured');
+    }
 
     const scopes = [
-      'https://www.googleapis.com/auth/youtube.readonly',
-      'https://www.googleapis.com/auth/youtube'
-    ];
+      'https://www.googleapis.com/auth/youtube',
+      'https://www.googleapis.com/auth/youtube.force-ssl'
+    ].join(' ');
 
-    return this.oauth2Client.generateAuthUrl({
-      access_type: 'offline',
+    const params = new URLSearchParams({
+      client_id: this.clientId,
+      redirect_uri: redirectUri,
       scope: scopes,
-      prompt: 'consent' // Always request refresh token
+      response_type: 'code',
+      access_type: 'offline',
+      prompt: 'consent',
+      state: userId // Include user ID for security
     });
+
+    return `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string, redirectUri: string) {
-    this.oauth2Client.redirectUri = redirectUri;
-    
-    const { tokens } = await this.oauth2Client.getToken(code);
-    
-    // Get channel information
-    this.oauth2Client.setCredentials(tokens);
-    const youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
-    
-    let channelTitle = 'Unknown Channel';
-    try {
-      const channelsResponse = await youtube.channels.list({
-        part: ['snippet'],
-        mine: true
-      });
-      
-      if (channelsResponse.data.items && channelsResponse.data.items.length > 0) {
-        channelTitle = channelsResponse.data.items[0].snippet?.title || 'Unknown Channel';
-      }
-    } catch (error) {
-      console.warn('Could not fetch channel info:', error);
+  /**
+   * Exchange authorization code for access token
+   */
+  async exchangeCodeForTokens(code: string, redirectUri: string): Promise<{
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+  }> {
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error('Google OAuth credentials not configured');
     }
 
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Token exchange failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Refresh access token using refresh token
+   */
+  async refreshAccessToken(refreshToken: string): Promise<{
+    access_token: string;
+    expires_in: number;
+  }> {
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error('Google OAuth credentials not configured');
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        refresh_token: refreshToken,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Token refresh failed: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get user's YouTube channel information
+   */
+  async getChannelInfo(accessToken: string): Promise<YouTubeChannel> {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to get channel info: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.items || data.items.length === 0) {
+      throw new Error('No YouTube channel found for this account');
+    }
+
+    const channel = data.items[0];
     return {
-      access_token: tokens.access_token!,
-      refresh_token: tokens.refresh_token,
-      expiry_date: tokens.expiry_date,
-      channelTitle
+      id: channel.id,
+      title: channel.snippet.title,
+      description: channel.snippet.description,
+      thumbnailUrl: channel.snippet.thumbnails.default.url,
+      subscriberCount: channel.statistics?.subscriberCount,
+      videoCount: channel.statistics?.videoCount,
     };
   }
 
-  async refreshToken(token: PlatformToken): Promise<PlatformToken> {
-    this.oauth2Client.setCredentials({
-      access_token: token.accessToken,
-      refresh_token: token.refreshToken
-    });
-
-    const { credentials } = await this.oauth2Client.refreshAccessToken();
-    
-    return {
-      ...token,
-      accessToken: credentials.access_token!,
-      expiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : undefined
-    };
-  }
-
-  async getUserVideos(token: PlatformToken) {
-    // Set up OAuth client with user's tokens
-    this.oauth2Client.setCredentials({
-      access_token: token.accessToken,
-      refresh_token: token.refreshToken
-    });
-
-    const youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
-
-    try {
-      // Get user's channel
-      const channelsResponse = await youtube.channels.list({
-        part: ['contentDetails'],
-        mine: true
-      });
-
-      if (!channelsResponse.data.items || channelsResponse.data.items.length === 0) {
-        throw new Error('No YouTube channel found');
+  /**
+   * Get user's YouTube videos
+   */
+  async getUserVideos(accessToken: string, maxResults: number = 50): Promise<YouTubeVideo[]> {
+    // First get the channel's uploads playlist
+    const channelResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
       }
+    );
 
-      const uploadsPlaylistId = channelsResponse.data.items[0].contentDetails?.relatedPlaylists?.uploads;
-      
-      if (!uploadsPlaylistId) {
-        throw new Error('Could not find uploads playlist');
-      }
-
-      // Get videos from uploads playlist
-      const playlistResponse = await youtube.playlistItems.list({
-        part: ['snippet', 'status'],
-        playlistId: uploadsPlaylistId,
-        maxResults: 50 // Can be made configurable
-      });
-
-      const videos = playlistResponse.data.items?.map(item => ({
-        id: item.snippet?.resourceId?.videoId,
-        title: item.snippet?.title,
-        description: item.snippet?.description,
-        publishedAt: item.snippet?.publishedAt,
-        thumbnails: item.snippet?.thumbnails,
-        privacyStatus: item.status?.privacyStatus,
-        channelTitle: item.snippet?.channelTitle
-      })) || [];
-
-      return videos;
-
-    } catch (error) {
-      console.error('YouTube API error:', error);
-      
-      // If token expired, try to refresh
-      if ((error as any).code === 401) {
-        const refreshedToken = await this.refreshToken(token);
-        // Retry with refreshed token
-        return this.getUserVideos(refreshedToken);
-      }
-      
-      throw error;
+    if (!channelResponse.ok) {
+      throw new Error(`Failed to get channel: ${channelResponse.statusText}`);
     }
+
+    const channelData = await channelResponse.json();
+    const uploadsPlaylistId = channelData.items[0]?.contentDetails?.relatedPlaylists?.uploads;
+
+    if (!uploadsPlaylistId) {
+      return [];
+    }
+
+    // Get videos from uploads playlist
+    const videosResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=${maxResults}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!videosResponse.ok) {
+      throw new Error(`Failed to get videos: ${videosResponse.statusText}`);
+    }
+
+    const videosData = await videosResponse.json();
+    const videoIds = videosData.items.map((item: any) => item.snippet.resourceId.videoId).join(',');
+
+    // Get detailed video information
+    const detailsResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,status,statistics&id=${videoIds}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!detailsResponse.ok) {
+      throw new Error(`Failed to get video details: ${detailsResponse.statusText}`);
+    }
+
+    const detailsData = await detailsResponse.json();
+
+    return detailsData.items.map((video: any) => ({
+      id: video.id,
+      title: video.snippet.title,
+      description: video.snippet.description,
+      thumbnailUrl: video.snippet.thumbnails.default.url,
+      publishedAt: video.snippet.publishedAt,
+      privacyStatus: video.status.privacyStatus,
+      viewCount: video.statistics?.viewCount,
+      likeCount: video.statistics?.likeCount,
+    }));
   }
 
-  async updateVideoVisibility(token: PlatformToken, videoId: string, action: 'hide' | 'show') {
-    this.oauth2Client.setCredentials({
-      access_token: token.accessToken,
-      refresh_token: token.refreshToken
-    });
-
-    const youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
-
-    try {
-      // First get current video details
-      const videoResponse = await youtube.videos.list({
-        part: ['snippet', 'status'],
-        id: [videoId]
-      });
-
-      if (!videoResponse.data.items || videoResponse.data.items.length === 0) {
-        throw new Error('Video not found');
-      }
-
-      const video = videoResponse.data.items[0];
-      const currentPrivacyStatus = video.status?.privacyStatus;
-
-      // Determine new privacy status
-      let newPrivacyStatus: string;
-      if (action === 'hide') {
-        newPrivacyStatus = 'private';
-      } else {
-        // For restore, we need to know the original status
-        // For now, default to 'public' - this could be improved by storing original status
-        newPrivacyStatus = 'public';
-      }
-
-      // Update video privacy
-      await youtube.videos.update({
-        part: ['status'],
-        requestBody: {
+  /**
+   * Update video visibility (privacy status)
+   */
+  async updateVideoVisibility(
+    accessToken: string, 
+    videoId: string, 
+    privacyStatus: 'public' | 'private' | 'unlisted'
+  ): Promise<void> {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=status`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           id: videoId,
           status: {
-            privacyStatus: newPrivacyStatus,
-            embeddable: video.status?.embeddable,
-            license: video.status?.license,
-            publicStatsViewable: video.status?.publicStatsViewable,
-            publishAt: video.status?.publishAt
-          }
-        }
-      });
-
-      return {
-        success: true,
-        videoId,
-        action,
-        previousStatus: currentPrivacyStatus,
-        newStatus: newPrivacyStatus
-      };
-
-    } catch (error) {
-      console.error('YouTube video update error:', error);
-      
-      // If token expired, try to refresh and retry
-      if ((error as any).code === 401) {
-        const refreshedToken = await this.refreshToken(token);
-        return this.updateVideoVisibility(refreshedToken, videoId, action);
+            privacyStatus: privacyStatus,
+          },
+        }),
       }
-      
-      throw error;
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to update video visibility: ${error}`);
     }
   }
 
-  async bulkUpdateVideos(token: PlatformToken, videoIds: string[], action: 'hide' | 'show') {
-    const results = [];
-    
+  /**
+   * Hide videos (make them private)
+   */
+  async hideVideos(userId: string, videoIds: string[]): Promise<void> {
+    const user = await storage.getUser(userId);
+    if (!user || !user.youtubeAccessToken) {
+      throw new Error('User not connected to YouTube');
+    }
+
     for (const videoId of videoIds) {
-      try {
-        const result = await this.updateVideoVisibility(token, videoId, action);
-        results.push(result);
-        
-        // Add small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
-      } catch (error) {
-        results.push({
-          success: false,
-          videoId,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        });
-      }
+      await this.updateVideoVisibility(user.youtubeAccessToken, videoId, 'private');
     }
-
-    return results;
   }
 
-  async testConnection(token: PlatformToken): Promise<boolean> {
+  /**
+   * Restore videos (make them public)
+   */
+  async restoreVideos(userId: string, videoIds: string[]): Promise<void> {
+    const user = await storage.getUser(userId);
+    if (!user || !user.youtubeAccessToken) {
+      throw new Error('User not connected to YouTube');
+    }
+
+    for (const videoId of videoIds) {
+      await this.updateVideoVisibility(user.youtubeAccessToken, videoId, 'public');
+    }
+  }
+
+  /**
+   * Test YouTube connection
+   */
+  async testConnection(accessToken: string): Promise<boolean> {
     try {
-      this.oauth2Client.setCredentials({
-        access_token: token.accessToken,
-        refresh_token: token.refreshToken
-      });
-
-      const youtube = google.youtube({ version: 'v3', auth: this.oauth2Client });
-      
-      // Simple test call
-      await youtube.channels.list({
-        part: ['snippet'],
-        mine: true
-      });
-
+      await this.getChannelInfo(accessToken);
       return true;
     } catch (error) {
-      console.error('YouTube connection test failed:', error);
       return false;
     }
   }
