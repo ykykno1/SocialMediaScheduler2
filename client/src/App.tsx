@@ -12,6 +12,7 @@ import FacebookPage from "@/pages/facebook";
 import InstagramPage from "@/pages/instagram";
 import AdminPage from "@/pages/admin";
 import AuthPage from "@/pages/auth";
+import HomePage from "@/pages/home";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
@@ -20,6 +21,7 @@ import DataDeletionPage from "@/pages/data-deletion";
 import { Button } from "@/components/ui/button";
 import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, CreditCard, Youtube, Facebook, Instagram } from "lucide-react";
 import { cn } from "@/lib/utils";
+import UserProfile from "@/components/UserProfile";
 
 // Custom navbar component directly in App.tsx
 function Navbar() {

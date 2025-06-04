@@ -55,11 +55,23 @@ export default function UserProfile({ onShowSettings }: UserProfileProps) {
     }
   });
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 bg-gray-300 rounded-full animate-pulse"></div>
       </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Button 
+        variant="ghost" 
+        className="text-white hover:bg-blue-600/20"
+        onClick={() => window.location.href = '/auth'}
+      >
+        התחבר
+      </Button>
     );
   }
 
