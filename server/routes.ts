@@ -45,8 +45,14 @@ export function registerRoutes(app: Express): Server {
       });
       
       // Set session
-      (req as any).session = (req as any).session || {};
       (req as any).session.userId = user.id;
+      
+      // Debug session
+      console.log('Registration - Session set:', {
+        sessionId: (req as any).sessionID,
+        userId: user.id,
+        sessionExists: !!(req as any).session
+      });
       
       // Return user without password
       const { password: _, ...userResponse } = user;
@@ -79,8 +85,14 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Set session
-      (req as any).session = (req as any).session || {};
       (req as any).session.userId = user.id;
+      
+      // Debug session
+      console.log('Login - Session set:', {
+        sessionId: (req as any).sessionID,
+        userId: user.id,
+        sessionExists: !!(req as any).session
+      });
       
       // Update last active
       storage.updateUser(user.id, { lastActive: new Date() });
@@ -102,6 +114,14 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/user", (req, res) => {
     const session = (req as any).session;
+    
+    // Debug session data
+    console.log('GET /api/user - Session debug:', {
+      sessionExists: !!session,
+      sessionId: (req as any).sessionID,
+      userId: session?.userId,
+      sessionData: session
+    });
     
     if (!session || !session.userId) {
       return res.status(401).json({ error: "Not authenticated" });
