@@ -64,7 +64,7 @@ export function registerRoutes(app: Express): Server {
       
       // Get user by email
       const user = storage.getUserByEmail(email);
-      if (!user) {
+      if (!user || !user.password) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
       

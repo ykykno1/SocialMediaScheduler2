@@ -11,6 +11,7 @@ import YouTubePage from "@/pages/youtube";
 import FacebookPage from "@/pages/facebook";
 import InstagramPage from "@/pages/instagram";
 import AdminPage from "@/pages/admin";
+import AuthPage from "@/pages/auth";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
@@ -99,6 +100,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/login" component={LoginPage} />
+          <Route path="/auth" component={AuthPage} />
           <Route path="/pricing" component={PricingPage} />
           <Route path="/youtube" component={YouTubePage} />
           <Route path="/facebook" component={FacebookPage} />
