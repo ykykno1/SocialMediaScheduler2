@@ -19,10 +19,12 @@ export default function useFacebookAuth() {
   const { 
     data: authStatus,
     isLoading,
-    error
+    error,
+    refetch: refetchAuthStatus
   } = useQuery<AuthStatus>({
     queryKey: ['/api/auth-status'],
     refetchInterval: 60000, // Refetch every minute to check token expiration
+    staleTime: 30000, // Consider data stale after 30 seconds
   });
 
   // Mutation for logging out
@@ -104,15 +106,18 @@ export default function useFacebookAuth() {
       
       // Handle successful auth
       if (event.data.success && event.data.platform === 'facebook') {
-        toast({
-          title: 'התחברות בוצעה בהצלחה',
-          description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
-        });
-        
-        // Invalidate queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+        // Wait a bit to ensure server has processed the auth
+        setTimeout(() => {
+          toast({
+            title: 'התחברות בוצעה בהצלחה',
+            description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
+          });
+          
+          // Invalidate queries to refresh data
+          queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+        }, 500);
       }
       
       // Handle auth error

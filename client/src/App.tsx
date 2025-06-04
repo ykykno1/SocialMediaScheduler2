@@ -16,7 +16,7 @@ import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
 import { Button } from "@/components/ui/button";
-import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, CreditCard } from "lucide-react";
+import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, CreditCard, Youtube, Facebook, Instagram } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Custom navbar component directly in App.tsx
@@ -28,6 +28,21 @@ function Navbar() {
       label: "בית",
       href: "/",
       icon: <Home className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "יוטיוב",
+      href: "/youtube",
+      icon: <Youtube className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "פייסבוק",
+      href: "/facebook",
+      icon: <Facebook className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "אינסטגרם",
+      href: "/instagram",
+      icon: <Instagram className="h-4 w-4 mr-2" />,
     },
     {
       label: "מחירים",
@@ -43,11 +58,6 @@ function Navbar() {
       label: "היסטוריה",
       href: "/history",
       icon: <HistoryIcon className="h-4 w-4 mr-2" />,
-    },
-    {
-      label: "כניסה",
-      href: "/login",
-      icon: <LogIn className="h-4 w-4 mr-2" />,
     },
   ];
 
