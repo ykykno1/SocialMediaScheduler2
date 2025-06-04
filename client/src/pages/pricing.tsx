@@ -2,18 +2,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Crown, Youtube, Facebook, Instagram } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 
 export default function PricingPage() {
-  const { user, setUser } = useAuth();
   const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('shabbat-robot-user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   const handleUpgrade = (plan: 'youtube' | 'premium') => {
     if (user) {
-      const upgradedUser = { ...user, accountType: plan as any };
+      const upgradedUser = { ...user, accountType: plan };
       setUser(upgradedUser);
       localStorage.setItem('shabbat-robot-user', JSON.stringify(upgradedUser));
+      
+      toast({
+        title: "שדרוג הושלם בהצלחה!",
+        description: plan === 'youtube' 
+          ? "כעת יש לך גישה לאוטומציה של יוטיוב"
+          : "כעת יש לך גישה לכל הרשתות החברתיות",
+      });
+    } else {
+      // Default free user
+      const newUser = { accountType: plan };
+      setUser(newUser);
+      localStorage.setItem('shabbat-robot-user', JSON.stringify(newUser));
       
       toast({
         title: "שדרוג הושלם בהצלחה!",
@@ -127,7 +146,7 @@ export default function PricingPage() {
                     ) : (
                       <X className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     )}
-                    <span className={`text-sm ${feature.included ? 'text-gray-900' : 'text-gray-400'} ${feature.highlight ? 'font-semibold text-orange-600' : ''}`}>
+                    <span className={`text-sm ${feature.included ? 'text-gray-900' : 'text-gray-400'} ${(feature as any).highlight ? 'font-semibold text-orange-600' : ''}`}>
                       {feature.text}
                     </span>
                   </li>
