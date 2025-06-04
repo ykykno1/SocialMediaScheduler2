@@ -264,35 +264,53 @@ export class MemStorage implements IStorage {
     this.userCachedPages.set(userId, []);
   }
   
-  // YouTube content operations
-  getCachedYouTubeVideos(): YouTubeVideo[] {
-    return this.cachedYouTubeVideos;
+  // YouTube content operations (user-specific)
+  getCachedYouTubeVideos(userId?: string): YouTubeVideo[] {
+    if (!userId) return [];
+    return this.userCachedYouTubeVideos.get(userId) || [];
   }
   
-  saveCachedYouTubeVideos(videos: YouTubeVideo[]): void {
-    this.cachedYouTubeVideos = videos;
+  saveCachedYouTubeVideos(videos: YouTubeVideo[], userId?: string): void {
+    if (!userId) return;
+    this.userCachedYouTubeVideos.set(userId, videos);
   }
   
-  clearCachedYouTubeVideos(): void {
-    this.cachedYouTubeVideos = [];
+  clearCachedYouTubeVideos(userId?: string): void {
+    if (!userId) return;
+    this.userCachedYouTubeVideos.set(userId, []);
   }
   
-  // Privacy status backup operations
-  savePrivacyStatuses(platform: SupportedPlatform, statuses: PrivacyStatus[]): void {
-    this.privacyStatuses[platform] = statuses;
+  // Privacy status backup operations (user-specific)
+  savePrivacyStatuses(platform: SupportedPlatform, statuses: PrivacyStatus[], userId?: string): void {
+    if (!userId) return;
+    let userStatuses = this.userPrivacyStatuses.get(userId);
+    if (!userStatuses) {
+      userStatuses = { facebook: [], youtube: [], tiktok: [], instagram: [] };
+      this.userPrivacyStatuses.set(userId, userStatuses);
+    }
+    userStatuses[platform] = statuses;
   }
   
-  getPrivacyStatuses(platform: SupportedPlatform): PrivacyStatus[] {
-    return this.privacyStatuses[platform] || [];
+  getPrivacyStatuses(platform: SupportedPlatform, userId?: string): PrivacyStatus[] {
+    if (!userId) return [];
+    const userStatuses = this.userPrivacyStatuses.get(userId);
+    return userStatuses?.[platform] || [];
   }
   
-  clearPrivacyStatuses(platform: SupportedPlatform): void {
-    this.privacyStatuses[platform] = [];
+  clearPrivacyStatuses(platform: SupportedPlatform, userId?: string): void {
+    if (!userId) return;
+    let userStatuses = this.userPrivacyStatuses.get(userId);
+    if (!userStatuses) {
+      userStatuses = { facebook: [], youtube: [], tiktok: [], instagram: [] };
+      this.userPrivacyStatuses.set(userId, userStatuses);
+    }
+    userStatuses[platform] = [];
   }
   
-  // Update or add a single privacy status
-  updatePrivacyStatus(platform: SupportedPlatform, contentId: string, updates: Partial<PrivacyStatus>): void {
-    const statuses = this.getPrivacyStatuses(platform);
+  // Update or add a single privacy status (user-specific)
+  updatePrivacyStatus(platform: SupportedPlatform, contentId: string, updates: Partial<PrivacyStatus>, userId?: string): void {
+    if (!userId) return;
+    const statuses = this.getPrivacyStatuses(platform, userId);
     const existingIndex = statuses.findIndex(s => s.contentId === contentId);
     
     if (existingIndex >= 0) {
@@ -311,27 +329,29 @@ export class MemStorage implements IStorage {
       statuses.push(newStatus);
     }
     
-    this.privacyStatuses[platform] = statuses;
+    this.savePrivacyStatuses(platform, statuses, userId);
   }
   
-  // Toggle lock status for a specific piece of content
-  toggleContentLock(platform: SupportedPlatform, contentId: string): boolean {
-    const statuses = this.getPrivacyStatuses(platform);
+  // Toggle lock status for a specific piece of content (user-specific)
+  toggleContentLock(platform: SupportedPlatform, contentId: string, userId?: string): boolean {
+    if (!userId) return false;
+    const statuses = this.getPrivacyStatuses(platform, userId);
     const status = statuses.find(s => s.contentId === contentId);
     
     if (status) {
       status.isLockedByUser = !status.isLockedByUser;
       status.lastModified = Date.now();
-      this.privacyStatuses[platform] = statuses;
+      this.savePrivacyStatuses(platform, statuses, userId);
       return status.isLockedByUser;
     }
     
     return false;
   }
   
-  // Get a specific privacy status
-  getPrivacyStatus(platform: SupportedPlatform, contentId: string): PrivacyStatus | null {
-    const statuses = this.getPrivacyStatuses(platform);
+  // Get a specific privacy status (user-specific)
+  getPrivacyStatus(platform: SupportedPlatform, contentId: string, userId?: string): PrivacyStatus | null {
+    if (!userId) return null;
+    const statuses = this.getPrivacyStatuses(platform, userId);
     return statuses.find(s => s.contentId === contentId) || null;
   }
   

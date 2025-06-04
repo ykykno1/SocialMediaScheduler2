@@ -222,16 +222,16 @@ export function registerRoutes(app: Express): Server {
         console.error("Error fetching user pages:", pagesError);
       }
       
-      // Save the auth token
+      // Save the auth token (user-specific)
       const auth = storage.saveFacebookAuth({
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now(),
         userId: userData.id,
         pageAccess
-      });
+      }, req.user?.id);
       
-      // Add a history entry for successful authentication
+      // Add a history entry for successful authentication (user-specific)
       storage.addHistoryEntry({
         timestamp: new Date(),
         action: "restore", // Use restore as this is making content visible again in a way
@@ -239,7 +239,7 @@ export function registerRoutes(app: Express): Server {
         success: true,
         affectedItems: 0,
         error: undefined
-      });
+      }, req.user?.id);
       
       res.json({
         access_token: tokenData.access_token,
@@ -270,8 +270,8 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Get auth status
-  app.get("/api/auth-status", (req, res) => {
-    const auth = storage.getFacebookAuth();
+  app.get("/api/auth-status", requireAuth, (req, res) => {
+    const auth = storage.getFacebookAuth(req.user.id);
     res.json({
       isAuthenticated: !!auth,
       // Don't send the token to the client for security
@@ -282,8 +282,8 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Logout/disconnect
-  app.post("/api/logout", (req, res) => {
-    storage.removeFacebookAuth();
+  app.post("/api/logout", requireAuth, (req, res) => {
+    storage.removeFacebookAuth(req.user.id);
     storage.addHistoryEntry({
       timestamp: new Date(),
       action: "restore", // Same as auth since this is disabling automation
@@ -291,13 +291,13 @@ export function registerRoutes(app: Express): Server {
       success: true,
       affectedItems: 0,
       error: undefined
-    });
+    }, req.user.id);
     res.json({ success: true });
   });
   
   // Get history entries
-  app.get("/api/history", (req, res) => {
-    const history = storage.getHistoryEntries();
+  app.get("/api/history", requireAuth, (req, res) => {
+    const history = storage.getHistoryEntries(undefined, req.user.id);
     res.json(history);
   });
   
