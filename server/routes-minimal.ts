@@ -251,7 +251,9 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (!tokenResponse.ok) {
-        throw new Error('Token exchange failed');
+        const errorText = await tokenResponse.text();
+        console.error('Token exchange failed:', tokenResponse.status, errorText);
+        throw new Error(`Token exchange failed: ${tokenResponse.status} - ${errorText}`);
       }
 
       const tokens = await tokenResponse.json();
