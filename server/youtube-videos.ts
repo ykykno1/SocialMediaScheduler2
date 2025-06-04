@@ -25,7 +25,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
     next();
   };
 
-  // Get YouTube auth URL for login  
+  // Get YouTube auth URL for login (public endpoint)
   app.get("/api/youtube/auth-url", (req, res) => {
     try {
       const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -129,9 +129,9 @@ export const registerYouTubeRoutes = (app: Express): void => {
     }
   });
 
-  // Get YouTube auth status
-  app.get("/api/youtube/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
-    const auth = storage.getAuthToken('youtube', req.user?.id);
+  // Get YouTube auth status (public endpoint)
+  app.get("/api/youtube/auth-status", (req, res) => {
+    const auth = storage.getAuthToken('youtube');
     
     if (!auth) {
       return res.json({ 
