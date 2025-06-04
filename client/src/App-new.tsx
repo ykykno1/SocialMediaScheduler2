@@ -1,22 +1,14 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/useAuth";
+import { queryClient } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
 
 // Pages
 import AuthPage from "@/pages/auth-new";
 import HomePage from "@/pages/home-new";
 import NotFound from "@/pages/not-found";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   return (

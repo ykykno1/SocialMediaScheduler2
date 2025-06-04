@@ -11,6 +11,18 @@ export function useAuth() {
   // Get current user
   const { data: user, isLoading, error } = useQuery<UserWithoutPassword>({
     queryKey: ["/api/user"],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest("GET", "/api/user");
+        return res.json();
+      } catch (error) {
+        // If no token or authentication fails, return null instead of throwing
+        if (error instanceof Error && error.message.includes("401")) {
+          return null;
+        }
+        throw error;
+      }
+    },
     retry: false,
   });
 
