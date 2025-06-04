@@ -94,7 +94,10 @@ function Router() {
   return (
     <div className="container px-4 mx-auto max-w-6xl min-h-screen flex flex-col">
       <header className="py-4">
-        <h1 className="text-3xl font-bold text-primary mb-4">רובוט שבת</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold text-primary">רובוט שבת</h1>
+          <UserProfile />
+        </div>
         <Navbar />
       </header>
       
