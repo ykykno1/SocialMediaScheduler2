@@ -10,6 +10,7 @@ import PricingPage from "@/pages/pricing";
 import YouTubePage from "@/pages/youtube";
 import FacebookPage from "@/pages/facebook";
 import InstagramPage from "@/pages/instagram";
+import AdminPage from "@/pages/admin";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import History from "@/components/History";
@@ -106,6 +107,7 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
           <Route path="/data-deletion" component={DataDeletionPage} />
+          <Route path="/system-admin-secure-access" component={AdminPage} />
           <Route component={NotFound} />
         </Switch>
       </main>

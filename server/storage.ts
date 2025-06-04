@@ -67,6 +67,11 @@ export interface IStorage {
   updateUser(id: string, updates: Partial<User>): User;
   verifyPassword(email: string, password: string): User | null;
   
+  // Admin operations
+  getAllUsers(): User[];
+  upgradeUser(userId: string, accountType: string): boolean;
+  deleteUser(userId: string): boolean;
+  
   // Shabbat times operations
   getShabbatTimes(latitude: number, longitude: number): Promise<ShabbatTimes | null>;
   cacheShabbatTimes(times: ShabbatTimes): void;
@@ -407,6 +412,41 @@ export class MemStorage implements IStorage {
     // Extract coordinates from cache key or use default
     const cacheKey = 'default';
     this.shabbatTimesCache.set(cacheKey, times);
+  }
+
+  // Admin operations
+  getAllUsers(): User[] {
+    return Array.from(this.users.values());
+  }
+
+  upgradeUser(userId: string, accountType: string): boolean {
+    const user = this.users.get(userId);
+    if (!user) {
+      return false;
+    }
+
+    const validTypes = ['free', 'youtube_pro', 'premium'];
+    if (!validTypes.includes(accountType)) {
+      return false;
+    }
+
+    user.accountType = accountType as 'free' | 'youtube_pro' | 'premium';
+    user.updatedAt = new Date();
+    this.users.set(userId, user);
+    return true;
+  }
+
+  deleteUser(userId: string): boolean {
+    const user = this.users.get(userId);
+    if (!user) {
+      return false;
+    }
+
+    this.users.delete(userId);
+    if (user.email) {
+      this.usersByEmail.delete(user.email);
+    }
+    return true;
   }
 }
 

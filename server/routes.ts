@@ -1286,6 +1286,118 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Admin routes - secured with password
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123"; // Change this in production!
+
+  // Admin authentication
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body;
+    
+    if (password === ADMIN_PASSWORD) {
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ error: "Invalid admin password" });
+    }
+  });
+
+  // Admin stats
+  app.get("/api/admin/stats", (req, res) => {
+    try {
+      const users = storage.getAllUsers();
+      const totalUsers = users.length;
+      const freeUsers = users.filter(u => u.accountType === 'free').length;
+      const youtubeProUsers = users.filter(u => u.accountType === 'youtube_pro').length;
+      const premiumUsers = users.filter(u => u.accountType === 'premium').length;
+      
+      // Mock revenue calculations - replace with real data
+      const monthlyRevenue = (youtubeProUsers * 14.90) + (premiumUsers * 24.90);
+      const totalRevenue = monthlyRevenue * 6; // Assume 6 months of operation
+      
+      res.json({
+        totalUsers,
+        freeUsers,
+        youtubeProUsers,
+        premiumUsers,
+        monthlyRevenue,
+        totalRevenue
+      });
+    } catch (error) {
+      console.error("Admin stats error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Admin users list
+  app.get("/api/admin/users", (req, res) => {
+    try {
+      const users = storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Admin users error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Upgrade user account
+  app.post("/api/admin/upgrade-user", (req, res) => {
+    try {
+      const { userId, accountType } = req.body;
+      
+      if (!userId || !accountType) {
+        return res.status(400).json({ error: "User ID and account type required" });
+      }
+      
+      const success = storage.upgradeUser(userId, accountType);
+      
+      if (success) {
+        // Add history entry
+        storage.addHistoryEntry({
+          timestamp: new Date(),
+          action: "admin_upgrade",
+          platform: "admin",
+          success: true,
+          affectedItems: 1,
+          error: undefined
+        });
+        
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "User not found" });
+      }
+    } catch (error) {
+      console.error("Admin upgrade user error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Delete user
+  app.delete("/api/admin/users/:userId", (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const success = storage.deleteUser(userId);
+      
+      if (success) {
+        // Add history entry
+        storage.addHistoryEntry({
+          timestamp: new Date(),
+          action: "admin_delete",
+          platform: "admin",
+          success: true,
+          affectedItems: 1,
+          error: undefined
+        });
+        
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "User not found" });
+      }
+    } catch (error) {
+      console.error("Admin delete user error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
