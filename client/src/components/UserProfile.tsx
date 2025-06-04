@@ -66,8 +66,9 @@ export default function UserProfile({ onShowSettings }: UserProfileProps) {
   if (!user) {
     return (
       <Button 
-        variant="ghost" 
-        className="text-white hover:bg-blue-600/20"
+        variant="outline" 
+        size="sm"
+        className="text-muted-foreground"
         onClick={() => window.location.href = '/auth'}
       >
         התחבר

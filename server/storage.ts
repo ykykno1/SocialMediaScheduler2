@@ -87,23 +87,14 @@ export interface IStorage {
 // In-memory storage implementation
 export class MemStorage implements IStorage {
   private settings: Settings;
-  private authTokens: Record<SupportedPlatform, AuthToken | null> = {
-    facebook: null,
-    youtube: null,
-    tiktok: null,
-    instagram: null
-  };
-  private facebookAuth: FacebookAuth | null = null; // Legacy support
-  private historyEntries: HistoryEntry[] = [];
-  private cachedPosts: FacebookPost[] = [];
-  private cachedPages: FacebookPage[] = [];
-  private cachedYouTubeVideos: YouTubeVideo[] = [];
-  private privacyStatuses: Record<SupportedPlatform, PrivacyStatus[]> = {
-    facebook: [],
-    youtube: [],
-    tiktok: [],
-    instagram: []
-  };
+  // User-specific data storage
+  private userAuthTokens: Map<string, Record<SupportedPlatform, AuthToken | null>> = new Map();
+  private userFacebookAuth: Map<string, FacebookAuth | null> = new Map();
+  private userHistoryEntries: Map<string, HistoryEntry[]> = new Map();
+  private userCachedPosts: Map<string, FacebookPost[]> = new Map();
+  private userCachedPages: Map<string, FacebookPage[]> = new Map();
+  private userCachedYouTubeVideos: Map<string, YouTubeVideo[]> = new Map();
+  private userPrivacyStatuses: Map<string, Record<SupportedPlatform, PrivacyStatus[]>> = new Map();
   private users: Map<string, User> = new Map();
   private usersByEmail: Map<string, string> = new Map(); // email -> userId
   private shabbatTimesCache: Map<string, ShabbatTimes> = new Map();
@@ -124,35 +115,50 @@ export class MemStorage implements IStorage {
     return this.settings;
   }
   
-  // Generic auth token operations
-  getAuthToken(platform: SupportedPlatform): AuthToken | null {
-    return this.authTokens[platform];
+  // Generic auth token operations (user-specific)
+  getAuthToken(platform: SupportedPlatform, userId?: string): AuthToken | null {
+    if (!userId) return null;
+    const userTokens = this.userAuthTokens.get(userId);
+    return userTokens?.[platform] || null;
   }
   
-  saveAuthToken(token: AuthToken): AuthToken {
+  saveAuthToken(token: AuthToken, userId?: string): AuthToken {
+    if (!userId) throw new Error('User ID required for saving auth token');
+    
     const validatedToken = authSchema.parse(token);
-    this.authTokens[token.platform] = validatedToken;
+    
+    let userTokens = this.userAuthTokens.get(userId);
+    if (!userTokens) {
+      userTokens = { facebook: null, youtube: null, tiktok: null, instagram: null };
+      this.userAuthTokens.set(userId, userTokens);
+    }
+    userTokens[token.platform] = validatedToken;
     
     // Sync with legacy Facebook auth if applicable
     if (token.platform === 'facebook') {
-      this.facebookAuth = {
+      this.userFacebookAuth.set(userId, {
         accessToken: token.accessToken,
         expiresIn: token.expiresIn || 0,
         timestamp: token.timestamp,
         userId: token.userId,
         isManualToken: token.isManualToken
-      };
+      });
     }
     
     return validatedToken;
   }
   
-  removeAuthToken(platform: SupportedPlatform): void {
-    this.authTokens[platform] = null;
+  removeAuthToken(platform: SupportedPlatform, userId?: string): void {
+    if (!userId) return;
+    
+    const userTokens = this.userAuthTokens.get(userId);
+    if (userTokens) {
+      userTokens[platform] = null;
+    }
     
     // Sync with legacy Facebook auth if applicable
     if (platform === 'facebook') {
-      this.facebookAuth = null;
+      this.userFacebookAuth.set(userId, null);
     }
   }
   
