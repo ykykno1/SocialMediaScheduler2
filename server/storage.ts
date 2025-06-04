@@ -72,6 +72,11 @@ export interface IStorage {
   upgradeUser(userId: string, accountType: string): boolean;
   deleteUser(userId: string): boolean;
   
+  // Payment tracking operations
+  addPayment(payment: { userId: string; amount: number; type: 'youtube_pro' | 'premium'; method: 'manual' | 'coupon'; description?: string; }): void;
+  getPayments(): any[];
+  getRevenue(): { monthly: number; total: number; };
+  
   // Shabbat times operations
   getShabbatTimes(latitude: number, longitude: number): Promise<ShabbatTimes | null>;
   cacheShabbatTimes(times: ShabbatTimes): void;
@@ -100,6 +105,15 @@ export class MemStorage implements IStorage {
   private users: Map<string, User> = new Map();
   private usersByEmail: Map<string, string> = new Map(); // email -> userId
   private shabbatTimesCache: Map<string, ShabbatTimes> = new Map();
+  private payments: Array<{
+    id: string;
+    userId: string;
+    amount: number;
+    type: 'youtube_pro' | 'premium';
+    method: 'manual' | 'coupon';
+    description?: string;
+    timestamp: Date;
+  }> = [];
   
   constructor() {
     // Initialize with default settings

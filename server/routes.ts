@@ -1421,13 +1421,15 @@ export function registerRoutes(app: Express): Server {
     try {
       const users = storage.getAllUsers();
       const totalUsers = users.length;
-      const freeUsers = users.filter(u => u.accountType === 'free').length;
-      const youtubeProUsers = users.filter(u => u.accountType === 'youtube_pro').length;
-      const premiumUsers = users.filter(u => u.accountType === 'premium').length;
+      const freeUsers = users.filter((u: any) => u.accountType === 'free').length;
+      const youtubeProUsers = users.filter((u: any) => u.accountType === 'youtube_pro').length;
+      const premiumUsers = users.filter((u: any) => u.accountType === 'premium').length;
       
-      // Mock revenue calculations - replace with real data
-      const monthlyRevenue = (youtubeProUsers * 14.90) + (premiumUsers * 24.90);
-      const totalRevenue = monthlyRevenue * 6; // Assume 6 months of operation
+      // Real revenue calculations - only count actual payments
+      // In a real app, this would come from payment processor (Stripe, PayPal, etc.)
+      // For now, we return 0 since no real payments are integrated
+      const monthlyRevenue = 0; // Will be updated when payment system is integrated
+      const totalRevenue = 0; // Will be updated when payment system is integrated
       
       res.json({
         totalUsers,
