@@ -171,7 +171,9 @@ export function registerRoutes(app: Express): Server {
         return res.status(500).json({ error: 'Google Client ID not configured' });
       }
 
-      const redirectUri = `${req.protocol}://${req.get('host')}/api/youtube/callback`;
+      // Use the correct Replit domain for OAuth callback
+      const host = req.get('host');
+      const redirectUri = `https://${host}/api/youtube/callback`;
       const scopes = [
         'https://www.googleapis.com/auth/youtube',
         'https://www.googleapis.com/auth/youtube.force-ssl'
@@ -211,7 +213,8 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Exchange code for tokens
-      const redirectUri = `${req.protocol}://${req.get('host')}/api/youtube/callback`;
+      const host = req.get('host');
+      const redirectUri = `https://${host}/api/youtube/callback`;
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
