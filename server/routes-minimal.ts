@@ -173,7 +173,7 @@ export function registerRoutes(app: Express): Server {
 
       // Use the correct Replit domain for OAuth callback
       const host = req.get('host');
-      const redirectUri = `https://${host}/api/youtube/callback`;
+      const redirectUri = `https://${host}/auth-callback.html`;
       const scopes = [
         'https://www.googleapis.com/auth/youtube',
         'https://www.googleapis.com/auth/youtube.force-ssl'
@@ -196,13 +196,13 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // YouTube OAuth callback
-  app.get('/api/youtube/callback', async (req: Request, res: Response) => {
+  // YouTube OAuth callback - process authorization code
+  app.post('/api/youtube/process-auth', requireAuth, async (req: any, res: Response) => {
     try {
-      const { code, state: userId } = req.query;
+      const { code } = req.body;
       
-      if (!code || !userId) {
-        return res.status(400).json({ error: 'Missing code or state parameter' });
+      if (!code) {
+        return res.status(400).json({ error: 'Missing authorization code' });
       }
 
       const clientId = process.env.GOOGLE_CLIENT_ID;

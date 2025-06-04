@@ -1,159 +1,187 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>רובוט שבת - אימות מתבצע</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f7f7f7;
-      direction: rtl;
-    }
-    .container {
-      text-align: center;
-      padding: 2rem;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      max-width: 500px;
-    }
-    h1 {
-      color: #4285f4;
-    }
-    .loader {
-      margin: 2rem auto;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #4285f4;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .error {
-      color: #ea4335;
-      margin-top: 1rem;
-      display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אימות בתהליך - רובוט שבת</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #2a2a2a;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        h1 {
+            color: #3466ad;
+            margin-bottom: 1rem;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(52, 102, 173, 0.2);
+            border-radius: 50%;
+            border-top-color: #3466ad;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .status {
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>אימות מתבצע</h1>
-    <p>אנא המתן בזמן שאנחנו מסיימים את תהליך האימות...</p>
-    <div class="loader"></div>
-    <div class="error" id="error-message">
-      <p>אירעה שגיאה בתהליך האימות. אנא נסה שוב.</p>
+    <div class="container">
+        <h1>אימות פלטפורמה</h1>
+        <div class="spinner" id="spinner"></div>
+        <p id="status-message">מעבד את האימות...</p>
+        <p class="status" id="status"></p>
     </div>
-  </div>
 
-  <script>
-    // Parse query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
-    const state = urlParams.get('state');
-    
-    if (code) {
-      // Check if this is YouTube or Facebook callback
-      if (state === 'facebook') {
-        processCallback('facebook');
-      } else {
-        // Assume YouTube if no state
-        processCallback('youtube');
-      }
-    } else if (error) {
-      // Show error
-      document.getElementById('error-message').style.display = 'block';
-      document.querySelector('.loader').style.display = 'none';
-      
-      // Send error message to parent
-      window.opener.postMessage({ error }, window.location.origin);
-      
-      // Close after a delay
-      setTimeout(() => {
-        window.close();
-      }, 3000);
-    }
-    
-    async function processCallback(platform) {
-      try {
-        if (platform === 'youtube') {
-          // For YouTube, store the code and redirect to main app
-          localStorage.setItem('youtube_auth_code', code);
-          
-          // Post message back to opener window
-          window.opener.postMessage({
-            platform: 'youtube',
-            success: true,
-            code: code
-          }, window.location.origin);
-          
-          // Close this window
-          window.close();
-          return;
+    <script>
+        // Parse URL parameters
+        function getUrlParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const hashString = window.location.hash.substring(1);
+            
+            // Parse query parameters
+            if (queryString) {
+                const pairs = queryString.split('&');
+                for (let i = 0; i < pairs.length; i++) {
+                    const pair = pairs[i].split('=');
+                    params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+                }
+            }
+            
+            // Parse hash parameters (used by some OAuth providers)
+            if (hashString) {
+                const pairs = hashString.split('&');
+                for (let i = 0; i < pairs.length; i++) {
+                    const pair = pairs[i].split('=');
+                    params[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+                }
+            }
+            
+            return params;
         }
         
-        // For Facebook, continue with the original flow
-        const redirectUri = window.location.href.split('?')[0];
-        const endpoint = '/api/auth-callback';
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            code,
-            redirectUri,
-            platform
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to exchange code for token');
+        // Process the authentication response
+        function processAuthResponse() {
+            const params = getUrlParams();
+            const statusElement = document.getElementById('status');
+            const messageElement = document.getElementById('status-message');
+            const spinnerElement = document.getElementById('spinner');
+            
+            // Check for errors
+            if (params.error) {
+                statusElement.textContent = params.error_description || params.error;
+                statusElement.className = 'status error';
+                messageElement.textContent = 'האימות נכשל, החלון ייסגר בקרוב.';
+                spinnerElement.style.display = 'none';
+                
+                // Send error to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        error: params.error,
+                        platform: params.state || 'youtube'
+                    }, window.location.origin);
+                }
+                
+                // Close the window after a delay
+                setTimeout(() => window.close(), 5000);
+                return;
+            }
+            
+            // Check for code (authorization code)
+            if (params.code) {
+                statusElement.textContent = 'האימות התקבל בהצלחה!';
+                statusElement.className = 'status success';
+                messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
+                
+                // Send code to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        code: params.code,
+                        platform: params.state || 'youtube'
+                    }, window.location.origin);
+                }
+                
+                // Close the window after a delay
+                setTimeout(() => window.close(), 2000);
+                return;
+            }
+            
+            // Check for token (implicit flow)
+            if (params.access_token) {
+                statusElement.textContent = 'האימות התקבל בהצלחה!';
+                statusElement.className = 'status success';
+                messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
+                
+                // Send token to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        access_token: params.access_token,
+                        expires_in: params.expires_in,
+                        platform: params.state || 'youtube'
+                    }, window.location.origin);
+                }
+                
+                // Close the window after a delay
+                setTimeout(() => window.close(), 2000);
+                return;
+            }
+            
+            // No recognizable response
+            statusElement.textContent = 'תגובה לא חוקית';
+            statusElement.className = 'status error';
+            messageElement.textContent = 'לא התקבלה תגובה חוקית מהשרת. החלון ייסגר בקרוב.';
+            spinnerElement.style.display = 'none';
+            
+            // Close the window after a delay
+            setTimeout(() => window.close(), 5000);
         }
         
-        const data = await response.json();
-        
-        // Post message back to opener window
-        window.opener.postMessage({
-          platform: platform,
-          success: true,
-          ...data
-        }, window.location.origin);
-        
-        // Close this window after a short delay
-        setTimeout(() => {
-          window.close();
-        }, 1000);
-      } catch (error) {
-        console.error('Auth callback error:', error);
-        
-        // Show error message
-        document.getElementById('error-message').style.display = 'block';
-        document.querySelector('.loader').style.display = 'none';
-        
-        // Send error to parent
-        window.opener.postMessage({
-          error: error.message || 'Authentication failed'
-        }, window.location.origin);
-        
-        // Close after a delay
-        setTimeout(() => {
-          window.close();
-        }, 3000);
-      }
-    }
-  </script>
+        // Run when page loads
+        window.addEventListener('DOMContentLoaded', processAuthResponse);
+    </script>
 </body>
 </html>
