@@ -40,6 +40,7 @@ export const youtubeVideoSchema = z.object({
   publishedAt: z.string(),
   thumbnailUrl: z.string().optional(),
   privacyStatus: z.enum(['public', 'private', 'unlisted']),
+  originalPrivacyStatus: z.enum(['public', 'private', 'unlisted']).optional(), // המצב המקורי לפני ההסתרה
   isHidden: z.boolean().optional().default(false)
 });
 

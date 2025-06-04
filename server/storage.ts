@@ -62,6 +62,12 @@ export interface IStorage {
   getPrivacyStatuses(platform: SupportedPlatform): PrivacyStatus[];
   clearPrivacyStatuses(platform: SupportedPlatform): void;
   
+  // Video original status operations (for Shabbat restore)
+  saveVideoOriginalStatus(videoId: string, originalStatus: string): void;
+  getVideoOriginalStatus(videoId: string): string | null;
+  clearVideoOriginalStatus(videoId: string): void;
+  getAllVideoOriginalStatuses(): Record<string, string>;
+  
   // User operations
   createUser(userData: RegisterData): User;
   getUserByEmail(email: string): User | null;
@@ -100,6 +106,7 @@ export class MemStorage implements IStorage {
   private usersByEmail: Map<string, string> = new Map(); // email -> userId
   private shabbatTimesCache: Map<string, ShabbatTimes> = new Map();
   private payments: Payment[] = [];
+  private videoOriginalStatuses: Map<string, string> = new Map(); // videoId -> originalPrivacyStatus
   
   constructor() {
     // Initialize with default settings
@@ -548,6 +555,27 @@ export class MemStorage implements IStorage {
       monthly: monthlyPayments.reduce((sum, p) => sum + p.amount, 0),
       total: totalPayments.reduce((sum, p) => sum + p.amount, 0)
     };
+  }
+
+  // Video original status operations (for Shabbat restore)
+  saveVideoOriginalStatus(videoId: string, originalStatus: string): void {
+    this.videoOriginalStatuses.set(videoId, originalStatus);
+  }
+
+  getVideoOriginalStatus(videoId: string): string | null {
+    return this.videoOriginalStatuses.get(videoId) || null;
+  }
+
+  clearVideoOriginalStatus(videoId: string): void {
+    this.videoOriginalStatuses.delete(videoId);
+  }
+
+  getAllVideoOriginalStatuses(): Record<string, string> {
+    const statuses: Record<string, string> = {};
+    for (const [videoId, status] of this.videoOriginalStatuses.entries()) {
+      statuses[videoId] = status;
+    }
+    return statuses;
   }
 }
 

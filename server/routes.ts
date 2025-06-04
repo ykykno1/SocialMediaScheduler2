@@ -1084,6 +1084,19 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
+      // First get current video status to save original state
+      const currentVideoResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${auth.accessToken}`);
+      
+      if (currentVideoResponse.ok) {
+        const currentVideoData = await currentVideoResponse.json();
+        const currentPrivacyStatus = currentVideoData.items?.[0]?.status?.privacyStatus;
+        
+        // Save original privacy status if not already saved
+        if (currentPrivacyStatus && !storage.getVideoOriginalStatus(videoId)) {
+          storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus);
+        }
+      }
+
       // Update video privacy status to private using YouTube Data API
       const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
         method: 'PUT',
@@ -1128,7 +1141,10 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
-      // Update video privacy status to public using YouTube Data API
+      // Get original privacy status, default to public if not found
+      const originalStatus = storage.getVideoOriginalStatus(videoId) || 'public';
+      
+      // Update video privacy status to original status using YouTube Data API
       const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
         method: 'PUT',
         headers: {
@@ -1137,7 +1153,7 @@ export function registerRoutes(app: Express): Server {
         body: JSON.stringify({
           id: videoId,
           status: {
-            privacyStatus: 'public'
+            privacyStatus: originalStatus
           }
         })
       });
