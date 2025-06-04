@@ -568,7 +568,7 @@ export function registerRoutes(app: Express): Server {
         // Check if the token has expired or is invalid
         if (errorData.error && (errorData.error.code === 190 || errorData.error.code === 104)) {
           // Token is invalid, clear it
-          storage.removeFacebookAuth();
+          storage.removeFacebookAuth(req.user?.id);
           return res.status(401).json({ error: "Facebook authentication expired", details: errorData.error });
         }
         
