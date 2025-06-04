@@ -31,6 +31,18 @@ interface AdminStats {
   monthlyRevenue: number;
 }
 
+interface Payment {
+  id: string;
+  userId: string;
+  userEmail: string;
+  username: string;
+  amount: number;
+  type: 'youtube_pro' | 'premium';
+  method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer';
+  description?: string;
+  timestamp: string;
+}
+
 export default function AdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -233,6 +245,7 @@ export default function AdminPage() {
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
           <TabsTrigger value="users">משתמשים</TabsTrigger>
+          <TabsTrigger value="payments">ניהול תשלומים</TabsTrigger>
           <TabsTrigger value="settings">הגדרות מערכת</TabsTrigger>
         </TabsList>
 

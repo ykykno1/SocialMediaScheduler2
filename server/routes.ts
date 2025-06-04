@@ -1425,19 +1425,16 @@ export function registerRoutes(app: Express): Server {
       const youtubeProUsers = users.filter((u: any) => u.accountType === 'youtube_pro').length;
       const premiumUsers = users.filter((u: any) => u.accountType === 'premium').length;
       
-      // Real revenue calculations - only count actual payments
-      // In a real app, this would come from payment processor (Stripe, PayPal, etc.)
-      // For now, we return 0 since no real payments are integrated
-      const monthlyRevenue = 0; // Will be updated when payment system is integrated
-      const totalRevenue = 0; // Will be updated when payment system is integrated
+      // Real revenue calculations from payment tracking
+      const revenue = storage.getRevenue();
       
       res.json({
         totalUsers,
         freeUsers,
         youtubeProUsers,
         premiumUsers,
-        monthlyRevenue,
-        totalRevenue
+        monthlyRevenue: revenue.monthly,
+        totalRevenue: revenue.total
       });
     } catch (error) {
       console.error("Admin stats error:", error);
@@ -1512,6 +1509,58 @@ export function registerRoutes(app: Express): Server {
       }
     } catch (error) {
       console.error("Admin delete user error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Admin payment management
+  app.post("/api/admin/payments", (req, res) => {
+    try {
+      const { userId, amount, type, method, description } = req.body;
+      
+      // Validate required fields
+      if (!userId || !amount || !type || !method) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      // Add payment record
+      storage.addPayment({
+        userId,
+        amount: parseFloat(amount),
+        type,
+        method,
+        description
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Payment recorded successfully" 
+      });
+    } catch (error) {
+      console.error("Admin payment error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Get all payments
+  app.get("/api/admin/payments", (req, res) => {
+    try {
+      const payments = storage.getPayments();
+      const users = storage.getAllUsers();
+      
+      // Enrich payments with user information
+      const enrichedPayments = payments.map(payment => {
+        const user = users.find(u => u.id === payment.userId);
+        return {
+          ...payment,
+          userEmail: user?.email || 'Unknown',
+          username: user?.username || 'Unknown'
+        };
+      });
+      
+      res.json(enrichedPayments);
+    } catch (error) {
+      console.error("Admin payments fetch error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

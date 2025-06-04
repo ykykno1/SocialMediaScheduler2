@@ -456,6 +456,42 @@ export class MemStorage implements IStorage {
     }
     return true;
   }
+
+  // Payment tracking operations
+  addPayment(payment: { userId: string; amount: number; type: 'youtube_pro' | 'premium'; method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer'; description?: string; }): void {
+    const newPayment = paymentSchema.parse({
+      id: nanoid(),
+      userId: payment.userId,
+      amount: payment.amount,
+      type: payment.type,
+      method: payment.method,
+      description: payment.description,
+      timestamp: new Date(),
+      isActive: true
+    });
+    this.payments.push(newPayment);
+  }
+
+  getPayments(): Payment[] {
+    return this.payments.filter(p => p.isActive);
+  }
+
+  getRevenue(): { monthly: number; total: number; } {
+    const activePayments = this.payments.filter(p => p.isActive);
+    const now = new Date();
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const monthlyPayments = activePayments.filter(p => 
+      p.timestamp >= currentMonth && p.method !== 'coupon'
+    );
+    
+    const totalPayments = activePayments.filter(p => p.method !== 'coupon');
+    
+    return {
+      monthly: monthlyPayments.reduce((sum, p) => sum + p.amount, 0),
+      total: totalPayments.reduce((sum, p) => sum + p.amount, 0)
+    };
+  }
 }
 
 // Use in-memory storage
