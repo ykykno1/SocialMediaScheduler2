@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import AuthPage from "@/pages/auth-simple";
 import HomePage from "@/pages/home-simple";
 import YouTubePage from "@/pages/youtube";
+import OAuthSetupPage from "@/pages/oauth-setup";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -57,6 +58,9 @@ function App() {
           </Route>
           <Route path="/youtube">
             {isAuthenticated ? <YouTubePage /> : <AuthPage onLogin={() => setIsAuthenticated(true)} />}
+          </Route>
+          <Route path="/oauth-setup">
+            <OAuthSetupPage />
           </Route>
         </Switch>
         <Toaster />

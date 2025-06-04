@@ -76,7 +76,7 @@ export default function OAuthSetupPage() {
                   <Button variant="outline" size="sm" asChild>
                     <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">
                       פתח Google Cloud Console
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <ExternalLink className="w-4 h-4 ml-2" />
                     </a>
                   </Button>
                 </div>
@@ -95,9 +95,9 @@ export default function OAuthSetupPage() {
               <div className="flex items-start gap-3">
                 <Badge variant="outline" className="mt-1">3</Badge>
                 <div>
-                  <h3 className="font-medium">לך ל-APIs & Services > Credentials</h3>
+                  <h3 className="font-medium">לך ל-APIs &amp; Services &gt; Credentials</h3>
                   <p className="text-sm text-muted-foreground">
-                    במסך הפרויקט, לחץ על "APIs & Services" ואז על "Credentials"
+                    במסך הפרויקט, לחץ על APIs &amp; Services ואז על Credentials
                   </p>
                 </div>
               </div>
