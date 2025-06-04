@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import App from "./App-new";
 import "./index.css";
 
 // Add global CSS for RTL layout and fontface
