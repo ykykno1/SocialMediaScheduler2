@@ -74,7 +74,7 @@ export default function YouTubePage() {
         window.location.href = authUrl;
       } else {
         const error = await response.json();
-        setError(error.error || 'Failed to get auth URL');
+        setError('שגיאה בהתחברות ל-YouTube: יש צורך בהגדרת Google OAuth');
       }
     } catch (error) {
       setError('Failed to connect to YouTube');
@@ -243,15 +243,33 @@ export default function YouTubePage() {
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setError(null)}
-              className="ml-2"
-            >
-              ✕
-            </Button>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <p className="font-medium mb-1">שגיאה בהתחברות ל-YouTube</p>
+                <p className="text-sm">{error}</p>
+                {error.includes('OAuth') && (
+                  <div className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open('/oauth-setup', '_blank')}
+                      className="text-red-700 border-red-300 bg-red-50"
+                    >
+                      פתח הוראות תיקון
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setError(null)}
+                className="text-red-500 hover:text-red-700"
+              >
+                ✕
+              </Button>
+            </div>
           </div>
         )}
 
@@ -265,15 +283,33 @@ export default function YouTubePage() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-4">
-                Connect your YouTube channel to automatically hide your videos during Shabbat and restore them afterward.
+                התחבר לערוץ YouTube שלך כדי להסתיר אוטומטית את הסרטונים שלך בשבת ולשחזר אותם אחר כך.
               </p>
+              
+              {error && error.includes('OAuth') && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-orange-800 text-sm mb-2">
+                    <strong>נדרשת הגדרה חד-פעמית:</strong> יש צורך להוסיף redirect URI ב-Google Cloud Console
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open('/oauth-setup', '_blank')}
+                    className="text-orange-700 border-orange-300"
+                  >
+                    הוראות תיקון מפורטות
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
+              )}
+              
               <Button 
                 onClick={connectYouTube} 
                 disabled={loading}
                 className="bg-red-500 hover:bg-red-600"
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                {loading ? 'Connecting...' : 'Connect YouTube'}
+                {loading ? 'מתחבר...' : 'התחבר ל-YouTube'}
               </Button>
             </CardContent>
           </Card>
