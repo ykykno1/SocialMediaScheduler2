@@ -2,14 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Youtube, Facebook, Instagram, ArrowLeft, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { Link } from "wouter";
-import AccountStatus from "./AccountStatus";
 
 const Dashboard = () => {
   return (
     <div className="space-y-6">
-      {/* Account Status Section */}
-      <AccountStatus />
-      
       {/* Welcome Section */}
       <div className="text-center py-8">
         <h1 className="text-3xl font-bold mb-2">ברוכים הבאים לרובוט שבת</h1>

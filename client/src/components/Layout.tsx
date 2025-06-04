@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import { Settings, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import UserProfile from './UserProfile';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,15 +20,7 @@ const Layout: React.FC<LayoutProps> = ({
       <header className="bg-[#3466ad] text-white shadow-md">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <h1 className="text-xl font-bold">רובוט שבת</h1>
-          <div className="flex gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onShowSettings}
-              className="p-2 rounded hover:bg-blue-600 transition text-white"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
+          <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="icon"
@@ -36,6 +29,7 @@ const Layout: React.FC<LayoutProps> = ({
             >
               <History className="h-5 w-5" />
             </Button>
+            <UserProfile onShowSettings={onShowSettings} />
           </div>
         </div>
       </header>
