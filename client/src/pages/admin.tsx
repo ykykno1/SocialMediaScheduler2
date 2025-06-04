@@ -134,6 +134,50 @@ export default function AdminPage() {
     }
   });
 
+  // Payments queries
+  const { data: payments, isLoading: paymentsLoading } = useQuery<Payment[]>({
+    queryKey: ['/api/admin/payments'],
+    enabled: isAuthenticated
+  });
+
+  // Add payment mutation
+  const addPaymentMutation = useMutation({
+    mutationFn: async (paymentData: {
+      userId: string;
+      amount: number;
+      type: 'youtube_pro' | 'premium';
+      method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer';
+      description?: string;
+    }) => {
+      const response = await apiRequest('POST', '/api/admin/payments', paymentData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/payments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      toast({
+        title: "תשלום נוסף",
+        description: "התשלום נוסף בהצלחה למערכת"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בהוספת התשלום",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Payment form state
+  const [paymentForm, setPaymentForm] = useState({
+    userId: '',
+    amount: '',
+    type: 'youtube_pro' as 'youtube_pro' | 'premium',
+    method: 'manual' as 'manual' | 'coupon' | 'credit_card' | 'bank_transfer',
+    description: ''
+  });
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -320,6 +364,150 @@ export default function AdminPage() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Add Payment Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>הוסף תשלום ידני</CardTitle>
+                <CardDescription>
+                  תעד תשלום שהתקבל מחוץ למערכת (מזומן, העברה בנקאית וכו')
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="userId">מזהה משתמש</Label>
+                  <Input
+                    id="userId"
+                    value={paymentForm.userId}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, userId: e.target.value }))}
+                    placeholder="הזן מזהה משתמש"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="amount">סכום (₪)</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={paymentForm.amount}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="הזן סכום בשקלים"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="type">סוג מנוי</Label>
+                  <select
+                    id="type"
+                    value={paymentForm.type}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, type: e.target.value as 'youtube_pro' | 'premium' }))}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="youtube_pro">יוטיוב פרו (₪14.90)</option>
+                    <option value="premium">פרימיום (₪24.90)</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="method">אמצעי תשלום</Label>
+                  <select
+                    id="method"
+                    value={paymentForm.method}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, method: e.target.value as any }))}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="manual">תשלום ידני</option>
+                    <option value="bank_transfer">העברה בנקאית</option>
+                    <option value="credit_card">כרטיס אשראי</option>
+                    <option value="coupon">קופון</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">הערות (אופציונלי)</Label>
+                  <Input
+                    id="description"
+                    value={paymentForm.description}
+                    onChange={(e) => setPaymentForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="הערות נוספות על התשלום"
+                  />
+                </div>
+                
+                <Button
+                  onClick={() => {
+                    if (paymentForm.userId && paymentForm.amount) {
+                      addPaymentMutation.mutate({
+                        userId: paymentForm.userId,
+                        amount: parseFloat(paymentForm.amount),
+                        type: paymentForm.type,
+                        method: paymentForm.method,
+                        description: paymentForm.description || undefined
+                      });
+                      setPaymentForm({
+                        userId: '',
+                        amount: '',
+                        type: 'youtube_pro',
+                        method: 'manual',
+                        description: ''
+                      });
+                    }
+                  }}
+                  disabled={!paymentForm.userId || !paymentForm.amount || addPaymentMutation.isPending}
+                  className="w-full"
+                >
+                  {addPaymentMutation.isPending ? 'מוסיף...' : 'הוסף תשלום'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Payments List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>תשלומים אחרונים</CardTitle>
+                <CardDescription>
+                  רשימת התשלומים שנרשמו במערכת
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {paymentsLoading ? (
+                  <div className="text-center py-4">טוען תשלומים...</div>
+                ) : payments && payments.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {payments.slice(0, 10).map((payment) => (
+                      <div key={payment.id} className="border rounded-lg p-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-medium">{payment.userEmail}</p>
+                            <p className="text-sm text-gray-500">{payment.username}</p>
+                          </div>
+                          <Badge variant={payment.type === 'premium' ? 'default' : 'secondary'}>
+                            ₪{payment.amount}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <p>סוג: {payment.type === 'premium' ? 'פרימיום' : 'יוטיוב פרו'}</p>
+                          <p>אמצעי: {
+                            payment.method === 'manual' ? 'ידני' :
+                            payment.method === 'bank_transfer' ? 'העברה בנקאית' :
+                            payment.method === 'credit_card' ? 'כרטיס אשראי' : 'קופון'
+                          }</p>
+                          <p>תאריך: {new Date(payment.timestamp).toLocaleDateString('he-IL')}</p>
+                          {payment.description && <p>הערות: {payment.description}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    עדיין לא נרשמו תשלומים במערכת
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
