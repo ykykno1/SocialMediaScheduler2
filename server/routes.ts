@@ -1024,9 +1024,9 @@ export function registerRoutes(app: Express): Server {
   registerFacebookPagesRoutes(app);
   
   // YouTube videos endpoint  
-  app.get("/api/youtube/videos", async (req, res) => {
+  app.get("/api/youtube/videos", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -1096,9 +1096,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide/show individual video
-  app.post("/api/youtube/videos/:videoId/hide", async (req, res) => {
+  app.post("/api/youtube/videos/:videoId/hide", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
       
       if (!auth) {
@@ -1153,9 +1153,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/youtube/videos/:videoId/show", async (req, res) => {
+  app.post("/api/youtube/videos/:videoId/show", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
       
       if (!auth) {
@@ -1205,9 +1205,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide all videos
-  app.post("/api/youtube/hide-all", async (req, res) => {
+  app.post("/api/youtube/hide-all", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -1299,9 +1299,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube show all videos
-  app.post("/api/youtube/show-all", async (req, res) => {
+  app.post("/api/youtube/show-all", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -2138,7 +2138,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube OAuth - secure token exchange
-  app.post("/api/youtube/token", async (req, res) => {
+  app.post("/api/youtube/token", authMiddleware, async (req: any, res) => {
     try {
       const { code } = req.body;
       
@@ -2181,7 +2181,7 @@ export function registerRoutes(app: Express): Server {
         refreshToken: tokenData.refresh_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now()
-      });
+      }, req.user.id);
 
       res.json({ 
         success: true,
