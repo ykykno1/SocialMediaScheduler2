@@ -214,7 +214,7 @@ export function registerRoutes(app: Express): Server {
 
       // Exchange code for tokens
       const host = req.get('host');
-      const redirectUri = `https://${host}/api/youtube/callback`;
+      const redirectUri = `https://${host}/auth-callback.html`;
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
