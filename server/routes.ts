@@ -1218,29 +1218,46 @@ export function registerRoutes(app: Express): Server {
       let hiddenCount = 0;
       let errors = [];
 
-      // Hide each video
+      // Hide each video (only if not already private)
       for (const item of videos) {
         const videoId = item.snippet.resourceId.videoId;
         
         try {
-          const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              id: videoId,
-              status: {
-                privacyStatus: 'private'
-              }
-            })
-          });
+          // First check current video status
+          const currentVideoResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${auth.accessToken}`);
+          
+          if (currentVideoResponse.ok) {
+            const currentVideoData = await currentVideoResponse.json();
+            const currentPrivacyStatus = currentVideoData.items?.[0]?.status?.privacyStatus;
+            
+            // Only hide videos that are not already private
+            if (currentPrivacyStatus && currentPrivacyStatus !== 'private') {
+              // Save original status before hiding
+              storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus);
+              
+              const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  id: videoId,
+                  status: {
+                    privacyStatus: 'private'
+                  }
+                })
+              });
 
-          if (updateResponse.ok) {
-            hiddenCount++;
-          } else {
-            const errorData = await updateResponse.json();
-            errors.push({ videoId, error: errorData.error?.message });
+              if (updateResponse.ok) {
+                hiddenCount++;
+              } else {
+                const errorData = await updateResponse.json();
+                errors.push({ videoId, error: errorData.error?.message });
+                // Remove saved status if hiding failed
+                storage.clearVideoOriginalStatus(videoId);
+              }
+            }
+            // Skip videos that are already private
           }
         } catch (error) {
           errors.push({ videoId, error: error.message });
@@ -1269,35 +1286,20 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
-      // First get all videos
-      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${auth.accessToken}`);
+      // Get all videos that have saved original status (meaning they were hidden by our system)
+      const videoOriginalStatuses = storage.getAllVideoOriginalStatuses();
+      const videoIds = Object.keys(videoOriginalStatuses);
       
-      if (!channelResponse.ok) {
-        return res.status(400).json({ error: "Failed to fetch YouTube channel" });
+      if (videoIds.length === 0) {
+        return res.json({ success: true, message: "אין סרטונים מוסתרים לשחזור", shownCount: 0 });
       }
-
-      const channelData = await channelResponse.json();
-      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-
-      if (!uploadsPlaylistId) {
-        return res.json({ success: true, message: "אין סרטונים להצגה", shownCount: 0 });
-      }
-
-      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${auth.accessToken}`);
-      
-      if (!videosResponse.ok) {
-        return res.status(400).json({ error: "Failed to fetch YouTube videos" });
-      }
-
-      const videosData = await videosResponse.json();
-      const videos = videosData.items || [];
       
       let shownCount = 0;
       let errors = [];
 
-      // Show each video
-      for (const item of videos) {
-        const videoId = item.snippet.resourceId.videoId;
+      // Restore each video to its original status
+      for (const videoId of videoIds) {
+        const originalStatus = videoOriginalStatuses[videoId];
         
         try {
           const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
@@ -1308,12 +1310,14 @@ export function registerRoutes(app: Express): Server {
             body: JSON.stringify({
               id: videoId,
               status: {
-                privacyStatus: 'public'
+                privacyStatus: originalStatus
               }
             })
           });
 
           if (updateResponse.ok) {
+            // Clear original status after successful restore
+            storage.clearVideoOriginalStatus(videoId);
             shownCount++;
           } else {
             const errorData = await updateResponse.json();
