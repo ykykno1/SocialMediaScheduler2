@@ -1166,12 +1166,16 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      console.log(`Video ${videoId} set to public`);
+      console.log(`Video ${videoId} set to ${originalStatus}`);
+      
+      // Clear original status after successful restore
+      storage.clearVideoOriginalStatus(videoId);
       
       res.json({ 
         success: true,
-        message: "סרטון הוצג בהצלחה",
-        videoId 
+        message: `סרטון הוחזר למצב המקורי (${originalStatus === 'public' ? 'פומבי' : originalStatus === 'private' ? 'פרטי' : 'לא רשום'})`,
+        videoId,
+        restoredStatus: originalStatus
       });
     } catch (error) {
       console.error("YouTube show video error:", error);
