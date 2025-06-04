@@ -141,7 +141,8 @@
                 if (window.opener) {
                     window.opener.postMessage({
                         code: params.code,
-                        platform: params.state || 'youtube'
+                        platform: 'youtube',
+                        success: true
                     }, window.location.origin);
                 }
                 

@@ -130,14 +130,13 @@ export default function useYouTubeAuth() {
   // Process YouTube auth code
   const processYouTubeCode = async (code: string) => {
     try {
-      const response = await fetch('/api/youtube-auth-callback', {
+      const response = await fetch('/api/youtube/process-auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          code,
-          redirectUri: `${window.location.origin}/auth-callback.html`
+          code
         })
       });
 
