@@ -5,33 +5,119 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogIn, UserPlus } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
-  const { user, isAuthenticated, login, register, isLoggingIn, isRegistering } = useAuth();
+  const { toast } = useToast();
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({ email: "", password: "", confirmPassword: "" });
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      setLocation("/");
-    }
-  }, [isAuthenticated, user, setLocation]);
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginData.email && loginData.password) {
-      login(loginData);
+    if (!loginData.email || !loginData.password) {
+      toast({
+        title: "שגיאה",
+        description: "נא למלא את כל השדות",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginData),
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        queryClient.setQueryData(["/api/user"], userData);
+        toast({
+          title: "התחברת בהצלחה",
+          description: `ברוך הבא, ${userData.username || userData.email}`,
+        });
+        setLocation("/");
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "שגיאה בהתחברות",
+          description: errorData.error || "נסה שוב",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה בהתחברות",
+        description: "בדוק את החיבור לאינטרנט",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (registerData.email && registerData.password && registerData.password === registerData.confirmPassword) {
-      register({ email: registerData.email, password: registerData.password });
+    if (!registerData.email || !registerData.password || !registerData.confirmPassword) {
+      toast({
+        title: "שגיאה",
+        description: "נא למלא את כל השדות",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (registerData.password !== registerData.confirmPassword) {
+      toast({
+        title: "שגיאה",
+        description: "הסיסמאות אינן תואמות",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: registerData.email,
+          password: registerData.password,
+          username: registerData.email.split('@')[0]
+        }),
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        queryClient.setQueryData(["/api/user"], userData);
+        toast({
+          title: "נרשמת בהצלחה",
+          description: `ברוך הבא, ${userData.username || userData.email}`,
+        });
+        setLocation("/");
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "שגיאה ברישום",
+          description: errorData.error || "נסה שוב",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה ברישום",
+        description: "בדוק את החיבור לאינטרנט",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,9 +163,9 @@ export default function AuthPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   <LogIn className="mr-2 h-4 w-4" />
-                  {isLoggingIn ? "מתחבר..." : "התחבר"}
+                  {isLoading ? "מתחבר..." : "התחבר"}
                 </Button>
               </form>
             </TabsContent>
@@ -125,10 +211,10 @@ export default function AuthPage() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isRegistering || registerData.password !== registerData.confirmPassword}
+                  disabled={isLoading || registerData.password !== registerData.confirmPassword}
                 >
                   <UserPlus className="mr-2 h-4 w-4" />
-                  {isRegistering ? "נרשם..." : "הרשם"}
+                  {isLoading ? "נרשם..." : "הרשם"}
                 </Button>
               </form>
             </TabsContent>
