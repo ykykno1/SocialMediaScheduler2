@@ -149,7 +149,7 @@ export const userSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   profileImageUrl: z.string().optional(),
-  accountType: z.enum(['free', 'premium']).default('free'),
+  accountType: z.enum(['free', 'youtube_pro', 'premium']).default('free'),
   subscriptionId: z.string().optional(), // Stripe subscription ID
   location: z.object({
     city: z.string(),
@@ -167,7 +167,8 @@ export const userSchema = z.object({
   googleId: z.string().optional(), // For Google OAuth
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
-  lastLogin: z.date().optional()
+  lastLogin: z.date().optional(),
+  lastActive: z.date().optional()
 });
 
 export type User = z.infer<typeof userSchema>;
@@ -210,3 +211,17 @@ export const shabbatTimesSchema = z.object({
 });
 
 export type ShabbatTimes = z.infer<typeof shabbatTimesSchema>;
+
+// Payment tracking schema
+export const paymentSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  amount: z.number(),
+  type: z.enum(['youtube_pro', 'premium']),
+  method: z.enum(['manual', 'coupon', 'credit_card', 'bank_transfer']),
+  description: z.string().optional(),
+  timestamp: z.date(),
+  isActive: z.boolean().default(true)
+});
+
+export type Payment = z.infer<typeof paymentSchema>;

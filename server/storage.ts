@@ -13,10 +13,12 @@ import {
   type LoginData,
   type RegisterData,
   type ShabbatTimes,
+  type Payment,
   settingsSchema,
   facebookAuthSchema,
   historyEntrySchema,
   authSchema,
+  paymentSchema,
   SupportedPlatform as SupportedPlatformEnum
 } from "@shared/schema";
 import { nanoid } from 'nanoid';
@@ -73,8 +75,8 @@ export interface IStorage {
   deleteUser(userId: string): boolean;
   
   // Payment tracking operations
-  addPayment(payment: { userId: string; amount: number; type: 'youtube_pro' | 'premium'; method: 'manual' | 'coupon'; description?: string; }): void;
-  getPayments(): any[];
+  addPayment(payment: { userId: string; amount: number; type: 'youtube_pro' | 'premium'; method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer'; description?: string; }): void;
+  getPayments(): Payment[];
   getRevenue(): { monthly: number; total: number; };
   
   // Shabbat times operations
@@ -105,15 +107,7 @@ export class MemStorage implements IStorage {
   private users: Map<string, User> = new Map();
   private usersByEmail: Map<string, string> = new Map(); // email -> userId
   private shabbatTimesCache: Map<string, ShabbatTimes> = new Map();
-  private payments: Array<{
-    id: string;
-    userId: string;
-    amount: number;
-    type: 'youtube_pro' | 'premium';
-    method: 'manual' | 'coupon';
-    description?: string;
-    timestamp: Date;
-  }> = [];
+  private payments: Payment[] = [];
   
   constructor() {
     // Initialize with default settings
