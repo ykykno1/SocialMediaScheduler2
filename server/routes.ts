@@ -1601,6 +1601,63 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // YouTube OAuth - secure token exchange
+  app.post("/api/youtube/token", async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: "Authorization code required" });
+      }
+
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
+
+      // Exchange code for tokens using server-side secrets
+      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: process.env.GOOGLE_CLIENT_ID!,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+          code: code,
+          grant_type: "authorization_code",
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      const tokens = await tokenResponse.json();
+      
+      if (!tokenResponse.ok) {
+        console.error("Token exchange failed:", tokens);
+        return res.status(400).json({ 
+          error: tokens.error_description || tokens.error || "Token exchange failed" 
+        });
+      }
+
+      // Store tokens securely on server
+      const tokenData = tokens as any;
+      storage.saveAuthToken({
+        platform: 'youtube',
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        expiresIn: tokenData.expires_in,
+        timestamp: Date.now()
+      });
+
+      res.json({ 
+        success: true,
+        message: "YouTube connected successfully"
+      });
+      
+    } catch (error) {
+      console.error("YouTube token exchange error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

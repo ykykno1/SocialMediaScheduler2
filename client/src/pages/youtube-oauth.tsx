@@ -101,23 +101,18 @@ export default function YouTubeOAuthPage() {
 
   const processAuthCode = async (code: string) => {
     try {
-      const response = await fetch('/api/youtube/process-auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
+      const response = await apiRequest("POST", "/api/youtube/token", { code });
+      const result = await response.json();
 
-      if (response.ok) {
-        const data = await response.json();
-        setIsConnected(true);
-        setChannelTitle(data.channelTitle);
+      if (response.ok && result.success) {
+        queryClient.invalidateQueries({ queryKey: ["/api/youtube/auth-status"] });
         toast({
           title: "התחברות הצליחה",
-          description: `התחברת בהצלחה לערוץ ${data.channelTitle}`,
+          description: "התחברת בהצלחה ל-YouTube",
         });
-        loadVideos();
+        setLoading(false);
       } else {
-        const errorData = await response.json();
+        const errorData = result;
         throw new Error(errorData.error || 'שגיאה בעיבוד ההתחברות');
       }
     } catch (error: any) {
