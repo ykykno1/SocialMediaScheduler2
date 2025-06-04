@@ -8,7 +8,7 @@ export default function useYouTubeAuth() {
 
   // Get auth status
   const { 
-    data: authStatus,
+    data: authStatus = {},
     isLoading
   } = useQuery({
     queryKey: ['/api/youtube/auth-status'],
@@ -53,17 +53,13 @@ export default function useYouTubeAuth() {
       const messageListener = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
         
-        if (event.data.platform === 'youtube' && event.data.success) {
-          console.log('YouTube auth successful');
+        if (event.data.platform === 'youtube' && event.data.success && event.data.code) {
+          console.log('YouTube auth successful, processing code...');
           popup?.close();
           window.removeEventListener('message', messageListener);
-          queryClient.invalidateQueries({ queryKey: ['/api/youtube/auth-status'] });
-          setIsAuthenticating(false);
           
-          toast({
-            title: "התחברות הצליחה",
-            description: "התחברת בהצלחה לחשבון YouTube",
-          });
+          // Process the code with authenticated session
+          processYouTubeCode(event.data.code);
         } else if (event.data.error) {
           console.error('YouTube auth error:', event.data.error);
           popup?.close();
@@ -131,6 +127,49 @@ export default function useYouTubeAuth() {
     }
   });
 
+  // Process YouTube auth code
+  const processYouTubeCode = async (code: string) => {
+    try {
+      const response = await fetch('/api/youtube-auth-callback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          code,
+          redirectUri: `${window.location.origin}/auth-callback.html`
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to exchange code for token');
+      }
+
+      const data = await response.json();
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/youtube/auth-status'] });
+      setIsAuthenticating(false);
+      
+      toast({
+        title: "התחברות הצליחה",
+        description: "התחברת בהצלחה לחשבון YouTube",
+      });
+
+      // Clear any stored auth code
+      localStorage.removeItem('youtube_auth_code');
+    } catch (error) {
+      console.error('Error processing YouTube code:', error);
+      setIsAuthenticating(false);
+      
+      toast({
+        title: "שגיאה בהתחברות",
+        description: error instanceof Error ? error.message : 'שגיאה לא ידועה',
+        variant: "destructive",
+      });
+    }
+  };
+
   const login = () => {
     console.log('YouTube login clicked');
     setIsAuthenticating(true);
@@ -144,12 +183,12 @@ export default function useYouTubeAuth() {
   };
 
   return {
-    isAuthenticated: authStatus?.isAuthenticated ?? false,
+    isAuthenticated: (authStatus as any)?.isAuthenticated ?? false,
     isAuthenticating: isAuthenticating || authUrlMutation.isPending,
     isLoading,
     login,
     logout,
     isLoggingOut: logoutMutation.isPending,
-    channelTitle: authStatus?.channelTitle
+    channelTitle: (authStatus as any)?.channelTitle
   };
 }

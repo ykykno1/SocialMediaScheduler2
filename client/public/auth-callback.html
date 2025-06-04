@@ -87,13 +87,26 @@
     
     async function processCallback(platform) {
       try {
-        // Get the redirect URI that was used
+        if (platform === 'youtube') {
+          // For YouTube, store the code and redirect to main app
+          localStorage.setItem('youtube_auth_code', code);
+          
+          // Post message back to opener window
+          window.opener.postMessage({
+            platform: 'youtube',
+            success: true,
+            code: code
+          }, window.location.origin);
+          
+          // Close this window
+          window.close();
+          return;
+        }
+        
+        // For Facebook, continue with the original flow
         const redirectUri = window.location.href.split('?')[0];
+        const endpoint = '/api/auth-callback';
         
-        // Choose the correct endpoint based on platform
-        const endpoint = platform === 'youtube' ? '/api/youtube-auth-callback' : '/api/auth-callback';
-        
-        // Exchange code for token via the server
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
