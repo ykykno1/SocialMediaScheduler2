@@ -14,6 +14,122 @@ import { registerFacebookPagesRoutes } from "./facebook-pages";
 import { registerYouTubeRoutes } from "./youtube-videos";
 
 export function registerRoutes(app: Express): Server {
+  
+  // Authentication routes
+  app.post("/api/register", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+      
+      // Check if user already exists
+      const existingUser = storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User already exists" });
+      }
+      
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Create user
+      const user = storage.createUser({
+        email,
+        password: hashedPassword,
+        username: email.split('@')[0] // Use email prefix as username
+      });
+      
+      // Set session
+      (req as any).session = (req as any).session || {};
+      (req as any).session.userId = user.id;
+      
+      // Return user without password
+      const { password: _, ...userResponse } = user;
+      res.json(userResponse);
+      
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ error: "Registration failed" });
+    }
+  });
+
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+      
+      // Get user by email
+      const user = storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Verify password
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Set session
+      (req as any).session = (req as any).session || {};
+      (req as any).session.userId = user.id;
+      
+      // Update last active
+      storage.updateUser(user.id, { lastActive: new Date() });
+      
+      // Return user without password
+      const { password: _, ...userResponse } = user;
+      res.json(userResponse);
+      
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.post("/api/logout", (req, res) => {
+    (req as any).session = null;
+    res.json({ success: true });
+  });
+
+  app.get("/api/user", (req, res) => {
+    const session = (req as any).session;
+    
+    if (!session || !session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    const user = storage.getUserById(session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    
+    // Return user without password
+    const { password: _, ...userResponse } = user;
+    res.json(userResponse);
+  });
+
+  // Middleware to check authentication
+  const requireAuth = (req: any, res: any, next: any) => {
+    const session = req.session;
+    
+    if (!session || !session.userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    const user = storage.getUserById(session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    
+    req.user = user;
+    next();
+  };
+
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
     // Use the new Facebook App ID directly

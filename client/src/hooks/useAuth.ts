@@ -1,175 +1,132 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useToast } from './use-toast';
-import AuthService from '../services/authService';
-import StorageService from '../services/storageService';
-import FacebookSdkService from '../services/facebookSdk';
-import useSettings from './useSettings';
-import CONFIG from '../config';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
-export function useAuth() {
-  const [authenticating, setAuthenticating] = useState<Record<string, boolean>>({});
-  const [fbSdkInitialized, setFbSdkInitialized] = useState<boolean>(false);
-  const { settings, saveSettings } = useSettings();
-  const { toast } = useToast();
-  
-  // Initialize Facebook SDK on component mount
-  useEffect(() => {
-    if (CONFIG.DEV_MODE) {
-      // Skip in development mode
-      return;
-    }
-    
-    const initFacebookSdk = async () => {
-      try {
-        // Fetch app ID from server
-        const response = await fetch('/api/facebook-config');
-        if (!response.ok) {
-          throw new Error('Failed to fetch Facebook configuration');
-        }
-        
-        const config = await response.json();
-        if (config?.appId) {
-          await FacebookSdkService.initialize(config.appId);
-          setFbSdkInitialized(true);
-          
-          // Try to check login status
-          try {
-            await FacebookSdkService.checkLoginStatus();
-          } catch (err) {
-            console.warn('Failed to check Facebook login status:', err);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to initialize Facebook SDK:', error);
-      }
-    };
-    
-    initFacebookSdk();
-  }, []);
-
-  // Check if platform is authenticated
-  const isAuthenticated = useCallback((platform: string) => {
-    // First check AuthService (stores tokens in localStorage)
-    const isAuthFromService = AuthService.isAuthenticated(platform);
-    
-    // If platform is Facebook, we might be authenticated via SDK only
-    if (platform === 'facebook' && !isAuthFromService) {
-      // Check if we have a token in localStorage that might not be in AuthService
-      const fbToken = StorageService.getAuthTokens().facebook?.accessToken;
-      if (fbToken) {
-        return true;
-      }
-    }
-    
-    return isAuthFromService;
-  }, []);
-
-  // Connect platform
-  const connectPlatform = useCallback(async (platform: string) => {
-    setAuthenticating(prev => ({ ...prev, [platform]: true }));
-    
-    try {
-      console.log(`Attempting to authenticate with ${platform}...`);
-      
-      // For all platforms, including Facebook, use the traditional OAuth flow
-      // First validate that platform has API key and secret in dev mode
-      if (CONFIG.DEV_MODE) {
-        if (!settings.platforms[platform].apiKey || !settings.platforms[platform].apiSecret) {
-          throw new Error(`נדרש להזין מפתח API וסיסמת API ל${getPlatformDisplayName(platform)}`);
-        }
-      }
-      
-      // For all platforms, use AuthService
-      await AuthService.authenticate(platform);
-      
-      // If authentication succeeds, we don't need any platform-specific handling
-      
-      // Update settings to reflect connected state
-      const updatedSettings = { ...settings };
-      updatedSettings.platforms[platform].connected = true;
-      await saveSettings(updatedSettings);
-      
-      toast({
-        title: 'חיבור הצליח',
-        description: `התחברת בהצלחה ל${getPlatformDisplayName(platform)}.`,
-      });
-      
-      return true;
-    } catch (error) {
-      console.error(`Authentication error with ${platform}:`, error);
-      toast({
-        title: 'שגיאת חיבור',
-        description: (error as Error).message,
-        variant: 'destructive'
-      });
-      return false;
-    } finally {
-      setAuthenticating(prev => ({ ...prev, [platform]: false }));
-    }
-  }, [settings, saveSettings, toast]);
-
-  // Disconnect platform
-  const disconnectPlatform = useCallback(async (platform: string) => {
-    try {
-      // For Facebook, we need to handle SDK logout if initialized
-      if (platform === 'facebook' && fbSdkInitialized && !CONFIG.DEV_MODE) {
-        try {
-          // Use the SDK to logout
-          // This is a placeholder as the SDK doesn't have a direct logout method
-          // We'll rely on removing the token from storage
-          console.log('Logging out of Facebook with SDK...');
-          
-          // The SDK doesn't have a direct logout method we can call
-          // Facebook login state will refresh on next page load
-        } catch (fbError) {
-          console.error('Error logging out from Facebook SDK:', fbError);
-          // Continue with local logout even if FB SDK logout fails
-        }
-      }
-      
-      // Remove auth token
-      StorageService.removeAuthToken(platform);
-      
-      // Update settings
-      const updatedSettings = { ...settings };
-      updatedSettings.platforms[platform].connected = false;
-      await saveSettings(updatedSettings);
-      
-      toast({
-        title: 'ניתוק הצליח',
-        description: `נותקת בהצלחה מ${getPlatformDisplayName(platform)}.`,
-      });
-      
-      return true;
-    } catch (error) {
-      toast({
-        title: 'שגיאת ניתוק',
-        description: (error as Error).message,
-        variant: 'destructive'
-      });
-      return false;
-    }
-  }, [settings, saveSettings, toast]);
-
-  // Helper function to get display name for platform
-  const getPlatformDisplayName = (platform: string): string => {
-    const displayNames: Record<string, string> = {
-      facebook: 'פייסבוק',
-      instagram: 'אינסטגרם',
-      youtube: 'יוטיוב',
-      tiktok: 'טיקטוק'
-    };
-    
-    return displayNames[platform] || platform;
-  };
-
-  return {
-    isAuthenticated,
-    connectPlatform,
-    disconnectPlatform,
-    authenticating,
-    fbSdkInitialized
-  };
+interface User {
+  id: string;
+  email?: string;
+  accountType: 'free' | 'youtube_pro' | 'premium';
+  createdAt: string;
+  hideCount: number;
+  maxHides: number;
 }
 
-export default useAuth;
+interface LoginData {
+  email: string;
+  password: string;
+}
+
+interface RegisterData {
+  email: string;
+  password: string;
+}
+
+export function useAuth() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Get current user
+  const { data: user, isLoading } = useQuery<User | null>({
+    queryKey: ['/api/user'],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/user');
+        if (response.status === 401) {
+          return null;
+        }
+        return await response.json();
+      } catch (error) {
+        return null;
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginData) => {
+      const response = await apiRequest('POST', '/api/login', credentials);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
+      }
+      return await response.json();
+    },
+    onSuccess: (userData) => {
+      queryClient.setQueryData(['/api/user'], userData);
+      toast({
+        title: 'התחברות בוצעה בהצלחה',
+        description: 'ברוך הבא בחזרה!'
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'שגיאת התחברות',
+        description: error instanceof Error ? error.message : 'אירעה שגיאה בהתחברות',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: async (userData: RegisterData) => {
+      const response = await apiRequest('POST', '/api/register', userData);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Registration failed');
+      }
+      return await response.json();
+    },
+    onSuccess: (userData) => {
+      queryClient.setQueryData(['/api/user'], userData);
+      toast({
+        title: 'הרשמה בוצעה בהצלחה',
+        description: 'ברוך הבא לרובוט שבת!'
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'שגיאת רישום',
+        description: error instanceof Error ? error.message : 'אירעה שגיאה ברישום',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/logout');
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(['/api/user'], null);
+      queryClient.clear();
+      toast({
+        title: 'התנתקות בוצעה בהצלחה',
+        description: 'להתראות!'
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'שגיאת התנתקות',
+        description: 'אירעה שגיאה בהתנתקות',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login: loginMutation.mutate,
+    register: registerMutation.mutate,
+    logout: logoutMutation.mutate,
+    isLoggingIn: loginMutation.isPending,
+    isRegistering: registerMutation.isPending,
+    isLoggingOut: logoutMutation.isPending,
+  };
+}
