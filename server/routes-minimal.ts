@@ -241,6 +241,15 @@ export function registerRoutes(app: Express): Server {
       // Exchange code for tokens
       const host = req.get('host');
       const redirectUri = `https://${host}/auth-callback.html`;
+      
+      console.log('Token exchange request:', {
+        code: code ? 'exists' : 'missing',
+        client_id: clientId,
+        client_secret: clientSecret ? 'exists' : 'missing',
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code'
+      });
+      
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
