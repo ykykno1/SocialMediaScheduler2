@@ -1,7 +1,11 @@
-import { Express } from "express";
+import { Express, Request } from "express";
 import { google } from "googleapis";
 import { storage } from "./storage";
 import { AuthToken } from "@shared/schema";
+
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
 
 export const registerYouTubeRoutes = (app: Express): void => {
   // Get YouTube auth URL for login
@@ -42,8 +46,25 @@ export const registerYouTubeRoutes = (app: Express): void => {
     }
   });
 
+  // Middleware to check authentication
+  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
+    const session = (req as any).session;
+    
+    if (!session || !session.userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    const user = storage.getUserById(session.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    
+    req.user = user;
+    next();
+  };
+
   // Handle YouTube auth callback
-  app.post("/api/youtube-auth-callback", async (req, res) => {
+  app.post("/api/youtube-auth-callback", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const { code } = req.body;
       
@@ -95,7 +116,7 @@ export const registerYouTubeRoutes = (app: Express): void => {
           }
         };
         
-        storage.saveAuthToken(token);
+        storage.saveAuthToken(token, req.user.id);
         
         res.json({ success: true, channelTitle });
       } catch (apiError) {
@@ -109,8 +130,8 @@ export const registerYouTubeRoutes = (app: Express): void => {
   });
 
   // Get YouTube auth status
-  app.get("/api/youtube/auth-status", (req, res) => {
-    const auth = storage.getAuthToken('youtube');
+  app.get("/api/youtube/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
+    const auth = storage.getAuthToken('youtube', req.user?.id);
     
     if (!auth) {
       return res.json({ 
@@ -127,9 +148,9 @@ export const registerYouTubeRoutes = (app: Express): void => {
   });
 
   // Get YouTube videos
-  app.get("/api/youtube/videos", async (req, res) => {
+  app.get("/api/youtube/videos", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -226,12 +247,12 @@ export const registerYouTubeRoutes = (app: Express): void => {
   });
 
   // Update video privacy
-  app.post("/api/youtube/videos/:videoId/privacy", async (req, res) => {
+  app.post("/api/youtube/videos/:videoId/privacy", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const { videoId } = req.params;
       const { privacyStatus } = req.body;
       
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
