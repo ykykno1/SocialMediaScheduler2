@@ -43,28 +43,23 @@ export function registerRoutes(app: Express): Server {
   
   // Middleware to check authentication
   const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    console.log(`RequireAuth middleware - headers:`, req.headers.authorization);
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
     
     if (!token) {
-      console.log(`RequireAuth middleware - no token found`);
       return res.status(401).json({ error: "Authentication required" });
     }
     
     const decoded = verifyToken(token);
     if (!decoded) {
-      console.log(`RequireAuth middleware - invalid token`);
       return res.status(401).json({ error: "Invalid token" });
     }
     
     const user = storage.getUserById(decoded.userId);
     if (!user) {
-      console.log(`RequireAuth middleware - user not found for ID: ${decoded.userId}`);
       return res.status(401).json({ error: "User not found" });
     }
     
-    console.log(`RequireAuth middleware - success for user: ${user.id}`);
     req.user = user;
     next();
   };
@@ -81,7 +76,16 @@ export function registerRoutes(app: Express): Server {
       // Check if user exists
       const existingUser = storage.getUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ error: "User already exists" });
+        // If user exists, just log them in and return their info
+        const token = generateToken(existingUser.id);
+        req.session.userId = existingUser.id;
+        
+        return res.json({
+          id: existingUser.id,
+          email: existingUser.email,
+          username: existingUser.username,
+          token: token
+        });
       }
 
       // Create user

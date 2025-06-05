@@ -575,5 +575,13 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Use in-memory storage
-export const storage = new MemStorage();
+// Use in-memory storage - ensure singleton
+let storageInstance: MemStorage | null = null;
+
+export const storage = (() => {
+  if (!storageInstance) {
+    console.log('Creating new storage instance');
+    storageInstance = new MemStorage();
+  }
+  return storageInstance;
+})();
