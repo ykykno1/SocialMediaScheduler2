@@ -29,10 +29,10 @@ export interface IStorage {
   getSettings(): Settings;
   saveSettings(settings: Settings): Settings;
   
-  // Generic auth token operations (user-specific)
-  getAuthToken(platform: SupportedPlatform, userId: string): AuthToken | null;
-  saveAuthToken(token: AuthToken, userId: string): AuthToken;
-  removeAuthToken(platform: SupportedPlatform, userId: string): void;
+  // Generic auth token operations
+  getAuthToken(platform: SupportedPlatform): AuthToken | null;
+  saveAuthToken(token: AuthToken): AuthToken;
+  removeAuthToken(platform: SupportedPlatform): void;
   
   // Legacy Facebook-specific auth (kept for backward compatibility)
   getFacebookAuth(): FacebookAuth | null;
@@ -124,12 +124,14 @@ export class MemStorage implements IStorage {
   }
   
   // Generic auth token operations (user-specific)
-  getAuthToken(platform: SupportedPlatform, userId: string): AuthToken | null {
+  getAuthToken(platform: SupportedPlatform, userId?: string): AuthToken | null {
+    if (!userId) return null;
     const userTokens = this.userAuthTokens.get(userId);
     return userTokens?.[platform] || null;
   }
   
-  saveAuthToken(token: AuthToken, userId: string): AuthToken {
+  saveAuthToken(token: AuthToken, userId?: string): AuthToken {
+    if (!userId) throw new Error('User ID required for saving auth token');
     
     const validatedToken = authSchema.parse(token);
     
@@ -154,7 +156,9 @@ export class MemStorage implements IStorage {
     return validatedToken;
   }
   
-  removeAuthToken(platform: SupportedPlatform, userId: string): void {
+  removeAuthToken(platform: SupportedPlatform, userId?: string): void {
+    if (!userId) return;
+    
     const userTokens = this.userAuthTokens.get(userId);
     if (userTokens) {
       userTokens[platform] = null;
@@ -361,8 +365,7 @@ export class MemStorage implements IStorage {
   
   // User operations
   createUser(userData: RegisterData): User {
-    // Generate deterministic ID based on email to maintain consistency across server restarts
-    const userId = Buffer.from(userData.email).toString('base64').replace(/[^A-Za-z0-9]/g, '').substring(0, 16);
+    const userId = nanoid();
     const user: User = {
       id: userId,
       email: userData.email,
@@ -576,6 +579,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Use persistent in-memory storage
-const storage = new MemStorage();
-export { storage };
+// Use in-memory storage
+export const storage = new MemStorage();

@@ -30,14 +30,7 @@ function useAuth() {
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token');
-      const headers: Record<string, string> = {};
-      
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-      
-      const response = await fetch("/api/user", { headers });
+      const response = await fetch("/api/user");
       if (response.status === 401) {
         return null;
       }

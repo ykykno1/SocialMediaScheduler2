@@ -41,27 +41,16 @@ declare module 'express-session' {
 
 export function registerRoutes(app: Express): Server {
   
-  // Middleware to check authentication
-  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
+  // Authentication middleware
+  const authMiddleware = (req: any, res: any, next: any) => {
+    if (req.session.userId) {
+      const user = storage.getUser(req.session.userId);
+      if (user) {
+        req.user = user;
+        return next();
+      }
     }
-    
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-    
-    const user = storage.getUserById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
-    
-    req.user = user;
-    next();
+    return res.status(401).json({ error: "Not authenticated" });
   };
 
   // User registration and login endpoints
@@ -76,16 +65,7 @@ export function registerRoutes(app: Express): Server {
       // Check if user exists
       const existingUser = storage.getUserByEmail(email);
       if (existingUser) {
-        // If user exists, just log them in and return their info
-        const token = generateToken(existingUser.id);
-        req.session.userId = existingUser.id;
-        
-        return res.json({
-          id: existingUser.id,
-          email: existingUser.email,
-          username: existingUser.username,
-          token: token
-        });
+        return res.status(400).json({ error: "User already exists" });
       }
 
       // Create user
@@ -97,15 +77,11 @@ export function registerRoutes(app: Express): Server {
 
       // Set session
       req.session.userId = user.id;
-      
-      // Generate and return JWT token
-      const token = generateToken(user.id);
 
       res.json({
         id: user.id,
         email: user.email,
-        username: user.username,
-        token: token
+        username: user.username
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -128,15 +104,11 @@ export function registerRoutes(app: Express): Server {
 
       // Set session
       req.session.userId = user.id;
-      
-      // Generate and return JWT token
-      const token = generateToken(user.id);
 
       res.json({
         id: user.id,
         email: user.email,
-        username: user.username,
-        token: token
+        username: user.username
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -144,7 +116,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/user", requireAuth, (req: any, res) => {
+  app.get("/api/user", authMiddleware, (req: any, res) => {
     res.json({
       id: req.user.id,
       email: req.user.email,
@@ -242,15 +214,13 @@ export function registerRoutes(app: Express): Server {
       }
 
       const tokenData = tokens as any;
-      
-      // Store token globally for now (temporary solution)
       storage.saveAuthToken({
         platform: 'youtube',
         accessToken: tokenData.access_token,
         refreshToken: tokenData.refresh_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now()
-      });
+      }, 'global-user');
 
       res.json({ 
         success: true,
@@ -370,6 +340,29 @@ export function registerRoutes(app: Express): Server {
     const { password: _, ...userResponse } = user;
     res.json(userResponse);
   });
+
+  // Middleware to check authentication
+  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (!token) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+    
+    const user = storage.getUserById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    
+    req.user = user;
+    next();
+  };
 
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
@@ -575,7 +568,7 @@ export function registerRoutes(app: Express): Server {
         // Check if the token has expired or is invalid
         if (errorData.error && (errorData.error.code === 190 || errorData.error.code === 104)) {
           // Token is invalid, clear it
-          storage.removeFacebookAuth(req.user?.id);
+          storage.removeFacebookAuth();
           return res.status(401).json({ error: "Facebook authentication expired", details: errorData.error });
         }
         
@@ -1031,9 +1024,9 @@ export function registerRoutes(app: Express): Server {
   registerFacebookPagesRoutes(app);
   
   // YouTube videos endpoint  
-  app.get("/api/youtube/videos", async (req: any, res) => {
+  app.get("/api/youtube/videos", async (req, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', 'global-user');
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -1103,9 +1096,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide/show individual video
-  app.post("/api/youtube/videos/:videoId/hide", async (req: any, res) => {
+  app.post("/api/youtube/videos/:videoId/hide", async (req, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', 'global-user');
       const { videoId } = req.params;
       
       if (!auth) {
@@ -1160,9 +1153,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/youtube/videos/:videoId/show", async (req: any, res) => {
+  app.post("/api/youtube/videos/:videoId/show", async (req, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', 'global-user');
       const { videoId } = req.params;
       
       if (!auth) {
@@ -1212,9 +1205,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide all videos
-  app.post("/api/youtube/hide-all", async (req: any, res) => {
+  app.post("/api/youtube/hide-all", async (req, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', 'global-user');
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -1306,9 +1299,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube show all videos
-  app.post("/api/youtube/show-all", async (req: any, res) => {
+  app.post("/api/youtube/show-all", async (req, res) => {
     try {
-      const auth = storage.getAuthToken('youtube');
+      const auth = storage.getAuthToken('youtube', 'global-user');
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -2145,7 +2138,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube OAuth - secure token exchange
-  app.post("/api/youtube/token", requireAuth, async (req: any, res) => {
+  app.post("/api/youtube/token", async (req, res) => {
     try {
       const { code } = req.body;
       
@@ -2188,7 +2181,7 @@ export function registerRoutes(app: Express): Server {
         refreshToken: tokenData.refresh_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now()
-      }, req.user.id);
+      });
 
       res.json({ 
         success: true,
