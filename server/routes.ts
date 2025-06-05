@@ -1031,9 +1031,7 @@ export function registerRoutes(app: Express): Server {
   // YouTube videos endpoint  
   app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
     try {
-      console.log(`Looking for YouTube token for user: ${req.user.id}`);
       const auth = storage.getAuthToken('youtube', req.user.id);
-      console.log(`YouTube token found:`, auth ? 'YES' : 'NO');
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -2147,7 +2145,6 @@ export function registerRoutes(app: Express): Server {
   // YouTube OAuth - secure token exchange
   app.post("/api/youtube/token", requireAuth, async (req: any, res) => {
     try {
-      console.log(`YouTube token request for user: ${req.user?.id}, user object:`, req.user);
       const { code } = req.body;
       
       if (!code) {
@@ -2183,7 +2180,6 @@ export function registerRoutes(app: Express): Server {
 
       // Store tokens securely on server
       const tokenData = tokens as any;
-      console.log(`Saving YouTube token for user: ${req.user.id}`);
       storage.saveAuthToken({
         platform: 'youtube',
         accessToken: tokenData.access_token,
@@ -2191,7 +2187,6 @@ export function registerRoutes(app: Express): Server {
         expiresIn: tokenData.expires_in,
         timestamp: Date.now()
       }, req.user.id);
-      console.log(`YouTube token saved successfully for user: ${req.user.id}`);
 
       res.json({ 
         success: true,
