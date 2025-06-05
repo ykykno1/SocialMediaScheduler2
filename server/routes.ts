@@ -41,7 +41,30 @@ declare module 'express-session' {
 
 export function registerRoutes(app: Express): Server {
 
-  // Authentication middleware
+  // Middleware to check authentication (JWT-based)
+  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    if (!token) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    const user = storage.getUserById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    req.user = user;
+    next();
+  };
+
+  // Authentication middleware (session-based - for legacy support)
   const authMiddleware = (req: any, res: any, next: any) => {
     if (req.session.userId) {
       const user = storage.getUser(req.session.userId);
@@ -279,28 +302,7 @@ export function registerRoutes(app: Express): Server {
     res.json(userResponse);
   });
 
-  // Middleware to check authentication
-  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-    if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-
-    const user = storage.getUserById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
-
-    req.user = user;
-    next();
-  };
+  
 
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
