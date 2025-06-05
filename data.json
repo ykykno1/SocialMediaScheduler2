@@ -9,8 +9,8 @@
         "password": "$2b$10$1TFn0VU5qApE7DABeI1oq.3H.YGRv6sZhAv9zzaR3lO1FFC4GA4PK",
         "accountType": "free",
         "createdAt": "2025-06-05T05:42:06.017Z",
-        "updatedAt": "2025-06-05T05:54:13.350Z",
-        "lastActive": "2025-06-05T05:54:13.349Z"
+        "updatedAt": "2025-06-05T05:58:43.737Z",
+        "lastActive": "2025-06-05T05:58:43.737Z"
       }
     ]
   ],
@@ -39,5 +39,5 @@
   ],
   "userHistoryEntries": [],
   "userCachedYouTubeVideos": [],
-  "timestamp": 1749102964016
+  "timestamp": 1749103171489
 }
