@@ -243,6 +243,7 @@ export function registerRoutes(app: Express): Server {
 
       const tokenData = tokens as any;
       
+      // Store token globally for now (temporary solution)
       storage.saveAuthToken({
         platform: 'youtube',
         accessToken: tokenData.access_token,
@@ -1104,13 +1105,7 @@ export function registerRoutes(app: Express): Server {
   // YouTube hide/show individual video
   app.post("/api/youtube/videos/:videoId/hide", async (req: any, res) => {
     try {
-      // Get user ID from session or JWT
-      const userId = req.session?.userId || req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-      
-      const auth = storage.getAuthToken('youtube', userId);
+      const auth = storage.getAuthToken('youtube');
       const { videoId } = req.params;
       
       if (!auth) {
@@ -1167,13 +1162,7 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/youtube/videos/:videoId/show", async (req: any, res) => {
     try {
-      // Get user ID from session or JWT
-      const userId = req.session?.userId || req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-      
-      const auth = storage.getAuthToken('youtube', userId);
+      const auth = storage.getAuthToken('youtube');
       const { videoId } = req.params;
       
       if (!auth) {
