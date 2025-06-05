@@ -1,8 +1,4 @@
 import type { Express, Request, Response } from "express";
-
-interface AuthenticatedRequest extends Request {
-  user?: any;
-}
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import fetch from 'node-fetch';
@@ -16,6 +12,10 @@ import {
   loginSchema
 } from "@shared/schema";
 import { registerFacebookPagesRoutes } from "./facebook-pages";
+
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
@@ -32,16 +32,9 @@ const verifyToken = (token: string) => {
   }
 };
 
-// Extend Express Request type to include session
-declare module 'express-session' {
-  interface SessionData {
-    userId?: string;
-  }
-}
-
 export function registerRoutes(app: Express): Server {
 
-  // Middleware to check authentication (JWT-based)
+  // Authentication middleware
   const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
     try {
       const authHeader = req.headers.authorization;
@@ -69,21 +62,78 @@ export function registerRoutes(app: Express): Server {
     }
   };
 
-  // Authentication middleware (session-based - for legacy support)
-  const authMiddleware = (req: any, res: any, next: any) => {
-    if (req.session.userId) {
-      const user = storage.getUser(req.session.userId);
-      if (user) {
-        req.user = user;
-        return next();
+  // User authentication routes
+  app.post("/api/register", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
       }
+
+      const existingUser = storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User already exists" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = storage.createUser({
+        email,
+        password: hashedPassword,
+        username: email.split('@')[0]
+      });
+
+      const token = generateToken(user.id);
+      const { password: _, ...userResponse } = user;
+
+      res.json({ ...userResponse, token });
+
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ error: "Registration failed" });
     }
-    return res.status(401).json({ error: "Not authenticated" });
-  };
+  });
 
-  // Remove duplicate routes - keep only the JWT-based ones below
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
 
-  // YouTube OAuth - check user-specific auth
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+
+      const user = storage.getUserByEmail(email);
+      if (!user || !user.password) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const token = generateToken(user.id);
+      storage.updateUser(user.id, { lastActive: new Date() });
+
+      const { password: _, ...userResponse } = user;
+      res.json({ ...userResponse, token });
+
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.get("/api/user", requireAuth, (req: AuthenticatedRequest, res) => {
+    const { password: _, ...userResponse } = req.user;
+    res.json(userResponse);
+  });
+
+  app.post("/api/logout", requireAuth, (req, res) => {
+    res.json({ success: true });
+  });
+
+  // YouTube OAuth routes
   app.get("/api/youtube/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user?.id);
@@ -95,7 +145,6 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Check if token is expired
       const isExpired = auth.timestamp && auth.expiresIn && 
         (Date.now() - auth.timestamp) > (auth.expiresIn * 1000);
 
@@ -123,12 +172,12 @@ export function registerRoutes(app: Express): Server {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-      const domain = req.headers.host;
-      const redirectUri = `https://${domain}/auth-callback.html`;
-
       if (!clientId || !clientSecret) {
         return res.status(500).json({ error: "Google credentials not configured" });
       }
+
+      const domain = req.headers.host;
+      const redirectUri = `https://${domain}/auth-callback.html`;
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${encodeURIComponent(clientId)}&` +
@@ -181,10 +230,9 @@ export function registerRoutes(app: Express): Server {
 
       const tokenData = tokens as any;
 
-      // Get channel info from YouTube API
       try {
         const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true&access_token=${tokenData.access_token}`);
-        
+
         let channelTitle = 'Unknown Channel';
         if (channelResponse.ok) {
           const channelData = await channelResponse.json();
@@ -199,9 +247,7 @@ export function registerRoutes(app: Express): Server {
           refreshToken: tokenData.refresh_token,
           expiresIn: tokenData.expires_in,
           timestamp: Date.now(),
-          additionalData: {
-            channelTitle
-          }
+          additionalData: { channelTitle }
         }, req.user?.id);
 
         res.json({ 
@@ -211,8 +257,7 @@ export function registerRoutes(app: Express): Server {
         });
       } catch (apiError) {
         console.error('YouTube API error:', apiError);
-        
-        // Still save the token even if we can't get channel info
+
         storage.saveAuthToken({
           platform: 'youtube',
           accessToken: tokenData.access_token,
@@ -233,13 +278,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // YouTube logout endpoint
   app.post("/api/youtube/logout", requireAuth, (req: AuthenticatedRequest, res) => {
     try {
-      // Remove YouTube auth token for this user
       storage.removeAuthToken('youtube', req.user?.id);
-
-      // Add history entry
       storage.addHistoryEntry({
         timestamp: new Date(),
         action: "logout",
@@ -248,7 +289,6 @@ export function registerRoutes(app: Express): Server {
         affectedItems: 0,
         error: undefined
       }, req.user?.id);
-
       res.json({ success: true, message: "התנתקת בהצלחה מ-YouTube" });
     } catch (error) {
       console.error("YouTube logout error:", error);
@@ -1716,7 +1756,7 @@ export function registerRoutes(app: Express): Server {
       console.error("Instagram show post error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
-  });
+});
 
   app.post("/api/instagram/posts/hide-all", async (req, res) => {
     try {
@@ -2134,63 +2174,6 @@ export function registerRoutes(app: Express): Server {
       res.json(enrichedPayments);
     } catch (error) {
       console.error("Admin payments fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // YouTube OAuth - secure token exchange
-  app.post("/api/youtube/token", async (req, res) => {
-    try {
-      const { code } = req.body;
-
-      if (!code) {
-        return res.status(400).json({ error: "Authorization code required" });
-      }
-
-      const domain = req.headers.host;
-      const redirectUri = `https://${domain}/auth-callback.html`;
-
-      // Exchange code for tokens using server-side secrets
-      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          client_id: process.env.GOOGLE_CLIENT_ID!,
-          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-          code: code,
-          grant_type: "authorization_code",
-          redirect_uri: redirectUri,
-        }),
-      });
-
-      const tokens = await tokenResponse.json();
-
-      if (!tokenResponse.ok) {
-        console.error("Token exchange failed:", tokens);
-        return res.status(400).json({ 
-          error: tokens.error_description || tokens.error || "Token exchange failed" 
-        });
-      }
-
-      // Store tokens securely on server
-      const tokenData = tokens as any;
-      storage.saveAuthToken({
-        platform: 'youtube',
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
-        expiresIn: tokenData.expires_in,
-        timestamp: Date.now()
-      });
-
-      res.json({ 
-        success: true,
-        message: "YouTube connected successfully"
-      });
-
-    } catch (error) {
-      console.error("YouTube token exchange error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
