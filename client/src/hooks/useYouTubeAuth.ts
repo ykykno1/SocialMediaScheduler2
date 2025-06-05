@@ -1,43 +1,48 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 
 export default function useYouTubeAuth() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Initialize token from localStorage on mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    setToken(storedToken);
+  }, []);
 
   // Get auth status with proper token handling
   const { 
     data: authStatus = { isAuthenticated: false },
     isLoading,
-    error
+    error,
+    refetch: refetchAuthStatus
   } = useQuery({
-    queryKey: ['/api/youtube/auth-status'],
+    queryKey: ['youtube-auth-status', token],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
-      
       if (!token) {
-        console.log('No token found in localStorage for YouTube auth check');
+        console.log('No token available for YouTube auth check');
         return { isAuthenticated: false, error: 'No token found' };
       }
 
-      console.log('Making YouTube auth status request with token:', token.substring(0, 20) + '...');
+      console.log('Making YouTube auth status request with token');
       
       const response = await fetch('/api/youtube/auth-status', {
         method: 'GET',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        credentials: 'include' // Include credentials for cross-origin requests
+        }
       });
 
       console.log('YouTube auth status response status:', response.status);
 
       if (!response.ok) {
         if (response.status === 401) {
-          console.log('YouTube auth status: unauthorized - token may be invalid');
+          console.log('YouTube auth status: unauthorized');
           return { isAuthenticated: false, error: 'Authentication required' };
         }
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -49,28 +54,26 @@ export default function useYouTubeAuth() {
       console.log('YouTube auth status success:', data);
       return data;
     },
+    enabled: !!token,
     refetchOnWindowFocus: false,
-    retry: 1,
-    enabled: !!localStorage.getItem('token') // Only run if we have a token
+    retry: 1
   });
 
   // Get auth URL
   const authUrlMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('עליך להתחבר תחילה');
       }
 
-      console.log('Getting YouTube auth URL with token:', token.substring(0, 20) + '...');
+      console.log('Getting YouTube auth URL');
 
       const response = await fetch('/api/youtube/auth-url', {
         method: 'GET',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        credentials: 'include'
+        }
       });
 
       console.log('YouTube auth URL response status:', response.status);
@@ -82,7 +85,7 @@ export default function useYouTubeAuth() {
       }
 
       const data = await response.json();
-      console.log('YouTube auth URL received successfully:', data.authUrl);
+      console.log('YouTube auth URL received successfully');
       return data.authUrl;
     },
     onSuccess: (authUrl) => {
@@ -105,6 +108,8 @@ export default function useYouTubeAuth() {
         return;
       }
 
+      setIsAuthenticating(true);
+
       // Listen for messages from the popup
       const messageListener = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
@@ -113,12 +118,12 @@ export default function useYouTubeAuth() {
 
         if (event.data.platform === 'youtube' && event.data.success && event.data.code) {
           console.log('YouTube auth successful, processing code...');
-          popup?.close();
+          popup.close();
           window.removeEventListener('message', messageListener);
           processYouTubeCode(event.data.code);
         } else if (event.data.error) {
           console.error('YouTube auth error:', event.data.error);
-          popup?.close();
+          popup.close();
           window.removeEventListener('message', messageListener);
           setIsAuthenticating(false);
 
@@ -131,11 +136,10 @@ export default function useYouTubeAuth() {
       };
 
       window.addEventListener('message', messageListener);
-      setIsAuthenticating(true);
 
       // Check if popup was closed manually
       const checkClosed = setInterval(() => {
-        if (popup?.closed) {
+        if (popup.closed) {
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
           setIsAuthenticating(false);
@@ -157,12 +161,11 @@ export default function useYouTubeAuth() {
   // Process YouTube auth code
   const processYouTubeCode = async (code: string) => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('עליך להתחבר תחילה');
       }
       
-      console.log('Processing YouTube code:', code);
+      console.log('Processing YouTube code');
       
       const response = await fetch('/api/youtube/token', {
         method: 'POST',
@@ -182,9 +185,8 @@ export default function useYouTubeAuth() {
       const data = await response.json();
       console.log('YouTube token exchange success:', data);
 
-      // Invalidate queries to refresh auth status
-      queryClient.invalidateQueries({ queryKey: ['/api/youtube/auth-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+      // Refresh auth status
+      await refetchAuthStatus();
       
       setIsAuthenticating(false);
 
@@ -208,7 +210,6 @@ export default function useYouTubeAuth() {
   // Logout
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Not authenticated');
       }
@@ -233,8 +234,7 @@ export default function useYouTubeAuth() {
         title: "התנתקות הצליחה",
         description: "התנתקת בהצלחה מחשבון YouTube",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/youtube/auth-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+      refetchAuthStatus();
     },
     onError: (error) => {
       console.error('YouTube logout error:', error);
@@ -246,9 +246,19 @@ export default function useYouTubeAuth() {
     }
   });
 
+  // Update token when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem('token');
+      setToken(newToken);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const login = () => {
     console.log('YouTube login clicked');
-    setIsAuthenticating(true);
     authUrlMutation.mutate();
   };
 
