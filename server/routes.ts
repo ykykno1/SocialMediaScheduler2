@@ -1214,13 +1214,7 @@ export function registerRoutes(app: Express): Server {
   // YouTube hide all videos
   app.post("/api/youtube/hide-all", async (req: any, res) => {
     try {
-      // Get user ID from session or JWT
-      const userId = req.session?.userId || req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-      
-      const auth = storage.getAuthToken('youtube', userId);
+      const auth = storage.getAuthToken('youtube');
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -1314,13 +1308,7 @@ export function registerRoutes(app: Express): Server {
   // YouTube show all videos
   app.post("/api/youtube/show-all", async (req: any, res) => {
     try {
-      // Get user ID from session or JWT
-      const userId = req.session?.userId || req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-      
-      const auth = storage.getAuthToken('youtube', userId);
+      const auth = storage.getAuthToken('youtube');
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
