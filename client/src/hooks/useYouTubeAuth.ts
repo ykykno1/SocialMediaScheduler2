@@ -17,42 +17,46 @@ export default function useYouTubeAuth() {
       const response = await fetch('/api/youtube/auth-status', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to get auth status');
       }
-      
+
       return response.json();
     },
     refetchOnWindowFocus: false
   });
 
-  // Get auth URL for login
+  // Get auth URL
   const authUrlMutation = useMutation({
     mutationFn: async () => {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/youtube/auth-url', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to get auth URL');
+      if (!token) {
+        throw new Error('Not authenticated');
       }
-      
-      return await response.json();
+
+      const response = await fetch('/api/youtube/auth-url', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get auth URL');
+      }
+
+      const data = await response.json();
+      return data.authUrl;
     },
     onSuccess: (data) => {
       // Open YouTube auth page in popup
       console.log('Got auth URL:', data.authUrl);
       console.log('Opening Google auth in popup...');
-      
+
       const popup = window.open(
         data.authUrl,
         'google-auth',
         'width=500,height=600,scrollbars=yes,resizable=yes'
       );
-      
+
       if (!popup) {
         console.error('Popup blocked by browser');
         setIsAuthenticating(false);
@@ -63,16 +67,16 @@ export default function useYouTubeAuth() {
         });
         return;
       }
-      
+
       // Listen for messages from the popup
       const messageListener = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
-        
+
         if (event.data.platform === 'youtube' && event.data.success && event.data.code) {
           console.log('YouTube auth successful, processing code...');
           popup?.close();
           window.removeEventListener('message', messageListener);
-          
+
           // Process the code with authenticated session
           processYouTubeCode(event.data.code);
         } else if (event.data.error) {
@@ -80,7 +84,7 @@ export default function useYouTubeAuth() {
           popup?.close();
           window.removeEventListener('message', messageListener);
           setIsAuthenticating(false);
-          
+
           toast({
             title: "שגיאה בהתחברות",
             description: event.data.error,
@@ -88,10 +92,10 @@ export default function useYouTubeAuth() {
           });
         }
       };
-      
+
       window.addEventListener('message', messageListener);
       setIsAuthenticating(true);
-      
+
       // Check if popup was closed manually
       const checkClosed = setInterval(() => {
         if (popup?.closed) {
@@ -111,21 +115,22 @@ export default function useYouTubeAuth() {
     }
   });
 
-  // Logout from YouTube
+  // Logout
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch('/api/youtube/logout', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'שגיאה בהתנתקות');
+        throw new Error('Failed to logout');
       }
-      
-      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -165,10 +170,10 @@ export default function useYouTubeAuth() {
       }
 
       const data = await response.json();
-      
+
       queryClient.invalidateQueries({ queryKey: ['/api/youtube/auth-status'] });
       setIsAuthenticating(false);
-      
+
       toast({
         title: "התחברות הצליחה",
         description: "התחברת בהצלחה לחשבון YouTube",
@@ -179,7 +184,7 @@ export default function useYouTubeAuth() {
     } catch (error) {
       console.error('Error processing YouTube code:', error);
       setIsAuthenticating(false);
-      
+
       toast({
         title: "שגיאה בהתחברות",
         description: error instanceof Error ? error.message : 'שגיאה לא ידועה',
