@@ -51,7 +51,10 @@ export default function useYouTubeAuth() {
       }
 
       const response = await fetch('/api/youtube/auth-url', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
@@ -141,7 +144,10 @@ export default function useYouTubeAuth() {
 
       const response = await fetch('/api/youtube/logout', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {

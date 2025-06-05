@@ -114,26 +114,26 @@ export class MemStorage implements IStorage {
   constructor() {
     // Initialize with default settings
     this.settings = settingsSchema.parse({});
-    
+
     // Load persisted data
     this.loadPersistedData();
-    
+
     // Auto-save every 30 seconds
     setInterval(() => {
       this.savePersistedData();
     }, 30000);
   }
-  
+
   private getDataFilePath(): string {
     return path.join(process.cwd(), 'data.json');
   }
-  
+
   private loadPersistedData(): void {
     try {
       const dataPath = this.getDataFilePath();
       if (fs.existsSync(dataPath)) {
         const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-        
+
         // Restore users
         if (data.users) {
           this.users = new Map(data.users);
@@ -141,14 +141,14 @@ export class MemStorage implements IStorage {
         if (data.usersByEmail) {
           this.usersByEmail = new Map(data.usersByEmail);
         }
-        
+
         // Restore user auth tokens
         if (data.userAuthTokens) {
           this.userAuthTokens = new Map(
             data.userAuthTokens.map(([key, value]: [string, any]) => [key, value])
           );
         }
-        
+
         // Restore user data
         if (data.userHistoryEntries) {
           this.userHistoryEntries = new Map(data.userHistoryEntries);
@@ -156,14 +156,14 @@ export class MemStorage implements IStorage {
         if (data.userCachedYouTubeVideos) {
           this.userCachedYouTubeVideos = new Map(data.userCachedYouTubeVideos);
         }
-        
+
         console.log('Loaded persisted data successfully');
       }
     } catch (error) {
       console.error('Error loading persisted data:', error);
     }
   }
-  
+
   private savePersistedData(): void {
     try {
       const data = {
@@ -174,7 +174,7 @@ export class MemStorage implements IStorage {
         userCachedYouTubeVideos: Array.from(this.userCachedYouTubeVideos.entries()),
         timestamp: Date.now()
       };
-      
+
       const dataPath = this.getDataFilePath();
       fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
     } catch (error) {
@@ -230,7 +230,7 @@ export class MemStorage implements IStorage {
         });
       }
     }
-    
+
     // Save data after token operations
     this.savePersistedData();
 
@@ -466,10 +466,10 @@ export class MemStorage implements IStorage {
 
     this.users.set(userId, user);
     this.usersByEmail.set(userData.email, userId);
-    
+
     // Save immediately after user creation
     this.savePersistedData();
-    
+
     return user;
   }
 

@@ -236,6 +236,29 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // YouTube logout endpoint
+  app.post("/api/youtube/logout", requireAuth, (req: AuthenticatedRequest, res) => {
+    try {
+      // Remove YouTube auth token for this user
+      storage.removeAuthToken('youtube', req.user?.id);
+
+      // Add history entry
+      storage.addHistoryEntry({
+        timestamp: new Date(),
+        action: "logout",
+        platform: "youtube",
+        success: true,
+        affectedItems: 0,
+        error: undefined
+      }, req.user?.id);
+
+      res.json({ success: true, message: "התנתקת בהצלחה מ-YouTube" });
+    } catch (error) {
+      console.error("YouTube logout error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Authentication routes
   app.post("/api/register", async (req, res) => {
     try {
