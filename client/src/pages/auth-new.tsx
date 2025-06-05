@@ -29,11 +29,7 @@ export default function AuthPage({ onLogin }: AuthPageProps) {
   
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect if already authenticated
-  if (isAuthenticated && user) {
-    setLocation("/");
-    return null;
-  }
+  // Don't redirect here - let PublicRoute handle it
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
