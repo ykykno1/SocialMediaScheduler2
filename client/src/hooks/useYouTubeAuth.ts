@@ -20,19 +20,26 @@ export default function useYouTubeAuth() {
       }
 
       const response = await fetch('/api/youtube/auth-status', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      const data = await response.json();
-      
-      if (!response.ok && response.status !== 401) {
-        throw new Error(data.error || 'Failed to get auth status');
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { isAuthenticated: false, error: 'Authentication required' };
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get auth status');
       }
 
+      const data = await response.json();
       return data;
     },
     refetchOnWindowFocus: false,
-    retry: false
+    retry: false,
+    enabled: !!localStorage.getItem('token') // Only run if we have a token
   });
 
   // Get auth URL

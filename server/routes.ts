@@ -43,25 +43,33 @@ export function registerRoutes(app: Express): Server {
 
   // Middleware to check authentication (JWT-based)
   const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-    if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
+      if (!token) {
+        console.log('No token provided in request');
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const decoded = verifyToken(token);
+      if (!decoded) {
+        console.log('Invalid token provided');
+        return res.status(401).json({ error: "Invalid token" });
+      }
+
+      const user = storage.getUserById(decoded.userId);
+      if (!user) {
+        console.log('User not found for token');
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error('Auth middleware error:', error);
+      return res.status(401).json({ error: "Authentication failed" });
     }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-
-    const user = storage.getUserById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
-
-    req.user = user;
-    next();
   };
 
   // Authentication middleware (session-based - for legacy support)
@@ -80,20 +88,37 @@ export function registerRoutes(app: Express): Server {
 
   // YouTube OAuth - check user-specific auth
   app.get("/api/youtube/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
-    const auth = storage.getAuthToken('youtube', req.user?.id);
+    try {
+      const auth = storage.getAuthToken('youtube', req.user?.id);
 
-    if (!auth) {
-      return res.json({ 
-        isAuthenticated: false, 
-        platform: 'youtube' 
+      if (!auth) {
+        return res.json({ 
+          isAuthenticated: false, 
+          platform: 'youtube' 
+        });
+      }
+
+      // Check if token is expired
+      const isExpired = auth.timestamp && auth.expiresIn && 
+        (Date.now() - auth.timestamp) > (auth.expiresIn * 1000);
+
+      if (isExpired) {
+        return res.json({ 
+          isAuthenticated: false, 
+          platform: 'youtube',
+          error: 'Token expired'
+        });
+      }
+
+      res.json({ 
+        isAuthenticated: true, 
+        platform: 'youtube',
+        channelTitle: auth.additionalData?.channelTitle || 'Unknown Channel'
       });
+    } catch (error) {
+      console.error('YouTube auth status error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    res.json({ 
-      isAuthenticated: true, 
-      platform: 'youtube',
-      channelTitle: auth.additionalData?.channelTitle || 'Unknown Channel'
-    });
   });
 
   app.get("/api/youtube/auth-url", requireAuth, (req: AuthenticatedRequest, res) => {
