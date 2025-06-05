@@ -22,6 +22,8 @@ import {
   SupportedPlatform as SupportedPlatformEnum
 } from "@shared/schema";
 import { nanoid } from 'nanoid';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Interface for storage operations
 export interface IStorage {
@@ -112,6 +114,72 @@ export class MemStorage implements IStorage {
   constructor() {
     // Initialize with default settings
     this.settings = settingsSchema.parse({});
+    
+    // Load persisted data
+    this.loadPersistedData();
+    
+    // Auto-save every 30 seconds
+    setInterval(() => {
+      this.savePersistedData();
+    }, 30000);
+  }
+  
+  private getDataFilePath(): string {
+    return path.join(process.cwd(), 'data.json');
+  }
+  
+  private loadPersistedData(): void {
+    try {
+      const dataPath = this.getDataFilePath();
+      if (fs.existsSync(dataPath)) {
+        const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        
+        // Restore users
+        if (data.users) {
+          this.users = new Map(data.users);
+        }
+        if (data.usersByEmail) {
+          this.usersByEmail = new Map(data.usersByEmail);
+        }
+        
+        // Restore user auth tokens
+        if (data.userAuthTokens) {
+          this.userAuthTokens = new Map(
+            data.userAuthTokens.map(([key, value]: [string, any]) => [key, value])
+          );
+        }
+        
+        // Restore user data
+        if (data.userHistoryEntries) {
+          this.userHistoryEntries = new Map(data.userHistoryEntries);
+        }
+        if (data.userCachedYouTubeVideos) {
+          this.userCachedYouTubeVideos = new Map(data.userCachedYouTubeVideos);
+        }
+        
+        console.log('Loaded persisted data successfully');
+      }
+    } catch (error) {
+      console.error('Error loading persisted data:', error);
+    }
+  }
+  
+  private savePersistedData(): void {
+    try {
+      const data = {
+        users: Array.from(this.users.entries()),
+        usersByEmail: Array.from(this.usersByEmail.entries()),
+        userAuthTokens: Array.from(this.userAuthTokens.entries()),
+        userHistoryEntries: Array.from(this.userHistoryEntries.entries()),
+        userCachedYouTubeVideos: Array.from(this.userCachedYouTubeVideos.entries()),
+        timestamp: Date.now()
+      };
+      
+      const dataPath = this.getDataFilePath();
+      fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+    } catch (error) {
+      console.error('Error saving persisted data:', error);
+    }
   }
 
   // Settings operations
@@ -162,6 +230,9 @@ export class MemStorage implements IStorage {
         });
       }
     }
+    
+    // Save data after token operations
+    this.savePersistedData();
 
     return validatedToken;
   }
@@ -395,6 +466,10 @@ export class MemStorage implements IStorage {
 
     this.users.set(userId, user);
     this.usersByEmail.set(userData.email, userId);
+    
+    // Save immediately after user creation
+    this.savePersistedData();
+    
     return user;
   }
 
