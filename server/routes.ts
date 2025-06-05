@@ -2138,6 +2138,7 @@ export function registerRoutes(app: Express): Server {
   // YouTube OAuth - secure token exchange
   app.post("/api/youtube/token", requireAuth, async (req: any, res) => {
     try {
+      console.log(`YouTube token request for user: ${req.user?.id}, user object:`, req.user);
       const { code } = req.body;
       
       if (!code) {
