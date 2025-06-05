@@ -4,90 +4,45 @@ import { Toaster } from "@/components/ui/toaster";
 import { queryClient } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
 
 // Pages
 import AuthPage from "@/pages/auth-new";
 import HomePage from "@/pages/home-new";
 import NotFound from "@/pages/not-found";
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const [location, setLocation] = useLocation();
-  const { user, isLoading, isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setLocation("/auth");
-    }
-  }, [isLoading, isAuthenticated, setLocation]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
-          <p className="text-gray-600">טוען...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // Will redirect via useEffect
-  }
-
-  return <Component />;
-}
-
-function PublicRoute({ component: Component }: { component: React.ComponentType }) {
-  const [location, setLocation] = useLocation();
-  const { user, isLoading, isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      setLocation("/");
-    }
-  }, [isLoading, isAuthenticated, setLocation]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
-          <p className="text-gray-600">טוען...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return null; // Will redirect via useEffect
-  }
-
-  return <Component />;
-}
-
-function AppRouter() {
-  return (
-    <Switch>
-      <Route path="/auth">
-        <PublicRoute component={AuthPage} />
-      </Route>
-
-      <Route path="/">
-        <ProtectedRoute component={HomePage} />
-      </Route>
-
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
 function App() {
+  const [location] = useLocation();
+  const { user, isLoading, isAuthenticated } = useAuth();
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+            <p className="text-gray-600">טוען...</p>
+          </div>
+        </div>
+        <Toaster />
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="app" dir="rtl">
-        <AppRouter />
+        <Switch>
+          <Route path="/auth">
+            {isAuthenticated ? <HomePage /> : <AuthPage />}
+          </Route>
+
+          <Route path="/">
+            {isAuthenticated ? <HomePage /> : <AuthPage />}
+          </Route>
+
+          <Route component={NotFound} />
+        </Switch>
         <Toaster />
       </div>
     </QueryClientProvider>
