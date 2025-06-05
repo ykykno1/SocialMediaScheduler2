@@ -103,6 +103,8 @@ export default function AuthPage() {
         // Save token to localStorage
         if (userData.token) {
           localStorage.setItem('auth_token', userData.token);
+          // Invalidate user query to force refetch with token
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
         }
         queryClient.setQueryData(["/api/user"], userData);
         toast({

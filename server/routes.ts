@@ -88,11 +88,15 @@ export function registerRoutes(app: Express): Server {
 
       // Set session
       req.session.userId = user.id;
+      
+      // Generate and return JWT token
+      const token = generateToken(user.id);
 
       res.json({
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.username,
+        token: token
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -115,11 +119,15 @@ export function registerRoutes(app: Express): Server {
 
       // Set session
       req.session.userId = user.id;
+      
+      // Generate and return JWT token
+      const token = generateToken(user.id);
 
       res.json({
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.username,
+        token: token
       });
     } catch (error) {
       console.error("Login error:", error);
