@@ -14,17 +14,25 @@ export default function useYouTubeAuth() {
     queryKey: ['/api/youtube/auth-status'],
     queryFn: async () => {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/youtube/auth-status', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get auth status');
+      
+      if (!token) {
+        return { isAuthenticated: false, error: 'No token found' };
       }
 
-      return response.json();
+      const response = await fetch('/api/youtube/auth-status', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok && response.status !== 401) {
+        throw new Error(data.error || 'Failed to get auth status');
+      }
+
+      return data;
     },
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    retry: false
   });
 
   // Get auth URL
@@ -32,15 +40,14 @@ export default function useYouTubeAuth() {
     mutationFn: async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('Not authenticated');
+        throw new Error('עליך להתחבר תחילה');
       }
 
-      const response = await fetch('/api/youtube/auth-url', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch('/api/youtube/auth-url');
 
       if (!response.ok) {
-        throw new Error('Failed to get auth URL');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get auth URL');
       }
 
       const data = await response.json();
@@ -153,11 +160,15 @@ export default function useYouTubeAuth() {
   const processYouTubeCode = async (code: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/youtube/process-auth', {
+      if (!token) {
+        throw new Error('עליך להתחבר תחילה');
+      }
+      
+      const response = await fetch('/api/youtube/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           code

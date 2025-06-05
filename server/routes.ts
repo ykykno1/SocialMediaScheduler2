@@ -79,8 +79,38 @@ export function registerRoutes(app: Express): Server {
   // Remove duplicate routes - keep only the JWT-based ones below
 
   // YouTube OAuth - check user-specific auth
-  app.get("/api/youtube/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
-    const auth = storage.getAuthToken('youtube', req.user?.id);
+  app.get("/api/youtube/auth-status", (req: AuthenticatedRequest, res) => {
+    // Check if user is authenticated via JWT
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    if (!token) {
+      return res.json({ 
+        isAuthenticated: false, 
+        platform: 'youtube',
+        error: 'No authentication token provided'
+      });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.json({ 
+        isAuthenticated: false, 
+        platform: 'youtube',
+        error: 'Invalid authentication token'
+      });
+    }
+
+    const user = storage.getUserById(decoded.userId);
+    if (!user) {
+      return res.json({ 
+        isAuthenticated: false, 
+        platform: 'youtube',
+        error: 'User not found'
+      });
+    }
+
+    const auth = storage.getAuthToken('youtube', user.id);
 
     if (!auth) {
       return res.json({ 
