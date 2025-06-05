@@ -43,7 +43,9 @@ export default function useYouTubeAuth() {
         throw new Error('עליך להתחבר תחילה');
       }
 
-      const response = await fetch('/api/youtube/auth-url');
+      const response = await fetch('/api/youtube/auth-url', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

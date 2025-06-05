@@ -79,38 +79,8 @@ export function registerRoutes(app: Express): Server {
   // Remove duplicate routes - keep only the JWT-based ones below
 
   // YouTube OAuth - check user-specific auth
-  app.get("/api/youtube/auth-status", (req: AuthenticatedRequest, res) => {
-    // Check if user is authenticated via JWT
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-    if (!token) {
-      return res.json({ 
-        isAuthenticated: false, 
-        platform: 'youtube',
-        error: 'No authentication token provided'
-      });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.json({ 
-        isAuthenticated: false, 
-        platform: 'youtube',
-        error: 'Invalid authentication token'
-      });
-    }
-
-    const user = storage.getUserById(decoded.userId);
-    if (!user) {
-      return res.json({ 
-        isAuthenticated: false, 
-        platform: 'youtube',
-        error: 'User not found'
-      });
-    }
-
-    const auth = storage.getAuthToken('youtube', user.id);
+  app.get("/api/youtube/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
+    const auth = storage.getAuthToken('youtube', req.user?.id);
 
     if (!auth) {
       return res.json({ 
@@ -126,7 +96,7 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  app.get("/api/youtube/auth-url", (req, res) => {
+  app.get("/api/youtube/auth-url", requireAuth, (req: AuthenticatedRequest, res) => {
     try {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -153,7 +123,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/youtube/token", async (req, res) => {
+  app.post("/api/youtube/token", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const { code } = req.body;
 
@@ -189,34 +159,51 @@ export function registerRoutes(app: Express): Server {
 
       const tokenData = tokens as any;
 
-      // Get user from JWT token
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-      let userId = null;
-
-      if (token) {
-        const decoded = verifyToken(token);
-        if (decoded) {
-          userId = decoded.userId;
+      // Get channel info from YouTube API
+      try {
+        const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true&access_token=${tokenData.access_token}`);
+        
+        let channelTitle = 'Unknown Channel';
+        if (channelResponse.ok) {
+          const channelData = await channelResponse.json();
+          if (channelData.items && channelData.items.length > 0) {
+            channelTitle = channelData.items[0].snippet.title;
+          }
         }
+
+        storage.saveAuthToken({
+          platform: 'youtube',
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token,
+          expiresIn: tokenData.expires_in,
+          timestamp: Date.now(),
+          additionalData: {
+            channelTitle
+          }
+        }, req.user?.id);
+
+        res.json({ 
+          success: true,
+          message: "YouTube connected successfully",
+          channelTitle
+        });
+      } catch (apiError) {
+        console.error('YouTube API error:', apiError);
+        
+        // Still save the token even if we can't get channel info
+        storage.saveAuthToken({
+          platform: 'youtube',
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token,
+          expiresIn: tokenData.expires_in,
+          timestamp: Date.now()
+        }, req.user?.id);
+
+        res.json({ 
+          success: true,
+          message: "YouTube connected successfully"
+        });
       }
-
-      if (!userId) {
-        return res.status(401).json({ error: "Authentication required" });
-      }
-
-      storage.saveAuthToken({
-        platform: 'youtube',
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
-        expiresIn: tokenData.expires_in,
-        timestamp: Date.now()
-      }, userId);
-
-      res.json({ 
-        success: true,
-        message: "YouTube connected successfully"
-      });
 
     } catch (error) {
       console.error("YouTube token exchange error:", error);
