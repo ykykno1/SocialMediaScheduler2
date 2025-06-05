@@ -361,7 +361,8 @@ export class MemStorage implements IStorage {
   
   // User operations
   createUser(userData: RegisterData): User {
-    const userId = nanoid();
+    // Generate deterministic ID based on email to maintain consistency across server restarts
+    const userId = Buffer.from(userData.email).toString('base64').replace(/[^A-Za-z0-9]/g, '').substring(0, 16);
     const user: User = {
       id: userId,
       email: userData.email,
