@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function AuthPage() {
-  const [_, setLocation] = useLocation();
-  const { loginMutation, registerMutation } = useAuth();
+  const { login, register, isLoginPending, isRegisterPending } = useAuth();
 
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -29,8 +27,7 @@ export default function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await loginMutation.mutateAsync(loginForm);
-      setLocation("/");
+      await login(loginForm);
     } catch (error) {
       // Error handled by useAuth hook
     }
@@ -39,8 +36,7 @@ export default function AuthPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await registerMutation.mutateAsync(registerForm);
-      setLocation("/");
+      await register(registerForm);
     } catch (error) {
       // Error handled by useAuth hook
     }
@@ -102,9 +98,9 @@ export default function AuthPage() {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={loginMutation.isPending}
+                  disabled={isLoginPending}
                 >
-                  {loginMutation.isPending ? (
+                  {isLoginPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       מתחבר...
@@ -168,9 +164,9 @@ export default function AuthPage() {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={registerMutation.isPending}
+                  disabled={isRegisterPending}
                 >
-                  {registerMutation.isPending ? (
+                  {isRegisterPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       נרשם...

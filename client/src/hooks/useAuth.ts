@@ -1,7 +1,5 @@
-
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
 
 interface User {
   id: string;
@@ -22,8 +20,9 @@ interface RegisterData {
 
 export function useAuth() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: user, isLoading, error } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["user"],
     queryFn: async (): Promise<User | null> => {
       const token = localStorage.getItem('token');
@@ -48,7 +47,7 @@ export function useAuth() {
       return response.json();
     },
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
@@ -116,43 +115,24 @@ export function useAuth() {
     },
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        await fetch("/api/logout", { 
-          method: "POST",
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
-    },
-    onSuccess: () => {
-      localStorage.removeItem('token');
-      queryClient.setQueryData(["user"], null);
-      queryClient.clear();
-      toast({
-        title: "התנתקת בהצלחה",
-        description: "שבת שלום!",
-      });
-    },
-    onError: () => {
-      localStorage.removeItem('token');
-      queryClient.setQueryData(["user"], null);
-      queryClient.clear();
-    },
-  });
+  const logout = () => {
+    localStorage.removeItem('token');
+    queryClient.setQueryData(["user"], null);
+    queryClient.clear();
+    toast({
+      title: "התנתקת בהצלחה",
+      description: "שבת שלום!",
+    });
+  };
 
   return {
     user: user || null,
     isLoading,
-    error,
     isAuthenticated: !!user,
-    loginMutation,
-    registerMutation,
-    logout: logoutMutation.mutate,
-    isLoggingOut: logoutMutation.isPending,
+    login: loginMutation.mutateAsync,
+    register: registerMutation.mutateAsync,
+    logout,
+    isLoginPending: loginMutation.isPending,
+    isRegisterPending: registerMutation.isPending,
   };
 }
