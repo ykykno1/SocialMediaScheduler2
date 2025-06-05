@@ -45,25 +45,28 @@ export function registerRoutes(app: Express): Server {
   const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
     try {
       const authHeader = req.headers.authorization;
+      console.log('Auth middleware - Headers:', { authorization: authHeader ? 'Bearer ***' : 'missing' });
+      
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
       if (!token) {
-        console.log('No token provided in request');
+        console.log('Auth middleware - No token provided in request');
         return res.status(401).json({ error: "Authentication required" });
       }
 
       const decoded = verifyToken(token);
       if (!decoded) {
-        console.log('Invalid token provided');
+        console.log('Auth middleware - Invalid token provided');
         return res.status(401).json({ error: "Invalid token" });
       }
 
       const user = storage.getUserById(decoded.userId);
       if (!user) {
-        console.log('User not found for token');
+        console.log('Auth middleware - User not found for token, userId:', decoded.userId);
         return res.status(401).json({ error: "User not found" });
       }
 
+      console.log('Auth middleware - Success for user:', user.email);
       req.user = user;
       next();
     } catch (error) {
