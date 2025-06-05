@@ -45,32 +45,37 @@ export function registerRoutes(app: Express): Server {
   const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
     try {
       const authHeader = req.headers.authorization;
-      console.log('Auth middleware - Headers:', { authorization: authHeader ? 'Bearer ***' : 'missing' });
+      console.log('Auth middleware - Request URL:', req.url);
+      console.log('Auth middleware - Headers:', { 
+        authorization: authHeader ? `Bearer ${authHeader.slice(7, 27)}...` : 'missing',
+        contentType: req.headers['content-type'],
+        userAgent: req.headers['user-agent']?.substring(0, 50)
+      });
       
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
       if (!token) {
-        console.log('Auth middleware - No token provided in request');
+        console.log('Auth middleware - No token provided in request for:', req.url);
         return res.status(401).json({ error: "Authentication required" });
       }
 
       const decoded = verifyToken(token);
       if (!decoded) {
-        console.log('Auth middleware - Invalid token provided');
+        console.log('Auth middleware - Invalid token provided for:', req.url);
         return res.status(401).json({ error: "Invalid token" });
       }
 
       const user = storage.getUserById(decoded.userId);
       if (!user) {
-        console.log('Auth middleware - User not found for token, userId:', decoded.userId);
+        console.log('Auth middleware - User not found for token, userId:', decoded.userId, 'URL:', req.url);
         return res.status(401).json({ error: "User not found" });
       }
 
-      console.log('Auth middleware - Success for user:', user.email);
+      console.log('Auth middleware - Success for user:', user.email, 'accessing:', req.url);
       req.user = user;
       next();
     } catch (error) {
-      console.error('Auth middleware error:', error);
+      console.error('Auth middleware error for URL:', req.url, error);
       return res.status(401).json({ error: "Authentication failed" });
     }
   };

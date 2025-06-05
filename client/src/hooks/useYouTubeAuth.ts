@@ -18,25 +18,26 @@ export default function useYouTubeAuth() {
       const token = localStorage.getItem('token');
       
       if (!token) {
-        console.log('No token found in localStorage');
+        console.log('No token found in localStorage for YouTube auth check');
         return { isAuthenticated: false, error: 'No token found' };
       }
 
-      console.log('Making YouTube auth status request with token');
+      console.log('Making YouTube auth status request with token:', token.substring(0, 20) + '...');
       
       const response = await fetch('/api/youtube/auth-status', {
         method: 'GET',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'include' // Include credentials for cross-origin requests
       });
 
-      console.log('YouTube auth status response:', response.status);
+      console.log('YouTube auth status response status:', response.status);
 
       if (!response.ok) {
         if (response.status === 401) {
-          console.log('YouTube auth status: unauthorized');
+          console.log('YouTube auth status: unauthorized - token may be invalid');
           return { isAuthenticated: false, error: 'Authentication required' };
         }
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -50,7 +51,7 @@ export default function useYouTubeAuth() {
     },
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: true // Always enabled, let the function handle token checking
+    enabled: !!localStorage.getItem('token') // Only run if we have a token
   });
 
   // Get auth URL
@@ -61,24 +62,27 @@ export default function useYouTubeAuth() {
         throw new Error('עליך להתחבר תחילה');
       }
 
-      console.log('Getting YouTube auth URL');
+      console.log('Getting YouTube auth URL with token:', token.substring(0, 20) + '...');
 
       const response = await fetch('/api/youtube/auth-url', {
         method: 'GET',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'include'
       });
+
+      console.log('YouTube auth URL response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to get auth URL' }));
-        console.error('YouTube auth URL error:', errorData);
+        console.error('YouTube auth URL error:', response.status, errorData);
         throw new Error(errorData.error || 'Failed to get auth URL');
       }
 
       const data = await response.json();
-      console.log('YouTube auth URL received:', data.authUrl);
+      console.log('YouTube auth URL received successfully:', data.authUrl);
       return data.authUrl;
     },
     onSuccess: (authUrl) => {
