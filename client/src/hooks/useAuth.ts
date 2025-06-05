@@ -1,138 +1,130 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, type UseMutationResult } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { User, AuthResponse, RegisterRequest, LoginRequest } from "../../../shared/types";
 
-interface User {
-  id: string;
-  email: string;
-  username: string;
-}
-
-interface LoginData {
-  email: string;
-  password: string;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  username: string;
-}
+type UserWithoutPassword = Omit<User, 'password'>;
 
 export function useAuth() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["user"],
-    queryFn: async (): Promise<User | null> => {
-      const token = localStorage.getItem('token');
-      if (!token) return null;
-
-      const response = await fetch("/api/user", {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+  // Get current user - only if token exists
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  
+  const { data: user, isLoading, error } = useQuery<UserWithoutPassword>({
+    queryKey: ["/api/user"],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest("GET", "/api/user");
+        return res.json();
+      } catch (error) {
+        // If token is invalid, clear it and return null
+        if (error instanceof Error && (error.message.includes("401") || error.message.includes("INVALID_TOKEN"))) {
+          localStorage.removeItem('auth_token');
+          return null;
         }
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        return null;
+        throw error;
       }
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch user");
-      }
-
-      return response.json();
     },
+    enabled: !!token, // Only run query if token exists
     retry: false,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginData) => {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Login failed");
-      }
-
-      return response.json();
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: async (credentials: RegisterRequest): Promise<AuthResponse> => {
+      const res = await apiRequest("POST", "/api/register", credentials);
+      return res.json();
     },
-    onSuccess: (data) => {
-      localStorage.setItem('token', data.token);
-      queryClient.setQueryData(["user"], data.user);
+    onSuccess: (response: AuthResponse) => {
+      // Store JWT token
+      localStorage.setItem("auth_token", response.token);
+      
+      // Update query cache
+      queryClient.setQueryData(["/api/user"], response.user);
+      
       toast({
-        title: "התחברת בהצלחה",
-        description: "ברוך הבא!",
+        title: "ברוך הבא!",
+        description: "חשבונך נוצר בהצלחה",
       });
     },
     onError: (error: Error) => {
       toast({
+        title: "שגיאה ברישום",
+        description: error.message,
         variant: "destructive",
+      });
+    },
+  });
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginRequest): Promise<AuthResponse> => {
+      const res = await apiRequest("POST", "/api/login", credentials);
+      return res.json();
+    },
+    onSuccess: (response: AuthResponse) => {
+      // Store JWT token
+      localStorage.setItem("auth_token", response.token);
+      
+      // Update query cache
+      queryClient.setQueryData(["/api/user"], response.user);
+      
+      toast({
+        title: "ברוך השב!",
+        description: "התחברת בהצלחה",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
         title: "שגיאה בהתחברות",
         description: error.message,
+        variant: "destructive",
       });
     },
   });
 
-  const registerMutation = useMutation({
-    mutationFn: async (data: RegisterData) => {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Registration failed");
-      }
-
-      return response.json();
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async (): Promise<void> => {
+      await apiRequest("POST", "/api/logout");
     },
-    onSuccess: (data) => {
-      localStorage.setItem('token', data.token);
-      queryClient.setQueryData(["user"], data.user);
+    onSuccess: () => {
+      // Remove JWT token
+      localStorage.removeItem("auth_token");
+      
+      // Clear query cache
+      queryClient.setQueryData(["/api/user"], null);
+      
       toast({
-        title: "נרשמת בהצלחה",
-        description: "ברוך הבא!",
+        title: "התנתקת בהצלחה",
+        description: "שבת שלום!",
       });
     },
     onError: (error: Error) => {
+      // Even if logout fails on server, clear local storage
+      localStorage.removeItem("auth_token");
+      queryClient.setQueryData(["/api/user"], null);
+      
       toast({
-        variant: "destructive",
-        title: "שגיאה בהרשמה",
-        description: error.message,
+        title: "התנתקות",
+        description: "התנתקת מהמערכת",
       });
     },
   });
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    queryClient.setQueryData(["user"], null);
-    queryClient.clear();
-    toast({
-      title: "התנתקת בהצלחה",
-      description: "שבת שלום!",
-    });
-  };
 
   return {
     user: user || null,
     isLoading,
+    error,
     isAuthenticated: !!user,
-    login: loginMutation.mutateAsync,
-    register: registerMutation.mutateAsync,
-    logout,
-    isLoginPending: loginMutation.isPending,
-    isRegisterPending: registerMutation.isPending,
+    register: registerMutation.mutate,
+    login: loginMutation.mutate,
+    logout: logoutMutation.mutate,
+    isRegistering: registerMutation.isPending,
+    isLoggingIn: loginMutation.isPending,
+    registerMutation,
+    loginMutation,
+    logoutMutation,
   };
 }

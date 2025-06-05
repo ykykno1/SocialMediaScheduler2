@@ -37,6 +37,10 @@ export default function AuthPage() {
 
       if (response.ok) {
         const userData = await response.json();
+        // Save token to localStorage
+        if (userData.token) {
+          localStorage.setItem('auth_token', userData.token);
+        }
         queryClient.setQueryData(["/api/user"], userData);
         toast({
           title: "התחברת בהצלחה",
@@ -96,6 +100,12 @@ export default function AuthPage() {
 
       if (response.ok) {
         const userData = await response.json();
+        // Save token to localStorage
+        if (userData.token) {
+          localStorage.setItem('auth_token', userData.token);
+          // Invalidate user query to force refetch with token
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        }
         queryClient.setQueryData(["/api/user"], userData);
         toast({
           title: "נרשמת בהצלחה",
