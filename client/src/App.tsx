@@ -1,3 +1,4 @@
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Switch, Route, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
@@ -5,6 +6,7 @@ import { queryClient } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 // Pages
 import AuthPage from "@/pages/auth-new";
@@ -80,9 +82,15 @@ function useAuth() {
   };
 }
 
-function AppRouter() {
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const [location, setLocation] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
-  const [location] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/auth");
+    }
+  }, [isAuthenticated, isLoading, setLocation]);
 
   if (isLoading) {
     return (
@@ -95,14 +103,50 @@ function AppRouter() {
     );
   }
 
+  if (!isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
+
+  return <Component />;
+}
+
+function PublicRoute({ component: Component }: { component: React.ComponentType }) {
+  const [location, setLocation] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, isLoading, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+          <p className="text-gray-600">טוען...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
+
+  return <Component />;
+}
+
+function AppRouter() {
   return (
     <Switch>
       <Route path="/auth">
-        {isAuthenticated ? () => { window.location.href = "/"; return null; } : AuthPage}
+        <PublicRoute component={AuthPage} />
       </Route>
 
       <Route path="/">
-        {isAuthenticated ? HomePage : () => { window.location.href = "/auth"; return null; }}
+        <ProtectedRoute component={HomePage} />
       </Route>
 
       <Route component={NotFound} />
