@@ -242,13 +242,19 @@ export function registerRoutes(app: Express): Server {
       }
 
       const tokenData = tokens as any;
+      // Get user from session
+      const userId = req.session.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
       storage.saveAuthToken({
         platform: 'youtube',
         accessToken: tokenData.access_token,
         refreshToken: tokenData.refresh_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now()
-      }, 'global-user');
+      }, userId);
 
       res.json({ 
         success: true,
