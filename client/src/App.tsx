@@ -13,13 +13,13 @@ import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const [location, setLocation] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       setLocation("/auth");
     }
-  }, [isAuthenticated, isLoading, setLocation]);
+  }, [isLoading, isAuthenticated, setLocation]);
 
   if (isLoading) {
     return (
@@ -41,13 +41,13 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
 function PublicRoute({ component: Component }: { component: React.ComponentType }) {
   const [location, setLocation] = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       setLocation("/");
     }
-  }, [isAuthenticated, isLoading, setLocation]);
+  }, [isLoading, isAuthenticated, setLocation]);
 
   if (isLoading) {
     return (
