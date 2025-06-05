@@ -9,7 +9,8 @@
         "password": "$2b$10$1TFn0VU5qApE7DABeI1oq.3H.YGRv6sZhAv9zzaR3lO1FFC4GA4PK",
         "accountType": "free",
         "createdAt": "2025-06-05T05:42:06.017Z",
-        "updatedAt": "2025-06-05T05:42:06.017Z"
+        "updatedAt": "2025-06-05T05:44:33.491Z",
+        "lastActive": "2025-06-05T05:44:33.491Z"
       }
     ]
   ],
@@ -26,10 +27,10 @@
         "facebook": null,
         "youtube": {
           "platform": "youtube",
-          "accessToken": "ya29.A0AW4XtxhXTOJPwoSjEpD7-UbaJuApxNRd6nBc7F1i9r8cLGVObJyFrdkLG3nTResyapk81-inSTOQOVROIgX8Ya8AqYxlAAFRQ_qFnA8qUhADIcpfa6tigSrJTBRgEdAeDM4s3OCivoHC4T3d6-RuPgHgja8dXmL4uYnL3gbmggTXMzefwUimgJZemxJ01YqKqLwxrawaCgYKAdcSARUSFQHGX2MiPqVTjcADCm7mU_czIsQH2A0206",
-          "refreshToken": "1//05Mfrild4RHFrCgYIARAAGAUSNwF-L9Ir08R_Lf7bocycmY2JDL0m8UG22ta7yZTNdQW5wHbkgSoRQRNb-tTHvN65k97zq8TW-g0",
+          "accessToken": "ya29.A0AW4XtxgRV7RCySnfHfdRLT4KUjLmJuGf9vtBv-JBckhfkYvzUJwIK3N3wHhX2ih1kafsPJ483qs-LLOsqJ0zij6oJlR9KndyhmSlOQnvwxdZMnz7PBZ907HhVaPbXGbsD9YuiL8LmZtYs7aTAjbumZ_hSL6nVR9EKTijtjT4gk7BjC-QNaOrG6WqzglTNjGSeTWGRbIaCgYKAXsSARUSFQHGX2MieFDTm9fjFOAkj514m2_9sQ0206",
+          "refreshToken": "1//05NH6BFB_XYiaCgYIARAAGAUSNwF-L9Iri1NtrIWij4mSM7aP3j7obppqN_yiP8iA34z-EZJ9u9IsCy_fUWo9zvkwRg_-IDfdGxo",
           "expiresIn": 3599,
-          "timestamp": 1749102153052
+          "timestamp": 1749102299650
         },
         "tiktok": null,
         "instagram": null
@@ -38,5 +39,5 @@
   ],
   "userHistoryEntries": [],
   "userCachedYouTubeVideos": [],
-  "timestamp": 1749102205584
+  "timestamp": 1749102335560
 }
