@@ -63,10 +63,10 @@ export interface IStorage {
   clearPrivacyStatuses(platform: SupportedPlatform): void;
 
   // Video original status operations (for Shabbat restore)
-  saveVideoOriginalStatus(videoId: string, originalStatus: string): void;
-  getVideoOriginalStatus(videoId: string): string | null;
-  clearVideoOriginalStatus(videoId: string): void;
-  getAllVideoOriginalStatuses(): Record<string, string>;
+  saveVideoOriginalStatus(videoId: string, originalStatus: string, userId: string): void;
+  getVideoOriginalStatus(videoId: string, userId: string): string | null;
+  clearVideoOriginalStatus(videoId: string, userId: string): void;
+  getAllVideoOriginalStatuses(userId: string): Record<string, string>;
 
   // User operations
   createUser(userData: RegisterData): User;
@@ -106,7 +106,7 @@ export class MemStorage implements IStorage {
   private usersByEmail: Map<string, string> = new Map(); // email -> userId
   private shabbatTimesCache: Map<string, ShabbatTimes> = new Map();
   private payments: Payment[] = [];
-  private videoOriginalStatuses: Map<string, string> = new Map(); // videoId -> originalPrivacyStatus
+  private userVideoOriginalStatuses: Map<string, Map<string, string>> = new Map(); // userId -> Map<videoId, originalPrivacyStatus>
 
   constructor() {
     // Initialize with default settings
@@ -558,22 +558,34 @@ export class MemStorage implements IStorage {
   }
 
   // Video original status operations (for Shabbat restore)
-  saveVideoOriginalStatus(videoId: string, originalStatus: string): void {
-    this.videoOriginalStatuses.set(videoId, originalStatus);
+  saveVideoOriginalStatus(videoId: string, originalStatus: string, userId: string): void {
+    let userStatuses = this.userVideoOriginalStatuses.get(userId);
+    if (!userStatuses) {
+      userStatuses = new Map();
+      this.userVideoOriginalStatuses.set(userId, userStatuses);
+    }
+    userStatuses.set(videoId, originalStatus);
   }
 
-  getVideoOriginalStatus(videoId: string): string | null {
-    return this.videoOriginalStatuses.get(videoId) || null;
+  getVideoOriginalStatus(videoId: string, userId: string): string | null {
+    const userStatuses = this.userVideoOriginalStatuses.get(userId);
+    return userStatuses?.get(videoId) || null;
   }
 
-  clearVideoOriginalStatus(videoId: string): void {
-    this.videoOriginalStatuses.delete(videoId);
+  clearVideoOriginalStatus(videoId: string, userId: string): void {
+    const userStatuses = this.userVideoOriginalStatuses.get(userId);
+    if (userStatuses) {
+      userStatuses.delete(videoId);
+    }
   }
 
-  getAllVideoOriginalStatuses(): Record<string, string> {
+  getAllVideoOriginalStatuses(userId: string): Record<string, string> {
+    const userStatuses = this.userVideoOriginalStatuses.get(userId);
     const statuses: Record<string, string> = {};
-    for (const [videoId, status] of this.videoOriginalStatuses.entries()) {
-      statuses[videoId] = status;
+    if (userStatuses) {
+      for (const [videoId, status] of userStatuses.entries()) {
+        statuses[videoId] = status;
+      }
     }
     return statuses;
   }

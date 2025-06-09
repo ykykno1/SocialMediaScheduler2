@@ -1024,9 +1024,9 @@ export function registerRoutes(app: Express): Server {
   registerFacebookPagesRoutes(app);
   
   // YouTube videos endpoint  
-  app.get("/api/youtube/videos", async (req, res) => {
+  app.get("/api/youtube/videos", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -1073,7 +1073,7 @@ export function registerRoutes(app: Express): Server {
         const videoId = item.snippet.resourceId.videoId;
         const detailedVideo = detailedVideos.find((v: any) => v.id === videoId);
         const currentPrivacyStatus = detailedVideo?.status?.privacyStatus || 'unknown';
-        const hasOriginalStatus = storage.getVideoOriginalStatus(videoId) !== null;
+        const hasOriginalStatus = storage.getVideoOriginalStatus(videoId, req.user.id) !== null;
         
         return {
           id: videoId,
@@ -1096,9 +1096,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide/show individual video
-  app.post("/api/youtube/videos/:videoId/hide", async (req, res) => {
+  app.post("/api/youtube/videos/:videoId/hide", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
       
       if (!auth) {
@@ -1113,8 +1113,8 @@ export function registerRoutes(app: Express): Server {
         const currentPrivacyStatus = currentVideoData.items?.[0]?.status?.privacyStatus;
         
         // Save original privacy status if not already saved
-        if (currentPrivacyStatus && !storage.getVideoOriginalStatus(videoId)) {
-          storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus);
+        if (currentPrivacyStatus && !storage.getVideoOriginalStatus(videoId, req.user.id)) {
+          storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, req.user.id);
         }
       }
 
@@ -1153,9 +1153,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/youtube/videos/:videoId/show", async (req, res) => {
+  app.post("/api/youtube/videos/:videoId/show", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
       
       if (!auth) {
@@ -1163,7 +1163,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Get original privacy status, default to public if not found
-      const originalStatus = storage.getVideoOriginalStatus(videoId) || 'public';
+      const originalStatus = storage.getVideoOriginalStatus(videoId, req.user.id) || 'public';
       
       // Update video privacy status to original status using YouTube Data API
       const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
