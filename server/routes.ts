@@ -19,6 +19,50 @@ import { registerFacebookPagesRoutes } from "./facebook-pages";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
+// YouTube token refresh helper
+async function refreshYouTubeToken(auth: any, userId: string) {
+  if (!auth.refreshToken) {
+    throw new Error('No refresh token available');
+  }
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: clientId!,
+      client_secret: clientSecret!,
+      refresh_token: auth.refreshToken,
+      grant_type: 'refresh_token'
+    })
+  });
+
+  if (!refreshResponse.ok) {
+    const errorData = await refreshResponse.json();
+    throw new Error(`Token refresh failed: ${errorData.error_description}`);
+  }
+
+  const tokens = await refreshResponse.json();
+  
+  // Update stored token
+  const updatedAuth = {
+    ...auth,
+    accessToken: tokens.access_token,
+    expiresAt: Date.now() + (tokens.expires_in * 1000)
+  };
+  
+  storage.saveAuthToken(updatedAuth, userId);
+  return updatedAuth;
+}
+
+// Test YouTube connection helper
+async function testYouTubeConnection(accessToken: string) {
+  const testResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true&access_token=${accessToken}`);
+  return testResponse.ok;
+}
+
 // JWT helper functions
 const generateToken = (userId: string) => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
@@ -151,8 +195,8 @@ export function registerRoutes(app: Express): Server {
   });
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
-  app.get("/api/youtube/auth-status", (req, res) => {
-    const auth = storage.getAuthToken('youtube', 'global-user');
+  app.get("/api/youtube/auth-status", requireAuth, (req: any, res) => {
+    const auth = storage.getAuthToken('youtube', req.user.id);
     
     if (!auth) {
       return res.json({ 
@@ -1021,10 +1065,27 @@ export function registerRoutes(app: Express): Server {
   // YouTube videos endpoint  
   app.get("/api/youtube/videos", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', req.user.id);
+      let auth = storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      // Test connection and refresh token if needed
+      let connectionValid = await testYouTubeConnection(auth.accessToken);
+      
+      if (!connectionValid) {
+        try {
+          auth = await refreshYouTubeToken(auth, req.user.id);
+          connectionValid = await testYouTubeConnection(auth.accessToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+        }
+      }
+
+      if (!connectionValid) {
+        return res.status(401).json({ error: "YouTube authentication invalid. Please reconnect." });
       }
 
       // Use YouTube Data API to get user's videos
