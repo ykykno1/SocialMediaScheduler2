@@ -37,7 +37,12 @@ export default function AuthPage() {
 
       if (response.ok) {
         const userData = await response.json();
-        queryClient.setQueryData(["/api/user"], userData);
+        // Store JWT token
+        localStorage.setItem('auth_token', userData.token);
+        // Store user data without token
+        const userDataWithoutToken = { ...userData };
+        delete userDataWithoutToken.token;
+        queryClient.setQueryData(["/api/user"], userDataWithoutToken);
         toast({
           title: "התחברת בהצלחה",
           description: `ברוך הבא, ${userData.username || userData.email}`,
@@ -96,7 +101,12 @@ export default function AuthPage() {
 
       if (response.ok) {
         const userData = await response.json();
-        queryClient.setQueryData(["/api/user"], userData);
+        // Store JWT token
+        localStorage.setItem('auth_token', userData.token);
+        // Store user data without token
+        const userDataWithoutToken = { ...userData };
+        delete userDataWithoutToken.token;
+        queryClient.setQueryData(["/api/user"], userDataWithoutToken);
         toast({
           title: "נרשמת בהצלחה",
           description: `ברוך הבא, ${userData.username || userData.email}`,

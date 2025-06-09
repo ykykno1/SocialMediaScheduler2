@@ -41,17 +41,31 @@ declare module 'express-session' {
 
 export function registerRoutes(app: Express): Server {
   
-  // Authentication middleware
-  const authMiddleware = (req: any, res: any, next: any) => {
-    if (req.session.userId) {
-      const user = storage.getUser(req.session.userId);
-      if (user) {
-        req.user = user;
-        return next();
-      }
+  // JWT Authentication middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: "Not authenticated" });
     }
-    return res.status(401).json({ error: "Not authenticated" });
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const decoded = verifyToken(token);
+    
+    if (!decoded) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    const user = storage.getUser(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    req.user = user;
+    next();
   };
+
+  // Legacy alias for compatibility
+  const authMiddleware = requireAuth;
 
   // User registration and login endpoints
   app.post("/api/register", async (req, res) => {
@@ -75,13 +89,14 @@ export function registerRoutes(app: Express): Server {
         username: username || email.split('@')[0]
       });
 
-      // Set session
-      req.session.userId = user.id;
+      // Generate JWT token
+      const token = generateToken(user.id);
 
       res.json({
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.username,
+        token
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -102,13 +117,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // Set session
-      req.session.userId = user.id;
+      // Generate JWT token
+      const token = generateToken(user.id);
 
       res.json({
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.username,
+        token
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -341,28 +357,7 @@ export function registerRoutes(app: Express): Server {
     res.json(userResponse);
   });
 
-  // Middleware to check authentication
-  const requireAuth = (req: AuthenticatedRequest, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    if (!token) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-    
-    const user = storage.getUserById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
-    
-    req.user = user;
-    next();
-  };
+
 
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
