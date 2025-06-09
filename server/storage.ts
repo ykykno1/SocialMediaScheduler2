@@ -583,9 +583,9 @@ export class MemStorage implements IStorage {
     const userStatuses = this.userVideoOriginalStatuses.get(userId);
     const statuses: Record<string, string> = {};
     if (userStatuses) {
-      for (const [videoId, status] of userStatuses.entries()) {
+      userStatuses.forEach((status, videoId) => {
         statuses[videoId] = status;
-      }
+      });
     }
     return statuses;
   }
