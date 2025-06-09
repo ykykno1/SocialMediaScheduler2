@@ -141,7 +141,7 @@ export class YouTubeService {
     }
 
     const data = await response.json();
-
+    
     if (!data.items || data.items.length === 0) {
       throw new Error('No YouTube channel found for this account');
     }
