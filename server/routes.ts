@@ -185,13 +185,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/logout", (req, res) => {
-    req.session.destroy((err: any) => {
-      if (err) {
-        return res.status(500).json({ error: "Logout failed" });
-      }
-      res.clearCookie('shabbat.sid');
-      res.json({ success: true });
-    });
+    // For JWT authentication, logout is handled client-side by removing the token
+    // No server-side action needed since JWT tokens are stateless
+    res.json({ success: true, message: "Logged out successfully" });
   });
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)

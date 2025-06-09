@@ -30,7 +30,14 @@ function useAuth() {
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      const response = await fetch("/api/user");
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch("/api/user", { headers });
       if (response.status === 401) {
         return null;
       }
@@ -44,7 +51,8 @@ function useAuth() {
 
   const logout = async () => {
     try {
-      await fetch("/api/logout", { method: "POST" });
+      // Clear the JWT token from localStorage
+      localStorage.removeItem('auth_token');
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
       toast({
