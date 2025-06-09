@@ -1190,7 +1190,7 @@ export function registerRoutes(app: Express): Server {
       console.log(`Video ${videoId} set to ${originalStatus}`);
       
       // Clear original status after successful restore
-      storage.clearVideoOriginalStatus(videoId);
+      storage.clearVideoOriginalStatus(videoId, req.user.id);
       
       res.json({ 
         success: true,
@@ -1205,9 +1205,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide all videos
-  app.post("/api/youtube/hide-all", async (req, res) => {
+  app.post("/api/youtube/hide-all", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
@@ -1254,7 +1254,7 @@ export function registerRoutes(app: Express): Server {
             // Only hide videos that are not already private
             if (currentPrivacyStatus && currentPrivacyStatus !== 'private') {
               // Save original status before hiding
-              storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus);
+              storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, req.user.id);
               
               const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
                 method: 'PUT',
@@ -1275,7 +1275,7 @@ export function registerRoutes(app: Express): Server {
                 const errorData = await updateResponse.json();
                 errors.push({ videoId, error: errorData.error?.message });
                 // Remove saved status if hiding failed
-                storage.clearVideoOriginalStatus(videoId);
+                storage.clearVideoOriginalStatus(videoId, req.user.id);
               }
             }
             // Skip videos that are already private
@@ -1299,16 +1299,16 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube show all videos
-  app.post("/api/youtube/show-all", async (req, res) => {
+  app.post("/api/youtube/show-all", authMiddleware, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', 'global-user');
+      const auth = storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
       // Get all videos that have saved original status (meaning they were hidden by our system)
-      const videoOriginalStatuses = storage.getAllVideoOriginalStatuses();
+      const videoOriginalStatuses = storage.getAllVideoOriginalStatuses(req.user.id);
       const videoIds = Object.keys(videoOriginalStatuses);
       
       if (videoIds.length === 0) {
@@ -1338,7 +1338,7 @@ export function registerRoutes(app: Express): Server {
 
           if (updateResponse.ok) {
             // Clear original status after successful restore
-            storage.clearVideoOriginalStatus(videoId);
+            storage.clearVideoOriginalStatus(videoId, req.user.id);
             shownCount++;
           } else {
             const errorData = await updateResponse.json();
