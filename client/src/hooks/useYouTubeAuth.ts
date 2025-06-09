@@ -148,7 +148,7 @@ export default function useYouTubeAuth() {
   const processYouTubeCode = async (code: string) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/youtube/process-auth', {
+      const response = await fetch('/api/youtube/auth-callback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
