@@ -13,7 +13,7 @@ export default function useYouTubeAuth() {
   } = useQuery({
     queryKey: ['/api/youtube/auth-status'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/youtube/auth-status', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -30,7 +30,7 @@ export default function useYouTubeAuth() {
   // Get auth URL for login
   const authUrlMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/youtube/auth-url', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -114,7 +114,7 @@ export default function useYouTubeAuth() {
   // Logout from YouTube
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/youtube/logout', {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -147,7 +147,7 @@ export default function useYouTubeAuth() {
   // Process YouTube auth code
   const processYouTubeCode = async (code: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/youtube/process-auth', {
         method: 'POST',
         headers: {
