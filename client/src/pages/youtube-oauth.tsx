@@ -211,7 +211,7 @@ export default function YouTubeOAuthPage() {
         
         if (response.ok) {
           // Refresh the video list to get updated status
-          await loadVideos();
+          await loadVideos(true);
           
           toast({
             title: "נעילת הסרטון בוטלה",
