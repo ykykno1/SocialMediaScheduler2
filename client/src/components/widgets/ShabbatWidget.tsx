@@ -157,11 +157,11 @@ export function ShabbatWidget() {
     } else {
       // Before campaign closure
       if (countdown.days > 0) {
-        return `סוגרים קמפיינים בעוד: ${countdown.days} ימים, ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
+        return `הסתרת תוכן בעוד: ${countdown.days} ימים, ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
       } else if (countdown.hours > 0) {
-        return `סוגרים קמפיינים בעוד: ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
+        return `הסתרת תוכן בעוד: ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
       } else {
-        return `סוגרים קמפיינים בעוד: ${countdown.minutes}:${countdown.seconds.toString().padStart(2, '0')}`;
+        return `הסתרת תוכן בעוד: ${countdown.minutes}:${countdown.seconds.toString().padStart(2, '0')}`;
       }
     }
   };
@@ -303,11 +303,11 @@ export function ShabbatWidget() {
               </p>
               {shabbatTimes.hebrewDate && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {shabbatTimes.hebrewDate}
+                  {shabbatTimes.hebrewDate} • {shabbatTimes.parasha}
                 </p>
               )}
               <p className="text-xs text-muted-foreground mt-2">
-                * סגירת קמפיינים 30 דקות לפני כניסת שבת
+                * הסתרת תוכן 30 דקות לפני כניסת שבת
               </p>
             </div>
           </>

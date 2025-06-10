@@ -2259,12 +2259,14 @@ export function registerRoutes(app: Express): Server {
       const day = nextFriday.getDate();
       
       // Use Hebcal API with Israeli Halachic parameters
-      // m=50 sets Havdalah time (50 minutes after sunset for Israeli cities)
-      // For Israeli cities, use Israeli Halachic standards
+      // For Israeli cities, adjust parameters to match local standards (Mako/Israeli sources)
+      // b=22 sets candle lighting 22 minutes before sunset (Israeli standard)
+      // m=30 sets Havdalah time (30 minutes after sunset for Israeli standard)
       const isIsraeliCity = ['Jerusalem', 'Tel Aviv', 'Haifa', 'Beer Sheva'].includes(city as string);
-      const mParam = isIsraeliCity ? '50' : '50'; // 50 minutes for Havdalah
+      const bParam = isIsraeliCity ? '22' : '18'; // 22 minutes before sunset for Israeli cities
+      const mParam = isIsraeliCity ? '30' : '50'; // 30 minutes for Israeli Havdalah
       
-      const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&m=${mParam}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&b=${bParam}&m=${mParam}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
       
       console.log(`Fetching Shabbat times from: ${hebcalUrl}`);
       
