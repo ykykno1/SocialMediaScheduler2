@@ -46,7 +46,7 @@ export default function YouTubeOAuthPage() {
   const connectToYouTube = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/youtube/auth-url');
+      const response = await apiRequest("GET", "/api/youtube/auth-url");
       if (response.ok) {
         const data = await response.json();
         
@@ -131,7 +131,7 @@ export default function YouTubeOAuthPage() {
   const loadVideos = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/youtube/videos');
+      const response = await apiRequest("GET", "/api/youtube/videos");
       if (response.ok) {
         const data = await response.json();
         setVideos(data.videos || []);
@@ -152,9 +152,7 @@ export default function YouTubeOAuthPage() {
   const toggleVideoVisibility = async (videoId: string, currentlyHidden: boolean) => {
     try {
       const action = currentlyHidden ? 'show' : 'hide';
-      const response = await fetch(`/api/youtube/videos/${videoId}/${action}`, {
-        method: 'POST',
-      });
+      const response = await apiRequest("POST", `/api/youtube/videos/${videoId}/${action}`);
 
       if (response.ok) {
         setVideos(prev => prev.map(video => 
@@ -182,9 +180,7 @@ export default function YouTubeOAuthPage() {
   const hideAllVideos = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/youtube/hide-all', {
-        method: 'POST',
-      });
+      const response = await apiRequest("POST", "/api/youtube/hide-all");
 
       if (response.ok) {
         const data = await response.json();
@@ -210,9 +206,7 @@ export default function YouTubeOAuthPage() {
   const showAllVideos = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/youtube/show-all', {
-        method: 'POST',
-      });
+      const response = await apiRequest("POST", "/api/youtube/show-all");
 
       if (response.ok) {
         const data = await response.json();
