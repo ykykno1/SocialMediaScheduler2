@@ -4,7 +4,7 @@ interface AuthenticatedRequest extends Request {
   user?: any;
 }
 import { createServer, type Server } from "http";
-import { secureStorage as storage } from './storage-new';
+import { storage } from './storage';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
