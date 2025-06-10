@@ -1092,7 +1092,14 @@ export function registerRoutes(app: Express): Server {
   // YouTube videos endpoint  
   app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
     try {
+      console.log('Fetching YouTube videos for user:', req.user.id);
       let auth = storage.getAuthToken('youtube', req.user.id);
+      console.log('YouTube auth found:', {
+        found: !!auth,
+        platform: auth?.platform,
+        hasAccessToken: !!auth?.accessToken,
+        hasRefreshToken: !!auth?.refreshToken
+      });
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
