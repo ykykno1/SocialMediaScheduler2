@@ -209,15 +209,12 @@ export default function YouTubeOAuthPage() {
         const response = await apiRequest("POST", `/api/youtube/video/${videoId}/unlock`, { password });
         
         if (response.ok) {
-          setVideos(prev => prev.map(video => 
-            video.id === videoId 
-              ? { ...video, isLocked: false, lockReason: undefined }
-              : video
-          ));
+          // Refresh the video list to get updated status
+          await loadVideos();
           
           toast({
             title: "נעילת הסרטון בוטלה",
-            description: "הסרטון יכלל במבצעי הסתרה/הצגה",
+            description: "הסרטון שוחזר למצב המקורי ויכלל במבצעי הסתרה/הצגה",
           });
         } else {
           const error = await response.json();

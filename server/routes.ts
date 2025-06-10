@@ -1604,11 +1604,42 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "סיסמה שגויה" });
       }
 
+      // Get YouTube auth
+      const auth = await storage.getAuthToken('youtube', req.user.id);
+      if (!auth) {
+        return res.status(401).json({ error: "YouTube authentication required" });
+      }
+
+      // Get the original status of the video
+      const originalStatus = await storage.getVideoOriginalStatus(videoId, req.user.id);
+      
+      if (originalStatus) {
+        // Restore the video to its original status
+        const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: videoId,
+            status: {
+              privacyStatus: originalStatus
+            }
+          })
+        });
+
+        if (updateResponse.ok) {
+          // Clear the original status since video has been restored
+          await storage.clearVideoOriginalStatus(videoId, req.user.id);
+        }
+      }
+
+      // Unlock the video
       await storage.setVideoLockStatus(req.user.id, videoId, false, "unlocked");
       
       res.json({ 
         success: true, 
-        message: "הסרטון שוחרר מנעילה" 
+        message: "הסרטון שוחרר מנעילה ושוחזר למצב המקורי" 
       });
     } catch (error) {
       console.error("Error unlocking video:", error);
