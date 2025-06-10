@@ -2332,6 +2332,52 @@ export function registerRoutes(app: Express): Server {
         });
       };
       
+      // Format Hebrew date according to user specification
+      const formatHebrewDate = (hebrewDateStr: string, parashaName: string) => {
+        if (!hebrewDateStr) return '';
+        
+        // Convert "18 Sivan 5785" to "י"ח בסיוון ה'תשפ"ה"
+        const hebrewNumerals: { [key: string]: string } = {
+          '1': 'א\'', '2': 'ב\'', '3': 'ג\'', '4': 'ד\'', '5': 'ה\'', '6': 'ו\'', '7': 'ז\'', '8': 'ח\'', '9': 'ט\'', '10': 'י\'',
+          '11': 'י"א', '12': 'י"ב', '13': 'י"ג', '14': 'י"ד', '15': 'ט"ו', '16': 'ט"ז', '17': 'י"ז', '18': 'י"ח', '19': 'י"ט', '20': 'כ\'',
+          '21': 'כ"א', '22': 'כ"ב', '23': 'כ"ג', '24': 'כ"ד', '25': 'כ"ה', '26': 'כ"ו', '27': 'כ"ז', '28': 'כ"ח', '29': 'כ"ט', '30': 'ל\''
+        };
+        
+        const hebrewMonths: { [key: string]: string } = {
+          'Tishrei': 'תשרי', 'Cheshvan': 'חשוון', 'Kislev': 'כסלו', 'Tevet': 'טבת', 'Shvat': 'שבט', 'Adar': 'אדר',
+          'Nisan': 'ניסן', 'Iyyar': 'אייר', 'Sivan': 'סיוון', 'Tamuz': 'תמוז', 'Av': 'אב', 'Elul': 'אלול'
+        };
+        
+        const parts = hebrewDateStr.split(' ');
+        if (parts.length >= 3) {
+          const day = parts[0];
+          const month = parts[1];
+          const year = parts[2];
+          
+          const hebrewDay = hebrewNumerals[day] || day;
+          const hebrewMonth = hebrewMonths[month] || 'ב' + month.toLowerCase();
+          const hebrewYear = year === '5785' ? 'ה\'תשפ"ה' : year;
+          
+          return `${hebrewDay} ב${hebrewMonth} ${hebrewYear}`;
+        }
+        return hebrewDateStr;
+      };
+      
+      const formattedHebrewDate = formatHebrewDate(parasha?.hdate || '', parasha?.hebrew || '');
+      const currentDate = nextFriday.toLocaleDateString('he-IL', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+      
+      console.log('Formatted Hebrew Date:', formattedHebrewDate);
+      console.log('Current Date:', currentDate);
+      console.log('Parasha Hebrew:', parasha?.hebrew);
+      
+      const fullHebrewDateString = formattedHebrewDate ? 
+        `שבת ${parasha?.hebrew || 'פרשת השבוע'}, ${formattedHebrewDate} ${currentDate}` : 
+        `שבת ${parasha?.hebrew || 'פרשת השבוע'}`;
+
       // Format response
       const responseData = {
         date: nextFriday.toISOString(),
@@ -2341,7 +2387,7 @@ export function registerRoutes(app: Express): Server {
         candleLighting: shabbatEntryTime.toISOString(),
         havdalah: shabbatExitTime.toISOString(),
         parasha: parasha?.hebrew || parasha?.title || 'פרשת השבוע',
-        hebrewDate: parasha?.hdate || '',
+        hebrewDate: fullHebrewDateString,
         city: city as string
       };
       
