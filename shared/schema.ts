@@ -269,7 +269,20 @@ export const videoStatuses = pgTable("video_statuses", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const videoLockStatuses = pgTable("video_lock_statuses", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  videoId: varchar("video_id").notNull(),
+  platform: varchar("platform").$type<SupportedPlatform>().notNull().default('youtube'),
+  isLocked: boolean("is_locked").notNull().default(false),
+  lockedReason: varchar("locked_reason").default("manual"), // "manual" or "pre_hidden"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type AuthTokenDb = typeof authTokens.$inferSelect;
 export type InsertAuthToken = typeof authTokens.$inferInsert;
+export type VideoLockStatus = typeof videoLockStatuses.$inferSelect;
+export type InsertVideoLockStatus = typeof videoLockStatuses.$inferInsert;

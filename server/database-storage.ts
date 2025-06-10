@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, authTokens, historyEntries, videoStatuses } from "@shared/schema";
+import { users, authTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
@@ -341,6 +341,84 @@ export class DatabaseStorage implements IStorage {
 
   getRevenue(): { monthly: number; total: number; } {
     return { monthly: 0, total: 0 };
+  }
+
+  // Video lock status operations
+  async setVideoLockStatus(userId: string, videoId: string, isLocked: boolean, reason: string = "manual"): Promise<void> {
+    try {
+      const existingLock = await db.select().from(videoLockStatuses)
+        .where(and(
+          eq(videoLockStatuses.userId, userId),
+          eq(videoLockStatuses.videoId, videoId),
+          eq(videoLockStatuses.platform, 'youtube')
+        ));
+
+      if (existingLock.length > 0) {
+        // Update existing lock status
+        await db.update(videoLockStatuses)
+          .set({ 
+            isLocked, 
+            lockedReason: reason,
+            updatedAt: new Date()
+          })
+          .where(and(
+            eq(videoLockStatuses.userId, userId),
+            eq(videoLockStatuses.videoId, videoId)
+          ));
+      } else {
+        // Create new lock status
+        await db.insert(videoLockStatuses).values({
+          id: nanoid(),
+          userId,
+          videoId,
+          platform: 'youtube',
+          isLocked,
+          lockedReason: reason
+        });
+      }
+    } catch (error) {
+      console.error('Error setting video lock status:', error);
+      throw error;
+    }
+  }
+
+  async getVideoLockStatus(userId: string, videoId: string): Promise<{ isLocked: boolean; reason?: string } | null> {
+    try {
+      const [lockStatus] = await db.select().from(videoLockStatuses)
+        .where(and(
+          eq(videoLockStatuses.userId, userId),
+          eq(videoLockStatuses.videoId, videoId),
+          eq(videoLockStatuses.platform, 'youtube')
+        ));
+
+      if (!lockStatus) {
+        return { isLocked: false };
+      }
+
+      return {
+        isLocked: lockStatus.isLocked,
+        reason: lockStatus.lockedReason || undefined
+      };
+    } catch (error) {
+      console.error('Error getting video lock status:', error);
+      return null;
+    }
+  }
+
+  async getAllLockedVideos(userId: string): Promise<string[]> {
+    try {
+      const lockedVideos = await db.select().from(videoLockStatuses)
+        .where(and(
+          eq(videoLockStatuses.userId, userId),
+          eq(videoLockStatuses.isLocked, true),
+          eq(videoLockStatuses.platform, 'youtube')
+        ));
+
+      return lockedVideos.map(lock => lock.videoId);
+    } catch (error) {
+      console.error('Error getting all locked videos:', error);
+      return [];
+    }
   }
 
   // Shabbat times operations
