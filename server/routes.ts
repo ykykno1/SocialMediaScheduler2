@@ -87,25 +87,36 @@ export function registerRoutes(app: Express): Server {
   
   // JWT Authentication middleware
   const requireAuth = async (req: any, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
+    try {
+      console.log(`Auth middleware for ${req.method} ${req.path}`);
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('No auth header or wrong format');
+        return res.status(401).json({ error: "Not authenticated" });
+      }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    const decoded = verifyToken(token);
-    
-    if (!decoded) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      const decoded = verifyToken(token);
+      
+      if (!decoded) {
+        console.log('Token verification failed');
+        return res.status(401).json({ error: "Invalid token" });
+      }
 
-    const user = await storage.getUserById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ error: "User not found" });
-    }
+      console.log('Getting user for ID:', decoded.userId);
+      const user = await storage.getUserById(decoded.userId);
+      if (!user) {
+        console.log('User not found in database');
+        return res.status(401).json({ error: "User not found" });
+      }
 
-    req.user = user;
-    next();
+      console.log('User authenticated successfully:', user.id);
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error('Auth middleware error:', error);
+      return res.status(500).json({ error: "Authentication error" });
+    }
   };
 
   // Legacy alias for compatibility
