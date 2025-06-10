@@ -4,7 +4,7 @@ interface AuthenticatedRequest extends Request {
   user?: any;
 }
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { secureStorage as storage } from './storage-new';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -192,7 +192,15 @@ export function registerRoutes(app: Express): Server {
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
   app.get("/api/youtube/auth-status", requireAuth, (req: any, res) => {
+    console.log('Checking YouTube auth status for user:', req.user.id);
     const auth = storage.getAuthToken('youtube', req.user.id);
+    console.log('Retrieved auth token:', {
+      found: !!auth,
+      platform: auth?.platform,
+      hasAccessToken: !!auth?.accessToken,
+      hasRefreshToken: !!auth?.refreshToken,
+      channelTitle: auth?.additionalData?.channelTitle
+    });
     
     if (!auth) {
       return res.json({ 
@@ -235,8 +243,8 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // YouTube OAuth callback - Updated to use per-user authentication
-  app.post("/api/youtube/auth-callback", requireAuth, async (req: any, res) => {
+  // YouTube OAuth token exchange - Updated to use per-user authentication
+  app.post("/api/youtube/token", requireAuth, async (req: any, res) => {
     try {
       const { code } = req.body;
       
@@ -281,15 +289,24 @@ export function registerRoutes(app: Express): Server {
         channelTitle = channelData.items?.[0]?.snippet?.title || "Unknown Channel";
       }
 
-      storage.saveAuthToken({
-        platform: 'youtube',
+      const authTokenToSave = {
+        platform: 'youtube' as const,
         accessToken: tokenData.access_token,
         refreshToken: tokenData.refresh_token,
         expiresAt: Date.now() + (tokenData.expires_in * 1000),
         timestamp: Date.now(),
         userId: req.user.id,
         additionalData: { channelTitle }
-      }, req.user.id);
+      };
+      
+      console.log('Saving YouTube token for user:', req.user.id, 'Token data:', {
+        platform: authTokenToSave.platform,
+        hasAccessToken: !!authTokenToSave.accessToken,
+        hasRefreshToken: !!authTokenToSave.refreshToken,
+        channelTitle: authTokenToSave.additionalData?.channelTitle
+      });
+      
+      storage.saveAuthToken(authTokenToSave, req.user.id);
 
       res.json({ 
         success: true,

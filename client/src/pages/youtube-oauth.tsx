@@ -28,7 +28,7 @@ export default function YouTubeOAuthPage() {
 
   const checkConnectionStatus = async () => {
     try {
-      const response = await fetch('/api/youtube/auth-status');
+      const response = await apiRequest("GET", "/api/youtube/auth-status");
       if (response.ok) {
         const data = await response.json();
         setIsConnected(data.isAuthenticated);
@@ -41,6 +41,7 @@ export default function YouTubeOAuthPage() {
       console.error('Failed to check YouTube status:', error);
     }
   };
+
 
   const connectToYouTube = async () => {
     setLoading(true);

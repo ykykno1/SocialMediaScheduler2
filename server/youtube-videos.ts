@@ -1,7 +1,7 @@
 import { Express, Request, Response, NextFunction } from "express";
 import { google } from "googleapis";
 import jwt from "jsonwebtoken";
-import { storage } from "./storage";
+import { secureStorage as storage } from './storage-new';
 import { AuthToken } from "@shared/schema";
 
 interface AuthenticatedRequest extends Request {
