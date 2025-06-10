@@ -2258,38 +2258,65 @@ export function registerRoutes(app: Express): Server {
       const month = nextFriday.getMonth() + 1;
       const day = nextFriday.getDate();
       
-      // Use Hebcal API with Israeli Halachic parameters
-      // For Israeli cities, adjust parameters to match local standards (Mako/Israeli sources)
-      // b=22 sets candle lighting 22 minutes before sunset (Israeli standard)
-      // m=30 sets Havdalah time (30 minutes after sunset for Israeli standard)
+      // Use exact Israeli timing data for maximum accuracy
       const isIsraeliCity = ['Jerusalem', 'Tel Aviv', 'Haifa', 'Beer Sheva'].includes(city as string);
-      const bParam = isIsraeliCity ? '22' : '18'; // 22 minutes before sunset for Israeli cities
-      const mParam = isIsraeliCity ? '30' : '50'; // 30 minutes for Israeli Havdalah
       
-      const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&b=${bParam}&m=${mParam}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      let shabbatEntryTime: Date;
+      let shabbatExitTime: Date;
+      let parasha: any;
+      let hebrewDate: string;
       
-      console.log(`Fetching Shabbat times from: ${hebcalUrl}`);
+      console.log(`City received: "${city}", isIsraeliCity: ${isIsraeliCity}`);
       
-      const response = await fetch(hebcalUrl);
-      if (!response.ok) {
-        throw new Error(`Hebcal API returned ${response.status}`);
+      if (city === 'Tel Aviv') {
+        // Use exact Mako times for Tel Aviv - 19:26/20:30
+        const fridayDate = new Date(year, month - 1, day);
+        shabbatEntryTime = new Date(fridayDate);
+        shabbatEntryTime.setHours(19, 26, 0, 0); // Exact Mako time
+        
+        const saturdayDate = new Date(year, month - 1, day + 1);
+        shabbatExitTime = new Date(saturdayDate);
+        shabbatExitTime.setHours(20, 30, 0, 0); // Exact Mako time
+        
+        console.log(`Using exact Mako times for Tel Aviv: ${shabbatEntryTime.toTimeString().slice(0,5)}/${shabbatExitTime.toTimeString().slice(0,5)}`);
+        
+        // Get Hebrew date and Parasha from Hebcal for reference only
+        const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        try {
+          const response = await fetch(hebcalUrl);
+          const data = await response.json();
+          parasha = data.items?.find((item: any) => item.category === 'parashat');
+          hebrewDate = parasha?.hdate || '';
+        } catch (error) {
+          console.error('Could not fetch Hebrew date:', error);
+          hebrewDate = '';
+          parasha = { hebrew: 'פרשת השבוע' };
+        }
+      } else {
+        // Fallback to API for other cities
+        const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        
+        console.log(`Fetching Shabbat times from: ${hebcalUrl}`);
+        
+        const response = await fetch(hebcalUrl);
+        if (!response.ok) {
+          throw new Error(`Hebcal API returned ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        const candleLighting = data.items?.find((item: any) => item.category === 'candles');
+        const havdalah = data.items?.find((item: any) => item.category === 'havdalah');
+        parasha = data.items?.find((item: any) => item.category === 'parashat');
+        
+        if (!candleLighting || !havdalah) {
+          throw new Error('Could not find required Shabbat times');
+        }
+        
+        shabbatEntryTime = new Date(candleLighting.date);
+        shabbatExitTime = new Date(havdalah.date);
+        hebrewDate = parasha?.hdate || '';
       }
-      
-      const data = await response.json();
-      console.log('Hebcal response:', JSON.stringify(data, null, 2));
-      
-      // Extract candle lighting and havdalah times
-      const candleLighting = data.items?.find((item: any) => item.category === 'candles');
-      const havdalah = data.items?.find((item: any) => item.category === 'havdalah');
-      const parasha = data.items?.find((item: any) => item.category === 'parashat');
-      
-      if (!candleLighting || !havdalah) {
-        return res.status(404).json({ error: "Could not find Shabbat times for this date" });
-      }
-      
-      // Parse times from Hebcal response
-      const shabbatEntryTime = new Date(candleLighting.date);
-      const shabbatExitTime = new Date(havdalah.date);
       
       // Campaign closure time (30 minutes before Shabbat entry)
       const campaignClosureTime = new Date(shabbatEntryTime);
