@@ -362,10 +362,16 @@ export default function YouTubeOAuthPage() {
                         alt={video.title}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute top-2 left-2">
+                      <div className="absolute top-2 left-2 flex gap-2">
                         <Badge variant={video.isHidden ? "destructive" : "default"}>
                           {video.isHidden ? "מוסתר" : "גלוי"}
                         </Badge>
+                        {video.isLocked && (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                            <Lock className="w-3 h-3 ml-1" />
+                            נעול
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <CardContent className="p-4">
@@ -375,24 +381,45 @@ export default function YouTubeOAuthPage() {
                       <p className="text-xs text-muted-foreground mb-3">
                         {video.viewCount} צפיות
                       </p>
-                      <Button
-                        size="sm"
-                        variant={video.isHidden ? "default" : "outline"}
-                        onClick={() => toggleVideoVisibility(video.id, video.isHidden)}
-                        className="w-full"
-                      >
-                        {video.isHidden ? (
-                          <>
-                            <Eye className="ml-2 h-4 w-4" />
-                            הצג
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="ml-2 h-4 w-4" />
-                            הסתר
-                          </>
-                        )}
-                      </Button>
+                      {video.isLocked && video.lockReason === 'auto_private' && (
+                        <div className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
+                          סרטון זה הוסתר מראש ולא ישוחזר בצאת השבת
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant={video.isHidden ? "default" : "outline"}
+                          onClick={() => toggleVideoVisibility(video.id, video.isHidden)}
+                          disabled={video.isLocked}
+                          className="flex-1"
+                        >
+                          {video.isHidden ? (
+                            <>
+                              <Eye className="ml-2 h-4 w-4" />
+                              הצג
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="ml-2 h-4 w-4" />
+                              הסתר
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={video.isLocked ? "secondary" : "outline"}
+                          onClick={() => toggleVideoLock(video.id, video.isLocked || false)}
+                          className="px-3"
+                          title={video.isLocked ? "בטל נעילה" : "נעל סרטון"}
+                        >
+                          {video.isLocked ? (
+                            <Lock className="h-4 w-4" />
+                          ) : (
+                            <Unlock className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
