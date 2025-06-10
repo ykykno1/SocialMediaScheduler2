@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 
 // Supported platforms enum
 export const SupportedPlatform = z.enum(['facebook', 'youtube', 'tiktok', 'instagram']);
@@ -226,3 +227,49 @@ export const paymentSchema = z.object({
 });
 
 export type Payment = z.infer<typeof paymentSchema>;
+
+// Database tables
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey(),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(),
+  username: varchar("username").notNull(),
+  accountType: varchar("account_type").$type<'free' | 'youtube_pro' | 'premium'>().notNull().default('free'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const authTokens = pgTable("auth_tokens", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  platform: varchar("platform").$type<SupportedPlatform>().notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  additionalData: text("additional_data"), // JSON string
+});
+
+export const historyEntries = pgTable("history_entries", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  timestamp: timestamp("timestamp").defaultNow(),
+  action: varchar("action").$type<'hide' | 'restore'>().notNull(),
+  platform: varchar("platform").$type<SupportedPlatform>().notNull(),
+  success: boolean("success").notNull(),
+  affectedItems: integer("affected_items").notNull(),
+  error: text("error"),
+});
+
+export const videoStatuses = pgTable("video_statuses", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  videoId: varchar("video_id").notNull(),
+  originalStatus: varchar("original_status").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+export type AuthTokenDb = typeof authTokens.$inferSelect;
+export type InsertAuthToken = typeof authTokens.$inferInsert;

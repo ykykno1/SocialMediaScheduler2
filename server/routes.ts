@@ -4,7 +4,7 @@ interface AuthenticatedRequest extends Request {
   user?: any;
 }
 import { createServer, type Server } from "http";
-import { storage } from './storage';
+import { storage } from './database-storage';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -86,7 +86,7 @@ declare module 'express-session' {
 export function registerRoutes(app: Express): Server {
   
   // JWT Authentication middleware
-  const requireAuth = (req: any, res: any, next: any) => {
+  const requireAuth = async (req: any, res: any, next: any) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -99,7 +99,7 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    const user = storage.getUserById(decoded.userId);
+    const user = await storage.getUserById(decoded.userId);
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }
