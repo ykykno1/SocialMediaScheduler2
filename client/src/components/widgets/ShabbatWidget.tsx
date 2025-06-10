@@ -169,10 +169,12 @@ export function ShabbatWidget() {
   const formatTime = (timeString: string) => {
     try {
       const time = new Date(timeString);
+      // Convert to Jerusalem timezone and format
       return time.toLocaleTimeString('he-IL', { 
         hour: '2-digit', 
         minute: '2-digit',
-        timeZone: 'Asia/Jerusalem'
+        timeZone: 'Asia/Jerusalem',
+        hour12: false
       });
     } catch {
       return timeString;
@@ -264,15 +266,15 @@ export function ShabbatWidget() {
 
         {shabbatTimes && (
           <>
-            {/* Date and Parasha */}
+            {/* Hebrew Date at Top */}
             <div className="space-y-2">
               <div className="text-center">
-                <p className="text-lg font-medium">{formatDate(shabbatTimes.date)}</p>
-                {shabbatTimes.parasha && (
-                  <Badge variant="secondary" className="mt-1">
-                    {shabbatTimes.parasha}
-                  </Badge>
+                {shabbatTimes.hebrewDate && (
+                  <p className="text-sm font-medium text-primary mb-2">
+                    {shabbatTimes.hebrewDate}
+                  </p>
                 )}
+                <p className="text-lg font-medium">{formatDate(shabbatTimes.date)}</p>
               </div>
             </div>
 
@@ -301,11 +303,6 @@ export function ShabbatWidget() {
               <p className="text-lg font-medium text-primary">
                 {formatCountdown()}
               </p>
-              {shabbatTimes.hebrewDate && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {shabbatTimes.hebrewDate} • {shabbatTimes.parasha}
-                </p>
-              )}
               <p className="text-xs text-muted-foreground mt-2">
                 * הסתרת תוכן 30 דקות לפני כניסת שבת
               </p>

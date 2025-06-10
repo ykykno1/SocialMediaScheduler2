@@ -2370,9 +2370,7 @@ export function registerRoutes(app: Express): Server {
         year: 'numeric' 
       });
       
-      console.log('Formatted Hebrew Date:', formattedHebrewDate);
-      console.log('Current Date:', currentDate);
-      console.log('Parasha Hebrew:', parasha?.hebrew);
+
       
       const fullHebrewDateString = formattedHebrewDate ? 
         `שבת ${parasha?.hebrew || 'פרשת השבוע'}, ${formattedHebrewDate} ${currentDate}` : 
