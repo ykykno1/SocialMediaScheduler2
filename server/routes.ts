@@ -1288,7 +1288,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide all videos
-  app.post("/api/youtube/hide-all", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/hide-all", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       
@@ -1382,7 +1382,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube show all videos
-  app.post("/api/youtube/show-all", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/show-all", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       
