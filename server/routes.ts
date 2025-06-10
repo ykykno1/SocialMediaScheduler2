@@ -1199,11 +1199,24 @@ export function registerRoutes(app: Express): Server {
   // YouTube hide/show individual video
   app.post("/api/youtube/videos/:videoId/hide", requireAuth, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', req.user.id);
+      let auth = await storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      // Test connection and refresh token if needed
+      let connectionValid = await testYouTubeConnection(auth.accessToken);
+      
+      if (!connectionValid) {
+        try {
+          auth = await refreshYouTubeToken(auth, req.user.id);
+          connectionValid = await testYouTubeConnection(auth.accessToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+        }
       }
 
       // First get current video status to save original state
@@ -1214,8 +1227,8 @@ export function registerRoutes(app: Express): Server {
         const currentPrivacyStatus = currentVideoData.items?.[0]?.status?.privacyStatus;
         
         // Save original privacy status if not already saved
-        if (currentPrivacyStatus && !storage.getVideoOriginalStatus(videoId, req.user.id)) {
-          storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, req.user.id);
+        if (currentPrivacyStatus && !(await storage.getVideoOriginalStatus(videoId, req.user.id))) {
+          await storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, req.user.id);
         }
       }
 
@@ -1256,15 +1269,28 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/youtube/videos/:videoId/show", requireAuth, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', req.user.id);
+      let auth = await storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
+      // Test connection and refresh token if needed
+      let connectionValid = await testYouTubeConnection(auth.accessToken);
+      
+      if (!connectionValid) {
+        try {
+          auth = await refreshYouTubeToken(auth, req.user.id);
+          connectionValid = await testYouTubeConnection(auth.accessToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+        }
+      }
+
       // Get original privacy status, default to public if not found
-      const originalStatus = storage.getVideoOriginalStatus(videoId, req.user.id) || 'public';
+      const originalStatus = (await storage.getVideoOriginalStatus(videoId, req.user.id)) || 'public';
       
       // Update video privacy status to original status using YouTube Data API
       const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
@@ -1291,7 +1317,7 @@ export function registerRoutes(app: Express): Server {
       console.log(`Video ${videoId} set to ${originalStatus}`);
       
       // Clear original status after successful restore
-      storage.clearVideoOriginalStatus(videoId, req.user.id);
+      await storage.clearVideoOriginalStatus(videoId, req.user.id);
       
       res.json({ 
         success: true,
@@ -1308,10 +1334,23 @@ export function registerRoutes(app: Express): Server {
   // YouTube hide all videos
   app.post("/api/youtube/hide-all", requireAuth, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', req.user.id);
+      let auth = await storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      // Test connection and refresh token if needed
+      let connectionValid = await testYouTubeConnection(auth.accessToken);
+      
+      if (!connectionValid) {
+        try {
+          auth = await refreshYouTubeToken(auth, req.user.id);
+          connectionValid = await testYouTubeConnection(auth.accessToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+        }
       }
 
       // First get all videos
@@ -1355,7 +1394,7 @@ export function registerRoutes(app: Express): Server {
             // Only hide videos that are not already private
             if (currentPrivacyStatus && currentPrivacyStatus !== 'private') {
               // Save original status before hiding
-              storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, req.user.id);
+              await storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, req.user.id);
               
               const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
                 method: 'PUT',
@@ -1376,7 +1415,7 @@ export function registerRoutes(app: Express): Server {
                 const errorData = await updateResponse.json();
                 errors.push({ videoId, error: errorData.error?.message });
                 // Remove saved status if hiding failed
-                storage.clearVideoOriginalStatus(videoId, req.user.id);
+                await storage.clearVideoOriginalStatus(videoId, req.user.id);
               }
             }
             // Skip videos that are already private
