@@ -169,11 +169,10 @@ export function ShabbatWidget() {
   const formatTime = (timeString: string) => {
     try {
       const time = new Date(timeString);
-      // Convert to Jerusalem timezone and format
+      // Format time without timezone conversion since server sends correct local times
       return time.toLocaleTimeString('he-IL', { 
         hour: '2-digit', 
         minute: '2-digit',
-        timeZone: 'Asia/Jerusalem',
         hour12: false
       });
     } catch {
@@ -267,43 +266,34 @@ export function ShabbatWidget() {
         {shabbatTimes && (
           <>
             {/* Hebrew Date at Top */}
-            <div className="space-y-2">
-              <div className="text-center">
-                {shabbatTimes.hebrewDate && (
-                  <p className="text-sm font-medium text-primary mb-2">
-                    {shabbatTimes.hebrewDate}
-                  </p>
-                )}
-                <p className="text-lg font-medium">{formatDate(shabbatTimes.date)}</p>
-              </div>
+            <div className="text-center mb-4">
+              {shabbatTimes.hebrewDate && (
+                <p className="text-sm font-medium text-primary">
+                  {shabbatTimes.hebrewDate}
+                </p>
+              )}
             </div>
 
-            {/* Prominent Shabbat Entry/Exit Times */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-primary/10 rounded-lg border">
-                <Clock className="h-5 w-5 mx-auto mb-2 text-primary" />
-                <p className="text-sm font-medium text-primary">כניסת שבת</p>
-                <p className="text-xl font-bold">{formatTime(shabbatTimes.shabbatEntry)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  הדלקת נרות: {formatTime(shabbatTimes.candleLighting)}
-                </p>
+            {/* Shabbat Entry/Exit Times */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-3 bg-primary/10 rounded-lg border">
+                <Clock className="h-4 w-4 mx-auto mb-1 text-primary" />
+                <p className="text-xs font-medium text-primary mb-1">כניסת שבת</p>
+                <p className="text-lg font-bold">{formatTime(shabbatTimes.shabbatEntry)}</p>
               </div>
-              <div className="text-center p-4 bg-primary/10 rounded-lg border">
-                <Clock className="h-5 w-5 mx-auto mb-2 text-primary" />
-                <p className="text-sm font-medium text-primary">יציאת שבת</p>
-                <p className="text-xl font-bold">{formatTime(shabbatTimes.shabbatExit)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  הבדלה: {formatTime(shabbatTimes.havdalah)}
-                </p>
+              <div className="text-center p-3 bg-primary/10 rounded-lg border">
+                <Clock className="h-4 w-4 mx-auto mb-1 text-primary" />
+                <p className="text-xs font-medium text-primary mb-1">יציאת שבת</p>
+                <p className="text-lg font-bold">{formatTime(shabbatTimes.shabbatExit)}</p>
               </div>
             </div>
 
             {/* Countdown */}
-            <div className="text-center p-4 bg-primary/5 rounded-lg border">
-              <p className="text-lg font-medium text-primary">
+            <div className="text-center p-3 bg-primary/5 rounded-lg border">
+              <p className="text-base font-medium text-primary">
                 {formatCountdown()}
               </p>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-1">
                 * הסתרת תוכן 30 דקות לפני כניסת שבת
               </p>
             </div>
