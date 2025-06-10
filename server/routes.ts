@@ -1178,7 +1178,10 @@ export function registerRoutes(app: Express): Server {
         
         // Auto-lock videos that are already private and weren't hidden by our system
         if (currentPrivacyStatus === 'private' && !hasOriginalStatus) {
-          await storage.setVideoLockStatus(req.user.id, videoId, true, 'auto_private');
+          const existingLockStatus = await storage.getVideoLockStatus(req.user.id, videoId);
+          if (!existingLockStatus || !existingLockStatus.isLocked) {
+            await storage.setVideoLockStatus(req.user.id, videoId, true, 'auto_private');
+          }
         }
         
         return {
@@ -1610,11 +1613,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "YouTube authentication required" });
       }
 
-      // Get the original status of the video
+      // Get the lock status to understand why it was locked
+      const lockStatus = await storage.getVideoLockStatus(req.user.id, videoId);
+      
+      // Check if the video has an original status (was hidden by our system)
       const originalStatus = await storage.getVideoOriginalStatus(videoId, req.user.id);
       
       if (originalStatus) {
-        // Restore the video to its original status
+        // Restore the video to its original status (it was hidden by our system)
         const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
           method: 'PUT',
           headers: {
@@ -1631,6 +1637,25 @@ export function registerRoutes(app: Express): Server {
         if (updateResponse.ok) {
           // Clear the original status since video has been restored
           await storage.clearVideoOriginalStatus(videoId, req.user.id);
+        }
+      } else if (lockStatus && lockStatus.reason === 'auto_private') {
+        // This video was already private before our system - make it public when unlocked
+        const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: videoId,
+            status: {
+              privacyStatus: 'public'
+            }
+          })
+        });
+
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json();
+          console.error("Failed to make video public:", errorData);
         }
       }
 

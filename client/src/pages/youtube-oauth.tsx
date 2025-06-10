@@ -231,9 +231,14 @@ export default function YouTubeOAuthPage() {
               : video
           ));
           
+          const video = videos.find(v => v.id === videoId);
+          const isHidden = video?.isHidden;
+          
           toast({
             title: "הסרטון ננעל",
-            description: "הסרטון לא ישוחזר בצאת השבת",
+            description: isHidden 
+              ? "הסרטון לא ישוחזר בצאת השבת" 
+              : "הסרטון נשאר גלוי ולא יוסתר בשבת",
           });
         } else {
           throw new Error('שגיאה בנעילת הסרטון');
@@ -388,7 +393,10 @@ export default function YouTubeOAuthPage() {
                           <div className="text-center text-white p-4">
                             <Lock className="mx-auto h-8 w-8 mb-2" />
                             <p className="text-sm font-medium leading-tight">
-                              הסרטון הזה הוסתר מראש ולכן לא ישוחזר כל עוד הוא נעול
+                              {video.isHidden 
+                                ? "הסרטון הזה נעול ולא ישוחזר כל עוד הוא נעול"
+                                : "הסרטון הזה נעול ונשאר גלוי ולא יוסתר בשבת"
+                              }
                             </p>
                           </div>
                         </div>
