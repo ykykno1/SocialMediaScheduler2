@@ -1441,15 +1441,34 @@ export function registerRoutes(app: Express): Server {
   // YouTube show all videos
   app.post("/api/youtube/show-all", requireAuth, async (req: any, res) => {
     try {
-      const auth = storage.getAuthToken('youtube', req.user.id);
+      let auth = await storage.getAuthToken('youtube', req.user.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with YouTube" });
       }
 
+      // Test connection and refresh token if needed
+      let connectionValid = await testYouTubeConnection(auth.accessToken);
+      
+      if (!connectionValid) {
+        try {
+          auth = await refreshYouTubeToken(auth, req.user.id);
+          connectionValid = await testYouTubeConnection(auth.accessToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+        }
+      }
+
       // Get all videos that have saved original status (meaning they were hidden by our system)
-      const videoOriginalStatuses = storage.getAllVideoOriginalStatuses(req.user.id);
+      const videoOriginalStatuses = await storage.getAllVideoOriginalStatuses(req.user.id);
       const videoIds = Object.keys(videoOriginalStatuses);
+      
+      console.log('Show all - Found video original statuses:', {
+        count: videoIds.length,
+        videoIds,
+        statuses: videoOriginalStatuses
+      });
       
       if (videoIds.length === 0) {
         return res.json({ success: true, message: "אין סרטונים מוסתרים לשחזור", shownCount: 0 });
@@ -1478,7 +1497,7 @@ export function registerRoutes(app: Express): Server {
 
           if (updateResponse.ok) {
             // Clear original status after successful restore
-            storage.clearVideoOriginalStatus(videoId, req.user.id);
+            await storage.clearVideoOriginalStatus(videoId, req.user.id);
             shownCount++;
           } else {
             const errorData = await updateResponse.json();
