@@ -1176,8 +1176,11 @@ export function registerRoutes(app: Express): Server {
         const currentPrivacyStatus = detailedVideo?.status?.privacyStatus || 'unknown';
         const hasOriginalStatus = await storage.getVideoOriginalStatus(videoId, req.user.id) !== null;
         
-        // Auto-lock videos that are already private and weren't hidden by our system
-        if (currentPrivacyStatus === 'private' && !hasOriginalStatus) {
+        // Only auto-lock videos on initial load, not during refreshes after user actions
+        // This prevents mass auto-locking when hiding individual videos
+        const skipAutoLock = req.query.skipAutoLock === 'true';
+        
+        if (!skipAutoLock && currentPrivacyStatus === 'private' && !hasOriginalStatus) {
           const existingLockStatus = await storage.getVideoLockStatus(req.user.id, videoId);
           if (!existingLockStatus || !existingLockStatus.isLocked) {
             await storage.setVideoLockStatus(req.user.id, videoId, true, 'auto_private');

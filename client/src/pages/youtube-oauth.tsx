@@ -130,10 +130,11 @@ export default function YouTubeOAuthPage() {
     }
   };
 
-  const loadVideos = async () => {
+  const loadVideos = async (skipAutoLock = false) => {
     setLoading(true);
     try {
-      const response = await apiRequest("GET", "/api/youtube/videos");
+      const url = skipAutoLock ? "/api/youtube/videos?skipAutoLock=true" : "/api/youtube/videos";
+      const response = await apiRequest("GET", url);
       if (response.ok) {
         const data = await response.json();
         const videosWithLockStatus = await Promise.all(
@@ -264,7 +265,7 @@ export default function YouTubeOAuthPage() {
           title: "הוסתרו כל הסרטונים",
           description: `הוסתרו ${data.hiddenCount} סרטונים בהצלחה`,
         });
-        loadVideos();
+        loadVideos(true);
       } else {
         throw new Error('שגיאה בהסתרת הסרטונים');
       }
@@ -290,7 +291,7 @@ export default function YouTubeOAuthPage() {
           title: "הוצגו כל הסרטונים",
           description: `הוצגו ${data.shownCount} סרטונים בהצלחה`,
         });
-        loadVideos();
+        loadVideos(true);
       } else {
         throw new Error('שגיאה בהצגת הסרטונים');
       }
