@@ -1090,7 +1090,7 @@ export function registerRoutes(app: Express): Server {
   registerFacebookPagesRoutes(app);
   
   // YouTube videos endpoint  
-  app.get("/api/youtube/videos", authMiddleware, async (req: any, res) => {
+  app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
     try {
       let auth = storage.getAuthToken('youtube', req.user.id);
       
@@ -1179,7 +1179,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube hide/show individual video
-  app.post("/api/youtube/videos/:videoId/hide", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/videos/:videoId/hide", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
@@ -1236,7 +1236,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/youtube/videos/:videoId/show", authMiddleware, async (req: any, res) => {
+  app.post("/api/youtube/videos/:videoId/show", requireAuth, async (req: any, res) => {
     try {
       const auth = storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
