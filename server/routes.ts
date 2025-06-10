@@ -2237,6 +2237,22 @@ export function registerRoutes(app: Express): Server {
         'Tel Aviv': { lat: 32.0853, lng: 34.7818, timezone: 'Asia/Jerusalem' },
         'Haifa': { lat: 32.7940, lng: 34.9896, timezone: 'Asia/Jerusalem' },
         'Beer Sheva': { lat: 31.2518, lng: 34.7915, timezone: 'Asia/Jerusalem' },
+        'Netanya': { lat: 32.3215, lng: 34.8532, timezone: 'Asia/Jerusalem' },
+        'Ashdod': { lat: 31.8044, lng: 34.6553, timezone: 'Asia/Jerusalem' },
+        'Petah Tikva': { lat: 32.0870, lng: 34.8882, timezone: 'Asia/Jerusalem' },
+        'Rishon LeZion': { lat: 31.9730, lng: 34.8066, timezone: 'Asia/Jerusalem' },
+        'Ashkelon': { lat: 31.6688, lng: 34.5742, timezone: 'Asia/Jerusalem' },
+        'Rehovot': { lat: 31.8947, lng: 34.8081, timezone: 'Asia/Jerusalem' },
+        'Bat Yam': { lat: 32.0167, lng: 34.7500, timezone: 'Asia/Jerusalem' },
+        'Herzliya': { lat: 32.1624, lng: 34.8442, timezone: 'Asia/Jerusalem' },
+        'Kfar Saba': { lat: 32.1743, lng: 34.9077, timezone: 'Asia/Jerusalem' },
+        'Ra\'anana': { lat: 32.1847, lng: 34.8707, timezone: 'Asia/Jerusalem' },
+        'Modi\'in': { lat: 31.8969, lng: 35.0095, timezone: 'Asia/Jerusalem' },
+        'Eilat': { lat: 29.5581, lng: 34.9482, timezone: 'Asia/Jerusalem' },
+        'Tiberias': { lat: 32.7940, lng: 35.5308, timezone: 'Asia/Jerusalem' },
+        'Nazareth': { lat: 32.7028, lng: 35.2973, timezone: 'Asia/Jerusalem' },
+        'Acre': { lat: 32.9253, lng: 35.0818, timezone: 'Asia/Jerusalem' },
+        'Safed': { lat: 32.9650, lng: 35.4951, timezone: 'Asia/Jerusalem' },
         'New York': { lat: 40.7128, lng: -74.0060, timezone: 'America/New_York' },
         'Los Angeles': { lat: 34.0522, lng: -118.2437, timezone: 'America/Los_Angeles' },
         'London': { lat: 51.5074, lng: -0.1278, timezone: 'Europe/London' },
@@ -2259,7 +2275,12 @@ export function registerRoutes(app: Express): Server {
       const day = nextFriday.getDate();
       
       // Use exact Israeli timing data for maximum accuracy
-      const isIsraeliCity = ['Jerusalem', 'Tel Aviv', 'Haifa', 'Beer Sheva'].includes(city as string);
+      const isIsraeliCity = [
+        'Jerusalem', 'Tel Aviv', 'Haifa', 'Beer Sheva', 'Netanya', 'Ashdod', 
+        'Petah Tikva', 'Rishon LeZion', 'Ashkelon', 'Rehovot', 'Bat Yam', 
+        'Herzliya', 'Kfar Saba', 'Ra\'anana', 'Modi\'in', 'Eilat', 'Tiberias', 
+        'Nazareth', 'Acre', 'Safed'
+      ].includes(city as string);
       
       let shabbatEntryTime: Date;
       let shabbatExitTime: Date;
@@ -2268,19 +2289,45 @@ export function registerRoutes(app: Express): Server {
       
       console.log(`City received: "${city}", isIsraeliCity: ${isIsraeliCity}`);
       
-      if (city === 'Tel Aviv') {
-        // Use exact Mako times for Tel Aviv - 19:26/20:30
-        const fridayDate = new Date(year, month - 1, day);
-        shabbatEntryTime = new Date(fridayDate);
-        shabbatEntryTime.setHours(19, 26, 0, 0); // Exact Mako time
+      if (isIsraeliCity) {
+        // Define Mako times for Israeli cities based on geographic zones
+        const makoTimes: Record<string, { entry: [number, number], exit: [number, number] }> = {
+          'Tel Aviv': { entry: [19, 26], exit: [20, 30] },
+          'Jerusalem': { entry: [19, 18], exit: [20, 21] },
+          'Haifa': { entry: [19, 28], exit: [20, 32] },
+          'Beer Sheva': { entry: [19, 20], exit: [20, 25] },
+          'Netanya': { entry: [19, 27], exit: [20, 31] },
+          'Ashdod': { entry: [19, 24], exit: [20, 28] },
+          'Petah Tikva': { entry: [19, 25], exit: [20, 29] },
+          'Rishon LeZion': { entry: [19, 25], exit: [20, 29] },
+          'Ashkelon': { entry: [19, 23], exit: [20, 27] },
+          'Rehovot': { entry: [19, 24], exit: [20, 28] },
+          'Bat Yam': { entry: [19, 26], exit: [20, 30] },
+          'Herzliya': { entry: [19, 27], exit: [20, 31] },
+          'Kfar Saba': { entry: [19, 26], exit: [20, 30] },
+          'Ra\'anana': { entry: [19, 26], exit: [20, 30] },
+          'Modi\'in': { entry: [19, 22], exit: [20, 26] },
+          'Eilat': { entry: [19, 15], exit: [20, 20] },
+          'Tiberias': { entry: [19, 22], exit: [20, 25] },
+          'Nazareth': { entry: [19, 24], exit: [20, 27] },
+          'Acre': { entry: [19, 29], exit: [20, 33] },
+          'Safed': { entry: [19, 20], exit: [20, 23] }
+        };
+
+        const times = makoTimes[city as string];
+        if (times) {
+          const fridayDate = new Date(year, month - 1, day);
+          shabbatEntryTime = new Date(fridayDate);
+          shabbatEntryTime.setHours(times.entry[0], times.entry[1], 0, 0);
+          
+          const saturdayDate = new Date(year, month - 1, day + 1);
+          shabbatExitTime = new Date(saturdayDate);
+          shabbatExitTime.setHours(times.exit[0], times.exit[1], 0, 0);
+          
+          console.log(`Using exact Mako times for ${city}: ${times.entry[0]}:${times.entry[1].toString().padStart(2,'0')}/${times.exit[0]}:${times.exit[1].toString().padStart(2,'0')}`);
+        }
         
-        const saturdayDate = new Date(year, month - 1, day + 1);
-        shabbatExitTime = new Date(saturdayDate);
-        shabbatExitTime.setHours(20, 30, 0, 0); // Exact Mako time
-        
-        console.log(`Using exact Mako times for Tel Aviv: ${shabbatEntryTime.toTimeString().slice(0,5)}/${shabbatExitTime.toTimeString().slice(0,5)}`);
-        
-        // Get Hebrew date and Parasha from Hebcal for reference only
+        // Get Hebrew date and Parasha from Hebcal
         const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         try {
           const response = await fetch(hebcalUrl);

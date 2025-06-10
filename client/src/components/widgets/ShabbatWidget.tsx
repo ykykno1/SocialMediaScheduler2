@@ -26,16 +26,32 @@ interface CountdownTime {
 }
 
 const MAJOR_CITIES = [
+  // Israeli Cities (with Mako times)
   { name: 'Jerusalem', lat: 31.7683, lng: 35.2137, timezone: 'Asia/Jerusalem' },
   { name: 'Tel Aviv', lat: 32.0853, lng: 34.7818, timezone: 'Asia/Jerusalem' },
   { name: 'Haifa', lat: 32.7940, lng: 34.9896, timezone: 'Asia/Jerusalem' },
   { name: 'Beer Sheva', lat: 31.2518, lng: 34.7915, timezone: 'Asia/Jerusalem' },
+  { name: 'Netanya', lat: 32.3215, lng: 34.8532, timezone: 'Asia/Jerusalem' },
+  { name: 'Ashdod', lat: 31.8044, lng: 34.6553, timezone: 'Asia/Jerusalem' },
+  { name: 'Petah Tikva', lat: 32.0870, lng: 34.8882, timezone: 'Asia/Jerusalem' },
+  { name: 'Rishon LeZion', lat: 31.9730, lng: 34.8066, timezone: 'Asia/Jerusalem' },
+  { name: 'Ashkelon', lat: 31.6688, lng: 34.5742, timezone: 'Asia/Jerusalem' },
+  { name: 'Rehovot', lat: 31.8947, lng: 34.8081, timezone: 'Asia/Jerusalem' },
+  { name: 'Bat Yam', lat: 32.0167, lng: 34.7500, timezone: 'Asia/Jerusalem' },
+  { name: 'Herzliya', lat: 32.1624, lng: 34.8442, timezone: 'Asia/Jerusalem' },
+  { name: 'Kfar Saba', lat: 32.1743, lng: 34.9077, timezone: 'Asia/Jerusalem' },
+  { name: 'Ra\'anana', lat: 32.1847, lng: 34.8707, timezone: 'Asia/Jerusalem' },
+  { name: 'Modi\'in', lat: 31.8969, lng: 35.0095, timezone: 'Asia/Jerusalem' },
+  { name: 'Eilat', lat: 29.5581, lng: 34.9482, timezone: 'Asia/Jerusalem' },
+  { name: 'Tiberias', lat: 32.7940, lng: 35.5308, timezone: 'Asia/Jerusalem' },
+  { name: 'Nazareth', lat: 32.7028, lng: 35.2973, timezone: 'Asia/Jerusalem' },
+  { name: 'Acre', lat: 32.9253, lng: 35.0818, timezone: 'Asia/Jerusalem' },
+  { name: 'Safed', lat: 32.9650, lng: 35.4951, timezone: 'Asia/Jerusalem' },
+  // International Cities
   { name: 'New York', lat: 40.7128, lng: -74.0060, timezone: 'America/New_York' },
   { name: 'Los Angeles', lat: 34.0522, lng: -118.2437, timezone: 'America/Los_Angeles' },
   { name: 'London', lat: 51.5074, lng: -0.1278, timezone: 'Europe/London' },
-  { name: 'Paris', lat: 48.8566, lng: 2.3522, timezone: 'Europe/Paris' },
-  { name: 'Toronto', lat: 43.6532, lng: -79.3832, timezone: 'America/Toronto' },
-  { name: 'Melbourne', lat: -37.8136, lng: 144.9631, timezone: 'Australia/Melbourne' }
+  { name: 'Paris', lat: 48.8566, lng: 2.3522, timezone: 'Europe/Paris' }
 ];
 
 export function ShabbatWidget() {
