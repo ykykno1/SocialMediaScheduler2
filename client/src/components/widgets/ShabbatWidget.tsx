@@ -145,23 +145,23 @@ export function ShabbatWidget() {
     if (!shabbatTimes) return '';
     
     const now = new Date();
-    const candleLightingTime = new Date(shabbatTimes.candleLighting);
-    const havdalahTime = new Date(shabbatTimes.havdalah);
+    const campaignClosureTime = new Date(shabbatTimes.campaignClosure);
+    const shabbatExitTime = new Date(shabbatTimes.shabbatExit);
     
-    if (now >= candleLightingTime && now < havdalahTime) {
-      // We're in Shabbat
+    if (now >= campaignClosureTime && now < shabbatExitTime) {
+      // We're in Shabbat (after campaign closure)
       if (countdown.hours > 0 || countdown.minutes > 0) {
         return `שבת נגמר בעוד: ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
       }
       return 'שבת שלום';
     } else {
-      // Before Shabbat
+      // Before campaign closure
       if (countdown.days > 0) {
-        return `שבת מתחיל בעוד: ${countdown.days} ימים, ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
+        return `סוגרים קמפיינים בעוד: ${countdown.days} ימים, ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
       } else if (countdown.hours > 0) {
-        return `שבת מתחיל בעוד: ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
+        return `סוגרים קמפיינים בעוד: ${countdown.hours}:${countdown.minutes.toString().padStart(2, '0')}`;
       } else {
-        return `שבת מתחיל בעוד: ${countdown.minutes}:${countdown.seconds.toString().padStart(2, '0')}`;
+        return `סוגרים קמפיינים בעוד: ${countdown.minutes}:${countdown.seconds.toString().padStart(2, '0')}`;
       }
     }
   };
@@ -276,17 +276,23 @@ export function ShabbatWidget() {
               </div>
             </div>
 
-            {/* Times */}
+            {/* Prominent Shabbat Entry/Exit Times */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <Clock className="h-4 w-4 mx-auto mb-1 text-primary" />
-                <p className="text-xs text-muted-foreground">הדלקת נרות</p>
-                <p className="font-semibold">{formatTime(shabbatTimes.candleLighting)}</p>
+              <div className="text-center p-4 bg-primary/10 rounded-lg border">
+                <Clock className="h-5 w-5 mx-auto mb-2 text-primary" />
+                <p className="text-sm font-medium text-primary">כניסת שבת</p>
+                <p className="text-xl font-bold">{formatTime(shabbatTimes.shabbatEntry)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  הדלקת נרות: {formatTime(shabbatTimes.candleLighting)}
+                </p>
               </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <Clock className="h-4 w-4 mx-auto mb-1 text-primary" />
-                <p className="text-xs text-muted-foreground">הבדלה</p>
-                <p className="font-semibold">{formatTime(shabbatTimes.havdalah)}</p>
+              <div className="text-center p-4 bg-primary/10 rounded-lg border">
+                <Clock className="h-5 w-5 mx-auto mb-2 text-primary" />
+                <p className="text-sm font-medium text-primary">יציאת שבת</p>
+                <p className="text-xl font-bold">{formatTime(shabbatTimes.shabbatExit)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  הבדלה: {formatTime(shabbatTimes.havdalah)}
+                </p>
               </div>
             </div>
 
@@ -300,6 +306,9 @@ export function ShabbatWidget() {
                   {shabbatTimes.hebrewDate}
                 </p>
               )}
+              <p className="text-xs text-muted-foreground mt-2">
+                * סגירת קמפיינים 30 דקות לפני כניסת שבת
+              </p>
             </div>
           </>
         )}

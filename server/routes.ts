@@ -2309,12 +2309,11 @@ export function registerRoutes(app: Express): Server {
         shabbatEntry: shabbatEntryTime.toISOString(),
         shabbatExit: shabbatExitTime.toISOString(),
         campaignClosure: campaignClosureTime.toISOString(),
-        candleLighting: formatTime(shabbatEntryTime),
-        havdalah: formatTime(shabbatExitTime),
+        candleLighting: shabbatEntryTime.toISOString(),
+        havdalah: shabbatExitTime.toISOString(),
         parasha: parasha?.hebrew || parasha?.title || 'פרשת השבוע',
-        hebrewDate: candleLighting.hdate || '',
-        city: city as string,
-        location: data.title || city
+        hebrewDate: parasha?.hdate || '',
+        city: city as string
       };
       
       res.json(responseData);
