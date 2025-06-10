@@ -169,12 +169,10 @@ export function ShabbatWidget() {
   const formatTime = (timeString: string) => {
     try {
       const time = new Date(timeString);
-      // Format time without timezone conversion since server sends correct local times
-      return time.toLocaleTimeString('he-IL', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false
-      });
+      // Extract just the hours and minutes from UTC time to show correct local times
+      const hours = String(time.getUTCHours()).padStart(2, '0');
+      const minutes = String(time.getUTCMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
     } catch {
       return timeString;
     }
