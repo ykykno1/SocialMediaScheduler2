@@ -199,24 +199,48 @@ export default function YouTubeOAuthPage() {
 
   const toggleVideoLock = async (videoId: string, currentlyLocked: boolean) => {
     try {
-      const action = currentlyLocked ? 'unlock' : 'lock';
-      const response = await apiRequest("POST", `/api/youtube/video/${videoId}/${action}`);
-
-      if (response.ok) {
-        setVideos(prev => prev.map(video => 
-          video.id === videoId 
-            ? { ...video, isLocked: !currentlyLocked, lockReason: !currentlyLocked ? 'manual' : undefined }
-            : video
-        ));
+      if (currentlyLocked) {
+        // For unlocking, prompt for password
+        const password = prompt("הכנס את הסיסמה שלך כדי לבטל את נעילת הסרטון:");
+        if (!password) {
+          return; // User cancelled
+        }
         
-        toast({
-          title: currentlyLocked ? "נעילת הסרטון בוטלה" : "הסרטון ננעל",
-          description: currentlyLocked 
-            ? "הסרטון יכלל במבצעי הסתרה/הצגה" 
-            : "הסרטון לא ישוחזר בצאת השבת",
-        });
+        const response = await apiRequest("POST", `/api/youtube/video/${videoId}/unlock`, { password });
+        
+        if (response.ok) {
+          setVideos(prev => prev.map(video => 
+            video.id === videoId 
+              ? { ...video, isLocked: false, lockReason: undefined }
+              : video
+          ));
+          
+          toast({
+            title: "נעילת הסרטון בוטלה",
+            description: "הסרטון יכלל במבצעי הסתרה/הצגה",
+          });
+        } else {
+          const error = await response.json();
+          throw new Error(error.error || 'שגיאה בביטול נעילת הסרטון');
+        }
       } else {
-        throw new Error('שגיאה בעדכון נעילת הסרטון');
+        // For locking, no password needed
+        const response = await apiRequest("POST", `/api/youtube/video/${videoId}/lock`);
+        
+        if (response.ok) {
+          setVideos(prev => prev.map(video => 
+            video.id === videoId 
+              ? { ...video, isLocked: true, lockReason: 'manual' }
+              : video
+          ));
+          
+          toast({
+            title: "הסרטון ננעל",
+            description: "הסרטון לא ישוחזר בצאת השבת",
+          });
+        } else {
+          throw new Error('שגיאה בנעילת הסרטון');
+        }
       }
     } catch (error: any) {
       toast({
@@ -362,6 +386,16 @@ export default function YouTubeOAuthPage() {
                         alt={video.title}
                         className="w-full h-full object-cover"
                       />
+                      {video.isLocked && (
+                        <div className="absolute inset-0 bg-gray-800/70 flex items-center justify-center">
+                          <div className="text-center text-white p-4">
+                            <Lock className="mx-auto h-8 w-8 mb-2" />
+                            <p className="text-sm font-medium leading-tight">
+                              הסרטון הזה הוסתר מראש ולכן לא ישוחזר כל עוד הוא נעול
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <div className="absolute top-2 left-2 flex gap-2">
                         <Badge variant={video.isHidden ? "destructive" : "default"}>
                           {video.isHidden ? "מוסתר" : "גלוי"}

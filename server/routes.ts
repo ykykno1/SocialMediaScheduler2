@@ -1170,11 +1170,16 @@ export function registerRoutes(app: Express): Server {
         detailedVideos = detailedData.items || [];
       }
       
-      const videos = videosData.items?.map((item: any) => {
+      const videos = await Promise.all(videosData.items?.map(async (item: any) => {
         const videoId = item.snippet.resourceId.videoId;
         const detailedVideo = detailedVideos.find((v: any) => v.id === videoId);
         const currentPrivacyStatus = detailedVideo?.status?.privacyStatus || 'unknown';
-        const hasOriginalStatus = storage.getVideoOriginalStatus(videoId, req.user.id) !== null;
+        const hasOriginalStatus = await storage.getVideoOriginalStatus(videoId, req.user.id) !== null;
+        
+        // Auto-lock videos that are already private and weren't hidden by our system
+        if (currentPrivacyStatus === 'private' && !hasOriginalStatus) {
+          await storage.setVideoLockStatus(req.user.id, videoId, true, 'auto_private');
+        }
         
         return {
           id: videoId,
@@ -1184,10 +1189,9 @@ export function registerRoutes(app: Express): Server {
           description: item.snippet.description,
           privacyStatus: currentPrivacyStatus,
           isHidden: currentPrivacyStatus === 'private',
-          isProtected: currentPrivacyStatus === 'private' && !hasOriginalStatus, // Was private before our system touched it
-          canBeRestored: hasOriginalStatus // Can be restored by our system
+          viewCount: detailedVideo?.statistics?.viewCount || '0'
         };
-      }) || [];
+      }) || []);
 
       res.json({ videos });
     } catch (error) {
@@ -1560,23 +1564,55 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube video lock routes
-  app.post("/api/youtube/video/lock", requireAuth, async (req: any, res) => {
+  app.post("/api/youtube/video/:videoId/lock", requireAuth, async (req: any, res) => {
     try {
-      const { videoId, isLocked, reason } = req.body;
+      const { videoId } = req.params;
+      const { reason } = req.body;
       
       if (!videoId) {
         return res.status(400).json({ error: "Video ID is required" });
       }
 
-      await storage.setVideoLockStatus(req.user.id, videoId, isLocked, reason || "manual");
+      await storage.setVideoLockStatus(req.user.id, videoId, true, reason || "manual");
       
       res.json({ 
         success: true, 
-        message: isLocked ? "הסרטון ננעל בהצלחה" : "הסרטון שוחרר מנעילה" 
+        message: "הסרטון ננעל בהצלחה" 
       });
     } catch (error) {
       console.error("Error setting video lock status:", error);
       res.status(500).json({ error: "שגיאה בעדכון סטטוס נעילת הסרטון" });
+    }
+  });
+
+  app.post("/api/youtube/video/:videoId/unlock", requireAuth, async (req: any, res) => {
+    try {
+      const { videoId } = req.params;
+      const { password } = req.body;
+      
+      if (!videoId) {
+        return res.status(400).json({ error: "Video ID is required" });
+      }
+
+      // Require password verification for unlock
+      if (!password) {
+        return res.status(400).json({ error: "Password is required to unlock video" });
+      }
+      
+      const user = await storage.verifyPassword(req.user.email, password);
+      if (!user) {
+        return res.status(401).json({ error: "סיסמה שגויה" });
+      }
+
+      await storage.setVideoLockStatus(req.user.id, videoId, false, "unlocked");
+      
+      res.json({ 
+        success: true, 
+        message: "הסרטון שוחרר מנעילה" 
+      });
+    } catch (error) {
+      console.error("Error unlocking video:", error);
+      res.status(500).json({ error: "שגיאה בשחרור נעילת הסרטון" });
     }
   });
 
