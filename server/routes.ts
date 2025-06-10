@@ -2222,32 +2222,76 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Shabbat times route
-  app.get("/api/shabbat-times", async (req, res) => {
+  // Shabbat times route - proxy to Hebcal API
+  app.get("/api/shabbat/times", async (req, res) => {
     try {
-      const { latitude, longitude } = req.query;
+      const { city } = req.query;
       
-      if (!latitude || !longitude) {
-        return res.status(400).json({ error: "Latitude and longitude are required" });
+      if (!city) {
+        return res.status(400).json({ error: "City parameter is required" });
       }
       
-      const lat = parseFloat(latitude as string);
-      const lng = parseFloat(longitude as string);
+      // City coordinates mapping for major cities
+      const cityCoordinates: Record<string, { lat: number; lng: number; timezone: string }> = {
+        'Jerusalem': { lat: 31.7683, lng: 35.2137, timezone: 'Asia/Jerusalem' },
+        'Tel Aviv': { lat: 32.0853, lng: 34.7818, timezone: 'Asia/Jerusalem' },
+        'Haifa': { lat: 32.7940, lng: 34.9896, timezone: 'Asia/Jerusalem' },
+        'Beer Sheva': { lat: 31.2518, lng: 34.7915, timezone: 'Asia/Jerusalem' },
+        'New York': { lat: 40.7128, lng: -74.0060, timezone: 'America/New_York' },
+        'Los Angeles': { lat: 34.0522, lng: -118.2437, timezone: 'America/Los_Angeles' },
+        'London': { lat: 51.5074, lng: -0.1278, timezone: 'Europe/London' },
+        'Paris': { lat: 48.8566, lng: 2.3522, timezone: 'Europe/Paris' },
+        'Toronto': { lat: 43.6532, lng: -79.3832, timezone: 'America/Toronto' },
+        'Melbourne': { lat: -37.8136, lng: 144.9631, timezone: 'Australia/Melbourne' }
+      };
       
-      if (isNaN(lat) || isNaN(lng)) {
-        return res.status(400).json({ error: "Invalid coordinates" });
+      const coords = cityCoordinates[city as string];
+      if (!coords) {
+        return res.status(400).json({ error: "City not supported" });
       }
       
-      const shabbatTimes = await storage.getShabbatTimes(lat, lng);
+      // Get next Friday's date
+      const today = new Date();
+      const daysUntilFriday = (5 - today.getDay() + 7) % 7;
+      const nextFriday = new Date(today);
+      nextFriday.setDate(today.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
       
-      if (!shabbatTimes) {
-        return res.status(404).json({ error: "Could not fetch Shabbat times for this location" });
+      const year = nextFriday.getFullYear();
+      const month = nextFriday.getMonth() + 1;
+      const day = nextFriday.getDate();
+      
+      // Fetch from Hebcal API
+      const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      
+      const response = await fetch(hebcalUrl);
+      if (!response.ok) {
+        throw new Error(`Hebcal API returned ${response.status}`);
       }
+      
+      const data = await response.json();
+      
+      // Extract relevant information
+      const candleLighting = data.items?.find((item: any) => item.category === 'candles');
+      const havdalah = data.items?.find((item: any) => item.category === 'havdalah');
+      const parasha = data.items?.find((item: any) => item.category === 'parashat');
+      
+      if (!candleLighting || !havdalah) {
+        return res.status(404).json({ error: "Could not find Shabbat times for this date" });
+      }
+      
+      // Format response
+      const shabbatTimes = {
+        date: candleLighting.date,
+        candleLighting: candleLighting.date,
+        havdalah: havdalah.date,
+        parasha: parasha?.hebrew || parasha?.title || '',
+        hebrewDate: candleLighting.hdate || ''
+      };
       
       res.json(shabbatTimes);
     } catch (error) {
-      console.error("Shabbat times error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Shabbat times API error:", error);
+      res.status(500).json({ error: "Failed to fetch Shabbat times" });
     }
   });
 

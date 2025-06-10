@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Youtube, Facebook, Instagram, ArrowLeft, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { Link } from "wouter";
+import { ShabbatWidget } from "@/components/widgets/ShabbatWidget";
 
 const Dashboard = () => {
   return (
@@ -10,6 +11,11 @@ const Dashboard = () => {
       <div className="text-center py-8">
         <h1 className="text-3xl font-bold mb-2">ברוכים הבאים לרובוט שבת</h1>
         <p className="text-gray-600 text-lg">נהל את התוכן שלך ברשתות החברתיות לשבת</p>
+      </div>
+
+      {/* Shabbat Timer Widget */}
+      <div className="flex justify-center mb-8">
+        <ShabbatWidget />
       </div>
 
       {/* Platform Navigation Cards */}

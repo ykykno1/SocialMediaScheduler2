@@ -1,0 +1,69 @@
+
+I want to add a new Shabbat Timer Widget to the homepage of my existing React app.
+This widget should show upcoming Shabbat times and a countdown timer until the next candle lighting.
+
+🧩 Component Requirements:
+Create a new React component called ShabbatWidget.tsx inside a components/widgets folder.
+
+This component will be imported and rendered in the homepage (pages/index.tsx) – but do not modify or interfere with existing homepage logic.
+
+The widget should include the following info:
+
+📅 Next Shabbat date (e.g. "Friday, June 14, 2025")
+
+📖 Weekly Parasha name (e.g. "Parashat Beha'alotcha")
+
+🕰️ Candle lighting time and Havdalah time (entry and exit)
+
+🏙️ Current city (based on user's location or localStorage preference)
+
+⏳ Countdown timer: "Shabbat begins in: 1 day, 3 hours, 12 minutes"
+
+⚙️ Button to change city (open modal or simple dropdown)
+
+🌍 Location Handling:
+Detect user’s location via navigator.geolocation.
+
+If location permission is denied, default to Jerusalem.
+
+Store city selection in localStorage under key "shabbat_city" so it persists.
+
+🔗 API Usage:
+Use a public API such as Hebcal or MyZmanim to get Shabbat times by city or coordinates.
+
+If CORS prevents frontend requests, create a new route in /api/shabbat/times that proxies the API.
+
+🧠 Logic & Performance:
+Use setInterval to update the countdown every minute, and clean it up with useEffect to prevent memory leaks.
+
+Calculate the next Friday candle-lighting time dynamically based on the city’s time zone.
+
+Cache data from the API (in React state or localStorage) to avoid repeated fetches.
+
+💅 Design Instructions:
+Use existing UI system (ShadCN) components:
+
+Card, CardHeader, CardContent, Badge, Button, Alert, etc.
+
+Match the look and feel of the existing design.
+
+Make the widget responsive and RTL-aware (dir="rtl" if in Hebrew).
+
+🚫 Do Not:
+❌ Do not modify existing auth logic, OAuth flows, or storage.ts / storage-new.ts.
+
+❌ Do not overwrite any API routes or interfere with /api/youtube/...
+
+❌ Do not break any existing features or logic.
+
+✅ Summary:
+Add a safe, modular, reusable ShabbatWidget component.
+
+No breaking changes to existing logic or features.
+
+Use public APIs only.
+
+Use local storage for city selection.
+
+Clean and maintainable.
+
