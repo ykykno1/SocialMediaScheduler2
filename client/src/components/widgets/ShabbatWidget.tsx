@@ -8,10 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface ShabbatTimes {
   date: string;
+  shabbatEntry: string;
+  shabbatExit: string;
+  campaignClosure: string;
   candleLighting: string;
   havdalah: string;
   parasha: string;
   hebrewDate: string;
+  city: string;
 }
 
 interface CountdownTime {
@@ -86,13 +90,13 @@ export function ShabbatWidget() {
     }
   };
 
-  // Calculate countdown to next Shabbat
+  // Calculate countdown to campaign closure (30 minutes before Shabbat entry)
   const calculateCountdown = () => {
     if (!shabbatTimes) return;
 
     const now = new Date();
-    const candleLightingTime = new Date(shabbatTimes.candleLighting);
-    const timeUntil = candleLightingTime.getTime() - now.getTime();
+    const campaignClosureTime = new Date(shabbatTimes.campaignClosure);
+    const timeUntil = campaignClosureTime.getTime() - now.getTime();
 
     if (timeUntil > 0) {
       const days = Math.floor(timeUntil / (1000 * 60 * 60 * 24));
@@ -102,14 +106,14 @@ export function ShabbatWidget() {
 
       setCountdown({ days, hours, minutes, seconds });
     } else {
-      // Check if we're in Shabbat (between candle lighting and Havdalah)
-      const havdalahTime = new Date(shabbatTimes.havdalah);
-      if (now < havdalahTime) {
-        // We're in Shabbat, show time until Havdalah
-        const timeUntilHavdalah = havdalahTime.getTime() - now.getTime();
-        const hours = Math.floor(timeUntilHavdalah / (1000 * 60 * 60));
-        const minutes = Math.floor((timeUntilHavdalah % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeUntilHavdalah % (1000 * 60)) / 1000);
+      // Check if we're in Shabbat (between campaign closure and Havdalah)
+      const shabbatExitTime = new Date(shabbatTimes.shabbatExit);
+      if (now < shabbatExitTime) {
+        // We're in Shabbat, show time until Shabbat exit
+        const timeUntilExit = shabbatExitTime.getTime() - now.getTime();
+        const hours = Math.floor(timeUntilExit / (1000 * 60 * 60));
+        const minutes = Math.floor((timeUntilExit % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeUntilExit % (1000 * 60)) / 1000);
         
         setCountdown({ days: 0, hours, minutes, seconds });
       } else {

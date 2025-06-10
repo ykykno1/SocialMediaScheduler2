@@ -2222,7 +2222,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Shabbat times route - proxy to Hebcal API
+  // Shabbat times route using Hebcal API
   app.get("/api/shabbat/times", async (req, res) => {
     try {
       const { city } = req.query;
@@ -2231,7 +2231,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "City parameter is required" });
       }
       
-      // City coordinates mapping for major cities
+      // City coordinates for Hebcal API
       const cityCoordinates: Record<string, { lat: number; lng: number; timezone: string }> = {
         'Jerusalem': { lat: 31.7683, lng: 35.2137, timezone: 'Asia/Jerusalem' },
         'Tel Aviv': { lat: 32.0853, lng: 34.7818, timezone: 'Asia/Jerusalem' },
@@ -2240,9 +2240,7 @@ export function registerRoutes(app: Express): Server {
         'New York': { lat: 40.7128, lng: -74.0060, timezone: 'America/New_York' },
         'Los Angeles': { lat: 34.0522, lng: -118.2437, timezone: 'America/Los_Angeles' },
         'London': { lat: 51.5074, lng: -0.1278, timezone: 'Europe/London' },
-        'Paris': { lat: 48.8566, lng: 2.3522, timezone: 'Europe/Paris' },
-        'Toronto': { lat: 43.6532, lng: -79.3832, timezone: 'America/Toronto' },
-        'Melbourne': { lat: -37.8136, lng: 144.9631, timezone: 'Australia/Melbourne' }
+        'Paris': { lat: 48.8566, lng: 2.3522, timezone: 'Europe/Paris' }
       };
       
       const coords = cityCoordinates[city as string];
@@ -2260,8 +2258,15 @@ export function registerRoutes(app: Express): Server {
       const month = nextFriday.getMonth() + 1;
       const day = nextFriday.getDate();
       
-      // Fetch from Hebcal API
-      const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      // Use Hebcal API with Israeli Halachic parameters
+      // m=50 sets Havdalah time (50 minutes after sunset for Israeli cities)
+      // For Israeli cities, use Israeli Halachic standards
+      const isIsraeliCity = ['Jerusalem', 'Tel Aviv', 'Haifa', 'Beer Sheva'].includes(city as string);
+      const mParam = isIsraeliCity ? '50' : '50'; // 50 minutes for Havdalah
+      
+      const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&m=${mParam}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      
+      console.log(`Fetching Shabbat times from: ${hebcalUrl}`);
       
       const response = await fetch(hebcalUrl);
       if (!response.ok) {
@@ -2269,8 +2274,9 @@ export function registerRoutes(app: Express): Server {
       }
       
       const data = await response.json();
+      console.log('Hebcal response:', JSON.stringify(data, null, 2));
       
-      // Extract relevant information
+      // Extract candle lighting and havdalah times
       const candleLighting = data.items?.find((item: any) => item.category === 'candles');
       const havdalah = data.items?.find((item: any) => item.category === 'havdalah');
       const parasha = data.items?.find((item: any) => item.category === 'parashat');
@@ -2279,16 +2285,39 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ error: "Could not find Shabbat times for this date" });
       }
       
-      // Format response
-      const shabbatTimes = {
-        date: candleLighting.date,
-        candleLighting: candleLighting.date,
-        havdalah: havdalah.date,
-        parasha: parasha?.hebrew || parasha?.title || '',
-        hebrewDate: candleLighting.hdate || ''
+      // Parse times from Hebcal response
+      const shabbatEntryTime = new Date(candleLighting.date);
+      const shabbatExitTime = new Date(havdalah.date);
+      
+      // Campaign closure time (30 minutes before Shabbat entry)
+      const campaignClosureTime = new Date(shabbatEntryTime);
+      campaignClosureTime.setMinutes(campaignClosureTime.getMinutes() - 30);
+      
+      // Format times for display (HH:MM format)
+      const formatTime = (date: Date) => {
+        return date.toLocaleTimeString('he-IL', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: coords.timezone,
+          hour12: false
+        });
       };
       
-      res.json(shabbatTimes);
+      // Format response
+      const responseData = {
+        date: nextFriday.toISOString(),
+        shabbatEntry: shabbatEntryTime.toISOString(),
+        shabbatExit: shabbatExitTime.toISOString(),
+        campaignClosure: campaignClosureTime.toISOString(),
+        candleLighting: formatTime(shabbatEntryTime),
+        havdalah: formatTime(shabbatExitTime),
+        parasha: parasha?.hebrew || parasha?.title || 'פרשת השבוע',
+        hebrewDate: candleLighting.hdate || '',
+        city: city as string,
+        location: data.title || city
+      };
+      
+      res.json(responseData);
     } catch (error) {
       console.error("Shabbat times API error:", error);
       res.status(500).json({ error: "Failed to fetch Shabbat times" });
