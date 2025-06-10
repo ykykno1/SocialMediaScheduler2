@@ -1442,10 +1442,16 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
+      let message = `הוסתרו ${hiddenCount} סרטונים בהצלחה`;
+      if (lockedCount > 0) {
+        message += `. ${lockedCount} סרטונים נעולים לא הושפעו`;
+      }
+
       res.json({ 
         success: true,
-        message: `הוסתרו ${hiddenCount} סרטונים בהצלחה`,
+        message,
         hiddenCount,
+        lockedCount,
         totalVideos: videos.length,
         errors: errors.length > 0 ? errors : undefined
       });
@@ -1479,22 +1485,31 @@ export function registerRoutes(app: Express): Server {
 
       // Get all videos that have saved original status (meaning they were hidden by our system)
       const videoOriginalStatuses = await storage.getAllVideoOriginalStatuses(req.user.id);
-      const videoIds = Object.keys(videoOriginalStatuses);
+      const allVideoIds = Object.keys(videoOriginalStatuses);
+      
+      // Get locked videos and exclude them from restoration
+      const lockedVideoIds = await storage.getAllLockedVideos(req.user.id);
+      const videoIds = allVideoIds.filter(videoId => !lockedVideoIds.includes(videoId));
       
       console.log('Show all - Found video original statuses:', {
-        count: videoIds.length,
+        totalCount: allVideoIds.length,
+        lockedCount: lockedVideoIds.length,
+        restoreCount: videoIds.length,
         videoIds,
         statuses: videoOriginalStatuses
       });
       
       if (videoIds.length === 0) {
-        return res.json({ success: true, message: "אין סרטונים מוסתרים לשחזור", shownCount: 0 });
+        const message = lockedVideoIds.length > 0 
+          ? `אין סרטונים לשחזור. ${lockedVideoIds.length} סרטונים נעולים לא ישוחזרו`
+          : "אין סרטונים מוסתרים לשחזור";
+        return res.json({ success: true, message, shownCount: 0, lockedCount: lockedVideoIds.length });
       }
       
       let shownCount = 0;
       let errors = [];
 
-      // Restore each video to its original status
+      // Restore each video to its original status (excluding locked videos)
       for (const videoId of videoIds) {
         const originalStatus = videoOriginalStatuses[videoId];
         
@@ -1525,10 +1540,16 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
+      let message = `הוצגו ${shownCount} סרטונים בהצלחה`;
+      if (lockedVideoIds.length > 0) {
+        message += `. ${lockedVideoIds.length} סרטונים נעולים לא הושפעו`;
+      }
+
       res.json({ 
         success: true,
-        message: `הוצגו ${shownCount} סרטונים בהצלחה`,
+        message,
         shownCount,
+        lockedCount: lockedVideoIds.length,
         totalVideos: videoIds.length,
         errors: errors.length > 0 ? errors : undefined
       });

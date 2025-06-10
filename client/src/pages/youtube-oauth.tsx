@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Youtube, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Youtube, Eye, EyeOff, Loader2, AlertCircle, Lock, Unlock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
@@ -13,6 +13,8 @@ interface YouTubeVideo {
   publishedAt: string;
   viewCount: string;
   isHidden: boolean;
+  isLocked?: boolean;
+  lockReason?: string;
 }
 
 export default function YouTubeOAuthPage() {
@@ -134,7 +136,25 @@ export default function YouTubeOAuthPage() {
       const response = await apiRequest("GET", "/api/youtube/videos");
       if (response.ok) {
         const data = await response.json();
-        setVideos(data.videos || []);
+        const videosWithLockStatus = await Promise.all(
+          (data.videos || []).map(async (video: YouTubeVideo) => {
+            try {
+              const lockResponse = await apiRequest("GET", `/api/youtube/video/${video.id}/lock-status`);
+              if (lockResponse.ok) {
+                const lockData = await lockResponse.json();
+                return {
+                  ...video,
+                  isLocked: lockData.isLocked || false,
+                  lockReason: lockData.reason
+                };
+              }
+            } catch (error) {
+              console.error(`Failed to fetch lock status for video ${video.id}:`, error);
+            }
+            return { ...video, isLocked: false };
+          })
+        );
+        setVideos(videosWithLockStatus);
       } else {
         throw new Error('שגיאה בטעינת הסרטונים');
       }
@@ -167,6 +187,36 @@ export default function YouTubeOAuthPage() {
         });
       } else {
         throw new Error('שגיאה בעדכון הסרטון');
+      }
+    } catch (error: any) {
+      toast({
+        title: "שגיאה",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleVideoLock = async (videoId: string, currentlyLocked: boolean) => {
+    try {
+      const action = currentlyLocked ? 'unlock' : 'lock';
+      const response = await apiRequest("POST", `/api/youtube/video/${videoId}/${action}`);
+
+      if (response.ok) {
+        setVideos(prev => prev.map(video => 
+          video.id === videoId 
+            ? { ...video, isLocked: !currentlyLocked, lockReason: !currentlyLocked ? 'manual' : undefined }
+            : video
+        ));
+        
+        toast({
+          title: currentlyLocked ? "נעילת הסרטון בוטלה" : "הסרטון ננעל",
+          description: currentlyLocked 
+            ? "הסרטון יכלל במבצעי הסתרה/הצגה" 
+            : "הסרטון לא ישוחזר בצאת השבת",
+        });
+      } else {
+        throw new Error('שגיאה בעדכון נעילת הסרטון');
       }
     } catch (error: any) {
       toast({
