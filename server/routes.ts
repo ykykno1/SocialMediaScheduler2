@@ -121,15 +121,15 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Check if user exists
-      const existingUser = storage.getUserByEmail(email);
+      const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ error: "User already exists" });
       }
 
       // Create user
-      const user = storage.createUser({
+      const user = await storage.createUser({
         email,
-        password, // In real app, hash this
+        password, // Will be hashed in database storage
         username: username || email.split('@')[0]
       });
 
@@ -156,8 +156,8 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Email and password required" });
       }
 
-      const user = storage.getUserByEmail(email);
-      if (!user || user.password !== password) {
+      const user = await storage.verifyPassword(email, password);
+      if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
@@ -191,9 +191,9 @@ export function registerRoutes(app: Express): Server {
   });
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
-  app.get("/api/youtube/auth-status", requireAuth, (req: any, res) => {
+  app.get("/api/youtube/auth-status", requireAuth, async (req: any, res) => {
     console.log('Checking YouTube auth status for user:', req.user.id);
-    const auth = storage.getAuthToken('youtube', req.user.id);
+    const auth = await storage.getAuthToken('youtube', req.user.id);
     console.log('Retrieved auth token:', {
       found: !!auth,
       platform: auth?.platform,
@@ -306,7 +306,7 @@ export function registerRoutes(app: Express): Server {
         channelTitle: authTokenToSave.additionalData?.channelTitle
       });
       
-      storage.saveAuthToken(authTokenToSave, req.user.id);
+      await storage.saveAuthToken(authTokenToSave, req.user.id);
 
       res.json({ 
         success: true,
@@ -1093,7 +1093,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
     try {
       console.log('Fetching YouTube videos for user:', req.user.id);
-      let auth = storage.getAuthToken('youtube', req.user.id);
+      let auth = await storage.getAuthToken('youtube', req.user.id);
       console.log('YouTube auth found:', {
         found: !!auth,
         platform: auth?.platform,
