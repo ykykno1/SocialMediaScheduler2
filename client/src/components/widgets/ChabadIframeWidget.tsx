@@ -140,48 +140,16 @@ export function ChabadIframeWidget() {
             font-weight: normal;
             color: #6b7280;
         }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
     </style>
 </head>
 <body>
-    <div id="chabad-container">
-        <div class="loading">טוען זמני שבת...</div>
-    </div>
-    <script>
-        // Try to load Chabad script
-        var script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = '//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he';
-        
-        script.onload = function() {
-            console.log('Chabad script loaded successfully');
-        };
-        
-        script.onerror = function() {
-            document.getElementById('chabad-container').innerHTML = 
-                '<div style="text-align: center; padding: 20px; color: #dc2626;">' +
-                'לא ניתן לטעון את זמני השבת<br>' +
-                'אנא נסה שוב מאוחר יותר' +
-                '</div>';
-        };
-        
-        document.head.appendChild(script);
-        
-        // Fallback timeout
-        setTimeout(function() {
-            if (document.getElementById('chabad-container').innerHTML.includes('טוען')) {
-                document.getElementById('chabad-container').innerHTML = 
-                    '<div style="text-align: center; padding: 20px;">' +
-                    'זמני שבת עבור ${currentCityData.name}<br>' +
-                    '(מחובר לשרת חבד)' +
-                    '</div>';
-            }
-        }, 10000);
-    </script>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td width="100%" class="clheading">
+                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he"></script>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>`;
   };
