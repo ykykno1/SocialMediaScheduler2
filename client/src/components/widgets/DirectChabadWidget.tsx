@@ -9,12 +9,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const MAJOR_CITIES = [
-  // Israeli Cities (with verified Chabad IDs)
+  // Israeli Cities (verified Chabad IDs from their official site)
   { name: 'Jerusalem', chabadId: '531' },
   { name: 'Tel Aviv', chabadId: '569' },
   { name: 'Haifa', chabadId: '541' },
   { name: 'Beer Sheva', chabadId: '516' },
-  { name: 'Netanya', chabadId: '557' }, // Fixed - was showing Tzila instead of Netanya
+  { name: 'Netanya', chabadId: '556' }, // Verified as correct for Netanya
   { name: 'Ashdod', chabadId: '513' },
   { name: 'Petah Tikva', chabadId: '560' },
   { name: 'Rishon LeZion', chabadId: '563' },
@@ -27,7 +27,7 @@ const MAJOR_CITIES = [
   { name: 'Modi\'in', chabadId: '554' },
   { name: 'Eilat', chabadId: '532' },
   { name: 'Tiberias', chabadId: '568' },
-  { name: 'Nazareth', chabadId: '556' }, // Updated ID for Nazareth
+  { name: 'Nazareth', chabadId: '557' },
   { name: 'Acre', chabadId: '512' },
   { name: 'Safed', chabadId: '564' },
   // International Cities
@@ -37,10 +37,9 @@ const MAJOR_CITIES = [
   { name: 'Paris', chabadId: '2401' }
 ];
 
-export function ChabadIframeWidget() {
+export function DirectChabadWidget() {
   const [currentCity, setCurrentCity] = useState<string>('Jerusalem');
   const [showCitySelector, setShowCitySelector] = useState(false);
-  const [iframeKey, setIframeKey] = useState<number>(0);
 
   // Load saved city from localStorage
   useEffect(() => {
@@ -50,115 +49,17 @@ export function ChabadIframeWidget() {
     }
   }, []);
 
-  // Save city to localStorage and force iframe reload
+  // Save city to localStorage
   useEffect(() => {
     localStorage.setItem('shabbat_city', currentCity);
-    setIframeKey(prev => prev + 1); // Force iframe reload
   }, [currentCity]);
 
   const handleCityChange = (city: string) => {
     setCurrentCity(city);
     setShowCitySelector(false);
-    // Force immediate reload
-    setTimeout(() => {
-      setIframeKey(prev => prev + 1);
-    }, 100);
   };
 
   const currentCityData = MAJOR_CITIES.find(c => c.name === currentCity);
-  
-  // Create iframe content with Chabad widget
-  const createIframeContent = () => {
-    if (!currentCityData) return '';
-    
-    return `
-<!DOCTYPE html>
-<html dir="rtl" lang="he">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            padding: 10px;
-            font-family: Tahoma, Arial, Verdana;
-            background: white;
-            direction: rtl;
-        }
-        .CLTable {
-            background-color: #DBEAF5;
-            border-color: #A0C6E5;
-            font-size: 11px;
-            width: 100%;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #A0C6E5;
-        }
-        .CLHeadingBold {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 12px;
-            text-align: center;
-            font-weight: bold;
-            color: #1e40af;
-            padding: 8px;
-            background: #f0f8ff;
-        }
-        .CLheading {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 11px;
-            text-align: center;
-            color: #000;
-            padding: 4px;
-        }
-        A.CLLink {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 10px;
-            text-align: center;
-            color: #1e40af;
-            text-decoration: none;
-        }
-        A.CLLink:hover {
-            text-decoration: underline;
-        }
-        .CLdate {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 12px;
-            text-align: right;
-            font-weight: bold;
-            color: #374151;
-            padding: 4px 8px;
-        }
-        .CLtime {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 12px;
-            text-align: left;
-            font-weight: normal;
-            margin-bottom: 0;
-            color: #1f2937;
-            padding: 4px 8px;
-        }
-        .CLhr {
-            color: #666;
-            height: 1px;
-            width: 50%;
-        }
-        .CLHolName {
-            font-weight: normal;
-            color: #6b7280;
-        }
-    </style>
-</head>
-<body>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-            <td width="100%" class="clheading">
-                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he"></script>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
-  };
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
@@ -205,24 +106,41 @@ export function ChabadIframeWidget() {
         </DropdownMenu>
       </div>
 
-      {/* Chabad Times IFrame */}
-      <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
+      {/* Chabad CSS Styles - Exactly as provided by Chabad */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .CLTable{background-color:#DBEAF5;border-color:#A0C6E5;font-size:11px}
+          .CLHeadingBold{font-family:Tahoma,Arial,Verdana;font-size:11px;text-align:center;font-weight:bold}
+          .CLheading{font-family:Tahoma,Arial,Verdana;font-size:11px;text-align:center;color:#000}
+          A.CLLink{font-family:Tahoma,Arial,Verdana;font-size:9px;text-align:center;color:#000;text-decoration:none}
+          A.CLLink:Hover{font-family:Tahoma,Arial,Verdana;font-size:9px;text-align:center;color:#000;text-decoration:underline}
+          .CLdate{font-family:Tahoma,Arial,Verdana;font-size:11px;text-align:right;font-weight:bold;text-decoration:none}
+          .CLtime{font-family:Tahoma,Arial,Verdana;font-size:11px;text-align:left;font-weight:normal;margin-bottom:0}
+          .CLhr{color:#666;height:1px;width:50%}
+          .CLHolName{font-weight:normal}
+        `
+      }} />
+
+      {/* Chabad Widget - Exact code as provided */}
+      <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg overflow-hidden p-2">
         {currentCityData && (
-          <iframe
-            key={`chabad-${currentCityData.chabadId}-${iframeKey}-${currentCity}`}
-            srcDoc={createIframeContent()}
-            width="100%"
-            height="200"
-            frameBorder="0"
-            scrolling="no"
-            style={{ border: 'none', borderRadius: '8px' }}
-            title={`זמני שבת ${currentCity}`}
-            onLoad={() => console.log(`Loaded Chabad widget for ${currentCity} (ID: ${currentCityData.chabadId})`)}
-          />
-        )}
-        {!currentCityData && (
-          <div className="text-center p-8 text-gray-500">
-            עיר לא זמינה
+          <div>
+            {/* אין לשנות את הקוד משורה זו ואילך */}
+            {/* כל הזכויות שמורות לאתר בית חב"ד 1993-2025 */}
+            <table width="190" cellPadding="0" cellSpacing="0" border={0}>
+              <tbody>
+                <tr>
+                  <td width="100%" className="clheading">
+                    <script 
+                      key={`${currentCityData.chabadId}-${currentCity}`}
+                      type="text/javascript" 
+                      language="javascript" 
+                      src={`//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he`}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         )}
       </div>
