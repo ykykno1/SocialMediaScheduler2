@@ -9,36 +9,30 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const MAJOR_CITIES = [
-  // Israeli Cities (verified Chabad IDs from their official site)
-  { name: 'Jerusalem', chabadId: '531' },
-  { name: 'Tel Aviv', chabadId: '569' },
-  { name: 'Haifa', chabadId: '541' },
-  { name: 'Beer Sheva', chabadId: '516' },
-  { name: 'Netanya', chabadId: '556' }, // Verified as correct for Netanya
-  { name: 'Ashdod', chabadId: '513' },
-  { name: 'Petah Tikva', chabadId: '560' },
-  { name: 'Rishon LeZion', chabadId: '563' },
-  { name: 'Ashkelon', chabadId: '514' },
-  { name: 'Rehovot', chabadId: '562' },
-  { name: 'Bat Yam', chabadId: '515' },
-  { name: 'Herzliya', chabadId: '542' },
-  { name: 'Kfar Saba', chabadId: '545' },
-  { name: 'Ra\'anana', chabadId: '561' },
-  { name: 'Modi\'in', chabadId: '554' },
-  { name: 'Eilat', chabadId: '532' },
-  { name: 'Tiberias', chabadId: '568' },
-  { name: 'Nazareth', chabadId: '557' },
-  { name: 'Acre', chabadId: '512' },
-  { name: 'Safed', chabadId: '564' },
-  // International Cities
-  { name: 'New York', chabadId: '280' },
-  { name: 'Los Angeles', chabadId: '197' },
-  { name: 'London', chabadId: '2671' },
-  { name: 'Paris', chabadId: '2401' }
+  // Israeli Cities - exact locationid from Chabad
+  { name: 'ירושלים', chabadId: '547' },
+  { name: 'תל אביב', chabadId: '531' },
+  { name: 'חיפה', chabadId: '536' },
+  { name: 'באר שבע', chabadId: '533' },
+  { name: 'צפת', chabadId: '542' },
+  { name: 'אילת', chabadId: '541' },
+  // International Cities - exact locationid from Chabad
+  { name: 'ניו יורק', chabadId: '1034' },
+  { name: 'לונדון', chabadId: '151' },
+  { name: 'פריז', chabadId: '152' },
+  { name: 'אמסטרדם', chabadId: '153' },
+  { name: 'בודפשט', chabadId: '163' },
+  { name: 'ברצלונה', chabadId: '158' },
+  { name: 'סלוניקי', chabadId: '173' },
+  { name: 'רומא', chabadId: '161' },
+  { name: 'קייב', chabadId: '175' },
+  { name: 'פראג', chabadId: '164' },
+  { name: 'אומן', chabadId: '1455' },
+  { name: 'בנגקוק', chabadId: '1022' }
 ];
 
 export function DirectChabadWidget() {
-  const [currentCity, setCurrentCity] = useState<string>('Jerusalem');
+  const [currentCity, setCurrentCity] = useState<string>('ירושלים');
   const [showCitySelector, setShowCitySelector] = useState(false);
 
   // Load saved city from localStorage

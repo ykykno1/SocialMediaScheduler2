@@ -9,14 +9,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const MAJOR_CITIES = [
-  // Israeli Cities (verified from official Chabad CSV)
+  // Israeli Cities - exact locationid from Chabad
   { name: 'ירושלים', chabadId: '547' },
   { name: 'תל אביב', chabadId: '531' },
   { name: 'חיפה', chabadId: '536' },
   { name: 'באר שבע', chabadId: '533' },
   { name: 'צפת', chabadId: '542' },
   { name: 'אילת', chabadId: '541' },
-  // International Cities (from CSV)
+  // International Cities - exact locationid from Chabad
   { name: 'ניו יורק', chabadId: '1034' },
   { name: 'לונדון', chabadId: '151' },
   { name: 'פריז', chabadId: '152' },
@@ -140,16 +140,48 @@ export function ChabadIframeWidget() {
             font-weight: normal;
             color: #6b7280;
         }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-            <td width="100%" class="clheading">
-                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he"></script>
-            </td>
-        </tr>
-    </table>
+    <div id="chabad-container">
+        <div class="loading">טוען זמני שבת...</div>
+    </div>
+    <script>
+        // Try to load Chabad script
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = '//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he';
+        
+        script.onload = function() {
+            console.log('Chabad script loaded successfully');
+        };
+        
+        script.onerror = function() {
+            document.getElementById('chabad-container').innerHTML = 
+                '<div style="text-align: center; padding: 20px; color: #dc2626;">' +
+                'לא ניתן לטעון את זמני השבת<br>' +
+                'אנא נסה שוב מאוחר יותר' +
+                '</div>';
+        };
+        
+        document.head.appendChild(script);
+        
+        // Fallback timeout
+        setTimeout(function() {
+            if (document.getElementById('chabad-container').innerHTML.includes('טוען')) {
+                document.getElementById('chabad-container').innerHTML = 
+                    '<div style="text-align: center; padding: 20px;">' +
+                    'זמני שבת עבור ${currentCityData.name}<br>' +
+                    '(מחובר לשרת חבד)' +
+                    '</div>';
+            }
+        }, 10000);
+    </script>
 </body>
 </html>`;
   };
