@@ -2264,15 +2264,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "City not supported" });
       }
       
-      // Get next Friday's date
+      // Get next 2 Fridays
       const today = new Date();
       const daysUntilFriday = (5 - today.getDay() + 7) % 7;
       const nextFriday = new Date(today);
       nextFriday.setDate(today.getDate() + (daysUntilFriday === 0 ? 7 : daysUntilFriday));
       
-      const year = nextFriday.getFullYear();
-      const month = nextFriday.getMonth() + 1;
-      const day = nextFriday.getDate();
+      const secondFriday = new Date(nextFriday);
+      secondFriday.setDate(nextFriday.getDate() + 7);
       
       // Use exact Israeli timing data for maximum accuracy
       const isIsraeliCity = [
@@ -2282,88 +2281,103 @@ export function registerRoutes(app: Express): Server {
         'Nazareth', 'Acre', 'Safed'
       ].includes(city as string);
       
-      let shabbatEntryTime: Date;
-      let shabbatExitTime: Date;
-      let parasha: any;
-      let hebrewDate: string;
-      
       console.log(`City received: "${city}", isIsraeliCity: ${isIsraeliCity}`);
       
-      if (isIsraeliCity) {
-        // Define Mako times for Israeli cities based on geographic zones
-        const makoTimes: Record<string, { entry: [number, number], exit: [number, number] }> = {
-          'Tel Aviv': { entry: [19, 26], exit: [20, 30] },
-          'Jerusalem': { entry: [19, 18], exit: [20, 21] },
-          'Haifa': { entry: [19, 28], exit: [20, 32] },
-          'Beer Sheva': { entry: [19, 20], exit: [20, 25] },
-          'Netanya': { entry: [19, 27], exit: [20, 31] },
-          'Ashdod': { entry: [19, 24], exit: [20, 28] },
-          'Petah Tikva': { entry: [19, 25], exit: [20, 29] },
-          'Rishon LeZion': { entry: [19, 25], exit: [20, 29] },
-          'Ashkelon': { entry: [19, 23], exit: [20, 27] },
-          'Rehovot': { entry: [19, 24], exit: [20, 28] },
-          'Bat Yam': { entry: [19, 26], exit: [20, 30] },
-          'Herzliya': { entry: [19, 27], exit: [20, 31] },
-          'Kfar Saba': { entry: [19, 26], exit: [20, 30] },
-          'Ra\'anana': { entry: [19, 26], exit: [20, 30] },
-          'Modi\'in': { entry: [19, 22], exit: [20, 26] },
-          'Eilat': { entry: [19, 15], exit: [20, 20] },
-          'Tiberias': { entry: [19, 22], exit: [20, 25] },
-          'Nazareth': { entry: [19, 24], exit: [20, 27] },
-          'Acre': { entry: [19, 29], exit: [20, 33] },
-          'Safed': { entry: [19, 20], exit: [20, 23] }
-        };
+      // Function to get Shabbat times for a specific Friday
+      const getShabbatTimesForDate = async (fridayDate: Date) => {
+        const year = fridayDate.getFullYear();
+        const month = fridayDate.getMonth() + 1;
+        const day = fridayDate.getDate();
+        
+        let shabbatEntryTime: Date;
+        let shabbatExitTime: Date;
+        let parasha: any;
+        let hebrewDate: string;
+        
+        if (isIsraeliCity) {
+          // Define Mako times for Israeli cities
+          const makoTimes: Record<string, { entry: [number, number], exit: [number, number] }> = {
+            'Tel Aviv': { entry: [19, 26], exit: [20, 30] },
+            'Jerusalem': { entry: [19, 18], exit: [20, 21] },
+            'Haifa': { entry: [19, 28], exit: [20, 32] },
+            'Beer Sheva': { entry: [19, 20], exit: [20, 25] },
+            'Netanya': { entry: [19, 27], exit: [20, 31] },
+            'Ashdod': { entry: [19, 24], exit: [20, 28] },
+            'Petah Tikva': { entry: [19, 25], exit: [20, 29] },
+            'Rishon LeZion': { entry: [19, 25], exit: [20, 29] },
+            'Ashkelon': { entry: [19, 23], exit: [20, 27] },
+            'Rehovot': { entry: [19, 24], exit: [20, 28] },
+            'Bat Yam': { entry: [19, 26], exit: [20, 30] },
+            'Herzliya': { entry: [19, 27], exit: [20, 31] },
+            'Kfar Saba': { entry: [19, 26], exit: [20, 30] },
+            'Ra\'anana': { entry: [19, 26], exit: [20, 30] },
+            'Modi\'in': { entry: [19, 22], exit: [20, 26] },
+            'Eilat': { entry: [19, 15], exit: [20, 20] },
+            'Tiberias': { entry: [19, 22], exit: [20, 25] },
+            'Nazareth': { entry: [19, 24], exit: [20, 27] },
+            'Acre': { entry: [19, 29], exit: [20, 33] },
+            'Safed': { entry: [19, 20], exit: [20, 23] }
+          };
 
-        const times = makoTimes[city as string];
-        if (times) {
-          const fridayDate = new Date(year, month - 1, day);
-          shabbatEntryTime = new Date(fridayDate);
-          shabbatEntryTime.setHours(times.entry[0], times.entry[1], 0, 0);
+          const times = makoTimes[city as string];
+          if (times) {
+            shabbatEntryTime = new Date(year, month - 1, day);
+            shabbatEntryTime.setHours(times.entry[0], times.entry[1], 0, 0);
+            
+            shabbatExitTime = new Date(year, month - 1, day + 1);
+            shabbatExitTime.setHours(times.exit[0], times.exit[1], 0, 0);
+          }
           
-          const saturdayDate = new Date(year, month - 1, day + 1);
-          shabbatExitTime = new Date(saturdayDate);
-          shabbatExitTime.setHours(times.exit[0], times.exit[1], 0, 0);
+          // Get Hebrew date and Parasha from Hebcal
+          const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+          try {
+            const response = await fetch(hebcalUrl);
+            const data = await response.json();
+            parasha = data.items?.find((item: any) => item.category === 'parashat');
+            hebrewDate = parasha?.hdate || '';
+          } catch (error) {
+            console.error('Could not fetch Hebrew date:', error);
+            hebrewDate = '';
+            parasha = { hebrew: 'פרשת השבוע' };
+          }
+        } else {
+          // Use Hebcal API for international cities
+          const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
           
-          console.log(`Using exact Mako times for ${city}: ${times.entry[0]}:${times.entry[1].toString().padStart(2,'0')}/${times.exit[0]}:${times.exit[1].toString().padStart(2,'0')}`);
-        }
-        
-        // Get Hebrew date and Parasha from Hebcal
-        const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        try {
           const response = await fetch(hebcalUrl);
+          if (!response.ok) {
+            throw new Error(`Hebcal API returned ${response.status}`);
+          }
+          
           const data = await response.json();
+          
+          const candleLighting = data.items?.find((item: any) => item.category === 'candles');
+          const havdalah = data.items?.find((item: any) => item.category === 'havdalah');
           parasha = data.items?.find((item: any) => item.category === 'parashat');
+          
+          if (!candleLighting || !havdalah) {
+            throw new Error('Could not find required Shabbat times');
+          }
+          
+          shabbatEntryTime = new Date(candleLighting.date);
+          shabbatExitTime = new Date(havdalah.date);
           hebrewDate = parasha?.hdate || '';
-        } catch (error) {
-          console.error('Could not fetch Hebrew date:', error);
-          hebrewDate = '';
-          parasha = { hebrew: 'פרשת השבוע' };
-        }
-      } else {
-        // Fallback to API for other cities
-        const hebcalUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${coords.lat}&longitude=${coords.lng}&date=${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        
-        console.log(`Fetching Shabbat times from: ${hebcalUrl}`);
-        
-        const response = await fetch(hebcalUrl);
-        if (!response.ok) {
-          throw new Error(`Hebcal API returned ${response.status}`);
         }
         
-        const data = await response.json();
-        
-        const candleLighting = data.items?.find((item: any) => item.category === 'candles');
-        const havdalah = data.items?.find((item: any) => item.category === 'havdalah');
-        parasha = data.items?.find((item: any) => item.category === 'parashat');
-        
-        if (!candleLighting || !havdalah) {
-          throw new Error('Could not find required Shabbat times');
-        }
-        
-        shabbatEntryTime = new Date(candleLighting.date);
-        shabbatExitTime = new Date(havdalah.date);
-        hebrewDate = parasha?.hdate || '';
-      }
+        return {
+          shabbatEntryTime,
+          shabbatExitTime,
+          parasha,
+          hebrewDate
+        };
+      };
+
+      // Get times for both Shabbats
+      const firstShabbat = await getShabbatTimesForDate(nextFriday);
+      const secondShabbat = await getShabbatTimesForDate(secondFriday);
+      
+      console.log(`Using exact Mako times for ${city}: First Shabbat ${firstShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${firstShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
+      console.log(`Using exact Mako times for ${city}: Second Shabbat ${secondShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${secondShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
       
       // Campaign closure time (30 minutes before Shabbat entry)
       const campaignClosureTime = new Date(shabbatEntryTime);
@@ -2423,17 +2437,50 @@ export function registerRoutes(app: Express): Server {
         `שבת ${parasha?.hebrew || 'פרשת השבוע'}, ${formattedHebrewDate} ${currentDate}` : 
         `שבת ${parasha?.hebrew || 'פרשת השבוע'}`;
 
-      // Format response
+      // Format both Shabbats
+      const formatShabbat = (shabbatData: any, fridayDate: Date) => {
+        const formattedHebrewDate = formatHebrewDate(shabbatData.hebrewDate, shabbatData.parasha?.hebrew || '');
+        const currentDate = fridayDate.toLocaleDateString('he-IL', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        });
+        
+        const fullHebrewDateString = formattedHebrewDate ? 
+          `שבת ${shabbatData.parasha?.hebrew || 'פרשת השבוע'}, ${formattedHebrewDate} ${currentDate}` : 
+          `שבת ${shabbatData.parasha?.hebrew || 'פרשת השבוע'}`;
+
+        // Campaign closure time (30 minutes before Shabbat entry)
+        const campaignClosureTime = new Date(shabbatData.shabbatEntryTime);
+        campaignClosureTime.setMinutes(campaignClosureTime.getMinutes() - 30);
+
+        return {
+          date: fridayDate.toISOString(),
+          shabbatEntry: shabbatData.shabbatEntryTime.toISOString(),
+          shabbatExit: shabbatData.shabbatExitTime.toISOString(),
+          campaignClosure: campaignClosureTime.toISOString(),
+          candleLighting: shabbatData.shabbatEntryTime.toISOString(),
+          havdalah: shabbatData.shabbatExitTime.toISOString(),
+          parasha: shabbatData.parasha?.hebrew || shabbatData.parasha?.title || 'פרשת השבוע',
+          hebrewDate: fullHebrewDateString,
+          entryTime: formatTime(shabbatData.shabbatEntryTime),
+          exitTime: formatTime(shabbatData.shabbatExitTime)
+        };
+      };
+
+      // Format response with 2 Shabbats
       const responseData = {
+        city: city as string,
+        shabbats: [
+          formatShabbat(firstShabbat, nextFriday),
+          formatShabbat(secondShabbat, secondFriday)
+        ],
+        // Backward compatibility - use first Shabbat data
         date: nextFriday.toISOString(),
-        shabbatEntry: shabbatEntryTime.toISOString(),
-        shabbatExit: shabbatExitTime.toISOString(),
-        campaignClosure: campaignClosureTime.toISOString(),
-        candleLighting: shabbatEntryTime.toISOString(),
-        havdalah: shabbatExitTime.toISOString(),
-        parasha: parasha?.hebrew || parasha?.title || 'פרשת השבוע',
-        hebrewDate: fullHebrewDateString,
-        city: city as string
+        shabbatEntry: firstShabbat.shabbatEntryTime.toISOString(),
+        shabbatExit: firstShabbat.shabbatExitTime.toISOString(),
+        parasha: firstShabbat.parasha?.hebrew || firstShabbat.parasha?.title || 'פרשת השבוע',
+        hebrewDate: formatShabbat(firstShabbat, nextFriday).hebrewDate
       };
       
       res.json(responseData);

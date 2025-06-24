@@ -16,6 +16,15 @@ interface ShabbatTimes {
   parasha: string;
   hebrewDate: string;
   city: string;
+  shabbats?: Array<{
+    date: string;
+    shabbatEntry: string;
+    shabbatExit: string;
+    parasha: string;
+    hebrewDate: string;
+    entryTime: string;
+    exitTime: string;
+  }>;
 }
 
 interface CountdownTime {
