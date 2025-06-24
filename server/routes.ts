@@ -2379,10 +2379,6 @@ export function registerRoutes(app: Express): Server {
       console.log(`Using exact Mako times for ${city}: First Shabbat ${firstShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${firstShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
       console.log(`Using exact Mako times for ${city}: Second Shabbat ${secondShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${secondShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
       
-      // Campaign closure time (30 minutes before Shabbat entry)
-      const campaignClosureTime = new Date(shabbatEntryTime);
-      campaignClosureTime.setMinutes(campaignClosureTime.getMinutes() - 30);
-      
       // Format times for display (HH:MM format)
       const formatTime = (date: Date) => {
         return date.toLocaleTimeString('he-IL', { 
@@ -2393,11 +2389,10 @@ export function registerRoutes(app: Express): Server {
         });
       };
       
-      // Format Hebrew date according to user specification
-      const formatHebrewDate = (hebrewDateStr: string, parashaName: string) => {
+      // Format Hebrew date
+      const formatHebrewDate = (hebrewDateStr: string) => {
         if (!hebrewDateStr) return '';
         
-        // Convert "18 Sivan 5785" to "י"ח בסיוון ה'תשפ"ה"
         const hebrewNumerals: { [key: string]: string } = {
           '1': 'א\'', '2': 'ב\'', '3': 'ג\'', '4': 'ד\'', '5': 'ה\'', '6': 'ו\'', '7': 'ז\'', '8': 'ח\'', '9': 'ט\'', '10': 'י\'',
           '11': 'י"א', '12': 'י"ב', '13': 'י"ג', '14': 'י"ד', '15': 'ט"ו', '16': 'ט"ז', '17': 'י"ז', '18': 'י"ח', '19': 'י"ט', '20': 'כ\'',
@@ -2423,23 +2418,10 @@ export function registerRoutes(app: Express): Server {
         }
         return hebrewDateStr;
       };
-      
-      const formattedHebrewDate = formatHebrewDate(parasha?.hdate || '', parasha?.hebrew || '');
-      const currentDate = nextFriday.toLocaleDateString('he-IL', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      });
-      
-
-      
-      const fullHebrewDateString = formattedHebrewDate ? 
-        `שבת ${parasha?.hebrew || 'פרשת השבוע'}, ${formattedHebrewDate} ${currentDate}` : 
-        `שבת ${parasha?.hebrew || 'פרשת השבוע'}`;
 
       // Format both Shabbats
       const formatShabbat = (shabbatData: any, fridayDate: Date) => {
-        const formattedHebrewDate = formatHebrewDate(shabbatData.hebrewDate, shabbatData.parasha?.hebrew || '');
+        const formattedHebrewDate = formatHebrewDate(shabbatData.hebrewDate);
         const currentDate = fridayDate.toLocaleDateString('he-IL', { 
           day: '2-digit', 
           month: '2-digit', 
@@ -2479,6 +2461,9 @@ export function registerRoutes(app: Express): Server {
         date: nextFriday.toISOString(),
         shabbatEntry: firstShabbat.shabbatEntryTime.toISOString(),
         shabbatExit: firstShabbat.shabbatExitTime.toISOString(),
+        campaignClosure: new Date(firstShabbat.shabbatEntryTime.getTime() - 30 * 60000).toISOString(),
+        candleLighting: firstShabbat.shabbatEntryTime.toISOString(),
+        havdalah: firstShabbat.shabbatExitTime.toISOString(),
         parasha: firstShabbat.parasha?.hebrew || firstShabbat.parasha?.title || 'פרשת השבוע',
         hebrewDate: formatShabbat(firstShabbat, nextFriday).hebrewDate
       };
