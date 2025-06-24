@@ -40,6 +40,7 @@ const MAJOR_CITIES = [
 export function ChabadIframeWidget() {
   const [currentCity, setCurrentCity] = useState<string>('Jerusalem');
   const [showCitySelector, setShowCitySelector] = useState(false);
+  const [iframeKey, setIframeKey] = useState<number>(0);
 
   // Load saved city from localStorage
   useEffect(() => {
@@ -49,14 +50,19 @@ export function ChabadIframeWidget() {
     }
   }, []);
 
-  // Save city to localStorage
+  // Save city to localStorage and force iframe reload
   useEffect(() => {
     localStorage.setItem('shabbat_city', currentCity);
+    setIframeKey(prev => prev + 1); // Force iframe reload
   }, [currentCity]);
 
   const handleCityChange = (city: string) => {
     setCurrentCity(city);
     setShowCitySelector(false);
+    // Force immediate reload
+    setTimeout(() => {
+      setIframeKey(prev => prev + 1);
+    }, 100);
   };
 
   const currentCityData = MAJOR_CITIES.find(c => c.name === currentCity);
@@ -201,16 +207,24 @@ export function ChabadIframeWidget() {
 
       {/* Chabad Times IFrame */}
       <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
-        <iframe
-          key={currentCityData?.chabadId}
-          srcDoc={createIframeContent()}
-          width="100%"
-          height="200"
-          frameBorder="0"
-          scrolling="no"
-          style={{ border: 'none', borderRadius: '8px' }}
-          title={`זמני שבת ${currentCity}`}
-        />
+        {currentCityData && (
+          <iframe
+            key={`chabad-${currentCityData.chabadId}-${iframeKey}-${currentCity}`}
+            srcDoc={createIframeContent()}
+            width="100%"
+            height="200"
+            frameBorder="0"
+            scrolling="no"
+            style={{ border: 'none', borderRadius: '8px' }}
+            title={`זמני שבת ${currentCity}`}
+            onLoad={() => console.log(`Loaded Chabad widget for ${currentCity} (ID: ${currentCityData.chabadId})`)}
+          />
+        )}
+        {!currentCityData && (
+          <div className="text-center p-8 text-gray-500">
+            עיר לא זמינה
+          </div>
+        )}
       </div>
 
       {/* Footer */}
