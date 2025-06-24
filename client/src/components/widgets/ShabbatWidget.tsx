@@ -286,9 +286,52 @@ export function ShabbatWidget() {
           </div>
         )}
 
-        {shabbatTimes && (
+        {shabbatTimes && shabbatTimes.shabbats && shabbatTimes.shabbats.length > 0 ? (
           <>
-            {/* Hebrew Date at Top */}
+            {/* Display both Shabbats */}
+            <div className="space-y-4 mb-4">
+              {shabbatTimes.shabbats.map((shabbat, index) => (
+                <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                  <div className="text-center mb-3">
+                    <p className="text-sm font-medium text-primary">
+                      {shabbat.hebrewDate}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="text-center p-3 bg-primary/10 rounded-lg border">
+                      <Clock className="h-4 w-4 mx-auto mb-1 text-primary" />
+                      <p className="text-xs font-medium text-primary mb-1">כניסת שבת</p>
+                      <p className="text-lg font-bold">
+                        {shabbat.entryTime || formatTime(shabbat.shabbatEntry)}
+                      </p>
+                    </div>
+                    
+                    <div className="text-center p-3 bg-primary/10 rounded-lg border">
+                      <Clock className="h-4 w-4 mx-auto mb-1 text-primary" />
+                      <p className="text-xs font-medium text-primary mb-1">יציאת שבת</p>
+                      <p className="text-lg font-bold">
+                        {shabbat.exitTime || formatTime(shabbat.shabbatExit)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Countdown to first Shabbat */}
+            <div className="text-center p-3 bg-primary/5 rounded-lg border">
+              <p className="text-base font-medium text-primary">
+                {formatCountdown()}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                * הסתרת תוכן 30 דקות לפני כניסת שבת
+              </p>
+            </div>
+          </>
+        ) : shabbatTimes ? (
+          // Fallback for single Shabbat display
+          <>
             <div className="text-center mb-4">
               {shabbatTimes.hebrewDate && (
                 <p className="text-sm font-medium text-primary">
@@ -297,7 +340,6 @@ export function ShabbatWidget() {
               )}
             </div>
 
-            {/* Shabbat Entry/Exit Times */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center p-3 bg-primary/10 rounded-lg border">
                 <Clock className="h-4 w-4 mx-auto mb-1 text-primary" />
@@ -311,7 +353,6 @@ export function ShabbatWidget() {
               </div>
             </div>
 
-            {/* Countdown */}
             <div className="text-center p-3 bg-primary/5 rounded-lg border">
               <p className="text-base font-medium text-primary">
                 {formatCountdown()}
@@ -321,7 +362,7 @@ export function ShabbatWidget() {
               </p>
             </div>
           </>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
