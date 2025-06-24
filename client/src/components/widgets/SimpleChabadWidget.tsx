@@ -37,10 +37,9 @@ const MAJOR_CITIES = [
   { name: 'Paris', chabadId: '2401' }
 ];
 
-export function ChabadShabbatWidget() {
+export function SimpleChabadWidget() {
   const [currentCity, setCurrentCity] = useState<string>('Jerusalem');
   const [showCitySelector, setShowCitySelector] = useState(false);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   // Load saved city from localStorage
   useEffect(() => {
@@ -50,70 +49,20 @@ export function ChabadShabbatWidget() {
     }
   }, []);
 
-  // Load Chabad script when city changes
+  // Save city to localStorage
   useEffect(() => {
-    const cityData = MAJOR_CITIES.find(c => c.name === currentCity);
-    if (!cityData) return;
-
-    // Remove any existing Chabad scripts first
-    const existingScripts = document.querySelectorAll('script[src*="chabad.org"]');
-    existingScripts.forEach(script => {
-      try {
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
-      } catch (e) {
-        // Script already removed, ignore
-      }
-    });
-
-    // Clear existing content
-    const container = document.getElementById('chabad-times-container');
-    if (container) {
-      container.innerHTML = '';
-    }
-
-    // Create the table structure first
-    const tableHtml = `
-      <table width="190" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td width="100%" class="clheading" id="chabad-script-target">
-            Loading Shabbat times...
-          </td>
-        </tr>
-      </table>
-    `;
-
-    if (container) {
-      container.innerHTML = tableHtml;
-    }
-
-    // Create and load new script
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = `//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${cityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he`;
-    
-    script.onload = () => {
-      setScriptLoaded(true);
-      localStorage.setItem('shabbat_city', currentCity);
-    };
-
-    script.onerror = () => {
-      console.error('Failed to load Chabad script');
-      if (container) {
-        container.innerHTML = '<div class="text-red-500 text-center p-4">Failed to load Shabbat times</div>';
-      }
-    };
-
-    // Append script to head
-    document.head.appendChild(script);
+    localStorage.setItem('shabbat_city', currentCity);
   }, [currentCity]);
 
   const handleCityChange = (city: string) => {
     setCurrentCity(city);
     setShowCitySelector(false);
-    setScriptLoaded(false);
   };
+
+  const currentCityData = MAJOR_CITIES.find(c => c.name === currentCity);
+  const chabadUrl = currentCityData 
+    ? `//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he`
+    : '';
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
@@ -164,89 +113,89 @@ export function ChabadShabbatWidget() {
       <style dangerouslySetInnerHTML={{
         __html: `
           .CLTable {
-            background-color: #DBEAF5;
-            border-color: #A0C6E5;
-            font-size: 11px;
-            width: 100%;
-            border-radius: 8px;
-            overflow: hidden;
+            background-color: #DBEAF5 !important;
+            border-color: #A0C6E5 !important;
+            font-size: 11px !important;
+            width: 100% !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
           }
           .CLHeadingBold {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 12px;
-            text-align: center;
-            font-weight: bold;
-            color: #1e40af;
-            padding: 8px;
+            font-family: Tahoma, Arial, Verdana !important;
+            font-size: 12px !important;
+            text-align: center !important;
+            font-weight: bold !important;
+            color: #1e40af !important;
+            padding: 8px !important;
           }
           .CLheading {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 11px;
-            text-align: center;
-            color: #000;
-            padding: 4px;
+            font-family: Tahoma, Arial, Verdana !important;
+            font-size: 11px !important;
+            text-align: center !important;
+            color: #000 !important;
+            padding: 4px !important;
           }
           A.CLLink {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 10px;
-            text-align: center;
-            color: #1e40af;
-            text-decoration: none;
+            font-family: Tahoma, Arial, Verdana !important;
+            font-size: 10px !important;
+            text-align: center !important;
+            color: #1e40af !important;
+            text-decoration: none !important;
           }
           A.CLLink:Hover {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 10px;
-            text-align: center;
-            color: #1e40af;
-            text-decoration: underline;
+            font-family: Tahoma, Arial, Verdana !important;
+            font-size: 10px !important;
+            text-align: center !important;
+            color: #1e40af !important;
+            text-decoration: underline !important;
           }
           .CLdate {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 12px;
-            text-align: right;
-            font-weight: bold;
-            text-decoration: none;
-            color: #374151;
-            padding: 4px 8px;
+            font-family: Tahoma, Arial, Verdana !important;
+            font-size: 12px !important;
+            text-align: right !important;
+            font-weight: bold !important;
+            text-decoration: none !important;
+            color: #374151 !important;
+            padding: 4px 8px !important;
           }
           .CLtime {
-            font-family: Tahoma, Arial, Verdana;
-            font-size: 12px;
-            text-align: left;
-            font-weight: normal;
-            margin-bottom: 0;
-            color: #1f2937;
-            padding: 4px 8px;
+            font-family: Tahoma, Arial, Verdana !important;
+            font-size: 12px !important;
+            text-align: left !important;
+            font-weight: normal !important;
+            margin-bottom: 0 !important;
+            color: #1f2937 !important;
+            padding: 4px 8px !important;
           }
           .CLhr {
-            color: #666;
-            height: 1px;
-            width: 50%;
+            color: #666 !important;
+            height: 1px !important;
+            width: 50% !important;
           }
           .CLHolName {
-            font-weight: normal;
-            color: #6b7280;
-          }
-          #chabad-times-container table {
-            width: 100% !important;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-weight: normal !important;
+            color: #6b7280 !important;
           }
         `
       }} />
 
       {/* Chabad Times Container */}
-      <div 
-        id="chabad-times-container" 
-        className="mt-4 bg-white dark:bg-gray-800 rounded-lg overflow-hidden"
-      >
-        {!scriptLoaded && (
-          <div className="text-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">טוען זמני שבת...</p>
-          </div>
-        )}
+      <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
+        <table width="190" cellPadding="0" cellSpacing="0" border={0}>
+          <tbody>
+            <tr>
+              <td width="100%" className="clheading">
+                {chabadUrl && (
+                  <script 
+                    type="text/javascript" 
+                    src={chabadUrl}
+                    key={currentCityData?.chabadId}
+                  />
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* Footer */}
