@@ -614,31 +614,40 @@ export function registerRoutes(app: Express): Server {
   // Logout/disconnect
   app.post("/api/logout", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      console.log(`LOGOUT_API: Starting logout for user: ${req.user?.id}`);
+      console.log(`=== FACEBOOK LOGOUT STARTED FOR USER: ${req.user?.id} ===`);
       
       // Check if user has Facebook auth before removing
-      const authBefore = await storage.getAuthToken('facebook', req.user?.id);
-      console.log(`LOGOUT_API: Auth exists before removal: ${!!authBefore}`);
+      const authBefore = storage.getFacebookAuth(req.user?.id);
+      console.log(`BEFORE LOGOUT: Facebook auth exists: ${!!authBefore}`);
+      if (authBefore) {
+        console.log(`BEFORE LOGOUT: Access token length: ${authBefore.accessToken?.length || 0}`);
+      }
       
-      await storage.removeFacebookAuth(req.user?.id);
-      console.log(`LOGOUT_API: removeFacebookAuth completed`);
+      // Force removal from memory and database
+      console.log(`CALLING removeFacebookAuth for user: ${req.user?.id}`);
+      storage.removeFacebookAuth(req.user?.id);
       
-      // Check if auth was actually removed
-      const authAfter = await storage.getAuthToken('facebook', req.user?.id);
-      console.log(`LOGOUT_API: Auth exists after removal: ${!!authAfter}`);
+      // Verify removal
+      const authAfter = storage.getFacebookAuth(req.user?.id);
+      console.log(`AFTER LOGOUT: Facebook auth exists: ${!!authAfter}`);
+      
+      // Also remove from generic auth tokens
+      storage.removeAuthToken('facebook', req.user?.id);
+      console.log(`REMOVED from generic auth tokens`);
       
       storage.addHistoryEntry({
         timestamp: new Date(),
-        action: "restore", // Same as auth since this is disabling automation
+        action: "restore",
         platform: "facebook",
         success: true,
         affectedItems: 0,
         error: undefined
       }, req.user?.id);
       
+      console.log(`=== FACEBOOK LOGOUT COMPLETED FOR USER: ${req.user?.id} ===`);
       res.json({ success: true, message: "Logged out successfully" });
     } catch (error) {
-      console.error('LOGOUT_API: Logout error:', error);
+      console.error('=== FACEBOOK LOGOUT ERROR ===', error);
       res.status(500).json({ error: "Failed to logout", message: error instanceof Error ? error.message : "Unknown error" });
     }
   });
