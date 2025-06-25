@@ -173,20 +173,37 @@ export class MemStorage implements IStorage {
 
   // Legacy Facebook-specific auth (user-specific)
   getFacebookAuth(userId?: string): FacebookAuth | null {
-    if (!userId) return null;
+    if (!userId) {
+      console.log('getFacebookAuth called without userId');
+      return null;
+    }
+    
+    console.log(`Getting Facebook auth for user ${userId}`);
+    console.log('Available users in userFacebookAuth:', Array.from(this.userFacebookAuth.keys()));
+    
     const auth = this.userFacebookAuth.get(userId) || null;
-    console.log(`Getting Facebook auth for user ${userId}:`, !!auth);
+    console.log(`Facebook auth found for user ${userId}:`, !!auth);
+    
     if (auth) {
       console.log(`Auth token exists, access token starts with: ${auth.accessToken.substring(0, 20)}...`);
+    } else {
+      console.log('No Facebook auth found for this user');
     }
+    
     return auth;
   }
 
   saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth {
     if (!userId) throw new Error('User ID required for saving Facebook auth');
 
+    console.log(`Saving Facebook auth for user: ${userId}`);
+    console.log('Token to save:', { accessToken: token.accessToken.substring(0, 20) + '...', expiresIn: token.expiresIn });
+
     const validatedToken = facebookAuthSchema.parse(token);
     this.userFacebookAuth.set(userId, validatedToken);
+    
+    console.log(`Facebook auth saved successfully for user: ${userId}`);
+    console.log('Users with Facebook auth after save:', Array.from(this.userFacebookAuth.keys()));
 
     // Sync with generic auth
     let userTokens = this.userAuthTokens.get(userId);
