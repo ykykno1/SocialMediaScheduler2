@@ -89,13 +89,13 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // בקשת הרשאות כולל הרשאות עמודים
-      // הוספנו pages_show_list ו-pages_read_engagement לגישה לעמודים
+      // בקשת הרשאות בסיסיות - רק הרשאות תקפות
+      // pages_manage_posts מאפשר ניהול פוסטים בעמודים
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,user_posts,pages_show_list,pages_read_engagement`;
+        `scope=public_profile,email,user_posts,pages_manage_posts`;
       
       // Open popup window
       const width = 600;

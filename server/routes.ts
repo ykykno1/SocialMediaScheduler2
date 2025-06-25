@@ -471,8 +471,8 @@ export function registerRoutes(app: Express): Server {
     });
   });
   
-  // Exchange Facebook code for token - Public endpoint
-  app.post("/api/auth-callback", async (req: any, res) => {
+  // Exchange Facebook code for token - Requires authentication
+  app.post("/api/auth-callback", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const { code, redirectUri } = req.body;
       
@@ -523,14 +523,14 @@ export function registerRoutes(app: Express): Server {
       // Try to get page access information as well
       let pageAccess = false;
       try {
-        // Using the correct API version and endpoint per Claude's advice
+        // Check for pages_manage_posts permission
         const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
         const pagesResponse = await fetch(pagesUrl);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as any;
           if (pagesData.data && pagesData.data.length > 0) {
             pageAccess = true;
-            console.log(`Found ${pagesData.data.length} Facebook pages for user with the correct permissions`);
+            console.log(`Found ${pagesData.data.length} Facebook pages for user`);
           }
         } else {
           const errorData = await pagesResponse.json();
@@ -540,17 +540,34 @@ export function registerRoutes(app: Express): Server {
         console.error("Error fetching user pages:", pagesError);
       }
       
-      // For now, just save the token temporarily - user needs to be logged into system first
-      console.log(`Facebook auth successful for Facebook user: ${userData.id}`);
-      console.log(`Access token received with page access: ${pageAccess}`);
+      // Save the auth token (user-specific)
+      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
+      console.log(`Facebook user ID: ${userData.id}`);
+      const auth = await storage.saveFacebookAuth({
+        accessToken: tokenData.access_token,
+        expiresIn: tokenData.expires_in,
+        timestamp: Date.now(),
+        userId: userData.id,
+        pageAccess,
+        isManualToken: false
+      }, req.user?.id);
+      console.log(`Auth saved successfully:`, !!auth);
       
-      // We'll return the token data to the client for storage
-      // Client will handle associating it with the logged-in user
+      // Add a history entry for successful authentication (user-specific)
+      storage.addHistoryEntry({
+        timestamp: new Date(),
+        action: "restore",
+        platform: "facebook",
+        success: true,
+        affectedItems: 0,
+        error: undefined
+      }, req.user?.id);
       
       res.json({
         access_token: tokenData.access_token,
         expires_in: tokenData.expires_in,
-        user_id: userData.id
+        user_id: userData.id,
+        pageAccess
       });
     } catch (error) {
       console.error("Auth callback error:", error);
@@ -575,6 +592,45 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
+  // Save Facebook token (after OAuth callback)
+  app.post("/api/facebook/save-token", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { access_token, expires_in, user_id, pageAccess } = req.body;
+      
+      if (!access_token || !user_id) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      // Save the auth token with the current user
+      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
+      console.log(`Facebook user ID: ${user_id}`);
+      const auth = await storage.saveFacebookAuth({
+        accessToken: access_token,
+        expiresIn: expires_in || 3600,
+        timestamp: Date.now(),
+        userId: user_id,
+        pageAccess: pageAccess || false,
+        isManualToken: false
+      }, req.user?.id);
+      console.log(`Auth saved successfully:`, !!auth);
+      
+      // Add a history entry for successful authentication
+      storage.addHistoryEntry({
+        timestamp: new Date(),
+        action: "restore",
+        platform: "facebook",
+        success: true,
+        affectedItems: 0,
+        error: undefined
+      }, req.user?.id);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving Facebook token:", error);
+      res.status(500).json({ error: "Failed to save Facebook token" });
+    }
+  });
+
   // Get auth status
   app.get("/api/auth-status", requireAuth, async (req: AuthenticatedRequest, res) => {
     console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
