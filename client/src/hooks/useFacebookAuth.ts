@@ -54,25 +54,10 @@ export default function useFacebookAuth() {
   // Exchange code for token mutation
   const exchangeCodeMutation = useMutation({
     mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
-      console.log('DEBUG: Starting token exchange with code:', code.substring(0, 10) + '...');
-      console.log('DEBUG: Redirect URI:', redirectUri);
-      
       const response = await apiRequest('POST', '/api/auth-callback', { code, redirectUri });
-      
-      console.log('DEBUG: Token exchange response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('DEBUG: Token exchange failed:', errorText);
-        throw new Error(`Token exchange failed: ${errorText}`);
-      }
-      
-      const result = await response.json();
-      console.log('DEBUG: Token exchange successful:', !!result.access_token);
-      return result;
+      return response.json();
     },
-    onSuccess: (data) => {
-      console.log('DEBUG: Facebook auth success, invalidating queries');
+    onSuccess: () => {
       toast({
         title: 'התחברות בוצעה בהצלחה',
         description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
@@ -84,7 +69,6 @@ export default function useFacebookAuth() {
       queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
     },
     onError: (error: Error) => {
-      console.error('DEBUG: Facebook auth error:', error);
       toast({
         title: 'שגיאת התחברות',
         description: error.message || 'אירעה שגיאה בהתחברות לפייסבוק',
@@ -105,13 +89,13 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // בקשת הרשאות כולל גישה לעמודים
-      // הוספת הרשאות עמודים לניהול פוסטים
+      // בקשת הרשאות בסיסיות - רק הרשאות תקפות
+      // pages_manage_posts מאפשר ניהול פוסטים בעמודים
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,user_posts,pages_show_list,pages_read_engagement,pages_manage_posts`;
+        `scope=public_profile,email,user_posts,pages_manage_posts`;
       
       // Open popup window
       const width = 600;

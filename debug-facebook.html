@@ -1,223 +1,70 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>בדיקת פייסבוק</title>
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            padding: 20px; 
-            direction: rtl;
-        }
-        .status { 
-            padding: 10px; 
-            margin: 10px 0; 
-            border: 1px solid #ccc; 
-            border-radius: 5px;
-        }
-        .error { background-color: #ffebee; border-color: #f44336; }
-        .success { background-color: #e8f5e8; border-color: #4caf50; }
-        .info { background-color: #e3f2fd; border-color: #2196f3; }
-        button { 
-            padding: 10px 20px; 
-            margin: 10px 5px; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer;
-            background-color: #1877f2;
-            color: white;
-        }
-        textarea {
-            width: 100%;
-            height: 200px;
-            margin: 10px 0;
-            padding: 10px;
-            font-family: monospace;
-        }
-    </style>
+    <title>בדיקת פייסבוק ואינסטגרם</title>
+    <meta charset="utf-8">
 </head>
 <body>
-    <h1>בדיקת התחברות פייסבוק</h1>
+    <h1>בדיקת חיבור פייסבוק ואינסטגרם</h1>
     
-    <div class="status info">
-        <strong>מצב נוכחי:</strong> <span id="current-status">טוען...</span>
-    </div>
+    <button onclick="checkUserInfo()">בדוק פרטי משתמש</button>
+    <button onclick="checkPages()">בדוק עמודים</button>
+    <button onclick="checkPermissions()">בדוק הרשאות</button>
+    <button onclick="requestMorePermissions()">בקש הרשאות נוספות</button>
     
-    <button onclick="testConfig()">בדוק קונפיגורציה</button>
-    <button onclick="testDirectAuth()">בדוק התחברות ישירה</button>
-    <button onclick="clearLogs()">נקה לוגים</button>
-    
-    <h3>קונפיגורציה נוכחית:</h3>
-    <div id="config-display" class="status"></div>
-    
-    <h3>לוגים:</h3>
-    <textarea id="logs" readonly placeholder="לוגים יופיעו כאן..."></textarea>
-    
+    <div id="results" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+
     <script>
-        let logs = [];
-        
-        function log(message) {
-            const timestamp = new Date().toLocaleTimeString('he-IL');
-            const logEntry = `[${timestamp}] ${message}`;
-            logs.push(logEntry);
-            document.getElementById('logs').value = logs.join('\n');
-            console.log(logEntry);
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId: '1030763279018030',
+                cookie: true,
+                xfbml: true,
+                version: 'v22.0'
+            });
+        };
+
+        function showResult(title, data) {
+            const results = document.getElementById('results');
+            results.innerHTML += `<h3>${title}</h3><pre>${JSON.stringify(data, null, 2)}</pre><hr>`;
         }
-        
-        function clearLogs() {
-            logs = [];
-            document.getElementById('logs').value = '';
+
+        function checkUserInfo() {
+            FB.api('/me', function(response) {
+                showResult('פרטי משתמש', response);
+            });
         }
-        
-        function updateStatus(message, type = 'info') {
-            const statusEl = document.getElementById('current-status');
-            statusEl.textContent = message;
-            statusEl.parentElement.className = `status ${type}`;
+
+        function checkPages() {
+            FB.api('/me/accounts', function(response) {
+                showResult('עמודים שלי', response);
+            });
         }
-        
-        async function testConfig() {
-            try {
-                log('בודק קונפיגורציה של פייסבוק...');
-                updateStatus('בודק קונפיגורציה...', 'info');
-                
-                const response = await fetch('/api/facebook-config');
-                log(`תגובה: ${response.status} ${response.statusText}`);
-                
-                if (!response.ok) {
-                    throw new Error(`שגיאה בקבלת קונפיגורציה: ${response.status}`);
+
+        function checkPermissions() {
+            FB.api('/me/permissions', function(response) {
+                showResult('הרשאות נוכחיות', response);
+            });
+        }
+
+        function requestMorePermissions() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    showResult('הרשאות חדשות', response);
+                    checkPermissions();
+                } else {
+                    showResult('שגיאה', 'המשתמש ביטל את ההרשאה');
                 }
-                
-                const config = await response.json();
-                log(`קונפיגורציה התקבלה: ${JSON.stringify(config, null, 2)}`);
-                
-                document.getElementById('config-display').innerHTML = 
-                    `<strong>App ID:</strong> ${config.appId}<br>
-                     <strong>Redirect URI:</strong> ${config.redirectUri}`;
-                
-                updateStatus('קונפיגורציה תקינה', 'success');
-                
-                // בדוק אם ה-redirect URI נגיש
-                await testRedirectUri(config.redirectUri);
-                
-            } catch (error) {
-                log(`שגיאה בבדיקת קונפיגורציה: ${error.message}`);
-                updateStatus(`שגיאה: ${error.message}`, 'error');
-            }
+            }, {scope: 'pages_show_list,pages_read_engagement,instagram_basic'});
         }
-        
-        async function testRedirectUri(redirectUri) {
-            try {
-                log(`בודק נגישות של redirect URI: ${redirectUri}`);
-                const response = await fetch(redirectUri, { method: 'HEAD' });
-                log(`Redirect URI נגיש: ${response.status}`);
-            } catch (error) {
-                log(`Redirect URI לא נגיש: ${error.message}`);
-            }
-        }
-        
-        async function testDirectAuth() {
-            try {
-                log('מתחיל בדיקת התחברות ישירה...');
-                updateStatus('פותח חלון התחברות...', 'info');
-                
-                // קבל קונפיגורציה
-                const configResponse = await fetch('/api/facebook-config');
-                const config = await configResponse.json();
-                
-                const scope = 'public_profile,email,user_posts,pages_show_list,pages_read_engagement,pages_manage_posts';
-                const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
-                    `client_id=${config.appId}&` +
-                    `redirect_uri=${encodeURIComponent(config.redirectUri)}&` +
-                    `state=facebook&` +
-                    `scope=${scope}`;
-                
-                log(`URL התחברות: ${authUrl}`);
-                
-                // פתח חלון קופץ
-                const popup = window.open(authUrl, 'facebook-auth', 'width=600,height=700');
-                
-                if (!popup) {
-                    throw new Error('נחסם חלון קופץ');
-                }
-                
-                log('חלון התחברות נפתח, ממתין לתגובה...');
-                updateStatus('ממתין לאישור משתמש...', 'info');
-                
-                // האזן להודעות מחלון ההתחברות
-                window.addEventListener('message', function(event) {
-                    log(`התקבלה הודעה: ${JSON.stringify(event.data)}`);
-                    
-                    if (event.data.error) {
-                        log(`שגיאה בהתחברות: ${event.data.error}`);
-                        updateStatus(`שגיאה: ${event.data.error}`, 'error');
-                    } else if (event.data.code) {
-                        log(`התקבל קוד אימות: ${event.data.code}`);
-                        updateStatus('קוד אימות התקבל', 'success');
-                        exchangeCodeForToken(event.data.code, config.redirectUri);
-                    }
-                });
-                
-            } catch (error) {
-                log(`שגיאה בבדיקת התחברות: ${error.message}`);
-                updateStatus(`שגיאה: ${error.message}`, 'error');
-            }
-        }
-        
-        async function exchangeCodeForToken(code, redirectUri) {
-            try {
-                log('מחליף קוד בטוקן...');
-                updateStatus('מעבד אימות...', 'info');
-                
-                const response = await fetch('/api/auth-callback', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
-                    },
-                    body: JSON.stringify({ code, redirectUri })
-                });
-                
-                log(`תגובה מהחלפת טוקן: ${response.status}`);
-                
-                if (!response.ok) {
-                    const errorData = await response.text();
-                    throw new Error(`שגיאה בהחלפת טוקן: ${errorData}`);
-                }
-                
-                const result = await response.json();
-                log(`הצלחה! ${JSON.stringify(result, null, 2)}`);
-                updateStatus('התחברות הושלמה בהצלחה!', 'success');
-                
-            } catch (error) {
-                log(`שגיאה בהחלפת טוקן: ${error.message}`);
-                updateStatus(`שגיאה: ${error.message}`, 'error');
-            }
-        }
-        
-        // בדוק מצב התחברות נוכחי
-        window.addEventListener('load', async function() {
-            try {
-                const response = await fetch('/api/auth-status', {
-                    headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
-                    }
-                });
-                
-                if (response.ok) {
-                    const status = await response.json();
-                    if (status.isAuthenticated) {
-                        updateStatus('מחובר לפייסבוק', 'success');
-                        log('מחובר לפייסבוק');
-                    } else {
-                        updateStatus('לא מחובר לפייסבוק', 'info');
-                        log('לא מחובר לפייסבוק');
-                    }
-                }
-            } catch (error) {
-                log(`שגיאה בבדיקת מצב: ${error.message}`);
-            }
-        });
+
+        (function(d, s, id){
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) {return;}
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
     </script>
 </body>
 </html>

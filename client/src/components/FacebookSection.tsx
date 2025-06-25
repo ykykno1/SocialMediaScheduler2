@@ -217,6 +217,15 @@ export default function FacebookSection() {
                 </Button>
               </div>
 
+              {/* Page access note */}
+              {posts && posts.length > 0 && posts.every(post => !post.pageId) && (
+                <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-xs text-orange-700">
+                    <strong>עמודים:</strong> מוצגים רק פוסטים אישיים. לטעינת פוסטים מעמודים, התנתק והתחבר מחדש לקבלת הרשאות עמודים.
+                  </p>
+                </div>
+              )}
+
               {/* Note about limitations */}
               <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
                 <p className="text-xs text-yellow-800">

@@ -195,10 +195,20 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  app.post("/api/logout", (req, res) => {
-    // For JWT authentication, logout is handled client-side by removing the token
-    // No server-side action needed since JWT tokens are stateless
-    res.json({ success: true, message: "Logged out successfully" });
+  app.post("/api/logout", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Remove all stored tokens for this user
+      await storage.removeAuthToken('facebook', req.user.id);
+      await storage.removeAuthToken('youtube', req.user.id);
+      await storage.removeAuthToken('instagram', req.user.id);
+      await storage.removeAuthToken('tiktok', req.user.id);
+      
+      console.log(`User ${req.user.id} logged out - all tokens removed`);
+      res.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ error: "Logout failed" });
+    }
   });
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
@@ -411,10 +421,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/logout", (req, res) => {
-    (req as any).session = null;
-    res.json({ success: true });
-  });
+
 
   app.get("/api/user", (req, res) => {
     const authHeader = req.headers.authorization;
@@ -449,25 +456,10 @@ export function registerRoutes(app: Express): Server {
     // Log for debugging
     console.log(`Using Facebook App ID: ${appId}, from env: ${process.env.FACEBOOK_APP_ID}`);
     
-    // Get domain from request headers
-    let domain = req.headers.host as string;
+    // Get domain from request
+    const domain = req.headers.host;
     
-    // For Replit, check various possible domain sources
-    if (req.headers['x-replit-domain']) {
-      domain = req.headers['x-replit-domain'] as string;
-    } else if (req.headers['x-forwarded-host']) {
-      domain = req.headers['x-forwarded-host'] as string;
-    } else if (process.env.REPLIT_DEV_DOMAIN) {
-      domain = process.env.REPLIT_DEV_DOMAIN;
-    }
-    
-    // Fallback: construct from known Replit pattern if we detect localhost
-    if (domain === 'localhost:5000' || domain?.includes('localhost')) {
-      // This is a development environment, use a hardcoded Replit domain
-      domain = '6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev';
-    }
-    
-    // Ensure we use https for the redirect URI
+    // Use the domain from headers by default
     const redirectUri = `https://${domain}/auth-callback.html`;
     
     // Log the redirectUri for debugging
@@ -479,8 +471,8 @@ export function registerRoutes(app: Express): Server {
     });
   });
   
-  // Exchange Facebook code for token
-  app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
+  // Exchange Facebook code for token - Requires authentication
+  app.post("/api/auth-callback", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const { code, redirectUri } = req.body;
       
@@ -500,34 +492,18 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Exchange code for token
-      console.log(`DEBUG: Attempting token exchange with:`, {
-        client_id: fbAppId,
-        redirect_uri: redirectUri,
-        has_secret: !!fbAppSecret,
-        code_length: code.length
-      });
-      
       const tokenUrl = `https://graph.facebook.com/v22.0/oauth/access_token?` +
         `client_id=${fbAppId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `client_secret=${fbAppSecret}&` +
         `code=${code}`;
       
-      console.log(`DEBUG: Making token exchange request to Facebook...`);
       const tokenResponse = await fetch(tokenUrl);
-      console.log(`DEBUG: Token response status: ${tokenResponse.status} ${tokenResponse.statusText}`);
       
       if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        console.error("Facebook token exchange error (raw):", errorText);
-        try {
-          const errorData = JSON.parse(errorText);
-          console.error("Facebook token exchange error (parsed):", errorData);
-          return res.status(400).json({ error: "Failed to exchange code for token", details: errorData });
-        } catch (parseError) {
-          console.error("Could not parse Facebook error response:", parseError);
-          return res.status(400).json({ error: "Failed to exchange code for token", details: { raw: errorText } });
-        }
+        const errorData = await tokenResponse.json();
+        console.error("Facebook token exchange error:", errorData);
+        return res.status(400).json({ error: "Failed to exchange code for token", details: errorData });
       }
       
       const tokenData = await tokenResponse.json() as { access_token: string; expires_in: number };
@@ -547,14 +523,14 @@ export function registerRoutes(app: Express): Server {
       // Try to get page access information as well
       let pageAccess = false;
       try {
-        // Using the correct API version and endpoint per Claude's advice
+        // Check for pages_manage_posts permission
         const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
         const pagesResponse = await fetch(pagesUrl);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as any;
           if (pagesData.data && pagesData.data.length > 0) {
             pageAccess = true;
-            console.log(`Found ${pagesData.data.length} Facebook pages for user with the correct permissions`);
+            console.log(`Found ${pagesData.data.length} Facebook pages for user`);
           }
         } else {
           const errorData = await pagesResponse.json();
@@ -580,7 +556,7 @@ export function registerRoutes(app: Express): Server {
       // Add a history entry for successful authentication (user-specific)
       storage.addHistoryEntry({
         timestamp: new Date(),
-        action: "restore", // Use restore as this is making content visible again in a way
+        action: "restore",
         platform: "facebook",
         success: true,
         affectedItems: 0,
@@ -590,7 +566,8 @@ export function registerRoutes(app: Express): Server {
       res.json({
         access_token: tokenData.access_token,
         expires_in: tokenData.expires_in,
-        user_id: userData.id
+        user_id: userData.id,
+        pageAccess
       });
     } catch (error) {
       console.error("Auth callback error:", error);
@@ -615,6 +592,45 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
+  // Save Facebook token (after OAuth callback)
+  app.post("/api/facebook/save-token", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { access_token, expires_in, user_id, pageAccess } = req.body;
+      
+      if (!access_token || !user_id) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      // Save the auth token with the current user
+      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
+      console.log(`Facebook user ID: ${user_id}`);
+      const auth = await storage.saveFacebookAuth({
+        accessToken: access_token,
+        expiresIn: expires_in || 3600,
+        timestamp: Date.now(),
+        userId: user_id,
+        pageAccess: pageAccess || false,
+        isManualToken: false
+      }, req.user?.id);
+      console.log(`Auth saved successfully:`, !!auth);
+      
+      // Add a history entry for successful authentication
+      storage.addHistoryEntry({
+        timestamp: new Date(),
+        action: "restore",
+        platform: "facebook",
+        success: true,
+        affectedItems: 0,
+        error: undefined
+      }, req.user?.id);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving Facebook token:", error);
+      res.status(500).json({ error: "Failed to save Facebook token" });
+    }
+  });
+
   // Get auth status
   app.get("/api/auth-status", requireAuth, async (req: AuthenticatedRequest, res) => {
     console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
@@ -641,47 +657,7 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
-  
-  // Logout/disconnect
-  app.post("/api/logout", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      console.log(`=== FACEBOOK LOGOUT STARTED FOR USER: ${req.user?.id} ===`);
-      
-      // Check if user has Facebook auth before removing
-      const authBefore = storage.getFacebookAuth(req.user?.id);
-      console.log(`BEFORE LOGOUT: Facebook auth exists: ${!!authBefore}`);
-      if (authBefore) {
-        console.log(`BEFORE LOGOUT: Access token length: ${authBefore.accessToken?.length || 0}`);
-      }
-      
-      // Force removal from memory and database
-      console.log(`CALLING removeFacebookAuth for user: ${req.user?.id}`);
-      storage.removeFacebookAuth(req.user?.id);
-      
-      // Verify removal
-      const authAfter = storage.getFacebookAuth(req.user?.id);
-      console.log(`AFTER LOGOUT: Facebook auth exists: ${!!authAfter}`);
-      
-      // Also remove from generic auth tokens
-      storage.removeAuthToken('facebook', req.user?.id);
-      console.log(`REMOVED from generic auth tokens`);
-      
-      storage.addHistoryEntry({
-        timestamp: new Date(),
-        action: "restore",
-        platform: "facebook",
-        success: true,
-        affectedItems: 0,
-        error: undefined
-      }, req.user?.id);
-      
-      console.log(`=== FACEBOOK LOGOUT COMPLETED FOR USER: ${req.user?.id} ===`);
-      res.json({ success: true, message: "Logged out successfully" });
-    } catch (error) {
-      console.error('=== FACEBOOK LOGOUT ERROR ===', error);
-      res.status(500).json({ error: "Failed to logout", message: error instanceof Error ? error.message : "Unknown error" });
-    }
-  });
+
   
   // Get history entries
   app.get("/api/history", requireAuth, (req: AuthenticatedRequest, res) => {
