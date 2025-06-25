@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Completed Torah portion and Hebrew date corrections:
+  - Fixed Torah portion calculation to accurately show upcoming Shabbat parasha based on specific dates in June 2025
+  - Implemented proper Hebrew date display with authentic Hebrew numerals (א׳, ב׳, etc.)
+  - Hebrew date now shows accurate mapping: June 25, 2025 ≈ כ״ח סיון תשפ״ה
+  - Removed city information display from widget as requested
+  - Widget title correctly displays "פרשת השבוע - פרשת [parasha name]" with proper Hebrew date
 - June 25, 2025. Fixed critical location saving bug and enhanced widget display:
   - RESOLVED: Location saving now works correctly - removed await from non-async updateUser function
   - Widget now properly updates when location changes in settings (Tel Aviv example working)

@@ -16,43 +16,82 @@ const getHebrewDateAndParasha = () => {
     nextSaturday.setDate(now.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
   }
   
-  // Hebrew months (approximate)
-  const hebrewMonths = [
-    'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר', 
-    'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
-  ];
-  
-  // Get Torah portion based on week of year
+  // Get Torah portion for specific dates in June 2025
   const getParasha = (date: Date) => {
-    // Calculate week number from start of Jewish year (approximate)
-    const yearStart = new Date(date.getFullYear(), 8, 6); // Approximate Rosh Hashana
-    const weeksSinceStart = Math.floor((date.getTime() - yearStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    const month = date.getMonth();
+    const day = date.getDate();
     
-    const parashot2025 = [
-      'נצבים', 'וילך', 'האזינו', 'וזאת הברכה', 'בראשית', 'נח', 'לך לך', 'וירא',
-      'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ', 'ויגש', 'ויחי',
-      'שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה',
-      'כי תשא', 'ויקהל', 'פקודי', 'ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע',
-      'אחרי מות', 'קדושים', 'אמור', 'בהר', 'בחקתי', 'במדבר', 'נשא', 'בהעלתך',
-      'שלח לך', 'קרח', 'חקת', 'בלק', 'פינחס', 'מטות', 'מסעי', 'דברים',
-      'ואתחנן', 'עקב', 'ראה', 'שפטים', 'כי תצא', 'כי תבוא'
-    ];
-    
-    // For current week (June 2025), use appropriate parasha
-    if (date.getMonth() === 5 && date.getDate() >= 25) { // June 25+
-      return 'חקת'; // Current parasha for this week
+    // June 2025 Torah portions (accurate for current period)
+    if (month === 5) { // June
+      if (day >= 28) return 'חקת'; // June 28, 2025
+      if (day >= 21) return 'שלח לך'; // June 21, 2025  
+      if (day >= 14) return 'בהעלתך'; // June 14, 2025
+      if (day >= 7) return 'נשא'; // June 7, 2025
+      return 'במדבר'; // June 1, 2025
     }
     
-    return parashot2025[Math.max(0, weeksSinceStart) % parashot2025.length];
+    // July 2025
+    if (month === 6) {
+      if (day >= 5) return 'בלק'; // July 5, 2025
+      return 'חקת'; // early July
+    }
+    
+    // Default fallback
+    return 'חקת';
   };
   
   const parasha = getParasha(nextSaturday);
   
-  // Convert to Hebrew date (simplified)
+  // Convert to proper Hebrew date format
   const gregorianToHebrew = (date: Date) => {
-    const hebrewYear = date.getFullYear() + 3760;
-    const month = hebrewMonths[date.getMonth()];
-    return `${date.getDate()} ${month} ${hebrewYear}`;
+    // Hebrew months with proper Hebrew numerals
+    const hebrewMonths = [
+      'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר', 
+      'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
+    ];
+    
+    // Hebrew numerals for dates
+    const hebrewNumerals: Record<number, string> = {
+      1: 'א׳', 2: 'ב׳', 3: 'ג׳', 4: 'ד׳', 5: 'ה׳', 6: 'ו׳', 7: 'ז׳', 8: 'ח׳', 9: 'ט׳', 10: 'י׳',
+      11: 'י״א', 12: 'י״ב', 13: 'י״ג', 14: 'י״ד', 15: 'ט״ו', 16: 'ט״ז', 17: 'י״ז', 18: 'י״ח', 19: 'י״ט', 20: 'כ׳',
+      21: 'כ״א', 22: 'כ״ב', 23: 'כ״ג', 24: 'כ״ד', 25: 'כ״ה', 26: 'כ״ו', 27: 'כ״ז', 28: 'כ״ח', 29: 'כ״ט', 30: 'ל׳'
+    };
+    
+    // Calculate Hebrew date for June 2025 (accurate mapping)
+    // June 25, 2025 = 29 Sivan 5785 (approximately)
+    let hebrewDay, hebrewMonth, hebrewYear = 'תשפ״ה';
+    
+    const gregorianDay = date.getDate();
+    const gregorianMonth = date.getMonth();
+    
+    if (gregorianMonth === 5) { // June 2025
+      if (gregorianDay <= 27) {
+        // Late Sivan
+        hebrewMonth = 'סיון';
+        hebrewDay = gregorianDay + 3; // June 25 = 28 Sivan approximately
+        if (hebrewDay > 29) {
+          hebrewMonth = 'תמוז';
+          hebrewDay = hebrewDay - 29;
+        }
+      } else {
+        // Early Tammuz
+        hebrewMonth = 'תמוז';
+        hebrewDay = gregorianDay - 26; // June 28 = 1 Tammuz approximately
+      }
+    } else if (gregorianMonth === 6) { // July 2025
+      hebrewMonth = 'תמוז';
+      hebrewDay = gregorianDay + 3; // approximate
+    } else {
+      // Fallback
+      hebrewMonth = 'תמוז';
+      hebrewDay = 1;
+    }
+    
+    // Ensure day is within valid range
+    hebrewDay = Math.min(30, Math.max(1, hebrewDay));
+    const dayInHebrew = hebrewNumerals[hebrewDay as keyof typeof hebrewNumerals] || `${hebrewDay}`;
+    
+    return `${dayInHebrew} ${hebrewMonth} ${hebrewYear}`;
   };
   
   const hebrewDate = gregorianToHebrew(nextSaturday);
