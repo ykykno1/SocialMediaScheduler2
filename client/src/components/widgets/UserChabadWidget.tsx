@@ -98,8 +98,10 @@ export function UserChabadWidget() {
     retry: false,
   });
 
+  const cityName = user?.shabbatCity || 'Jerusalem';
+  
   const { data: shabbatData, isLoading } = useQuery({
-    queryKey: ['/api/shabbat-times', user?.shabbatCityId || '247'],
+    queryKey: [`/api/shabbat/times?city=${cityName}`],
     enabled: !!user, // Enable when user data is loaded
     refetchInterval: 60000, // Refresh every minute
   });
@@ -121,7 +123,16 @@ export function UserChabadWidget() {
   }
 
   // Log for debugging
-  console.log(`Loaded Chabad widget for ${user?.shabbatCity} (ID: ${user?.shabbatCityId})`);
+  console.log('Shabbat data received:', shabbatData);
+  console.log(`User data:`, user);
+
+  if (!shabbatData || !shabbatData.candleLighting || !shabbatData.havdalah) {
+    return (
+      <div className="bg-gradient-to-br from-red-50 to-pink-100 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 shadow-sm border border-red-200/50 dark:border-red-800/50">
+        <div className="text-center text-red-700 dark:text-red-300">נתוני שבת לא זמינים</div>
+      </div>
+    );
+  }
 
   const candleLighting = new Date(shabbatData.candleLighting);
   const havdalah = new Date(shabbatData.havdalah);
