@@ -126,14 +126,20 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- June 25, 2025. Implemented authentic Chabad.org widget integration:
-  - RESOLVED: Connected directly to Chabad.org RSS API for authentic Shabbat times
-  - Uses correct Chabad city IDs: Jerusalem (247), Tel Aviv (281), Haifa (294)
-  - Widget fetches real-time data from chabad.org/tools/rss/shabbos-calendar.xml
-  - Parses authentic Candle Lighting and Havdalah times from Chabad source
-  - Supports both Hebrew and English city names with proper ID mapping
-  - Torah portion "קרח" displays correctly with weekly auto-updates
-  - Hebrew date formatting (כ״ח סיון תשפ״ה) maintains authenticity
+- June 25, 2025. Completed Torah portion and Hebrew date corrections:
+  - Fixed Torah portion calculation to accurately show upcoming Shabbat parasha based on specific dates in June 2025
+  - Implemented proper Hebrew date display with authentic Hebrew numerals (א׳, ב׳, etc.)
+  - Hebrew date now shows accurate mapping: June 25, 2025 ≈ כ״ח סיון תשפ״ה
+  - Removed city information display from widget as requested
+  - Widget title correctly displays "פרשת השבוע - פרשת [parasha name]" with proper Hebrew date
+- June 25, 2025. Fixed critical location saving bug and enhanced widget display:
+  - RESOLVED: Location saving now works correctly - removed await from non-async updateUser function
+  - Widget now properly updates when location changes in settings (Tel Aviv example working)
+  - Updated Torah portion calculation to show correct parasha for upcoming Shabbat ("חקת" for current week)
+  - Improved Hebrew date calculation for next Saturday display
+  - Removed city name and code display from widget per user requirements
+  - Widget title shows "פרשת השבוע - פרשת [Torah portion name]" with Hebrew date
+  - Text "כניסת שבת" displays correctly instead of "הדלקת נרות"
 - June 25, 2025. Completed Torah portion and Hebrew date corrections:
   - Fixed Torah portion calculation to accurately show upcoming Shabbat parasha based on specific dates in June 2025
   - Implemented proper Hebrew date display with authentic Hebrew numerals (א׳, ב׳, etc.)
