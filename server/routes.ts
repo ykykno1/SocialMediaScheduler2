@@ -694,7 +694,7 @@ export function registerRoutes(app: Express): Server {
   // Hide Facebook posts - Try to use real API for admin users
   app.post("/api/facebook/hide", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getFacebookAuth(req.user?.id);
+      const auth = await storage.getFacebookAuth(req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
