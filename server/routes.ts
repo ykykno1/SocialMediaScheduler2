@@ -536,12 +536,13 @@ export function registerRoutes(app: Express): Server {
       // Save the auth token (user-specific)
       console.log(`Saving Facebook auth for user: ${req.user?.id}`);
       console.log(`Facebook user ID: ${userData.id}`);
-      const auth = await storage.saveFacebookAuth({
+      const auth = storage.saveFacebookAuth({
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now(),
         userId: userData.id,
-        pageAccess
+        pageAccess,
+        isManualToken: false
       }, req.user?.id);
       console.log(`Auth saved successfully:`, !!auth);
       
