@@ -51,6 +51,32 @@ export default function useFacebookAuth() {
     }
   });
 
+  // Exchange code for token mutation
+  const exchangeCodeMutation = useMutation({
+    mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
+      const response = await apiRequest('POST', '/api/auth-callback', { code, redirectUri });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'התחברות בוצעה בהצלחה',
+        description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'שגיאת התחברות',
+        description: error.message || 'אירעה שגיאה בהתחברות לפייסבוק',
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Function to initiate Facebook login
   const login = useCallback(async () => {
     try {
