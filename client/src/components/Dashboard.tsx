@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Youtube, Facebook, Instagram, ArrowLeft, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { Link } from "wouter";
-import { ChabadIframeWidget } from "@/components/widgets/ChabadIframeWidget";
+import { UserChabadWidget } from "@/components/widgets/UserChabadWidget";
 
 const Dashboard = () => {
   return (
@@ -15,7 +15,7 @@ const Dashboard = () => {
 
       {/* Shabbat Timer Widget */}
       <div className="flex justify-center mb-8">
-        <ChabadIframeWidget />
+        <UserChabadWidget />
       </div>
 
       {/* Platform Navigation Cards */}

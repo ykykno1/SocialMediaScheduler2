@@ -15,6 +15,7 @@ import AuthPage from "@/pages/auth";
 import HomePage from "@/pages/home";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
+import SettingsPage from "@/pages/settings";
 import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
@@ -236,7 +237,7 @@ function Router() {
           <Route path="/youtube" component={YouTubePage} />
           <Route path="/facebook" component={FacebookPage} />
           <Route path="/instagram" component={InstagramPage} />
-          <Route path="/settings" component={Settings} />
+          <Route path="/settings" component={SettingsPage} />
           <Route path="/history" component={History} />
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
           <Route path="/data-deletion" component={DataDeletionPage} />

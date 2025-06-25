@@ -126,8 +126,22 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Implemented per-user Shabbat location system:
+  - Added shabbatCity and shabbatCityId fields to user schema
+  - Created UserChabadWidget that loads user's saved location
+  - Added /settings page for location management
+  - Moved city selection from widget to settings page
+  - Added text replacement: "הדלקת נרות" → "כניסת שבת"
+  - Updated city codes with correct Chabad location IDs
 - June 24, 2025. Initial setup
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+### Shabbat Widget Requirements
+- Per-user location settings (not global)
+- City selection in settings page, not on widget
+- Display only next Shabbat (weeks=1)
+- Text should show "כניסת שבת" instead of "הדלקת נרות"
+- Use authentic Chabad.org timing data with correct city codes
