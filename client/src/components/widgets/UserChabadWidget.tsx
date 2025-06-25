@@ -23,21 +23,21 @@ const getHebrewDateAndParasha = () => {
     
     // June 2025 Torah portions (accurate for current period)
     if (month === 5) { // June
-      if (day >= 28) return 'חקת'; // June 28, 2025
-      if (day >= 21) return 'שלח לך'; // June 21, 2025  
-      if (day >= 14) return 'בהעלתך'; // June 14, 2025
-      if (day >= 7) return 'נשא'; // June 7, 2025
-      return 'במדבר'; // June 1, 2025
+      if (day >= 28) return 'בלק'; // June 28, 2025 (Saturday)
+      if (day >= 21) return 'חקת'; // June 21, 2025  
+      if (day >= 14) return 'שלח לך'; // June 14, 2025
+      if (day >= 7) return 'בהעלתך'; // June 7, 2025
+      return 'נשא'; // June 1, 2025
     }
     
     // July 2025
     if (month === 6) {
-      if (day >= 5) return 'בלק'; // July 5, 2025
-      return 'חקת'; // early July
+      if (day >= 5) return 'פינחס'; // July 5, 2025
+      return 'בלק'; // early July
     }
     
-    // Default fallback
-    return 'חקת';
+    // Default fallback for current week
+    return 'בלק';
   };
   
   const parasha = getParasha(nextSaturday);
