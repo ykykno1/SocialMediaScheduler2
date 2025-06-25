@@ -585,7 +585,9 @@ export function registerRoutes(app: Express): Server {
   
   // Get auth status
   app.get("/api/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
+    console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
     const auth = storage.getFacebookAuth(req.user?.id);
+    console.log('Auth result in auth-status endpoint:', !!auth);
     res.json({
       isAuthenticated: !!auth,
       // Don't send the token to the client for security
@@ -2095,41 +2097,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Get auth status for all platforms (replacing the Facebook-specific one)
-  app.get("/api/auth-status", (req, res) => {
-    // Get all platform auth statuses
-    const facebookAuth = storage.getAuthToken('facebook');
-    const youtubeAuth = storage.getAuthToken('youtube');
-    
-    // Return the first authorized platform or facebook as default
-    let platform: SupportedPlatform = 'facebook';
-    let isAuthenticated = false;
-    let authTime = null;
-    let additionalData = {};
-    
-    if (facebookAuth) {
-      platform = 'facebook';
-      isAuthenticated = true;
-      authTime = new Date(facebookAuth.timestamp).toISOString();
-      additionalData = {
-        pageAccess: facebookAuth.additionalData?.pageAccess || false
-      };
-    } else if (youtubeAuth) {
-      platform = 'youtube';
-      isAuthenticated = true;
-      authTime = new Date(youtubeAuth.timestamp).toISOString();
-      additionalData = {
-        channelTitle: youtubeAuth.additionalData?.channelTitle || null
-      };
-    }
-    
-    res.json({
-      isAuthenticated,
-      platform,
-      authTime,
-      ...additionalData
-    });
-  });
+  // Duplicate endpoint removed - using the authenticated version at line 587
   
   // User authentication routes
   app.post("/api/auth/register", async (req, res) => {

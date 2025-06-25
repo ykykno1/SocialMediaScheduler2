@@ -204,6 +204,10 @@ export class MemStorage implements IStorage {
     
     console.log(`Facebook auth saved successfully for user: ${userId}`);
     console.log('Users with Facebook auth after save:', Array.from(this.userFacebookAuth.keys()));
+    
+    // Immediate verification - try to read what we just saved
+    const verification = this.userFacebookAuth.get(userId);
+    console.log(`Immediate verification - can we read the token we just saved? ${!!verification}`);
 
     // Sync with generic auth
     let userTokens = this.userAuthTokens.get(userId);
