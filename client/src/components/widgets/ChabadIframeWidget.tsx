@@ -9,26 +9,42 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const MAJOR_CITIES = [
-  // Israeli Cities - exact locationid from Chabad
-  { name: 'ירושלים', chabadId: '547' },
+  // Israeli Cities - updated correct codes
+  { name: 'ירושלים', chabadId: '247' },
   { name: 'תל אביב', chabadId: '531' },
-  { name: 'חיפה', chabadId: '536' },
-  { name: 'באר שבע', chabadId: '533' },
-  { name: 'צפת', chabadId: '542' },
-  { name: 'אילת', chabadId: '541' },
-  // International Cities - exact locationid from Chabad
-  { name: 'ניו יורק', chabadId: '1034' },
-  { name: 'לונדון', chabadId: '151' },
-  { name: 'פריז', chabadId: '152' },
-  { name: 'אמסטרדם', chabadId: '153' },
-  { name: 'בודפשט', chabadId: '163' },
-  { name: 'ברצלונה', chabadId: '158' },
-  { name: 'סלוניקי', chabadId: '173' },
-  { name: 'רומא', chabadId: '161' },
-  { name: 'קייב', chabadId: '175' },
-  { name: 'פראג', chabadId: '164' },
-  { name: 'אומן', chabadId: '1455' },
-  { name: 'בנגקוק', chabadId: '1022' }
+  { name: 'חיפה', chabadId: '689' },
+  { name: 'באר שבע', chabadId: '688' },
+  { name: 'צפת', chabadId: '695' },
+  { name: 'אילת', chabadId: '687' },
+  { name: 'חולון', chabadId: '851' },
+  { name: 'אשקלון', chabadId: '700' },
+  { name: 'דימונה', chabadId: '843' },
+  { name: 'חריש', chabadId: '1702' },
+  { name: 'הרצליה', chabadId: '981' },
+  { name: 'קריית שמונה', chabadId: '871' },
+  { name: 'נס ציונה', chabadId: '1661' },
+  { name: 'פרדס חנה כרכור', chabadId: '1663' },
+  { name: 'רעננה', chabadId: '937' },
+  { name: 'פתח תקווה', chabadId: '852' },
+  { name: 'רחובות', chabadId: '703' },
+  { name: 'ראש העין', chabadId: '1659' },
+  { name: 'ראשון לציון', chabadId: '853' },
+  { name: 'טבריה', chabadId: '697' },
+  { name: 'נתניה', chabadId: '694' },
+  { name: 'רמת גן', chabadId: '849' },
+  { name: 'בת ים', chabadId: '850' },
+  // International Cities - updated correct codes
+  { name: 'ניו יורק', chabadId: '370' },
+  { name: 'לוס אנג\'לס', chabadId: '1481' },
+  { name: 'מיאמי', chabadId: '331' },
+  { name: 'פריז', chabadId: '394' },
+  { name: 'ברצלונה', chabadId: '44' },
+  { name: 'ליסבון', chabadId: '297' },
+  { name: 'רומא', chabadId: '449' },
+  { name: 'מוסקבה', chabadId: '347' },
+  { name: 'פראג', chabadId: '421' },
+  { name: 'אומן', chabadId: '801' },
+  { name: 'בנגקוק', chabadId: '42' }
 ];
 
 export function ChabadIframeWidget() {
