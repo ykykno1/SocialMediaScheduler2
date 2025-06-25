@@ -1,6 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
+// Helper function to get current Hebrew date and Torah portion
+const getHebrewDateAndParasha = () => {
+  const now = new Date();
+  const nextSaturday = new Date(now);
+  nextSaturday.setDate(now.getDate() + (6 - now.getDay()));
+  
+  // Format Hebrew date (approximate)
+  const hebrewMonths = [
+    'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר', 
+    'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
+  ];
+  
+  // Get current Torah portion (simplified mapping)
+  const getParasha = (date: Date) => {
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const weekNumber = Math.floor((date.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    
+    const parashot = [
+      'בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח',
+      'וישב', 'מקץ', 'ויגש', 'ויחי', 'שמות', 'וארא', 'בא', 'בשלח',
+      'יתרו', 'משפטים', 'תרומה', 'תצוה', 'כי תשא', 'ויקהל', 'פקודי', 'ויקרא',
+      'צו', 'שמיני', 'תזריע', 'מצורע', 'אחרי מות', 'קדושים', 'אמור', 'בהר',
+      'בחקתי', 'במדבר', 'נשא', 'בהעלתך', 'שלח לך', 'קרח', 'חקת', 'בלק',
+      'פינחס', 'מטות', 'מסעי', 'דברים', 'ואתחנן', 'עקב', 'ראה', 'שפטים',
+      'כי תצא', 'כי תבוא', 'נצבים', 'וילך', 'האזינו', 'וזאת הברכה'
+    ];
+    
+    return parashot[weekNumber % parashot.length];
+  };
+  
+  const parasha = getParasha(nextSaturday);
+  const hebrewDate = `${nextSaturday.getDate()} ${hebrewMonths[nextSaturday.getMonth()]} ${nextSaturday.getFullYear() + 3760}`;
+  
+  return { parasha, hebrewDate };
+};
+
 export function UserChabadWidget() {
   const [iframeKey, setIframeKey] = useState(0);
 
@@ -9,6 +45,9 @@ export function UserChabadWidget() {
     queryKey: ['/api/user/shabbat-location'],
     retry: false,
   });
+
+  // Get Hebrew date and parasha info
+  const { parasha, hebrewDate } = getHebrewDateAndParasha();
 
   // Force iframe refresh when location changes
   useEffect(() => {
@@ -144,10 +183,10 @@ export function UserChabadWidget() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              פרשת השבוע
+              פרשת השבוע - פרשת {parasha}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              {locationData.shabbatCity}
+              {hebrewDate} • {locationData.shabbatCity}
             </p>
           </div>
         </div>

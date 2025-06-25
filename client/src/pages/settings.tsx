@@ -183,26 +183,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Current Settings Display */}
-        {locationData && (
-          <Card>
-            <CardHeader>
-              <CardTitle>הגדרות נוכחיות</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">עיר נבחרת:</span>
-                  <span className="font-medium">{locationData.shabbatCity}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">קוד עיר בחב"ד:</span>
-                  <span className="font-medium">{locationData.shabbatCityId}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
       </div>
     </div>
   );
