@@ -89,13 +89,14 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // בקשת הרשאות בסיסיות - רק הרשאות תקפות
-      // pages_manage_posts מאפשר ניהול פוסטים בעמודים
+      // בקשת הרשאות תקפות בלבד
+      // שימוש רק בהרשאות שנתמכות בגרסה 22.0 של Facebook API
+      // הסרנו את כל הרשאות העמודים שאינן תקפות
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,user_posts,pages_manage_posts`;
+        `scope=public_profile,email,user_posts`;
       
       // Open popup window
       const width = 600;
