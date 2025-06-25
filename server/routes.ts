@@ -463,6 +463,24 @@ export function registerRoutes(app: Express): Server {
     res.json({ success: true, message: "התנתקות הושלמה בהצלחה" });
   });
 
+  // Specific Facebook disconnect endpoint
+  app.post("/api/facebook/disconnect", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.id;
+      console.log(`Disconnecting Facebook for user: ${userId}`);
+      
+      // Remove Facebook tokens from both memory and database
+      await storage.removeFacebookAuth(userId);
+      await storage.removeAuthToken('facebook', userId);
+      
+      console.log(`Facebook disconnected successfully for user: ${userId}`);
+      res.json({ success: true, message: "התנתקות מפייסבוק הושלמה בהצלחה" });
+    } catch (error) {
+      console.error("Error disconnecting Facebook:", error);
+      res.status(500).json({ error: "שגיאה בהתנתקות מפייסבוק" });
+    }
+  });
+
   app.get("/api/user", (req, res) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;

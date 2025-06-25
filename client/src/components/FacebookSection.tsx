@@ -55,8 +55,40 @@ export default function FacebookSection() {
                 </Badge>
               )}
               
-              <div className="text-sm text-gray-600 mt-2">
-                פוסטים: {posts?.length || 0} | עמודים: {pages?.length || 0}
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-sm text-gray-600">
+                  פוסטים: {posts?.length || 0} | עמודים: {pages?.length || 0}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={async () => {
+                    if (confirm('האם אתה בטוח שברצונך להתנתק מפייסבוק?')) {
+                      try {
+                        const response = await fetch('/api/facebook/disconnect', {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                          }
+                        });
+                        
+                        if (response.ok) {
+                          // עדכון המצב המקומי
+                          window.location.reload();
+                        } else {
+                          alert('שגיאה בהתנתקות מפייסבוק');
+                        }
+                      } catch (error) {
+                        console.error('Error disconnecting Facebook:', error);
+                        alert('שגיאה בהתנתקות מפייסבוק');
+                      }
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  התנתק מפייסבוק
+                </Button>
               </div>
               
               {/* Display Posts Preview */}
