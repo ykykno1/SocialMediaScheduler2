@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 // Helper function to get current Hebrew date and Torah portion
-const getHebrewDateAndParasha = () => {
+const getHebrewDateAndParasha = (shabbatData?: any) => {
   const now = new Date();
   
   // Find the coming Saturday
@@ -16,32 +16,16 @@ const getHebrewDateAndParasha = () => {
     nextSaturday.setDate(now.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
   }
   
-  // Get Torah portion for specific dates in June 2025
-  // Based on the Jewish calendar cycle for 5785 (2024-2025)
-  const getParasha = (date: Date) => {
-    const month = date.getMonth();
-    const day = date.getDate();
-    
-    // Torah portions for June 2025 (Sivan-Tammuz 5785)
-    if (month === 5) { // June 2025
-      if (day >= 28) return 'קרח'; // June 28, 2025 (1 Tammuz 5785)
-      if (day >= 21) return 'שלח לך'; // June 21, 2025 (25 Sivan)
-      if (day >= 14) return 'בהעלתך'; // June 14, 2025 (18 Sivan)
-      if (day >= 7) return 'נשא'; // June 7, 2025 (11 Sivan)
-      return 'במדבר'; // June 1, 2025
+  // Get Torah portion from Chabad API data
+  const getParashaFromAPI = (data: any) => {
+    if (data?.parasha) {
+      // Remove "פרשת " prefix if it exists and return just the name
+      return data.parasha.replace('פרשת ', '');
     }
-    
-    // July 2025
-    if (month === 6) {
-      if (day >= 5) return 'חקת'; // July 5, 2025
-      return 'קרח'; // early July
-    }
-    
-    // Default fallback for current week (late June)
-    return 'קרח';
+    return 'קורח'; // fallback
   };
   
-  const parasha = getParasha(nextSaturday);
+  const parasha = getParashaFromAPI(shabbatData);
   
   // Convert to proper Hebrew date format
   const gregorianToHebrew = (date: Date) => {
@@ -109,8 +93,24 @@ export function UserChabadWidget() {
     retry: false,
   });
 
+  // State for Shabbat data from Chabad API
+  const [shabbatData, setShabbatData] = useState<any>(null);
+  
   // Get Hebrew date and parasha info
-  const { parasha, hebrewDate } = getHebrewDateAndParasha();
+  const { parasha, hebrewDate } = getHebrewDateAndParasha(shabbatData);
+
+  // Listen for messages from iframe with Shabbat data
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'shabbatData') {
+        console.log('Shabbat data received:', event.data.data);
+        setShabbatData(event.data.data);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // Force iframe refresh when location changes
   useEffect(() => {
@@ -207,10 +207,12 @@ export function UserChabadWidget() {
         }
     </style>
     <script>
-        // Replace "הדלקת נרות" with "כניסת שבת" after the widget loads
+        // Replace "הדלקת נרות" with "כניסת שבת" and extract Shabbat data
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 const elements = document.getElementsByTagName('*');
+                let shabbatData = {};
+                
                 for (let i = 0; i < elements.length; i++) {
                     const element = elements[i];
                     if (element.childNodes.length === 1 && element.childNodes[0].nodeType === 3) {
@@ -218,8 +220,22 @@ export function UserChabadWidget() {
                         if (text && text.includes('הדלקת נרות')) {
                             element.childNodes[0].nodeValue = text.replace('הדלקת נרות', 'כניסת שבת');
                         }
+                        
+                        // Extract parasha name if found
+                        if (text && text.includes('פרשת')) {
+                            const parashaMatch = text.match(/פרשת\\s*([א-ת\\s]+)/);
+                            if (parashaMatch) {
+                                shabbatData.parasha = parashaMatch[1].trim();
+                            }
+                        }
                     }
                 }
+                
+                // Send data to parent
+                window.parent.postMessage({
+                    type: 'shabbatData',
+                    data: shabbatData
+                }, '*');
             }, 1000);
         });
     </script>
