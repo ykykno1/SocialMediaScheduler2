@@ -449,10 +449,25 @@ export function registerRoutes(app: Express): Server {
     // Log for debugging
     console.log(`Using Facebook App ID: ${appId}, from env: ${process.env.FACEBOOK_APP_ID}`);
     
-    // Get domain from request
-    const domain = req.headers.host;
+    // Get domain from request headers
+    let domain = req.headers.host as string;
     
-    // Use the domain from headers by default
+    // For Replit, check various possible domain sources
+    if (req.headers['x-replit-domain']) {
+      domain = req.headers['x-replit-domain'] as string;
+    } else if (req.headers['x-forwarded-host']) {
+      domain = req.headers['x-forwarded-host'] as string;
+    } else if (process.env.REPLIT_DEV_DOMAIN) {
+      domain = process.env.REPLIT_DEV_DOMAIN;
+    }
+    
+    // Fallback: construct from known Replit pattern if we detect localhost
+    if (domain === 'localhost:5000' || domain?.includes('localhost')) {
+      // This is a development environment, use a hardcoded Replit domain
+      domain = '6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev';
+    }
+    
+    // Ensure we use https for the redirect URI
     const redirectUri = `https://${domain}/auth-callback.html`;
     
     // Log the redirectUri for debugging
