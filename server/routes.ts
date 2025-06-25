@@ -2674,6 +2674,46 @@ export function registerRoutes(app: Express): Server {
 
 
 
+  // Update user Shabbat location
+  app.post('/api/user/shabbat-location', requireAuth, async (req, res) => {
+    try {
+      const { cityName, cityId } = req.body;
+      
+      if (!cityName || !cityId) {
+        return res.status(400).json({ error: 'City name and ID are required' });
+      }
+
+      const updatedUser = storage.updateUserShabbatLocation(req.userId, cityName, cityId);
+      
+      res.json({
+        success: true,
+        shabbatCity: updatedUser.shabbatCity,
+        shabbatCityId: updatedUser.shabbatCityId
+      });
+    } catch (error) {
+      console.error('Error updating Shabbat location:', error);
+      res.status(500).json({ error: 'Failed to update location' });
+    }
+  });
+
+  // Get user Shabbat location
+  app.get('/api/user/shabbat-location', requireAuth, async (req, res) => {
+    try {
+      const user = storage.getUser(req.userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      res.json({
+        shabbatCity: user.shabbatCity || 'ירושלים',
+        shabbatCityId: user.shabbatCityId || '247'
+      });
+    } catch (error) {
+      console.error('Error getting Shabbat location:', error);
+      res.status(500).json({ error: 'Failed to get location' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
