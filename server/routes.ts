@@ -463,6 +463,42 @@ export function registerRoutes(app: Express): Server {
     res.json({ success: true, message: "התנתקות הושלמה בהצלחה" });
   });
 
+  // Refresh token endpoint for expired tokens
+  app.post("/api/refresh-token", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Generate new token
+      const newToken = jwt.sign(
+        { userId: user.id },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      
+      res.json({ 
+        token: newToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          accountType: user.accountType
+        }
+      });
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      res.status(500).json({ error: "שגיאה בחידוש הטוקן" });
+    }
+  });
+
   // Specific Facebook disconnect endpoint
   app.post("/api/facebook/disconnect", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {

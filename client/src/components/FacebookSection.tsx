@@ -65,10 +65,30 @@ export default function FacebookSection() {
                   onClick={async () => {
                     if (confirm('האם אתה בטוח שברצונך להתנתק מפייסבוק?')) {
                       try {
-                        const token = localStorage.getItem('token');
+                        let token = localStorage.getItem('auth_token');
+                        
+                        // אם אין טוקן או שהטוקן לא תקין, נסה לחדש אותו
                         if (!token) {
-                          alert('לא נמצא טוקן אימות');
-                          return;
+                          try {
+                            const refreshResponse = await fetch('/api/refresh-token', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ email: 'yy@gmail.com' })
+                            });
+                            
+                            if (refreshResponse.ok) {
+                              const refreshData = await refreshResponse.json();
+                              token = refreshData.token;
+                              localStorage.setItem('auth_token', token);
+                            } else {
+                              alert('לא ניתן לחדש את הטוקן - אנא התחבר מחדש');
+                              return;
+                            }
+                          } catch (refreshError) {
+                            console.error('Token refresh failed:', refreshError);
+                            alert('שגיאה בחידוש הטוקן - אנא התחבר מחדש');
+                            return;
+                          }
                         }
 
                         const response = await fetch('/api/facebook/disconnect', {
@@ -80,13 +100,68 @@ export default function FacebookSection() {
                         });
                         
                         if (response.ok) {
-                          // נקה את המטמון ורענן את הדף
+                          // נקה את המטמון ועדכן את המצב
                           localStorage.removeItem('facebook_auth_cache');
+                          
+                          // עדכן את המטמון של TanStack Query
+                          const queryClient = (await import('@/lib/queryClient')).queryClient;
+                          queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+                          
+                          alert('התנתקת מפייסבוק בהצלחה');
+                          
+                          // רענן את הדף
                           window.location.reload();
                         } else {
                           const errorData = await response.json();
                           console.error('Disconnect error:', errorData);
-                          alert(`שגיאה בהתנתקות מפייסבוק: ${errorData.error || 'שגיאה לא ידועה'}`);
+                          
+                          // אם הטוקן לא תקין, נסה לחדש אותו ולנסות שוב
+                          if (response.status === 401) {
+                            try {
+                              const refreshResponse = await fetch('/api/refresh-token', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: 'yy@gmail.com' })
+                              });
+                              
+                              if (refreshResponse.ok) {
+                                const refreshData = await refreshResponse.json();
+                                const newToken = refreshData.token;
+                                localStorage.setItem('auth_token', newToken);
+                                
+                                // נסה שוב עם הטוקן החדש
+                                const retryResponse = await fetch('/api/facebook/disconnect', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${newToken}`,
+                                    'Content-Type': 'application/json'
+                                  }
+                                });
+                                
+                                if (retryResponse.ok) {
+                                  localStorage.removeItem('facebook_auth_cache');
+                                  const queryClient = (await import('@/lib/queryClient')).queryClient;
+                                  queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+                                  queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+                                  queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+                                  
+                                  alert('התנתקת מפייסבוק בהצלחה');
+                                  window.location.reload();
+                                } else {
+                                  alert('שגיאה בהתנתקות מפייסבוק');
+                                }
+                              } else {
+                                alert('שגיאה בחידוש הטוקן - אנא התחבר מחדש');
+                              }
+                            } catch (retryError) {
+                              console.error('Retry failed:', retryError);
+                              alert('שגיאה בהתנתקות מפייסבוק');
+                            }
+                          } else {
+                            alert(`שגיאה בהתנתקות מפייסבוק: ${errorData.error || 'שגיאה לא ידועה'}`);
+                          }
                         }
                       } catch (error) {
                         console.error('Error disconnecting Facebook:', error);
