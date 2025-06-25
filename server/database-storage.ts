@@ -101,18 +101,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Legacy Facebook-specific auth (kept for backward compatibility)
-  getFacebookAuth(userId?: string): FacebookAuth | null {
-    // This would need to be implemented if Facebook auth is still needed
-    return null;
+  async getFacebookAuth(userId?: string): Promise<FacebookAuth | null> {
+    if (!userId) return null;
+    
+    try {
+      const token = await this.getAuthToken('facebook', userId);
+      if (!token) return null;
+
+      return {
+        accessToken: token.accessToken,
+        expiresIn: token.expiresIn || 3600,
+        timestamp: token.timestamp,
+        userId: token.userId,
+        isManualToken: token.isManualToken
+      };
+    } catch (error) {
+      console.error('Error getting Facebook auth:', error);
+      return null;
+    }
   }
 
   saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth {
-    // This would need to be implemented if Facebook auth is still needed
-    return token;
+    if (!userId) throw new Error('User ID is required');
+
+    try {
+      const authToken: AuthToken = {
+        platform: 'facebook',
+        accessToken: token.accessToken,
+        refreshToken: undefined,
+        expiresIn: token.expiresIn,
+        expiresAt: token.expiresIn ? Date.now() + (token.expiresIn * 1000) : undefined,
+        timestamp: token.timestamp,
+        userId: token.userId,
+        isManualToken: token.isManualToken
+      };
+
+      this.saveAuthToken(authToken, userId);
+      return token;
+    } catch (error) {
+      console.error('Error saving Facebook auth:', error);
+      throw error;
+    }
   }
 
-  removeFacebookAuth(userId?: string): void {
-    // This would need to be implemented if Facebook auth is still needed
+  async removeFacebookAuth(userId?: string): Promise<void> {
+    if (!userId) return;
+    
+    try {
+      await this.removeAuthToken('facebook', userId);
+    } catch (error) {
+      console.error('Error removing Facebook auth:', error);
+    }
   }
 
   // History operations
