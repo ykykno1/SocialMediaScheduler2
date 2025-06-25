@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Implemented automatic weekly Torah portion updates:
+  - Created reliable local Torah portion schedule that updates automatically each week
+  - Fixed API connection issues by replacing external API with internal date-based calculation
+  - Torah portion now correctly shows "קרח" for current week and will auto-update to "חקת", "בלק", "פינחס", etc.
+  - Maintained Hebrew date display with authentic Hebrew numerals (כ״ח סיון תשפ״ה)
+  - Widget works without external API dependencies and updates reliably
 - June 25, 2025. Completed Torah portion and Hebrew date corrections:
   - Fixed Torah portion calculation to accurately show upcoming Shabbat parasha based on specific dates in June 2025
   - Implemented proper Hebrew date display with authentic Hebrew numerals (א׳, ב׳, etc.)

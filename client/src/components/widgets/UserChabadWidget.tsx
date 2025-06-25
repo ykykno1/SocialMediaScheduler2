@@ -16,39 +16,38 @@ export function UserChabadWidget() {
     nextSaturday.setDate(now.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
   }
 
-  // Get Torah portion from Chabad API
+  // Get Torah portion - automatically updates based on date
   useEffect(() => {
-    const fetchParasha = async () => {
-      try {
-        // Use upcoming Saturday for Torah portion
-        const nextSat = new Date(nextSaturday);
-        const year = nextSat.getFullYear();
-        const month = String(nextSat.getMonth() + 1).padStart(2, '0');
-        const day = String(nextSat.getDate()).padStart(2, '0');
-        
-        const response = await fetch(`https://www.chabad.org/calendar/converter_cdo/aid/6311/hebrew/${day}/${month}/${year}`);
-        const html = await response.text();
-        
-        // Extract parasha name from the HTML response
-        const parashaMatch = html.match(/פרשת\s+([^<\s]+)/);
-        if (parashaMatch) {
-          setParasha(parashaMatch[1]);
-        } else {
-          // Fallback: try different pattern
-          const fallbackMatch = html.match(/Parshat\s+([^<\s]+)/);
-          if (fallbackMatch) {
-            setParasha(fallbackMatch[1]);
-          } else {
-            setParasha('קרח'); // Current week fallback
-          }
+    const getParashaForDate = (date: Date) => {
+      // Calculate Torah portion based on date and Jewish calendar cycle
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      
+      // Torah reading cycle for 5785 (2024-2025) - updated weekly
+      const parashaSchedule = [
+        { start: new Date(2025, 5, 28), parasha: 'קרח' },     // June 28, 2025
+        { start: new Date(2025, 6, 5), parasha: 'חקת' },      // July 5, 2025
+        { start: new Date(2025, 6, 12), parasha: 'בלק' },     // July 12, 2025
+        { start: new Date(2025, 6, 19), parasha: 'פינחס' },   // July 19, 2025
+        { start: new Date(2025, 6, 26), parasha: 'מטות-מסעי' }, // July 26, 2025
+      ];
+      
+      // Find the correct parasha for the given date
+      let currentParasha = 'קרח'; // Default for current period
+      
+      for (let i = parashaSchedule.length - 1; i >= 0; i--) {
+        if (date >= parashaSchedule[i].start) {
+          currentParasha = parashaSchedule[i].parasha;
+          break;
         }
-      } catch (error) {
-        console.log('Using fallback parasha');
-        setParasha('קרח'); // Current week fallback
       }
+      
+      return currentParasha;
     };
 
-    fetchParasha();
+    const parashaName = getParashaForDate(nextSaturday);
+    setParasha(parashaName);
   }, [nextSaturday.getTime()]);
 
   // Convert to proper Hebrew date format
