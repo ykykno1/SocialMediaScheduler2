@@ -173,9 +173,10 @@ export class MemStorage implements IStorage {
 
   // Legacy Facebook-specific auth (user-specific)
   async getFacebookAuth(userId?: string): Promise<FacebookAuth | null> {
-    console.log(`[FACEBOOK AUTH] Function called with userId: "${userId}", type: ${typeof userId}`);
+    console.log(`TRACE: getFacebookAuth called with userId: "${userId}"`);
+    
     if (!userId) {
-      console.log('[FACEBOOK AUTH] No userId provided, returning null');
+      console.log('TRACE: No userId provided');
       return null;
     }
     
