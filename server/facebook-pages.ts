@@ -22,32 +22,47 @@ const FACEBOOK_API_VERSION = 'v22.0';
  */
 export const getUserPages = async (auth: FacebookAuth): Promise<FacebookPage[]> => {
   try {
-    // בהתבסס על הניסיון שלנו, פייסבוק API גרסה 22.0 מגדירה את ההרשאות המתקדמות כלא תקפות
-    // אנחנו מנסים לבקש רק מידע בסיסי בלי הרשאות מיוחדות
+    console.log('Fetching Facebook pages with token:', auth.accessToken?.substring(0, 20) + '...');
+    
+    // נבדוק את ההרשאות קודם
+    const permissionsResponse = await fetch(
+      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/permissions?access_token=${auth.accessToken}`
+    );
+    const permissionsData = await permissionsResponse.json() as { data?: any[], error?: any };
+    console.log('Current Facebook permissions:', permissionsData);
+    
+    // נבקש עמודים עם הרשאות מינימליות
     const response = await fetch(
-      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/accounts?fields=id,name,category,is_published,picture&access_token=${auth.accessToken}`
+      `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/accounts?fields=id,name,category,picture&access_token=${auth.accessToken}`
     );
     
+    console.log('Facebook pages API response status:', response.status);
     const data = await response.json() as { data?: FacebookPage[], error?: { message: string, code?: number, type?: string } };
+    console.log('Facebook pages API response data:', data);
     
     if (data.error) {
       console.error('Error fetching Facebook pages:', data.error);
       
-      // לוג מפורט יותר כדי להבין את הבעיה
-      if (data.error.code === 190 || data.error.code === 200) {
-        console.log('Facebook permission issue detected. Error code:', data.error.code, 'Type:', data.error.type);
+      // אם אין הרשאות לעמודים, נחזיר רשימה ריקה במקום שגיאה
+      if (data.error.code === 200 || data.error.message?.includes('permission')) {
+        console.log('No page permissions - returning empty list');
+        return [];
       }
       
       throw new Error(data.error.message);
     }
     
-    return (data.data || []).map(page => ({
+    const pages = (data.data || []).map(page => ({
       ...page,
       isHidden: false // Default state is visible/published
     }));
+    
+    console.log(`Found ${pages.length} Facebook pages`);
+    return pages;
   } catch (error) {
     console.error('Error fetching Facebook pages:', error);
-    throw error;
+    // במקום לזרוק שגיאה, נחזיר רשימה ריקה
+    return [];
   }
 };
 
@@ -200,21 +215,22 @@ export const registerFacebookPagesRoutes = (app: Express, requireAuth: any) => {
         return res.status(401).json({ error: 'Not authenticated with Facebook' });
       }
       
-      // תיעוד של הבעיה עם גרסה 22.0 של פייסבוק
-      // מכיוון שנתקלנו בשינויים המגבילים בגרסה החדשה, אנחנו מחזירים הודעת שגיאה מדויקת
-      if (!auth.pageAccess) {
-        return res.status(403).json({
-          error: 'API Restriction', 
-          message: 'Facebook has restricted page access in API v22.0',
-          details: 'Required page management permissions (pages_manage_metadata, pages_show_list, etc.) are now marked as invalid by Facebook',
-          apiVersion: FACEBOOK_API_VERSION,
-          permissionsRequired: ['pages_manage_metadata', 'pages_manage_posts', 'pages_read_engagement', 'pages_show_list'],
-          apiUpdateDate: 'May 2025'
+      // נבקש את עמודי הפייסבוק
+      console.log('Facebook auth for pages:', { hasAuth: !!auth, hasPageAccess: auth.pageAccess });
+      
+      try {
+        const pages = await getUserPages(auth);
+        console.log(`Successfully fetched ${pages.length} Facebook pages`);
+        res.json(pages);
+      } catch (error: any) {
+        console.error('Error in getUserPages:', error);
+        // אם יש שגיאה בבקשת העמודים, נחזיר רשימה ריקה עם הודעה
+        res.json({
+          pages: [],
+          message: 'לא נמצאו עמודי פייסבוק או שאין הרשאה לצפייה בהם',
+          note: 'אם יש לך עמודי פייסבוק, ייתכן שתצטרך להתחבר שוב עם הרשאות נוספות'
         });
       }
-      
-      const pages = await getUserPages(auth);
-      res.json(pages);
     } catch (error: any) {
       console.error('Error fetching Facebook pages:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch Facebook pages' });
