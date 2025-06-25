@@ -72,33 +72,25 @@ export default function FacebookSection() {
                   {posts.slice(0, 3).map((post) => (
                     <div key={post.id} className="p-2 bg-gray-50 rounded text-xs">
                       <div className="flex space-x-2">
-                        {/* Media thumbnail */}
-                        {(post.full_picture || post.picture) && (
-                          <div className="flex-shrink-0">
-                            <img 
-                              src={post.picture || post.full_picture} 
-                              alt="תמונת פוסט"
-                              className="w-12 h-12 rounded object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Attachments media */}
-                        {post.attachments?.data?.[0]?.media?.image && (
-                          <div className="flex-shrink-0">
-                            <img 
-                              src={post.attachments.data[0].media.image.src} 
-                              alt="מדיה מצורפת"
-                              className="w-12 h-12 rounded object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
+                        {/* Media thumbnail - prefer attachments over direct picture fields to avoid duplicates */}
+                        {(() => {
+                          const attachmentImage = post.attachments?.data?.[0]?.media?.image?.src;
+                          const directImage = post.picture || post.full_picture;
+                          const imageUrl = attachmentImage || directImage;
+                          
+                          return imageUrl ? (
+                            <div className="flex-shrink-0">
+                              <img 
+                                src={imageUrl} 
+                                alt="תמונת פוסט"
+                                className="w-12 h-12 rounded object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          ) : null;
+                        })()}
                         
                         <div className="flex-1">
                           <div className="font-medium">
