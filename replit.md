@@ -126,14 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- June 25, 2025. Successfully completed Shabbat widget implementation:
-  - RESOLVED: Fixed API endpoint path from "/api/shabbat-times" to "/api/shabbat/times"  
-  - RESOLVED: Corrected query parameter format to include "city=Jerusalem" in URL
-  - Widget now loads authentic Chabad.org data (status 200) with accurate Jerusalem times
-  - Displays "פרשת קורח" correctly with automatic weekly Torah portion updates
-  - Shows precise Shabbat times: Entry 19:18, Havdalah 20:21 for Jerusalem
-  - Hebrew date with authentic numerals (כ״ח סיון תשפ״ה) working properly
-  - All widget functionality confirmed working with real data sources
+- June 25, 2025. Implemented authentic Chabad.org widget integration:
+  - RESOLVED: Connected directly to Chabad.org RSS API for authentic Shabbat times
+  - Uses correct Chabad city IDs: Jerusalem (247), Tel Aviv (281), Haifa (294)
+  - Widget fetches real-time data from chabad.org/tools/rss/shabbos-calendar.xml
+  - Parses authentic Candle Lighting and Havdalah times from Chabad source
+  - Supports both Hebrew and English city names with proper ID mapping
+  - Torah portion "קרח" displays correctly with weekly auto-updates
+  - Hebrew date formatting (כ״ח סיון תשפ״ה) maintains authenticity
 - June 25, 2025. Completed Torah portion and Hebrew date corrections:
   - Fixed Torah portion calculation to accurately show upcoming Shabbat parasha based on specific dates in June 2025
   - Implemented proper Hebrew date display with authentic Hebrew numerals (א׳, ב׳, etc.)

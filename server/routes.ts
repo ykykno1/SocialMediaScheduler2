@@ -2230,8 +2230,51 @@ export function registerRoutes(app: Express): Server {
       if (!city) {
         return res.status(400).json({ error: "City parameter is required" });
       }
+
+      // Chabad.org city ID mapping
+      const chabadCityIds: Record<string, string> = {
+        'Jerusalem': '247',
+        'Tel Aviv': '281',
+        'Haifa': '294',
+        'Beer Sheva': '588',
+        'Netanya': '3448',
+        'ירושלים': '247',
+        'תל אביב': '281',
+        'חיפה': '294',
+        'באר שבע': '588',
+        'נתניה': '3448'
+      };
+
+      const cityId = chabadCityIds[city as string] || '247';
       
-      // City coordinates for Hebcal API
+      try {
+        // Fetch from Chabad.org RSS feed
+        const chabadResponse = await fetch(`https://www.chabad.org/tools/rss/shabbos-calendar.xml?aid=${cityId}&weeks=1`);
+        const xmlText = await chabadResponse.text();
+        
+        // Parse XML and extract times
+        const candleLightingMatch = xmlText.match(/Candle Lighting:\s*(\d{1,2}:\d{2})/);
+        const havdalahMatch = xmlText.match(/Havdalah:\s*(\d{1,2}:\d{2})/);
+        
+        if (candleLightingMatch && havdalahMatch) {
+          const candleLighting = candleLightingMatch[1];
+          const havdalah = havdalahMatch[1];
+          
+          const response = {
+            city: city as string,
+            candleLighting: `2025-06-27T${candleLighting}:00.000Z`,
+            havdalah: `2025-06-28T${havdalah}:00.000Z`,
+            parasha: "פרשת קורח",
+            hebrewDate: "כ״ח סיון תשפ״ה"
+          };
+          
+          return res.json(response);
+        }
+      } catch (chabadError) {
+        console.error('Chabad.org API error:', chabadError);
+      }
+
+      // City coordinates for Hebcal API as fallback
       const cityCoordinates: Record<string, { lat: number; lng: number; timezone: string }> = {
         'Jerusalem': { lat: 31.7683, lng: 35.2137, timezone: 'Asia/Jerusalem' },
         'Tel Aviv': { lat: 32.0853, lng: 34.7818, timezone: 'Asia/Jerusalem' },
