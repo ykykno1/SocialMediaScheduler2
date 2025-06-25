@@ -109,3 +109,38 @@ export interface APIError {
   code?: string;
   details?: any;
 }
+
+// Facebook-specific types
+export interface FacebookPost {
+  id: string;
+  message?: string;
+  created_time: string;
+  privacy?: {
+    value: 'PUBLIC' | 'FRIENDS' | 'FRIENDS_OF_FRIENDS' | 'ONLY_ME' | 'SELF' | 'CUSTOM';
+    description?: string;
+  };
+  attachments?: {
+    data: Array<{
+      media?: {
+        image?: { src: string; width?: number; height?: number; };
+        video?: { src: string; width?: number; height?: number; };
+      };
+      subattachments?: {
+        data: Array<{
+          media?: {
+            image?: { src: string; width?: number; height?: number; };
+          };
+        }>;
+      };
+      type?: string;
+      url?: string;
+    }>;
+  };
+  full_picture?: string;
+  picture?: string;
+  type?: 'photo' | 'video' | 'status' | 'link' | 'event' | 'note';
+  story?: string;
+  isHidden?: boolean;
+  pageId?: string;
+  pageName?: string;
+}

@@ -134,6 +134,8 @@ The application follows Jewish religious principles by automatically hiding soci
   - Added indicators for multiple images in posts
   - Improved visual representation of different post types (photo, video, status, link)
   - Fixed duplicate image display by prioritizing attachment images over direct picture fields
+  - Extended Facebook integration to support both personal profile and Facebook page posts
+  - Added clear separation in UI between personal posts and page posts with distinct styling
 - June 25, 2025. Implemented dynamic Torah portion retrieval from Chabad API:
   - Torah portion names now automatically update weekly from authentic Chabad.org data
   - Removed manual parasha calculation in favor of API-driven approach for accuracy

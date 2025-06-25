@@ -67,58 +67,118 @@ export default function FacebookSection() {
                   <div className="text-xs text-gray-500">טוען פוסטים...</div>
                 </div>
               ) : posts && posts.length > 0 ? (
-                <div className="space-y-2 max-h-40 overflow-y-auto mt-3">
-                  <h4 className="font-medium text-sm">הפוסטים שלך ({posts.length}):</h4>
-                  {posts.slice(0, 3).map((post) => (
-                    <div key={post.id} className="p-2 bg-gray-50 rounded text-xs">
-                      <div className="flex space-x-2">
-                        {/* Media thumbnail - prefer attachments over direct picture fields to avoid duplicates */}
-                        {(() => {
-                          const attachmentImage = post.attachments?.data?.[0]?.media?.image?.src;
-                          const directImage = post.picture || post.full_picture;
-                          const imageUrl = attachmentImage || directImage;
+                <div className="space-y-4 max-h-60 overflow-y-auto mt-3">
+                  {(() => {
+                    // Separate personal posts and page posts
+                    const personalPosts = posts.filter(post => !post.pageId);
+                    const pagePosts = posts.filter(post => post.pageId);
+                    
+                    // Group page posts by page
+                    const pageGroups = pagePosts.reduce((groups, post) => {
+                      const pageKey = post.pageId || 'unknown';
+                      if (!groups[pageKey]) {
+                        groups[pageKey] = {
+                          pageName: post.pageName || 'עמוד לא ידוע',
+                          posts: []
+                        };
+                      }
+                      groups[pageKey].posts.push(post);
+                      return groups;
+                    }, {} as Record<string, { pageName: string; posts: typeof posts }>);
+
+                    const renderPost = (post: typeof posts[0]) => (
+                      <div key={post.id} className="p-2 bg-gray-50 rounded text-xs">
+                        <div className="flex space-x-2">
+                          {/* Media thumbnail */}
+                          {(() => {
+                            const attachmentImage = post.attachments?.data?.[0]?.media?.image?.src;
+                            const directImage = post.picture || post.full_picture;
+                            const imageUrl = attachmentImage || directImage;
+                            
+                            return imageUrl ? (
+                              <div className="flex-shrink-0">
+                                <img 
+                                  src={imageUrl} 
+                                  alt="תמונת פוסט"
+                                  className="w-12 h-12 rounded object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            ) : null;
+                          })()}
                           
-                          return imageUrl ? (
-                            <div className="flex-shrink-0">
-                              <img 
-                                src={imageUrl} 
-                                alt="תמונת פוסט"
-                                className="w-12 h-12 rounded object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {post.message || post.story || 'פוסט ללא טקסט'}
                             </div>
-                          ) : null;
-                        })()}
-                        
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {post.message || post.story || 'פוסט ללא טקסט'}
-                          </div>
-                          <div className="text-gray-500">
-                            {new Date(post.created_time).toLocaleDateString('he-IL')}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {post.type && (
-                              <span className="mr-2">סוג: {post.type}</span>
+                            <div className="text-gray-500">
+                              {new Date(post.created_time).toLocaleDateString('he-IL')}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {post.type && (
+                                <span className="mr-2">סוג: {post.type}</span>
+                              )}
+                              רמת פרטיות: {post.privacy?.value || 'לא ידוע'}
+                            </div>
+                            
+                            {/* Multiple images indicator */}
+                            {post.attachments?.data?.[0]?.subattachments?.data && post.attachments.data[0].subattachments.data.length > 1 && (
+                              <div className="text-xs text-blue-600 mt-1">
+                                +{post.attachments.data[0].subattachments.data.length - 1} תמונות נוספות
+                              </div>
                             )}
-                            רמת פרטיות: {post.privacy?.value || 'לא ידוע'}
                           </div>
-                          
-                          {/* Multiple images indicator */}
-                          {post.attachments?.data?.[0]?.subattachments?.data && post.attachments.data[0].subattachments.data.length > 1 && (
-                            <div className="text-xs text-blue-600 mt-1">
-                              +{post.attachments.data[0].subattachments.data.length - 1} תמונות נוספות
-                            </div>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  {posts.length > 3 && (
-                    <div className="text-xs text-gray-500">ועוד {posts.length - 3} פוסטים...</div>
-                  )}
+                    );
+
+                    return (
+                      <>
+                        {/* Personal Posts Section */}
+                        {personalPosts.length > 0 && (
+                          <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                            <h4 className="font-bold text-sm text-blue-800 mb-2">
+                              📱 פוסטים אישיים ({personalPosts.length})
+                            </h4>
+                            <div className="space-y-2">
+                              {personalPosts.slice(0, 2).map(renderPost)}
+                              {personalPosts.length > 2 && (
+                                <div className="text-xs text-blue-600 text-center">
+                                  ועוד {personalPosts.length - 2} פוסטים אישיים...
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Page Posts Sections */}
+                        {Object.entries(pageGroups).map(([pageId, { pageName, posts: pagePosts }]) => (
+                          <div key={pageId} className="border border-green-200 rounded-lg p-3 bg-green-50">
+                            <h4 className="font-bold text-sm text-green-800 mb-2">
+                              🏢 עמוד: {pageName} ({pagePosts.length})
+                            </h4>
+                            <div className="space-y-2">
+                              {pagePosts.slice(0, 2).map(renderPost)}
+                              {pagePosts.length > 2 && (
+                                <div className="text-xs text-green-600 text-center">
+                                  ועוד {pagePosts.length - 2} פוסטים מהעמוד...
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* No posts message */}
+                        {personalPosts.length === 0 && Object.keys(pageGroups).length === 0 && (
+                          <div className="text-center text-gray-500 text-sm py-4">
+                            לא נמצאו פוסטים
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div className="text-sm text-gray-500 mt-3">
