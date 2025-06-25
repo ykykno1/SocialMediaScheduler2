@@ -100,7 +100,7 @@ export function UserChabadWidget() {
 
   const { data: shabbatData, isLoading } = useQuery({
     queryKey: ['/api/shabbat-times', user?.shabbatCityId || '247'],
-    enabled: !!(user?.shabbatCityId),
+    enabled: !!user, // Enable when user data is loaded
     refetchInterval: 60000, // Refresh every minute
   });
 
