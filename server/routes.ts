@@ -584,11 +584,11 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Get auth status
-  app.get("/api/auth-status", requireAuth, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
     console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
     console.log('About to call storage.getFacebookAuth...');
     try {
-      const auth = await storage.getFacebookAuth(req.user?.id);
+      const auth = storage.getFacebookAuth(req.user?.id);
       console.log('Storage.getFacebookAuth completed');
       console.log('Auth result in auth-status endpoint:', !!auth);
       console.log('Auth object details:', auth ? { hasAccessToken: !!auth.accessToken, timestamp: auth.timestamp } : 'null');

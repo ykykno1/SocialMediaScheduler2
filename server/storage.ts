@@ -35,8 +35,8 @@ export interface IStorage {
   removeAuthToken(platform: SupportedPlatform, userId: string): void;
 
   // Legacy Facebook-specific auth (kept for backward compatibility)
-  getFacebookAuth(userId?: string): Promise<FacebookAuth | null>;
-  saveFacebookAuth(token: FacebookAuth, userId?: string): Promise<FacebookAuth>;
+  getFacebookAuth(userId?: string): FacebookAuth | null;
+  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth;
   removeFacebookAuth(userId?: string): void;
 
   // History operations
@@ -172,97 +172,26 @@ export class MemStorage implements IStorage {
   }
 
   // Legacy Facebook-specific auth (user-specific)
-  async getFacebookAuth(userId?: string): Promise<FacebookAuth | null> {
-    console.log(`TRACE: getFacebookAuth called with userId: "${userId}"`);
+  getFacebookAuth(userId?: string): FacebookAuth | null {
+    console.log(`SYNC_FB_AUTH: Getting auth for userId=${userId}`);
     
     if (!userId) {
-      console.log('TRACE: No userId provided');
+      console.log('SYNC_FB_AUTH: No userId provided');
       return null;
     }
     
-    console.log(`[FACEBOOK AUTH] Getting Facebook auth for user ${userId}`);
-    console.log('[FACEBOOK AUTH] Available users in userFacebookAuth:', Array.from(this.userFacebookAuth.keys()));
-    
-    // First check memory storage
-    let auth = this.userFacebookAuth.get(userId) || null;
-    console.log(`Facebook auth found in memory for user ${userId}:`, !!auth);
-    
-    // If not in memory, try to load from database
-    if (!auth) {
-      console.log('No Facebook auth in memory, checking database...');
-      try {
-        console.log('Importing database modules...');
-        const { db } = await import('./db');
-        const { authTokens } = await import('@shared/schema');
-        const { eq, and } = await import('drizzle-orm');
-        
-        console.log('[FACEBOOK AUTH] Database modules imported successfully');
-        
-        console.log(`Querying database for user ${userId} Facebook auth...`);
-        const dbResults = await db.select()
-          .from(authTokens)
-          .where(
-            and(
-              eq(authTokens.userId, userId),
-              eq(authTokens.platform, 'facebook')
-            )
-          )
-          .limit(1);
-        
-        console.log(`Database query returned ${dbResults.length} results`);
-        
-        const dbAuth = dbResults[0];
-        if (dbAuth) {
-          console.log(`Facebook auth found in database for user ${userId}`);
-          console.log('Token data:', { 
-            hasAccessToken: !!dbAuth.accessToken, 
-            accessTokenLength: dbAuth.accessToken?.length,
-            platform: dbAuth.platform,
-            expiresAt: dbAuth.expiresAt 
-          });
-          
-          // Parse additional data
-          const additionalData = dbAuth.additionalData ? JSON.parse(dbAuth.additionalData) : {};
-          console.log('Additional data:', additionalData);
-          
-          // Reconstruct FacebookAuth object
-          auth = {
-            accessToken: dbAuth.accessToken,
-            expiresIn: dbAuth.expiresAt ? Math.floor((dbAuth.expiresAt.getTime() - Date.now()) / 1000) : 3600,
-            timestamp: dbAuth.timestamp?.getTime() || Date.now(),
-            userId: additionalData.facebookUserId,
-            pageAccess: additionalData.pageAccess || false,
-            isManualToken: additionalData.isManualToken || false
-          };
-          
-          // Save to memory for faster future access
-          this.userFacebookAuth.set(userId, auth);
-          console.log('Facebook auth loaded from database and cached in memory');
-        } else {
-          console.log('No Facebook auth found in database either');
-        }
-      } catch (error) {
-        console.error('Failed to load Facebook auth from database:', error);
-        console.error('Error stack:', error.stack);
-      }
+    // Check memory first
+    const memoryAuth = this.userFacebookAuth.get(userId);
+    if (memoryAuth) {
+      console.log('SYNC_FB_AUTH: Found in memory');
+      return memoryAuth;
     }
     
-    if (auth) {
-      console.log(`Auth token exists, access token starts with: ${auth.accessToken.substring(0, 20)}...`);
-    } else {
-      console.log('No Facebook auth found for this user');
-      console.log('Checking if token was saved but not retrieved properly...');
-      
-      // Debug: Check all stored users
-      const allUsers = Array.from(this.userFacebookAuth.keys());
-      console.log('All users with Facebook auth:', allUsers);
-      console.log('Map size:', this.userFacebookAuth.size);
-    }
-    
-    return auth;
+    console.log('SYNC_FB_AUTH: Not in memory, returning null (database check will be done separately)');
+    return null;
   }
 
-  async saveFacebookAuth(token: FacebookAuth, userId?: string): Promise<FacebookAuth> {
+  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth {
     if (!userId) throw new Error('User ID required for saving Facebook auth');
 
     console.log(`Saving Facebook auth for user: ${userId}`);
@@ -273,61 +202,11 @@ export class MemStorage implements IStorage {
     // Save to memory storage for immediate access
     this.userFacebookAuth.set(userId, validatedToken);
     
-    // Also save to database for persistence across server restarts
-    try {
-      console.log('[FACEBOOK SAVE] Starting database save operation...');
-      console.log('[FACEBOOK SAVE] Importing database modules...');
-      const { db } = await import('./db');
-      const { authTokens } = await import('@shared/schema');
-      const { nanoid } = await import('nanoid');
-      const { eq, and } = await import('drizzle-orm');
-      
-      console.log('[FACEBOOK SAVE] Modules imported successfully');
-      console.log(`[FACEBOOK SAVE] Deleting existing Facebook auth for user: ${userId}`);
-      
-      // Delete existing Facebook auth for this user
-      const deleteResult = await db.delete(authTokens).where(
-        and(
-          eq(authTokens.userId, userId),
-          eq(authTokens.platform, 'facebook')
-        )
-      );
-      
-      console.log('[FACEBOOK SAVE] Delete operation completed');
-      
-      const newTokenId = nanoid();
-      const insertData = {
-        id: newTokenId,
-        userId,
-        platform: 'facebook' as const,
-        accessToken: token.accessToken,
-        expiresAt: token.expiresIn ? new Date(Date.now() + token.expiresIn * 1000) : null,
-        additionalData: JSON.stringify({
-          pageAccess: token.pageAccess,
-          isManualToken: token.isManualToken,
-          facebookUserId: token.userId
-        })
-      };
-      
-      console.log('[FACEBOOK SAVE] Preparing insert data:', {
-        id: newTokenId,
-        userId,
-        platform: 'facebook',
-        hasAccessToken: !!token.accessToken,
-        accessTokenLength: token.accessToken?.length,
-        expiresAt: insertData.expiresAt
-      });
-      
-      // Insert new auth token
-      const insertResult = await db.insert(authTokens).values(insertData);
-      
-      console.log('[FACEBOOK SAVE] Insert operation completed');
-      console.log(`[FACEBOOK SAVE] Facebook auth saved to database for user: ${userId}`);
-    } catch (error) {
-      console.error('[FACEBOOK SAVE] Failed to save Facebook auth to database:', error);
-      console.error('[FACEBOOK SAVE] Error stack:', error.stack);
-      // Continue with memory storage even if database save fails
-    }
+    // Database save will be handled asynchronously
+    console.log('SYNC_SAVE_FB: Starting background database save...');
+    this.saveFacebookAuthAsync(validatedToken, userId).catch(error => {
+      console.error('Background database save failed:', error);
+    });
     
     console.log(`Facebook auth saved successfully for user: ${userId}`);
     console.log('Users with Facebook auth after save:', Array.from(this.userFacebookAuth.keys()));
