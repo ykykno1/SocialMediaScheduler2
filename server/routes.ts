@@ -195,20 +195,10 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  app.post("/api/logout", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      // Remove all stored tokens for this user
-      await storage.removeAuthToken('facebook', req.user.id);
-      await storage.removeAuthToken('youtube', req.user.id);
-      await storage.removeAuthToken('instagram', req.user.id);
-      await storage.removeAuthToken('tiktok', req.user.id);
-      
-      console.log(`User ${req.user.id} logged out - all tokens removed`);
-      res.json({ success: true, message: "Logged out successfully" });
-    } catch (error) {
-      console.error('Logout error:', error);
-      res.status(500).json({ error: "Logout failed" });
-    }
+  app.post("/api/logout", (req, res) => {
+    // For JWT authentication, logout is handled client-side by removing the token
+    // No server-side action needed since JWT tokens are stateless
+    res.json({ success: true, message: "Logged out successfully" });
   });
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
@@ -421,7 +411,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-
+  app.post("/api/logout", (req, res) => {
+    (req as any).session = null;
+    res.json({ success: true });
+  });
 
   app.get("/api/user", (req, res) => {
     const authHeader = req.headers.authorization;
@@ -471,8 +464,8 @@ export function registerRoutes(app: Express): Server {
     });
   });
   
-  // Exchange Facebook code for token - Requires authentication
-  app.post("/api/auth-callback", requireAuth, async (req: AuthenticatedRequest, res) => {
+  // Exchange Facebook code for token
+  app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
       const { code, redirectUri } = req.body;
       
@@ -523,14 +516,14 @@ export function registerRoutes(app: Express): Server {
       // Try to get page access information as well
       let pageAccess = false;
       try {
-        // Check for pages_manage_posts permission
+        // Using the correct API version and endpoint per Claude's advice
         const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,category&access_token=${tokenData.access_token}`;
         const pagesResponse = await fetch(pagesUrl);
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as any;
           if (pagesData.data && pagesData.data.length > 0) {
             pageAccess = true;
-            console.log(`Found ${pagesData.data.length} Facebook pages for user`);
+            console.log(`Found ${pagesData.data.length} Facebook pages for user with the correct permissions`);
           }
         } else {
           const errorData = await pagesResponse.json();
@@ -556,7 +549,7 @@ export function registerRoutes(app: Express): Server {
       // Add a history entry for successful authentication (user-specific)
       storage.addHistoryEntry({
         timestamp: new Date(),
-        action: "restore",
+        action: "restore", // Use restore as this is making content visible again in a way
         platform: "facebook",
         success: true,
         affectedItems: 0,
@@ -566,8 +559,7 @@ export function registerRoutes(app: Express): Server {
       res.json({
         access_token: tokenData.access_token,
         expires_in: tokenData.expires_in,
-        user_id: userData.id,
-        pageAccess
+        user_id: userData.id
       });
     } catch (error) {
       console.error("Auth callback error:", error);
@@ -592,45 +584,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Save Facebook token (after OAuth callback)
-  app.post("/api/facebook/save-token", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { access_token, expires_in, user_id, pageAccess } = req.body;
-      
-      if (!access_token || !user_id) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-      
-      // Save the auth token with the current user
-      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
-      console.log(`Facebook user ID: ${user_id}`);
-      const auth = await storage.saveFacebookAuth({
-        accessToken: access_token,
-        expiresIn: expires_in || 3600,
-        timestamp: Date.now(),
-        userId: user_id,
-        pageAccess: pageAccess || false,
-        isManualToken: false
-      }, req.user?.id);
-      console.log(`Auth saved successfully:`, !!auth);
-      
-      // Add a history entry for successful authentication
-      storage.addHistoryEntry({
-        timestamp: new Date(),
-        action: "restore",
-        platform: "facebook",
-        success: true,
-        affectedItems: 0,
-        error: undefined
-      }, req.user?.id);
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error saving Facebook token:", error);
-      res.status(500).json({ error: "Failed to save Facebook token" });
-    }
-  });
-
   // Get auth status
   app.get("/api/auth-status", requireAuth, async (req: AuthenticatedRequest, res) => {
     console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
@@ -657,7 +610,20 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
-
+  
+  // Logout/disconnect
+  app.post("/api/logout", requireAuth, (req: AuthenticatedRequest, res) => {
+    storage.removeFacebookAuth(req.user?.id);
+    storage.addHistoryEntry({
+      timestamp: new Date(),
+      action: "restore", // Same as auth since this is disabling automation
+      platform: "facebook",
+      success: true,
+      affectedItems: 0,
+      error: undefined
+    }, req.user?.id);
+    res.json({ success: true });
+  });
   
   // Get history entries
   app.get("/api/history", requireAuth, (req: AuthenticatedRequest, res) => {
@@ -704,26 +670,22 @@ export function registerRoutes(app: Express): Server {
       
       // Then, get posts from managed pages
       try {
-        console.log("Checking for managed Facebook pages...");
         const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,id&access_token=${auth.accessToken}`;
         const pagesResponse = await fetch(pagesUrl);
         
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as { data: Array<{ id: string; name: string; access_token: string }> };
-          console.log(`Facebook pages API response:`, pagesData);
           console.log(`Found ${pagesData.data?.length || 0} managed pages`);
           
           if (pagesData.data && pagesData.data.length > 0) {
             // Get posts from each page
             for (const page of pagesData.data) {
               try {
-                console.log(`Fetching posts from page: ${page.name} (ID: ${page.id})`);
                 const pagePostsUrl = `https://graph.facebook.com/v22.0/${page.id}/posts?fields=id,message,created_time,privacy,attachments{media,subattachments,type,url},full_picture,picture,type,story&limit=25&access_token=${page.access_token}`;
                 const pagePostsResponse = await fetch(pagePostsUrl);
                 
                 if (pagePostsResponse.ok) {
                   const pagePostsData = await pagePostsResponse.json() as { data: FacebookPost[] };
-                  console.log(`Page ${page.name} posts response:`, pagePostsData);
                   if (pagePostsData.data && Array.isArray(pagePostsData.data)) {
                     // Add page info to posts
                     const pagePostsWithInfo = pagePostsData.data.map(post => ({
@@ -734,20 +696,12 @@ export function registerRoutes(app: Express): Server {
                     allPosts = [...allPosts, ...pagePostsWithInfo];
                     console.log(`Got ${pagePostsData.data.length} posts from page: ${page.name}`);
                   }
-                } else {
-                  const errorData = await pagePostsResponse.json();
-                  console.error(`Failed to fetch posts from page ${page.name}:`, errorData);
                 }
               } catch (pageError) {
                 console.error(`Error fetching posts from page ${page.name}:`, pageError);
               }
             }
-          } else {
-            console.log("No managed pages found - user may not have page management permissions");
           }
-        } else {
-          const errorData = await pagesResponse.json();
-          console.error("Failed to fetch Facebook pages:", errorData);
         }
       } catch (pagesError) {
         console.error("Error fetching pages:", pagesError);
