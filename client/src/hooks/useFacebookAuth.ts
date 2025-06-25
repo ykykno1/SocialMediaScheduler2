@@ -104,20 +104,27 @@ export default function useFacebookAuth() {
       // Verify origin
       if (event.origin !== window.location.origin) return;
       
-      // Handle successful auth
-      if (event.data.success && event.data.platform === 'facebook') {
-        // Wait a bit to ensure server has processed the auth
-        setTimeout(() => {
-          toast({
-            title: 'התחברות בוצעה בהצלחה',
-            description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
-          });
-          
-          // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
-        }, 500);
+      // Handle successful auth with code
+      if (event.data.code && event.data.platform === 'facebook') {
+        // Exchange code for token on the server
+        exchangeCodeMutation.mutate({
+          code: event.data.code,
+          redirectUri: window.location.origin + '/auth-callback.html'
+        });
+      }
+      
+      // Handle successful auth with access token (implicit flow)
+      if (event.data.access_token && event.data.platform === 'facebook') {
+        // TODO: Handle implicit flow if needed
+        toast({
+          title: 'התחברות בוצעה בהצלחה',
+          description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
+        });
+        
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
       }
       
       // Handle auth error
