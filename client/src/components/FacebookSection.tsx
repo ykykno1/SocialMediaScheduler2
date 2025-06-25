@@ -65,19 +65,28 @@ export default function FacebookSection() {
                   onClick={async () => {
                     if (confirm('האם אתה בטוח שברצונך להתנתק מפייסבוק?')) {
                       try {
+                        const token = localStorage.getItem('token');
+                        if (!token) {
+                          alert('לא נמצא טוקן אימות');
+                          return;
+                        }
+
                         const response = await fetch('/api/facebook/disconnect', {
                           method: 'POST',
                           headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                           }
                         });
                         
                         if (response.ok) {
-                          // עדכון המצב המקומי
+                          // נקה את המטמון ורענן את הדף
+                          localStorage.removeItem('facebook_auth_cache');
                           window.location.reload();
                         } else {
-                          alert('שגיאה בהתנתקות מפייסבוק');
+                          const errorData = await response.json();
+                          console.error('Disconnect error:', errorData);
+                          alert(`שגיאה בהתנתקות מפייסבוק: ${errorData.error || 'שגיאה לא ידועה'}`);
                         }
                       } catch (error) {
                         console.error('Error disconnecting Facebook:', error);
