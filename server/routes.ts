@@ -15,7 +15,7 @@ import {
   registerSchema,
   loginSchema
 } from "@shared/schema";
-// import { registerFacebookPagesRoutes } from "./facebook-pages"; // Temporarily disabled
+import { registerFacebookPagesRoutes } from "./facebook-pages";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
@@ -2832,6 +2832,9 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: 'Failed to get location' });
     }
   });
+
+  // Register Facebook pages routes
+  registerFacebookPagesRoutes(app, requireAuth);
 
   const httpServer = createServer(app);
   return httpServer;
