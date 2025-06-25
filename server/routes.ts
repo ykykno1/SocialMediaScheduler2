@@ -670,22 +670,26 @@ export function registerRoutes(app: Express): Server {
       
       // Then, get posts from managed pages
       try {
+        console.log("Checking for managed Facebook pages...");
         const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,id&access_token=${auth.accessToken}`;
         const pagesResponse = await fetch(pagesUrl);
         
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as { data: Array<{ id: string; name: string; access_token: string }> };
+          console.log(`Facebook pages API response:`, pagesData);
           console.log(`Found ${pagesData.data?.length || 0} managed pages`);
           
           if (pagesData.data && pagesData.data.length > 0) {
             // Get posts from each page
             for (const page of pagesData.data) {
               try {
+                console.log(`Fetching posts from page: ${page.name} (ID: ${page.id})`);
                 const pagePostsUrl = `https://graph.facebook.com/v22.0/${page.id}/posts?fields=id,message,created_time,privacy,attachments{media,subattachments,type,url},full_picture,picture,type,story&limit=25&access_token=${page.access_token}`;
                 const pagePostsResponse = await fetch(pagePostsUrl);
                 
                 if (pagePostsResponse.ok) {
                   const pagePostsData = await pagePostsResponse.json() as { data: FacebookPost[] };
+                  console.log(`Page ${page.name} posts response:`, pagePostsData);
                   if (pagePostsData.data && Array.isArray(pagePostsData.data)) {
                     // Add page info to posts
                     const pagePostsWithInfo = pagePostsData.data.map(post => ({
@@ -696,12 +700,20 @@ export function registerRoutes(app: Express): Server {
                     allPosts = [...allPosts, ...pagePostsWithInfo];
                     console.log(`Got ${pagePostsData.data.length} posts from page: ${page.name}`);
                   }
+                } else {
+                  const errorData = await pagePostsResponse.json();
+                  console.error(`Failed to fetch posts from page ${page.name}:`, errorData);
                 }
               } catch (pageError) {
                 console.error(`Error fetching posts from page ${page.name}:`, pageError);
               }
             }
+          } else {
+            console.log("No managed pages found - user may not have page management permissions");
           }
+        } else {
+          const errorData = await pagesResponse.json();
+          console.error("Failed to fetch Facebook pages:", errorData);
         }
       } catch (pagesError) {
         console.error("Error fetching pages:", pagesError);
