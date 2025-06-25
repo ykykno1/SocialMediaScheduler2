@@ -173,13 +173,14 @@ export class MemStorage implements IStorage {
 
   // Legacy Facebook-specific auth (user-specific)
   async getFacebookAuth(userId?: string): Promise<FacebookAuth | null> {
+    console.log(`[FACEBOOK AUTH] Function called with userId: "${userId}", type: ${typeof userId}`);
     if (!userId) {
-      console.log('getFacebookAuth called without userId');
+      console.log('[FACEBOOK AUTH] No userId provided, returning null');
       return null;
     }
     
-    console.log(`Getting Facebook auth for user ${userId}`);
-    console.log('Available users in userFacebookAuth:', Array.from(this.userFacebookAuth.keys()));
+    console.log(`[FACEBOOK AUTH] Getting Facebook auth for user ${userId}`);
+    console.log('[FACEBOOK AUTH] Available users in userFacebookAuth:', Array.from(this.userFacebookAuth.keys()));
     
     // First check memory storage
     let auth = this.userFacebookAuth.get(userId) || null;
@@ -189,46 +190,57 @@ export class MemStorage implements IStorage {
     if (!auth) {
       console.log('No Facebook auth in memory, checking database...');
       try {
-        if (typeof require !== 'undefined') {
-          const { db } = await import('./db');
-          const { authTokens } = await import('@shared/schema');
-          const { eq, and } = await import('drizzle-orm');
-          
-          const [dbAuth] = await db.select()
-            .from(authTokens)
-            .where(
-              and(
-                eq(authTokens.userId, userId),
-                eq(authTokens.platform, 'facebook')
-              )
+        console.log('Importing database modules...');
+        const { db } = await import('./db');
+        const { authTokens } = await import('@shared/schema');
+        const { eq, and } = await import('drizzle-orm');
+        
+        console.log(`Querying database for user ${userId} Facebook auth...`);
+        const dbResults = await db.select()
+          .from(authTokens)
+          .where(
+            and(
+              eq(authTokens.userId, userId),
+              eq(authTokens.platform, 'facebook')
             )
-            .limit(1);
+          )
+          .limit(1);
+        
+        console.log(`Database query returned ${dbResults.length} results`);
+        
+        const dbAuth = dbResults[0];
+        if (dbAuth) {
+          console.log(`Facebook auth found in database for user ${userId}`);
+          console.log('Token data:', { 
+            hasAccessToken: !!dbAuth.accessToken, 
+            accessTokenLength: dbAuth.accessToken?.length,
+            platform: dbAuth.platform,
+            expiresAt: dbAuth.expiresAt 
+          });
           
-          if (dbAuth) {
-            console.log(`Facebook auth found in database for user ${userId}`);
-            
-            // Parse additional data
-            const additionalData = dbAuth.additionalData ? JSON.parse(dbAuth.additionalData) : {};
-            
-            // Reconstruct FacebookAuth object
-            auth = {
-              accessToken: dbAuth.accessToken,
-              expiresIn: dbAuth.expiresAt ? Math.floor((dbAuth.expiresAt.getTime() - Date.now()) / 1000) : 3600,
-              timestamp: dbAuth.timestamp?.getTime() || Date.now(),
-              userId: additionalData.facebookUserId,
-              pageAccess: additionalData.pageAccess || false,
-              isManualToken: additionalData.isManualToken || false
-            };
-            
-            // Save to memory for faster future access
-            this.userFacebookAuth.set(userId, auth);
-            console.log('Facebook auth loaded from database and cached in memory');
-          } else {
-            console.log('No Facebook auth found in database either');
-          }
+          // Parse additional data
+          const additionalData = dbAuth.additionalData ? JSON.parse(dbAuth.additionalData) : {};
+          console.log('Additional data:', additionalData);
+          
+          // Reconstruct FacebookAuth object
+          auth = {
+            accessToken: dbAuth.accessToken,
+            expiresIn: dbAuth.expiresAt ? Math.floor((dbAuth.expiresAt.getTime() - Date.now()) / 1000) : 3600,
+            timestamp: dbAuth.timestamp?.getTime() || Date.now(),
+            userId: additionalData.facebookUserId,
+            pageAccess: additionalData.pageAccess || false,
+            isManualToken: additionalData.isManualToken || false
+          };
+          
+          // Save to memory for faster future access
+          this.userFacebookAuth.set(userId, auth);
+          console.log('Facebook auth loaded from database and cached in memory');
+        } else {
+          console.log('No Facebook auth found in database either');
         }
       } catch (error) {
-        console.warn('Failed to load Facebook auth from database:', error);
+        console.error('Failed to load Facebook auth from database:', error);
+        console.error('Error stack:', error.stack);
       }
     }
     
