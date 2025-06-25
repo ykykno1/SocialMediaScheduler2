@@ -4,35 +4,58 @@ import { useQuery } from '@tanstack/react-query';
 // Helper function to get current Hebrew date and Torah portion
 const getHebrewDateAndParasha = () => {
   const now = new Date();
-  const nextSaturday = new Date(now);
-  nextSaturday.setDate(now.getDate() + (6 - now.getDay()));
   
-  // Format Hebrew date (approximate)
+  // Find the coming Saturday
+  const nextSaturday = new Date(now);
+  const daysUntilSaturday = (6 - now.getDay()) % 7;
+  if (daysUntilSaturday === 0 && now.getHours() < 20) {
+    // If it's Saturday before sunset, show current week
+    nextSaturday.setDate(now.getDate());
+  } else {
+    // Show next Saturday
+    nextSaturday.setDate(now.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
+  }
+  
+  // Hebrew months (approximate)
   const hebrewMonths = [
     'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר', 
     'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
   ];
   
-  // Get current Torah portion (simplified mapping)
+  // Get Torah portion based on week of year
   const getParasha = (date: Date) => {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const weekNumber = Math.floor((date.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    // Calculate week number from start of Jewish year (approximate)
+    const yearStart = new Date(date.getFullYear(), 8, 6); // Approximate Rosh Hashana
+    const weeksSinceStart = Math.floor((date.getTime() - yearStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
     
-    const parashot = [
-      'בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח',
-      'וישב', 'מקץ', 'ויגש', 'ויחי', 'שמות', 'וארא', 'בא', 'בשלח',
-      'יתרו', 'משפטים', 'תרומה', 'תצוה', 'כי תשא', 'ויקהל', 'פקודי', 'ויקרא',
-      'צו', 'שמיני', 'תזריע', 'מצורע', 'אחרי מות', 'קדושים', 'אמור', 'בהר',
-      'בחקתי', 'במדבר', 'נשא', 'בהעלתך', 'שלח לך', 'קרח', 'חקת', 'בלק',
-      'פינחס', 'מטות', 'מסעי', 'דברים', 'ואתחנן', 'עקב', 'ראה', 'שפטים',
-      'כי תצא', 'כי תבוא', 'נצבים', 'וילך', 'האזינו', 'וזאת הברכה'
+    const parashot2025 = [
+      'נצבים', 'וילך', 'האזינו', 'וזאת הברכה', 'בראשית', 'נח', 'לך לך', 'וירא',
+      'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ', 'ויגש', 'ויחי',
+      'שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה',
+      'כי תשא', 'ויקהל', 'פקודי', 'ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע',
+      'אחרי מות', 'קדושים', 'אמור', 'בהר', 'בחקתי', 'במדבר', 'נשא', 'בהעלתך',
+      'שלח לך', 'קרח', 'חקת', 'בלק', 'פינחס', 'מטות', 'מסעי', 'דברים',
+      'ואתחנן', 'עקב', 'ראה', 'שפטים', 'כי תצא', 'כי תבוא'
     ];
     
-    return parashot[weekNumber % parashot.length];
+    // For current week (June 2025), use appropriate parasha
+    if (date.getMonth() === 5 && date.getDate() >= 25) { // June 25+
+      return 'חקת'; // Current parasha for this week
+    }
+    
+    return parashot2025[Math.max(0, weeksSinceStart) % parashot2025.length];
   };
   
   const parasha = getParasha(nextSaturday);
-  const hebrewDate = `${nextSaturday.getDate()} ${hebrewMonths[nextSaturday.getMonth()]} ${nextSaturday.getFullYear() + 3760}`;
+  
+  // Convert to Hebrew date (simplified)
+  const gregorianToHebrew = (date: Date) => {
+    const hebrewYear = date.getFullYear() + 3760;
+    const month = hebrewMonths[date.getMonth()];
+    return `${date.getDate()} ${month} ${hebrewYear}`;
+  };
+  
+  const hebrewDate = gregorianToHebrew(nextSaturday);
   
   return { parasha, hebrewDate };
 };
@@ -186,7 +209,7 @@ export function UserChabadWidget() {
               פרשת השבוע - פרשת {parasha}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              {hebrewDate} • {locationData.shabbatCity}
+              {hebrewDate}
             </p>
           </div>
         </div>

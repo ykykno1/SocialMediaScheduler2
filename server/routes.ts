@@ -2699,7 +2699,7 @@ export function registerRoutes(app: Express): Server {
   // Get user Shabbat location
   app.get('/api/user/shabbat-location', requireAuth, async (req, res) => {
     try {
-      const user = storage.getUser(req.user.id);
+      const user = await storage.getUser(req.user.id);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
