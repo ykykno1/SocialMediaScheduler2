@@ -84,7 +84,7 @@ export function DirectChabadWidget() {
               זמני שבת
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              השבתות הקרובות
+              השבת הקרובה
             </p>
           </div>
         </div>
@@ -145,7 +145,7 @@ export function DirectChabadWidget() {
                       key={`${currentCityData.chabadId}-${currentCity}`}
                       type="text/javascript" 
                       language="javascript" 
-                      src={`//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he`}
+                      src={`//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he`}
                     />
                   </td>
                 </tr>

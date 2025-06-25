@@ -162,7 +162,7 @@ export function ChabadIframeWidget() {
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td width="100%" class="clheading">
-                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he"></script>
+                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${currentCityData.chabadId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he"></script>
             </td>
         </tr>
     </table>

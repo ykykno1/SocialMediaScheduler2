@@ -101,7 +101,7 @@ export function ChabadShabbatWidget() {
     // Create and load new script
     const script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = `//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${cityData.chabadId}&locationid=&locationtype=&ln=2&weeks=2&mid=7068&lang=he`;
+    script.src = `//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${cityData.chabadId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he`;
     
     script.onload = () => {
       setScriptLoaded(true);
@@ -138,7 +138,7 @@ export function ChabadShabbatWidget() {
               זמני שבת
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              השבתות הקרובות
+              השבת הקרובה
             </p>
           </div>
         </div>
