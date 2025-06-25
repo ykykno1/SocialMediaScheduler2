@@ -28,7 +28,38 @@ export const facebookPostSchema = z.object({
     value: z.string(), // 'EVERYONE', 'SELF', etc.
     description: z.string().optional(),
   }),
-  isHidden: z.boolean().optional().default(false)
+  isHidden: z.boolean().optional().default(false),
+  // Media attachments
+  attachments: z.object({
+    data: z.array(z.object({
+      type: z.string().optional(), // 'photo', 'video', 'link', etc.
+      media: z.object({
+        image: z.object({
+          src: z.string(),
+          width: z.number().optional(),
+          height: z.number().optional()
+        }).optional()
+      }).optional(),
+      url: z.string().optional(),
+      subattachments: z.object({
+        data: z.array(z.object({
+          type: z.string().optional(),
+          media: z.object({
+            image: z.object({
+              src: z.string(),
+              width: z.number().optional(),
+              height: z.number().optional()
+            }).optional()
+          }).optional()
+        })).optional()
+      }).optional()
+    })).optional()
+  }).optional(),
+  // Direct media fields
+  full_picture: z.string().optional(), // Full size image URL
+  picture: z.string().optional(), // Thumbnail image URL
+  type: z.string().optional(), // 'photo', 'video', 'status', 'link', etc.
+  story: z.string().optional() // Story text for posts without message
 });
 
 export type FacebookPost = z.infer<typeof facebookPostSchema>;

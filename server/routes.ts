@@ -651,9 +651,9 @@ export function registerRoutes(app: Express): Server {
         }
       }
       
-      // Request posts from Facebook Graph API with more comprehensive parameters
+      // Request posts from Facebook Graph API with more comprehensive parameters including media
       console.log("Fetching posts from Facebook API...");
-      const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy&limit=100&access_token=${auth.accessToken}`;
+      const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy,attachments{media,subattachments,type,url},full_picture,picture,type,story&limit=100&access_token=${auth.accessToken}`;
       
       const postsResponse = await fetch(postsUrl);
       

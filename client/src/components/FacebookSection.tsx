@@ -71,9 +71,57 @@ export default function FacebookSection() {
                   <h4 className="font-medium text-sm">הפוסטים שלך ({posts.length}):</h4>
                   {posts.slice(0, 3).map((post) => (
                     <div key={post.id} className="p-2 bg-gray-50 rounded text-xs">
-                      <div className="font-medium">{post.message || 'פוסט ללא טקסט'}</div>
-                      <div className="text-gray-500">{new Date(post.created_time).toLocaleDateString('he-IL')}</div>
-                      <div className="text-xs text-gray-400">רמת פרטיות: {post.privacy?.value || 'לא ידוע'}</div>
+                      <div className="flex space-x-2">
+                        {/* Media thumbnail */}
+                        {(post.full_picture || post.picture) && (
+                          <div className="flex-shrink-0">
+                            <img 
+                              src={post.picture || post.full_picture} 
+                              alt="תמונת פוסט"
+                              className="w-12 h-12 rounded object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Attachments media */}
+                        {post.attachments?.data?.[0]?.media?.image && (
+                          <div className="flex-shrink-0">
+                            <img 
+                              src={post.attachments.data[0].media.image.src} 
+                              alt="מדיה מצורפת"
+                              className="w-12 h-12 rounded object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {post.message || post.story || 'פוסט ללא טקסט'}
+                          </div>
+                          <div className="text-gray-500">
+                            {new Date(post.created_time).toLocaleDateString('he-IL')}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {post.type && (
+                              <span className="mr-2">סוג: {post.type}</span>
+                            )}
+                            רמת פרטיות: {post.privacy?.value || 'לא ידוע'}
+                          </div>
+                          
+                          {/* Multiple images indicator */}
+                          {post.attachments?.data?.[0]?.subattachments?.data && post.attachments.data[0].subattachments.data.length > 1 && (
+                            <div className="text-xs text-blue-600 mt-1">
+                              +{post.attachments.data[0].subattachments.data.length - 1} תמונות נוספות
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                   {posts.length > 3 && (

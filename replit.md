@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Enhanced Facebook posts with media display:
+  - Added support for displaying post images and videos in UI
+  - Updated Facebook API request to fetch full_picture, picture, attachments with media data
+  - Enhanced FacebookPost schema to include media attachments structure
+  - Facebook posts now show thumbnails alongside text content
+  - Added indicators for multiple images in posts
+  - Improved visual representation of different post types (photo, video, status, link)
 - June 25, 2025. Implemented dynamic Torah portion retrieval from Chabad API:
   - Torah portion names now automatically update weekly from authentic Chabad.org data
   - Removed manual parasha calculation in favor of API-driven approach for accuracy
