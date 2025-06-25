@@ -36,7 +36,7 @@ export interface IStorage {
 
   // Legacy Facebook-specific auth (kept for backward compatibility)
   getFacebookAuth(userId?: string): FacebookAuth | null;
-  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth;
+  saveFacebookAuth(token: FacebookAuth, userId?: string): Promise<FacebookAuth>;
   removeFacebookAuth(userId?: string): void;
 
   // History operations
@@ -244,7 +244,7 @@ export class MemStorage implements IStorage {
     return null;
   }
 
-  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth {
+  async saveFacebookAuth(token: FacebookAuth, userId?: string): Promise<FacebookAuth> {
     if (!userId) throw new Error('User ID required for saving Facebook auth');
 
     console.log(`Saving Facebook auth for user: ${userId}`);
@@ -255,11 +255,14 @@ export class MemStorage implements IStorage {
     // Save to memory storage for immediate access
     this.userFacebookAuth.set(userId, validatedToken);
     
-    // Database save will be handled asynchronously
-    console.log('SYNC_SAVE_FB: Starting background database save...');
-    this.saveFacebookAuthAsync(validatedToken, userId).catch((error: any) => {
-      console.error('Background database save failed:', error);
-    });
+    // Save to database immediately
+    console.log('SYNC_SAVE_FB: Starting immediate database save...');
+    try {
+      await this.saveFacebookAuthAsync(validatedToken, userId);
+      console.log('SYNC_SAVE_FB: Database save completed successfully');
+    } catch (error) {
+      console.error('SYNC_SAVE_FB: Database save failed:', error);
+    }
     
     console.log(`Facebook auth saved successfully for user: ${userId}`);
     console.log('Users with Facebook auth after save:', Array.from(this.userFacebookAuth.keys()));
