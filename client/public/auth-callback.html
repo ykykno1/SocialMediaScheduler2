@@ -138,12 +138,17 @@
                 messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
                 
                 // Send code to parent window
+                console.log('Sending code to parent:', params.code);
+                console.log('Platform:', params.state || 'facebook');
                 if (window.opener) {
                     window.opener.postMessage({
                         code: params.code,
                         platform: params.state || 'facebook',
                         success: true
                     }, window.location.origin);
+                    console.log('Message sent to parent window');
+                } else {
+                    console.error('No parent window found');
                 }
                 
                 // Close the window after a delay

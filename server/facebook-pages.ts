@@ -1,7 +1,16 @@
 import fetch from 'node-fetch';
 import type { FacebookAuth, FacebookPage } from '@shared/schema';
 import { storage } from './storage';
-import type { Express } from "express";
+import type { Express, Request } from "express";
+
+// Import authentication middleware and types
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    username: string;
+  };
+}
 
 const FACEBOOK_API_VERSION = 'v22.0';
 
@@ -179,12 +188,13 @@ export const restoreAllPages = async (auth: FacebookAuth): Promise<{
 /**
  * Register Facebook pages API routes
  * @param app Express application
+ * @param requireAuth Authentication middleware
  */
-export const registerFacebookPagesRoutes = (app: Express) => {
+export const registerFacebookPagesRoutes = (app: Express, requireAuth: any) => {
   // Get Facebook pages
-  app.get('/api/facebook/pages', async (req, res) => {
+  app.get('/api/facebook/pages', requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getFacebookAuth();
+      const auth = storage.getFacebookAuth(req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: 'Not authenticated with Facebook' });

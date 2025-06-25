@@ -1101,7 +1101,7 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Register Facebook Pages routes
-  registerFacebookPagesRoutes(app);
+  registerFacebookPagesRoutes(app, requireAuth);
   
   // YouTube videos endpoint  
   app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {

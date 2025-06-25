@@ -174,7 +174,12 @@ export class MemStorage implements IStorage {
   // Legacy Facebook-specific auth (user-specific)
   getFacebookAuth(userId?: string): FacebookAuth | null {
     if (!userId) return null;
-    return this.userFacebookAuth.get(userId) || null;
+    const auth = this.userFacebookAuth.get(userId) || null;
+    console.log(`Getting Facebook auth for user ${userId}:`, !!auth);
+    if (auth) {
+      console.log(`Auth token exists, access token starts with: ${auth.accessToken.substring(0, 20)}...`);
+    }
+    return auth;
   }
 
   saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth {
