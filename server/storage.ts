@@ -174,6 +174,8 @@ export class MemStorage implements IStorage {
   // Legacy Facebook-specific auth (user-specific)
   getFacebookAuth(userId?: string): FacebookAuth | null {
     console.log(`SYNC_FB_AUTH: Getting auth for userId=${userId}`);
+    console.log(`SYNC_FB_AUTH: Memory map keys: [${Array.from(this.userFacebookAuth.keys()).join(', ')}]`);
+    console.log(`SYNC_FB_AUTH: Memory map size: ${this.userFacebookAuth.size}`);
     
     if (!userId) {
       console.log('SYNC_FB_AUTH: No userId provided');
@@ -182,12 +184,13 @@ export class MemStorage implements IStorage {
     
     // Check memory first
     const memoryAuth = this.userFacebookAuth.get(userId);
+    console.log(`SYNC_FB_AUTH: Memory lookup for "${userId}" result: ${!!memoryAuth}`);
     if (memoryAuth) {
-      console.log('SYNC_FB_AUTH: Found in memory');
+      console.log('SYNC_FB_AUTH: Found in memory, returning token');
       return memoryAuth;
     }
     
-    console.log('SYNC_FB_AUTH: Not in memory, returning null (database check will be done separately)');
+    console.log('SYNC_FB_AUTH: Not in memory, returning null');
     return null;
   }
 
