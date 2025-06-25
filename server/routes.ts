@@ -634,7 +634,7 @@ export function registerRoutes(app: Express): Server {
   // Get Facebook posts
   app.get("/api/facebook/posts", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getFacebookAuth(req.user?.id);
+      const auth = await storage.getAuthToken('facebook', req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
@@ -645,7 +645,7 @@ export function registerRoutes(app: Express): Server {
       
       // Try to use cached posts first if available (unless refresh requested)
       if (!refresh) {
-        const cachedPosts = storage.getCachedPosts();
+        const cachedPosts = storage.getCachedPosts(req.user?.id);
         if (cachedPosts.length > 0) {
           return res.json(cachedPosts);
         }
@@ -664,7 +664,7 @@ export function registerRoutes(app: Express): Server {
         // Check if the token has expired or is invalid
         if (errorData.error && (errorData.error.code === 190 || errorData.error.code === 104)) {
           // Token is invalid, clear it
-          storage.removeFacebookAuth();
+          await storage.removeAuthToken('facebook', req.user?.id);
           return res.status(401).json({ error: "Facebook authentication expired", details: errorData.error });
         }
         
