@@ -377,11 +377,43 @@ export class MemStorage implements IStorage {
 
   removeFacebookAuth(userId?: string): void {
     if (!userId) return;
-    this.userFacebookAuth.set(userId, null);
+    
+    console.log(`Removing Facebook auth for user: ${userId}`);
+    
+    // Remove from memory
+    this.userFacebookAuth.delete(userId);
 
     const userTokens = this.userAuthTokens.get(userId);
     if (userTokens) {
       userTokens.facebook = null;
+    }
+    
+    // Remove from database asynchronously
+    this.removeFacebookAuthFromDatabase(userId).catch(error => {
+      console.error('Failed to remove Facebook auth from database:', error);
+    });
+    
+    console.log(`Facebook auth removed for user: ${userId}`);
+  }
+
+  private async removeFacebookAuthFromDatabase(userId: string): Promise<void> {
+    try {
+      console.log(`Removing Facebook auth from database for user: ${userId}`);
+      
+      const { db } = await import('./db');
+      const { authTokens } = await import('@shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+
+      await db.delete(authTokens)
+        .where(and(
+          eq(authTokens.userId, userId),
+          eq(authTokens.platform, 'facebook')
+        ));
+      
+      console.log(`Facebook auth removed from database for user: ${userId}`);
+    } catch (error) {
+      console.error(`Error removing Facebook auth from database for user ${userId}:`, error);
+      throw error;
     }
   }
 
