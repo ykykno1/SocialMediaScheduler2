@@ -412,42 +412,54 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/logout", async (req, res) => {
-    console.log("LOGOUT: Starting logout process");
+    console.log("=== LOGOUT DEBUG: Starting logout process ===");
     
     // Get user ID from token
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
     
-    console.log(`LOGOUT: Token found: ${!!token}`);
+    console.log(`=== LOGOUT DEBUG: Token found: ${!!token} ===`);
     
     if (token) {
-      const decoded = verifyToken(token);
-      console.log(`LOGOUT: Token decoded: ${!!decoded}`);
-      
-      if (decoded) {
-        const userId = decoded.userId;
-        console.log(`LOGOUT: User ID: ${userId}`);
+      try {
+        const decoded = verifyToken(token);
+        console.log(`=== LOGOUT DEBUG: Token decoded: ${!!decoded} ===`);
         
-        // Log before clearing
-        const fbAuthBefore = storage.getFacebookAuth(userId);
-        console.log(`LOGOUT: Facebook auth before clearing: ${!!fbAuthBefore}`);
-        
-        // Clear all platform tokens for this user
-        storage.removeFacebookAuth(userId);
-        storage.removeAuthToken('youtube', userId);
-        storage.removeAuthToken('instagram', userId);
-        storage.removeAuthToken('tiktok', userId);
-        
-        // Log after clearing
-        const fbAuthAfter = storage.getFacebookAuth(userId);
-        console.log(`LOGOUT: Facebook auth after clearing: ${!!fbAuthAfter}`);
-        console.log(`LOGOUT: Cleared all platform tokens for user: ${userId}`);
+        if (decoded) {
+          const userId = decoded.userId;
+          console.log(`=== LOGOUT DEBUG: User ID: ${userId} ===`);
+          
+          // Log before clearing
+          const fbAuthBefore = storage.getFacebookAuth(userId);
+          console.log(`=== LOGOUT DEBUG: Facebook auth before clearing: ${!!fbAuthBefore} ===`);
+          
+          // Clear all platform tokens for this user
+          console.log(`=== LOGOUT DEBUG: Calling removeFacebookAuth for user: ${userId} ===`);
+          storage.removeFacebookAuth(userId);
+          
+          console.log(`=== LOGOUT DEBUG: Calling removeAuthToken for other platforms ===`);
+          storage.removeAuthToken('youtube', userId);
+          storage.removeAuthToken('instagram', userId);
+          storage.removeAuthToken('tiktok', userId);
+          
+          // Log after clearing
+          const fbAuthAfter = storage.getFacebookAuth(userId);
+          console.log(`=== LOGOUT DEBUG: Facebook auth after clearing: ${!!fbAuthAfter} ===`);
+          console.log(`=== LOGOUT DEBUG: Cleared all platform tokens for user: ${userId} ===`);
+        } else {
+          console.log("=== LOGOUT DEBUG: Token decode failed ===");
+        }
+      } catch (error) {
+        console.error("=== LOGOUT DEBUG: Error during logout:", error, "===");
       }
+    } else {
+      console.log("=== LOGOUT DEBUG: No token provided ===");
     }
     
     // Clear session
     (req as any).session = null;
     
+    console.log("=== LOGOUT DEBUG: Logout completed ===");
     res.json({ success: true, message: "התנתקות הושלמה בהצלחה" });
   });
 
