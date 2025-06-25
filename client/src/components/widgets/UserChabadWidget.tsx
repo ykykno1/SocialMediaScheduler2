@@ -222,7 +222,7 @@ export function UserChabadWidget() {
           srcDoc={createIframeContent()}
           className="w-full h-full border-none"
           style={{ minHeight: '200px' }}
-          title={`זמני שבת עבור ${locationData.shabbatCity}`}
+          title="זמני שבת"
         />
       </div>
 

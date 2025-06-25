@@ -126,6 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Fixed critical location saving bug and enhanced widget display:
+  - RESOLVED: Location saving now works correctly - removed await from non-async updateUser function
+  - Widget now properly updates when location changes in settings (Tel Aviv example working)
+  - Updated Torah portion calculation to show correct parasha for upcoming Shabbat ("חקת" for current week)
+  - Improved Hebrew date calculation for next Saturday display
+  - Removed city name and code display from widget per user requirements
+  - Widget title shows "פרשת השבוע - פרשת [Torah portion name]" with Hebrew date
+  - Text "כניסת שבת" displays correctly instead of "הדלקת נרות"
 - June 25, 2025. Enhanced Shabbat widget functionality:
   - Fixed location saving bug in settings page (updateUser instead of updateUserShabbatLocation)
   - Updated widget title to show Torah portion: "פרשת השבוע - פרשת [name]"
