@@ -173,7 +173,7 @@ export const userSchema = z.object({
   lastActive: z.date().optional()
 });
 
-export type User = z.infer<typeof userSchema>;
+export type UserZod = z.infer<typeof userSchema>;
 
 // Insert schemas
 export const insertUserSchema = userSchema.omit({ 
@@ -182,7 +182,7 @@ export const insertUserSchema = userSchema.omit({
   updatedAt: true 
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertUserZod = z.infer<typeof insertUserSchema>;
 
 // Login schemas
 export const loginSchema = z.object({
@@ -235,6 +235,8 @@ export const users = pgTable("users", {
   password: varchar("password").notNull(),
   username: varchar("username").notNull(),
   accountType: varchar("account_type").$type<'free' | 'youtube_pro' | 'premium'>().notNull().default('free'),
+  shabbatCity: varchar("shabbat_city").default('ירושלים'),
+  shabbatCityId: varchar("shabbat_city_id").default('247'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -74,6 +74,7 @@ export interface IStorage {
   getUser(id: string): User | null;
   getUserById(id: string): User | null;
   updateUser(id: string, updates: Partial<User>): User;
+  updateUserShabbatLocation(id: string, cityName: string, cityId: string): User;
   verifyPassword(email: string, password: string): User | null;
 
   // Admin operations
@@ -409,6 +410,21 @@ export class MemStorage implements IStorage {
       this.usersByEmail.delete(user.email);
       this.usersByEmail.set(updates.email, id);
     }
+
+    return updatedUser;
+  }
+
+  updateUserShabbatLocation(id: string, cityName: string, cityId: string): User {
+    const user = this.users.get(id);
+    if (!user) throw new Error('User not found');
+
+    const updatedUser = { 
+      ...user, 
+      shabbatCity: cityName, 
+      shabbatCityId: cityId, 
+      updatedAt: new Date() 
+    };
+    this.users.set(id, updatedUser);
 
     return updatedUser;
   }
