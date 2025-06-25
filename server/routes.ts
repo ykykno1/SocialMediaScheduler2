@@ -15,7 +15,7 @@ import {
   registerSchema,
   loginSchema
 } from "@shared/schema";
-import { registerFacebookPagesRoutes } from "./facebook-pages";
+// import { registerFacebookPagesRoutes } from "./facebook-pages"; // Temporarily disabled
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
@@ -1100,8 +1100,8 @@ export function registerRoutes(app: Express): Server {
     }
   });
   
-  // Register Facebook Pages routes
-  registerFacebookPagesRoutes(app, requireAuth);
+  // Register Facebook Pages routes - temporarily disable to fix authentication first
+  // registerFacebookPagesRoutes(app, requireAuth);
   
   // YouTube videos endpoint  
   app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
