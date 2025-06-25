@@ -634,7 +634,7 @@ export function registerRoutes(app: Express): Server {
   // Get Facebook posts
   app.get("/api/facebook/posts", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = await storage.getFacebookAuth(req.user?.id);
+      const auth = storage.getFacebookAuth(req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
@@ -697,7 +697,7 @@ export function registerRoutes(app: Express): Server {
   // Hide Facebook posts - Try to use real API for admin users
   app.post("/api/facebook/hide", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = await storage.getFacebookAuth(req.user?.id);
+      const auth = storage.getFacebookAuth(req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
@@ -1926,7 +1926,7 @@ export function registerRoutes(app: Express): Server {
       
       if (!accessToken) {
         // Try using Facebook token for Instagram Business account
-        const facebookAuth = await storage.getFacebookAuth(req.user?.id);
+        const facebookAuth = storage.getFacebookAuth(req.user?.id);
         if (facebookAuth) {
           accessToken = facebookAuth.accessToken;
           console.log("Trying Instagram Basic Display API directly...");
