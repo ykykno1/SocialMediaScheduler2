@@ -262,7 +262,7 @@ export function UserChabadWidget() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              פרשת השבוע - פרשת {parasha}
+              פרשת השבוע - פרשת {shabbatData?.parasha ? shabbatData.parasha.replace('פרשת ', '') : 'קורח'}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               {hebrewDate}
