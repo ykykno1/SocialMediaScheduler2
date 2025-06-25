@@ -651,35 +651,68 @@ export function registerRoutes(app: Express): Server {
         }
       }
       
-      // Request posts from Facebook Graph API with more comprehensive parameters including media
+      // First, get posts from user's personal profile
       console.log("Fetching posts from Facebook API...");
-      const postsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy,attachments{media,subattachments,type,url},full_picture,picture,type,story&limit=100&access_token=${auth.accessToken}`;
+      const userPostsUrl = `https://graph.facebook.com/v22.0/me/posts?fields=id,message,created_time,privacy,attachments{media,subattachments,type,url},full_picture,picture,type,story&limit=50&access_token=${auth.accessToken}`;
       
-      const postsResponse = await fetch(postsUrl);
+      const userPostsResponse = await fetch(userPostsUrl);
+      let allPosts: FacebookPost[] = [];
       
-      if (!postsResponse.ok) {
-        const errorData = await postsResponse.json() as { error?: { code: number; message: string } };
-        console.error("Facebook posts fetch error:", errorData);
-        
-        // Check if the token has expired or is invalid
-        if (errorData.error && (errorData.error.code === 190 || errorData.error.code === 104)) {
-          // Token is invalid, clear it
-          await storage.removeAuthToken('facebook', req.user?.id);
-          return res.status(401).json({ error: "Facebook authentication expired", details: errorData.error });
+      if (userPostsResponse.ok) {
+        const userPostsData = await userPostsResponse.json() as { data: FacebookPost[] };
+        if (userPostsData.data && Array.isArray(userPostsData.data)) {
+          allPosts = [...userPostsData.data];
+          console.log(`Got ${userPostsData.data.length} posts from user profile`);
         }
-        
-        return res.status(400).json({ error: "Failed to fetch Facebook posts", details: errorData });
+      } else {
+        console.log("Could not fetch user posts, continuing with pages only");
       }
       
-      const postsData = await postsResponse.json() as { data: FacebookPost[] };
-      console.log("Got posts from Facebook API:", postsData);
+      // Then, get posts from managed pages
+      try {
+        const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,id&access_token=${auth.accessToken}`;
+        const pagesResponse = await fetch(pagesUrl);
+        
+        if (pagesResponse.ok) {
+          const pagesData = await pagesResponse.json() as { data: Array<{ id: string; name: string; access_token: string }> };
+          console.log(`Found ${pagesData.data?.length || 0} managed pages`);
+          
+          if (pagesData.data && pagesData.data.length > 0) {
+            // Get posts from each page
+            for (const page of pagesData.data) {
+              try {
+                const pagePostsUrl = `https://graph.facebook.com/v22.0/${page.id}/posts?fields=id,message,created_time,privacy,attachments{media,subattachments,type,url},full_picture,picture,type,story&limit=25&access_token=${page.access_token}`;
+                const pagePostsResponse = await fetch(pagePostsUrl);
+                
+                if (pagePostsResponse.ok) {
+                  const pagePostsData = await pagePostsResponse.json() as { data: FacebookPost[] };
+                  if (pagePostsData.data && Array.isArray(pagePostsData.data)) {
+                    // Add page info to posts
+                    const pagePostsWithInfo = pagePostsData.data.map(post => ({
+                      ...post,
+                      pageId: page.id,
+                      pageName: page.name
+                    }));
+                    allPosts = [...allPosts, ...pagePostsWithInfo];
+                    console.log(`Got ${pagePostsData.data.length} posts from page: ${page.name}`);
+                  }
+                }
+              } catch (pageError) {
+                console.error(`Error fetching posts from page ${page.name}:`, pageError);
+              }
+            }
+          }
+        }
+      } catch (pagesError) {
+        console.error("Error fetching pages:", pagesError);
+      }
       
-      if (!postsData.data || !Array.isArray(postsData.data)) {
-        return res.status(400).json({ error: "Invalid response format from Facebook" });
+      if (allPosts.length === 0) {
+        return res.status(400).json({ error: "No posts found from user or pages" });
       }
       
       // Add isHidden property to all posts - checking for both SELF and ONLY_ME values
-      const postsWithIsHidden = postsData.data.map(post => ({
+      const postsWithIsHidden = allPosts.map(post => ({
         ...post,
         isHidden: post.privacy && (post.privacy.value === "SELF" || post.privacy.value === "ONLY_ME")
       }));
