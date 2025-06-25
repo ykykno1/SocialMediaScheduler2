@@ -54,10 +54,25 @@ export default function useFacebookAuth() {
   // Exchange code for token mutation
   const exchangeCodeMutation = useMutation({
     mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
+      console.log('DEBUG: Starting token exchange with code:', code.substring(0, 10) + '...');
+      console.log('DEBUG: Redirect URI:', redirectUri);
+      
       const response = await apiRequest('POST', '/api/auth-callback', { code, redirectUri });
-      return response.json();
+      
+      console.log('DEBUG: Token exchange response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('DEBUG: Token exchange failed:', errorText);
+        throw new Error(`Token exchange failed: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('DEBUG: Token exchange successful:', !!result.access_token);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('DEBUG: Facebook auth success, invalidating queries');
       toast({
         title: 'התחברות בוצעה בהצלחה',
         description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
@@ -69,6 +84,7 @@ export default function useFacebookAuth() {
       queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
     },
     onError: (error: Error) => {
+      console.error('DEBUG: Facebook auth error:', error);
       toast({
         title: 'שגיאת התחברות',
         description: error.message || 'אירעה שגיאה בהתחברות לפייסבוק',

@@ -500,18 +500,34 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Exchange code for token
+      console.log(`DEBUG: Attempting token exchange with:`, {
+        client_id: fbAppId,
+        redirect_uri: redirectUri,
+        has_secret: !!fbAppSecret,
+        code_length: code.length
+      });
+      
       const tokenUrl = `https://graph.facebook.com/v22.0/oauth/access_token?` +
         `client_id=${fbAppId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `client_secret=${fbAppSecret}&` +
         `code=${code}`;
       
+      console.log(`DEBUG: Making token exchange request to Facebook...`);
       const tokenResponse = await fetch(tokenUrl);
+      console.log(`DEBUG: Token response status: ${tokenResponse.status} ${tokenResponse.statusText}`);
       
       if (!tokenResponse.ok) {
-        const errorData = await tokenResponse.json();
-        console.error("Facebook token exchange error:", errorData);
-        return res.status(400).json({ error: "Failed to exchange code for token", details: errorData });
+        const errorText = await tokenResponse.text();
+        console.error("Facebook token exchange error (raw):", errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          console.error("Facebook token exchange error (parsed):", errorData);
+          return res.status(400).json({ error: "Failed to exchange code for token", details: errorData });
+        } catch (parseError) {
+          console.error("Could not parse Facebook error response:", parseError);
+          return res.status(400).json({ error: "Failed to exchange code for token", details: { raw: errorText } });
+        }
       }
       
       const tokenData = await tokenResponse.json() as { access_token: string; expires_in: number };
