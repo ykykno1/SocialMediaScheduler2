@@ -188,6 +188,12 @@ export class MemStorage implements IStorage {
       console.log(`Auth token exists, access token starts with: ${auth.accessToken.substring(0, 20)}...`);
     } else {
       console.log('No Facebook auth found for this user');
+      console.log('Checking if token was saved but not retrieved properly...');
+      
+      // Debug: Check all stored users
+      const allUsers = Array.from(this.userFacebookAuth.keys());
+      console.log('All users with Facebook auth:', allUsers);
+      console.log('Map size:', this.userFacebookAuth.size);
     }
     
     return auth;

@@ -586,15 +586,26 @@ export function registerRoutes(app: Express): Server {
   // Get auth status
   app.get("/api/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
     console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
-    const auth = storage.getFacebookAuth(req.user?.id);
-    console.log('Auth result in auth-status endpoint:', !!auth);
-    res.json({
-      isAuthenticated: !!auth,
-      // Don't send the token to the client for security
-      platform: "facebook",
-      authTime: auth ? new Date(auth.timestamp).toISOString() : null,
-      pageAccess: auth?.pageAccess || false
-    });
+    try {
+      const auth = storage.getFacebookAuth(req.user?.id);
+      console.log('Auth result in auth-status endpoint:', !!auth);
+      console.log('Auth object details:', auth ? { hasAccessToken: !!auth.accessToken, timestamp: auth.timestamp } : 'null');
+      res.json({
+        isAuthenticated: !!auth,
+        // Don't send the token to the client for security
+        platform: "facebook",
+        authTime: auth ? new Date(auth.timestamp).toISOString() : null,
+        pageAccess: auth?.pageAccess || false
+      });
+    } catch (error) {
+      console.error('Error in auth-status endpoint:', error);
+      res.json({
+        isAuthenticated: false,
+        platform: "facebook",
+        authTime: null,
+        pageAccess: false
+      });
+    }
   });
   
   // Logout/disconnect
