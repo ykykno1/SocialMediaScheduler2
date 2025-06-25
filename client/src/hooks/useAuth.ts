@@ -93,8 +93,14 @@ export function useAuth() {
       // Remove JWT token
       localStorage.removeItem("auth_token");
       
-      // Clear query cache
-      queryClient.setQueryData(["/api/user"], null);
+      // Clear all platform-related data from localStorage
+      localStorage.removeItem("facebook_auth");
+      localStorage.removeItem("youtube_auth");
+      localStorage.removeItem("instagram_auth");
+      localStorage.removeItem("tiktok_auth");
+      
+      // Clear query cache completely
+      queryClient.clear();
       
       toast({
         title: "התנתקת בהצלחה",

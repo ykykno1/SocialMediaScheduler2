@@ -412,8 +412,26 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/logout", (req, res) => {
+    // Clear session
     (req as any).session = null;
-    res.json({ success: true });
+    
+    // Get user ID from token if available
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    
+    if (token) {
+      const decoded = verifyToken(token);
+      if (decoded) {
+        // Clear all platform tokens for this user
+        storage.removeFacebookAuth(decoded.userId);
+        storage.removeAuthToken('youtube', decoded.userId);
+        storage.removeAuthToken('instagram', decoded.userId);
+        storage.removeAuthToken('tiktok', decoded.userId);
+        console.log(`Cleared all platform tokens for user: ${decoded.userId}`);
+      }
+    }
+    
+    res.json({ success: true, message: "התנתקות הושלמה בהצלחה" });
   });
 
   app.get("/api/user", (req, res) => {
