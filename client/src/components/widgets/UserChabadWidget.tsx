@@ -17,27 +17,28 @@ const getHebrewDateAndParasha = () => {
   }
   
   // Get Torah portion for specific dates in June 2025
+  // Based on the Jewish calendar cycle for 5785 (2024-2025)
   const getParasha = (date: Date) => {
     const month = date.getMonth();
     const day = date.getDate();
     
-    // June 2025 Torah portions (accurate for current period)
-    if (month === 5) { // June
-      if (day >= 28) return 'בלק'; // June 28, 2025 (Saturday)
-      if (day >= 21) return 'חקת'; // June 21, 2025  
-      if (day >= 14) return 'שלח לך'; // June 14, 2025
-      if (day >= 7) return 'בהעלתך'; // June 7, 2025
-      return 'נשא'; // June 1, 2025
+    // Torah portions for June 2025 (Sivan-Tammuz 5785)
+    if (month === 5) { // June 2025
+      if (day >= 28) return 'קרח'; // June 28, 2025 (1 Tammuz 5785)
+      if (day >= 21) return 'שלח לך'; // June 21, 2025 (25 Sivan)
+      if (day >= 14) return 'בהעלתך'; // June 14, 2025 (18 Sivan)
+      if (day >= 7) return 'נשא'; // June 7, 2025 (11 Sivan)
+      return 'במדבר'; // June 1, 2025
     }
     
     // July 2025
     if (month === 6) {
-      if (day >= 5) return 'פינחס'; // July 5, 2025
-      return 'בלק'; // early July
+      if (day >= 5) return 'חקת'; // July 5, 2025
+      return 'קרח'; // early July
     }
     
-    // Default fallback for current week
-    return 'בלק';
+    // Default fallback for current week (late June)
+    return 'קרח';
   };
   
   const parasha = getParasha(nextSaturday);
