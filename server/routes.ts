@@ -614,9 +614,18 @@ export function registerRoutes(app: Express): Server {
   // Logout/disconnect
   app.post("/api/logout", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      console.log(`Logging out user: ${req.user?.id}`);
+      console.log(`LOGOUT_API: Starting logout for user: ${req.user?.id}`);
+      
+      // Check if user has Facebook auth before removing
+      const authBefore = await storage.getAuthToken('facebook', req.user?.id);
+      console.log(`LOGOUT_API: Auth exists before removal: ${!!authBefore}`);
+      
       await storage.removeFacebookAuth(req.user?.id);
-      console.log(`Facebook auth removed successfully for user: ${req.user?.id}`);
+      console.log(`LOGOUT_API: removeFacebookAuth completed`);
+      
+      // Check if auth was actually removed
+      const authAfter = await storage.getAuthToken('facebook', req.user?.id);
+      console.log(`LOGOUT_API: Auth exists after removal: ${!!authAfter}`);
       
       storage.addHistoryEntry({
         timestamp: new Date(),
@@ -629,7 +638,7 @@ export function registerRoutes(app: Express): Server {
       
       res.json({ success: true, message: "Logged out successfully" });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('LOGOUT_API: Logout error:', error);
       res.status(500).json({ error: "Failed to logout", message: error instanceof Error ? error.message : "Unknown error" });
     }
   });
