@@ -381,27 +381,29 @@ export class MemStorage implements IStorage {
     console.log(`REMOVE_FB_AUTH: Removing Facebook auth for user: ${userId}`);
     
     // Remove from memory
-    this.userFacebookAuth.set(userId, null);
+    this.userFacebookAuth.delete(userId);
     
     const userTokens = this.userAuthTokens.get(userId);
     if (userTokens) {
       userTokens.facebook = null;
     }
     
-    // Remove from database
+    // Remove from database using direct database access
     try {
-      await this.removeFacebookAuthAsync(userId);
-      console.log(`REMOVE_FB_AUTH: Successfully removed from database for user: ${userId}`);
+      const { eq } = await import('drizzle-orm');
+      const { facebookAuthTable } = await import('../shared/schema');
+      const { neon } = await import('@neondatabase/serverless');
+      const { drizzle } = await import('drizzle-orm/neon-http');
+      
+      if (process.env.DATABASE_URL) {
+        const sql = neon(process.env.DATABASE_URL);
+        const db = drizzle(sql);
+        await db.delete(facebookAuthTable).where(eq(facebookAuthTable.userId, userId));
+        console.log(`REMOVE_FB_AUTH: Successfully removed from database for user: ${userId}`);
+      }
     } catch (error) {
       console.error(`REMOVE_FB_AUTH: Failed to remove from database for user ${userId}:`, error);
     }
-  }
-  
-  private async removeFacebookAuthAsync(userId: string): Promise<void> {
-    const db = await this.getDatabase();
-    const { facebookAuthTable } = await import('../shared/schema');
-    const { eq } = await import('drizzle-orm');
-    await db.delete(facebookAuthTable).where(eq(facebookAuthTable.userId, userId));
   }
 
   // History operations (user-specific)
