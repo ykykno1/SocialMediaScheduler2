@@ -204,7 +204,7 @@ export class MemStorage implements IStorage {
     
     // Database save will be handled asynchronously
     console.log('SYNC_SAVE_FB: Starting background database save...');
-    this.saveFacebookAuthAsync(validatedToken, userId).catch(error => {
+    this.saveFacebookAuthAsync(validatedToken, userId).catch((error: any) => {
       console.error('Background database save failed:', error);
     });
     
@@ -231,6 +231,48 @@ export class MemStorage implements IStorage {
     };
 
     return validatedToken;
+  }
+
+  private async saveFacebookAuthAsync(token: FacebookAuth, userId: string): Promise<void> {
+    try {
+      console.log('ASYNC_DB_SAVE: Starting database save...');
+      const { db } = await import('./db');
+      const { authTokens } = await import('@shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const tokenData = {
+        id: `fb_${userId}_${Date.now()}`,
+        userId: userId,
+        platform: 'facebook' as const,
+        accessToken: token.accessToken,
+        refreshToken: null,
+        expiresAt: token.expiresIn ? new Date(Date.now() + (token.expiresIn * 1000)) : null,
+        timestamp: new Date(token.timestamp || Date.now()),
+        additionalData: JSON.stringify({
+          facebookUserId: token.userId,
+          pageAccess: token.pageAccess || false,
+          isManualToken: token.isManualToken || false
+        })
+      };
+      
+      // Try update first, then insert
+      const updateResult = await db.update(authTokens)
+        .set(tokenData)
+        .where(and(
+          eq(authTokens.userId, userId),
+          eq(authTokens.platform, 'facebook')
+        ))
+        .returning();
+      
+      if (updateResult.length === 0) {
+        await db.insert(authTokens).values(tokenData);
+        console.log('ASYNC_DB_SAVE: Inserted new token');
+      } else {
+        console.log('ASYNC_DB_SAVE: Updated existing token');
+      }
+    } catch (error) {
+      console.error('ASYNC_DB_SAVE: Database save failed:', error);
+    }
   }
 
   removeFacebookAuth(userId?: string): void {
