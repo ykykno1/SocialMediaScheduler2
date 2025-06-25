@@ -112,6 +112,56 @@ export class MemStorage implements IStorage {
   constructor() {
     // Initialize with default settings
     this.settings = settingsSchema.parse({});
+    
+    // Initialize database connections after a short delay
+    setTimeout(() => {
+      this.initializeDatabaseConnection();
+    }, 1000);
+  }
+
+  private async initializeDatabaseConnection(): Promise<void> {
+    try {
+      console.log('STORAGE_INIT: Initializing database connection and loading tokens...');
+      
+      // Import database dependencies
+      const { db } = await import('./db');
+      const { authTokens } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Load all Facebook auth tokens from database
+      const allTokens = await db.select()
+        .from(authTokens)
+        .where(eq(authTokens.platform, 'facebook'));
+      
+      console.log(`STORAGE_INIT: Found ${allTokens.length} Facebook tokens in database`);
+      
+      for (const token of allTokens) {
+        try {
+          let additionalData: any = {};
+          if (token.additionalData) {
+            additionalData = JSON.parse(token.additionalData);
+          }
+          
+          const facebookAuth: FacebookAuth = {
+            accessToken: token.accessToken,
+            expiresIn: 3600,
+            timestamp: token.timestamp?.getTime() || Date.now(),
+            userId: additionalData.userId || '',
+            pageAccess: additionalData.pageAccess || false,
+            isManualToken: !!additionalData.isManualToken
+          };
+          
+          this.userFacebookAuth.set(token.userId, facebookAuth);
+          console.log(`STORAGE_INIT: Loaded Facebook token for user ${token.userId}`);
+        } catch (error) {
+          console.error(`STORAGE_INIT: Failed to load token for user ${token.userId}:`, error);
+        }
+      }
+      
+      console.log(`STORAGE_INIT: Successfully loaded ${this.userFacebookAuth.size} Facebook tokens into memory`);
+    } catch (error) {
+      console.error('STORAGE_INIT: Failed to initialize database connection:', error);
+    }
   }
 
   // Settings operations
@@ -234,6 +284,50 @@ export class MemStorage implements IStorage {
     };
 
     return validatedToken;
+  }
+
+  private async loadFacebookAuthFromDatabase(userId: string): Promise<void> {
+    try {
+      console.log(`SYNC_FB_AUTH: Loading from database for userId=${userId}`);
+      
+      const { db } = await import('./db');
+      const { authTokens } = await import('@shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+
+      const authToken = await db.select()
+        .from(authTokens)
+        .where(and(eq(authTokens.userId, userId), eq(authTokens.platform, 'facebook')))
+        .limit(1);
+
+      if (authToken.length > 0) {
+        const token = authToken[0];
+        // Parse additionalData safely
+        let additionalData: any = {};
+        try {
+          if (token.additionalData) {
+            additionalData = JSON.parse(token.additionalData);
+          }
+        } catch (e) {
+          console.warn('Failed to parse additionalData:', e);
+        }
+
+        const facebookAuth: FacebookAuth = {
+          accessToken: token.accessToken,
+          expiresIn: 3600, // Default value since it's not stored separately
+          timestamp: token.timestamp?.getTime() || Date.now(),
+          userId: additionalData.userId || '',
+          pageAccess: additionalData.pageAccess || false,
+          isManualToken: !!additionalData.isManualToken
+        };
+        
+        console.log(`SYNC_FB_AUTH: Loaded from database, setting in memory`);
+        this.userFacebookAuth.set(userId, facebookAuth);
+      } else {
+        console.log(`SYNC_FB_AUTH: No token found in database`);
+      }
+    } catch (error) {
+      console.error('SYNC_FB_AUTH: Database load error:', error);
+    }
   }
 
   private async saveFacebookAuthAsync(token: FacebookAuth, userId: string): Promise<void> {
