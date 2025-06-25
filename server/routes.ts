@@ -471,8 +471,8 @@ export function registerRoutes(app: Express): Server {
     });
   });
   
-  // Exchange Facebook code for token
-  app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
+  // Exchange Facebook code for token - Public endpoint
+  app.post("/api/auth-callback", async (req: any, res) => {
     try {
       const { code, redirectUri } = req.body;
       
@@ -540,28 +540,12 @@ export function registerRoutes(app: Express): Server {
         console.error("Error fetching user pages:", pagesError);
       }
       
-      // Save the auth token (user-specific)
-      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
-      console.log(`Facebook user ID: ${userData.id}`);
-      const auth = await storage.saveFacebookAuth({
-        accessToken: tokenData.access_token,
-        expiresIn: tokenData.expires_in,
-        timestamp: Date.now(),
-        userId: userData.id,
-        pageAccess,
-        isManualToken: false
-      }, req.user?.id);
-      console.log(`Auth saved successfully:`, !!auth);
+      // For now, just save the token temporarily - user needs to be logged into system first
+      console.log(`Facebook auth successful for Facebook user: ${userData.id}`);
+      console.log(`Access token received with page access: ${pageAccess}`);
       
-      // Add a history entry for successful authentication (user-specific)
-      storage.addHistoryEntry({
-        timestamp: new Date(),
-        action: "restore", // Use restore as this is making content visible again in a way
-        platform: "facebook",
-        success: true,
-        affectedItems: 0,
-        error: undefined
-      }, req.user?.id);
+      // We'll return the token data to the client for storage
+      // Client will handle associating it with the logged-in user
       
       res.json({
         access_token: tokenData.access_token,

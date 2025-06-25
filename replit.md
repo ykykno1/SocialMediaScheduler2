@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Fixed Facebook logout and enhanced permissions:
+  - Fixed logout functionality - now properly removes all stored authentication tokens
+  - Updated Facebook auth to request page permissions (pages_show_list, pages_read_engagement)
+  - Added notification when only personal posts are shown, suggesting reconnection for page access
+  - Resolved duplicate image display issue in Facebook posts
+  - Currently fixing authentication flow issue where callback requires JWT authentication
 - June 25, 2025. Enhanced Facebook posts with media display:
   - Added support for displaying post images and videos in UI
   - Updated Facebook API request to fetch full_picture, picture, attachments with media data
