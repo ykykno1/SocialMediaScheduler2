@@ -2230,53 +2230,8 @@ export function registerRoutes(app: Express): Server {
       if (!city) {
         return res.status(400).json({ error: "City parameter is required" });
       }
-
-      // Chabad.org city ID mapping
-      const chabadCityIds: Record<string, string> = {
-        'Jerusalem': '247',
-        'Tel Aviv': '281',
-        'Haifa': '294',
-        'Beer Sheva': '588',
-        'Netanya': '3448',
-        'ירושלים': '247',
-        'תל אביב': '281',
-        'חיפה': '294',
-        'באר שבע': '588',
-        'נתניה': '3448'
-      };
-
-      const cityId = chabadCityIds[city as string] || '247';
       
-      try {
-        // Try to fetch Torah portion from Chabad.org along with existing working times
-        let parasha = "קרח"; // Default for current week
-        
-        try {
-          const parashaResponse = await fetch(`https://www.chabad.org/calendar/view/day.asp?tdate=6/27/2025&aid=${cityId}`);
-          const htmlText = await parashaResponse.text();
-          const parashaMatch = htmlText.match(/Parshat?\s+([A-Za-z\u05d0-\u05ea\-\s]+)/i) || htmlText.match(/פרשת\s+([A-Za-z\u05d0-\u05ea\-\s]+)/);
-          if (parashaMatch) {
-            parasha = parashaMatch[1].trim();
-          }
-        } catch (parashaError) {
-          // Keep default parasha if fetch fails
-        }
-        
-        // Use the working system for times (from existing code that works)
-        const response = {
-          city: city as string,
-          candleLighting: '2025-06-27T19:18:00.000Z',
-          havdalah: '2025-06-28T20:21:00.000Z',
-          parasha: parasha.startsWith('פרשת') ? parasha : `פרשת ${parasha}`,
-          hebrewDate: "כ״ח סיון תשפ״ה"
-        };
-        
-        return res.json(response);
-      } catch (chabadError) {
-        console.error('Chabad.org API error:', chabadError);
-      }
-
-      // City coordinates for Hebcal API as fallback
+      // City coordinates for Hebcal API
       const cityCoordinates: Record<string, { lat: number; lng: number; timezone: string }> = {
         'Jerusalem': { lat: 31.7683, lng: 35.2137, timezone: 'Asia/Jerusalem' },
         'Tel Aviv': { lat: 32.0853, lng: 34.7818, timezone: 'Asia/Jerusalem' },

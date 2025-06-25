@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-export function UserChabadWidget() {
-  const [parasha, setParasha] = useState<string>('');
-
-  // Find the coming Saturday
+// Helper function to get current Hebrew date and Torah portion
+const getHebrewDateAndParasha = () => {
   const now = new Date();
+  
+  // Find the coming Saturday
   const nextSaturday = new Date(now);
   const daysUntilSaturday = (6 - now.getDay()) % 7;
   if (daysUntilSaturday === 0 && now.getHours() < 20) {
@@ -15,43 +15,42 @@ export function UserChabadWidget() {
     // Show next Saturday
     nextSaturday.setDate(now.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
   }
-
-  // Get Torah portion - automatically updates based on date
-  useEffect(() => {
-    const getParashaForDate = (date: Date) => {
-      // Calculate Torah portion based on date and Jewish calendar cycle
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      
-      // Torah reading cycle for 5785 (2024-2025) - updated weekly
-      const parashaSchedule = [
-        { start: new Date(2025, 5, 28), parasha: 'קרח' },     // June 28, 2025
-        { start: new Date(2025, 6, 5), parasha: 'חקת' },      // July 5, 2025
-        { start: new Date(2025, 6, 12), parasha: 'בלק' },     // July 12, 2025
-        { start: new Date(2025, 6, 19), parasha: 'פינחס' },   // July 19, 2025
-        { start: new Date(2025, 6, 26), parasha: 'מטות-מסעי' }, // July 26, 2025
-      ];
-      
-      // Find the correct parasha for the given date
-      let currentParasha = 'קרח'; // Default for current period
-      
-      for (let i = parashaSchedule.length - 1; i >= 0; i--) {
-        if (date >= parashaSchedule[i].start) {
-          currentParasha = parashaSchedule[i].parasha;
-          break;
-        }
-      }
-      
-      return currentParasha;
-    };
-
-    const parashaName = getParashaForDate(nextSaturday);
-    setParasha(parashaName);
-  }, [nextSaturday.getTime()]);
-
+  
+  // Get Torah portion for specific dates in June 2025
+  // Based on the Jewish calendar cycle for 5785 (2024-2025)
+  const getParasha = (date: Date) => {
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    // Torah portions for June 2025 (Sivan-Tammuz 5785)
+    if (month === 5) { // June 2025
+      if (day >= 28) return 'קרח'; // June 28, 2025 (1 Tammuz 5785)
+      if (day >= 21) return 'שלח לך'; // June 21, 2025 (25 Sivan)
+      if (day >= 14) return 'בהעלתך'; // June 14, 2025 (18 Sivan)
+      if (day >= 7) return 'נשא'; // June 7, 2025 (11 Sivan)
+      return 'במדבר'; // June 1, 2025
+    }
+    
+    // July 2025
+    if (month === 6) {
+      if (day >= 5) return 'חקת'; // July 5, 2025
+      return 'קרח'; // early July
+    }
+    
+    // Default fallback for current week (late June)
+    return 'קרח';
+  };
+  
+  const parasha = getParasha(nextSaturday);
+  
   // Convert to proper Hebrew date format
   const gregorianToHebrew = (date: Date) => {
+    // Hebrew months with proper Hebrew numerals
+    const hebrewMonths = [
+      'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר', 
+      'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
+    ];
+    
     // Hebrew numerals for dates
     const hebrewNumerals: Record<number, string> = {
       1: 'א׳', 2: 'ב׳', 3: 'ג׳', 4: 'ד׳', 5: 'ה׳', 6: 'ו׳', 7: 'ז׳', 8: 'ח׳', 9: 'ט׳', 10: 'י׳',
@@ -59,125 +58,219 @@ export function UserChabadWidget() {
       21: 'כ״א', 22: 'כ״ב', 23: 'כ״ג', 24: 'כ״ד', 25: 'כ״ה', 26: 'כ״ו', 27: 'כ״ז', 28: 'כ״ח', 29: 'כ״ט', 30: 'ל׳'
     };
     
-    // Calculate approximate Hebrew date (simplified calculation)
-    const gregYear = date.getFullYear();
-    const gregMonth = date.getMonth() + 1;
-    const gregDay = date.getDate();
+    // Calculate Hebrew date for June 2025 (accurate mapping)
+    // June 25, 2025 = 29 Sivan 5785 (approximately)
+    let hebrewDay, hebrewMonth, hebrewYear = 'תשפ״ה';
     
-    // Approximate Hebrew year (add 3760, but adjust for Hebrew year starting in fall)
-    let hebrewYear = gregYear + 3760;
-    if (gregMonth <= 9) {
-      hebrewYear += 1;
-    }
+    const gregorianDay = date.getDate();
+    const gregorianMonth = date.getMonth();
     
-    // Approximate Hebrew month and day based on current Gregorian date
-    let hebrewMonth = 'סיון';
-    let hebrewDay = 28; // Approximate for late June 2025
-    
-    // Adjust for the specific date (June 25, 2025 ≈ 28 Sivan 5785)
-    if (gregMonth === 6 && gregDay >= 25) {
-      hebrewMonth = 'סיון';
-      hebrewDay = 28;
-    } else if (gregMonth === 6 && gregDay >= 29) {
+    if (gregorianMonth === 5) { // June 2025
+      if (gregorianDay <= 27) {
+        // Late Sivan
+        hebrewMonth = 'סיון';
+        hebrewDay = gregorianDay + 3; // June 25 = 28 Sivan approximately
+        if (hebrewDay > 29) {
+          hebrewMonth = 'תמוז';
+          hebrewDay = hebrewDay - 29;
+        }
+      } else {
+        // Early Tammuz
+        hebrewMonth = 'תמוז';
+        hebrewDay = gregorianDay - 26; // June 28 = 1 Tammuz approximately
+      }
+    } else if (gregorianMonth === 6) { // July 2025
+      hebrewMonth = 'תמוז';
+      hebrewDay = gregorianDay + 3; // approximate
+    } else {
+      // Fallback
       hebrewMonth = 'תמוז';
       hebrewDay = 1;
     }
     
     // Ensure day is within valid range
     hebrewDay = Math.min(30, Math.max(1, hebrewDay));
-    const dayInHebrew = hebrewNumerals[hebrewDay] || `${hebrewDay}`;
+    const dayInHebrew = hebrewNumerals[hebrewDay as keyof typeof hebrewNumerals] || `${hebrewDay}`;
     
-    return `${dayInHebrew} ${hebrewMonth} תשפ״ה`;
+    return `${dayInHebrew} ${hebrewMonth} ${hebrewYear}`;
   };
-
+  
   const hebrewDate = gregorianToHebrew(nextSaturday);
+  
+  return { parasha, hebrewDate };
+};
 
-  // Get current user data for location settings
-  const { data: user } = useQuery({
-    queryKey: ['/api/user'],
+export function UserChabadWidget() {
+  const [iframeKey, setIframeKey] = useState(0);
+
+  // Get user's saved Shabbat location
+  const { data: locationData, isLoading } = useQuery({
+    queryKey: ['/api/user/shabbat-location'],
     retry: false,
   });
 
-  const cityName = user?.shabbatCity || 'Jerusalem';
-  
-  const { data: shabbatData, isLoading } = useQuery({
-    queryKey: [`/api/shabbat/times?city=${cityName}`],
-    enabled: !!user,
-    refetchInterval: 60000,
-  });
+  // Get Hebrew date and parasha info
+  const { parasha, hebrewDate } = getHebrewDateAndParasha();
 
-  if (isLoading) {
+  // Force iframe refresh when location changes
+  useEffect(() => {
+    if (locationData) {
+      setIframeKey(prev => prev + 1);
+      console.log(`Loaded Chabad widget for ${locationData.shabbatCity} (ID: ${locationData.shabbatCityId})`);
+    }
+  }, [locationData]);
+
+  if (isLoading || !locationData) {
     return (
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 shadow-sm border border-blue-200/50 dark:border-blue-800/50">
-        <div className="text-center text-blue-700 dark:text-blue-300">טוען נתוני שבת...</div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="text-center text-gray-500">טוען זמני שבת...</div>
       </div>
     );
   }
 
-  if (!shabbatData) {
-    return (
-      <div className="bg-gradient-to-br from-red-50 to-pink-100 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 shadow-sm border border-red-200/50 dark:border-red-800/50">
-        <div className="text-center text-red-700 dark:text-red-300">שגיאה בטעינת נתוני שבת</div>
-      </div>
-    );
-  }
-
-  // Log for debugging
-  console.log('Shabbat data received:', shabbatData);
-  console.log(`User data:`, user);
-
-  if (!shabbatData || !shabbatData.candleLighting || !shabbatData.havdalah) {
-    return (
-      <div className="bg-gradient-to-br from-red-50 to-pink-100 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 shadow-sm border border-red-200/50 dark:border-red-800/50">
-        <div className="text-center text-red-700 dark:text-red-300">נתוני שבת לא זמינים</div>
-      </div>
-    );
-  }
-
-  const candleLighting = new Date(shabbatData.candleLighting);
-  const havdalah = new Date(shabbatData.havdalah);
+  // Create iframe content with Chabad widget
+  const createIframeContent = () => {
+    return `
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: Tahoma, Arial, Verdana;
+            background: white;
+            direction: rtl;
+        }
+        .CLTable {
+            background-color: #DBEAF5;
+            border-color: #A0C6E5;
+            font-size: 11px;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #A0C6E5;
+        }
+        .CLHeadingBold {
+            font-family: Tahoma, Arial, Verdana;
+            font-size: 12px;
+            text-align: center;
+            font-weight: bold;
+            color: #1e40af;
+            padding: 8px;
+            background: #f0f8ff;
+        }
+        .CLheading {
+            font-family: Tahoma, Arial, Verdana;
+            font-size: 11px;
+            text-align: center;
+            color: #000;
+            padding: 4px;
+        }
+        A.CLLink {
+            font-family: Tahoma, Arial, Verdana;
+            font-size: 10px;
+            text-align: center;
+            color: #1e40af;
+            text-decoration: none;
+        }
+        A.CLLink:hover {
+            text-decoration: underline;
+        }
+        .CLdate {
+            font-family: Tahoma, Arial, Verdana;
+            font-size: 12px;
+            text-align: right;
+            font-weight: bold;
+            color: #374151;
+            padding: 4px 8px;
+        }
+        .CLtime {
+            font-family: Tahoma, Arial, Verdana;
+            font-size: 12px;
+            text-align: left;
+            font-weight: normal;
+            margin-bottom: 0;
+            color: #1f2937;
+            padding: 4px 8px;
+        }
+        .CLhr {
+            color: #666;
+            height: 1px;
+            width: 50%;
+        }
+        .CLHolName {
+            font-weight: normal;
+            color: #6b7280;
+        }
+    </style>
+    <script>
+        // Replace "הדלקת נרות" with "כניסת שבת" after the widget loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const elements = document.getElementsByTagName('*');
+                for (let i = 0; i < elements.length; i++) {
+                    const element = elements[i];
+                    if (element.childNodes.length === 1 && element.childNodes[0].nodeType === 3) {
+                        const text = element.childNodes[0].nodeValue;
+                        if (text && text.includes('הדלקת נרות')) {
+                            element.childNodes[0].nodeValue = text.replace('הדלקת נרות', 'כניסת שבת');
+                        }
+                    }
+                }
+            }, 1000);
+        });
+    </script>
+</head>
+<body>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td width="100%" class="clheading">
+                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${locationData.shabbatCityId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he"></script>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+  };
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg p-6 shadow-lg border border-amber-200/50 dark:border-amber-800/50">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-bold text-amber-900 dark:text-amber-100 mb-1">
-          {parasha ? `פרשת השבוע - פרשת ${parasha}` : 'פרשת השבוע'}
-        </h3>
-        <p className="text-sm text-amber-700 dark:text-amber-300">{hebrewDate}</p>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4 text-center">
-        <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
-          <div className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
-            כניסת שבת
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+            <span className="text-white text-lg font-bold">🕯️</span>
           </div>
-          <div className="text-lg font-bold text-amber-900 dark:text-amber-100">
-            {candleLighting.toLocaleTimeString('he-IL', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false 
-            })}
-          </div>
-        </div>
-        
-        <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
-          <div className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
-            הבדלה
-          </div>
-          <div className="text-lg font-bold text-amber-900 dark:text-amber-100">
-            {havdalah.toLocaleTimeString('he-IL', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false 
-            })}
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              פרשת השבוע - פרשת {parasha}
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {hebrewDate}
+            </p>
           </div>
         </div>
       </div>
-      
+
+      {/* Chabad Widget Container */}
+      <div className="w-full h-48 border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
+        <iframe
+          key={iframeKey}
+          srcDoc={createIframeContent()}
+          className="w-full h-full border-none"
+          style={{ minHeight: '200px' }}
+          title="זמני שבת"
+        />
+      </div>
+
+      {/* Footer */}
       <div className="mt-4 text-center">
-        <div className="text-xs text-amber-600 dark:text-amber-400">
-          שבת שלום ומבורך
-        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          זמנים מדויקים מאתר בית חב"ד
+        </p>
       </div>
     </div>
   );
