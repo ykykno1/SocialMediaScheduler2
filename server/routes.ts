@@ -465,7 +465,7 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Exchange Facebook code for token
-  app.post("/api/auth-callback", async (req, res) => {
+  app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
       const { code, redirectUri } = req.body;
       
@@ -534,6 +534,8 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Save the auth token (user-specific)
+      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
+      console.log(`Facebook user ID: ${userData.id}`);
       const auth = storage.saveFacebookAuth({
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
@@ -541,6 +543,7 @@ export function registerRoutes(app: Express): Server {
         userId: userData.id,
         pageAccess
       }, req.user?.id);
+      console.log(`Auth saved successfully:`, !!auth);
       
       // Add a history entry for successful authentication (user-specific)
       storage.addHistoryEntry({
