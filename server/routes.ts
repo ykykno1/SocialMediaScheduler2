@@ -536,7 +536,7 @@ export function registerRoutes(app: Express): Server {
       // Save the auth token (user-specific)
       console.log(`Saving Facebook auth for user: ${req.user?.id}`);
       console.log(`Facebook user ID: ${userData.id}`);
-      const auth = storage.saveFacebookAuth({
+      const auth = await storage.saveFacebookAuth({
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now(),
@@ -584,10 +584,10 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Get auth status
-  app.get("/api/auth-status", requireAuth, (req: AuthenticatedRequest, res) => {
+  app.get("/api/auth-status", requireAuth, async (req: AuthenticatedRequest, res) => {
     console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
     try {
-      const auth = storage.getFacebookAuth(req.user?.id);
+      const auth = await storage.getFacebookAuth(req.user?.id);
       console.log('Auth result in auth-status endpoint:', !!auth);
       console.log('Auth object details:', auth ? { hasAccessToken: !!auth.accessToken, timestamp: auth.timestamp } : 'null');
       res.json({
@@ -631,7 +631,7 @@ export function registerRoutes(app: Express): Server {
   // Get Facebook posts
   app.get("/api/facebook/posts", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const auth = storage.getFacebookAuth(req.user?.id);
+      const auth = await storage.getFacebookAuth(req.user?.id);
       
       if (!auth) {
         return res.status(401).json({ error: "Not authenticated with Facebook" });
@@ -1923,7 +1923,7 @@ export function registerRoutes(app: Express): Server {
       
       if (!accessToken) {
         // Try using Facebook token for Instagram Business account
-        const facebookAuth = storage.getFacebookAuth();
+        const facebookAuth = await storage.getFacebookAuth(req.user?.id);
         if (facebookAuth) {
           accessToken = facebookAuth.accessToken;
           console.log("Trying Instagram Basic Display API directly...");
