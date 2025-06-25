@@ -546,9 +546,9 @@ export class MemStorage implements IStorage {
       email: userData.email,
       username: userData.username,
       password: userData.password,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
       accountType: 'free',
+      shabbatCity: 'ירושלים',
+      shabbatCityId: '247',
       createdAt: new Date(),
       updatedAt: new Date()
     };

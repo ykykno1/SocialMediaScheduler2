@@ -97,7 +97,8 @@ export function UserChabadWidget() {
   const [shabbatData, setShabbatData] = useState<any>(null);
   
   // Get Hebrew date and parasha info
-  const { parasha, hebrewDate } = getHebrewDateAndParasha(shabbatData);
+  const parashaInfo = getHebrewDateAndParasha(shabbatData);
+  const { parasha, hebrewDate } = parashaInfo;
 
   // Listen for messages from iframe with Shabbat data
   useEffect(() => {

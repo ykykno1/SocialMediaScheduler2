@@ -5,17 +5,10 @@ export interface User {
   username: string;
   password: string;
   accountType: 'free' | 'youtube_pro' | 'premium';
-  createdAt: Date;
-  lastActive?: Date;
-  hideCount: number;
-  maxHides: number;
-  settings?: UserSettings;
-  // YouTube integration
-  youtubeAccessToken?: string;
-  youtubeRefreshToken?: string;
-  youtubeTokenExpiresAt?: Date;
-  youtubeChannelId?: string;
-  youtubeChannelTitle?: string;
+  shabbatCity: string | null;
+  shabbatCityId: string | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export interface UserSettings {
