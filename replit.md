@@ -126,12 +126,17 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Enhanced Shabbat widget functionality:
+  - Fixed location saving bug in settings page (updateUser instead of updateUserShabbatLocation)
+  - Updated widget title to show Torah portion: "פרשת השבוע - פרשת [name]"
+  - Added Hebrew date display in widget header
+  - Removed redundant current settings display from settings page
+  - Confirmed text replacement: "הדלקת נרות" → "כניסת שבת" working properly
 - June 25, 2025. Implemented per-user Shabbat location system:
   - Added shabbatCity and shabbatCityId fields to user schema
   - Created UserChabadWidget that loads user's saved location
   - Added /settings page for location management
   - Moved city selection from widget to settings page
-  - Added text replacement: "הדלקת נרות" → "כניסת שבת"
   - Updated city codes with correct Chabad location IDs
 - June 24, 2025. Initial setup
 
