@@ -612,17 +612,26 @@ export function registerRoutes(app: Express): Server {
   });
   
   // Logout/disconnect
-  app.post("/api/logout", requireAuth, (req: AuthenticatedRequest, res) => {
-    storage.removeFacebookAuth(req.user?.id);
-    storage.addHistoryEntry({
-      timestamp: new Date(),
-      action: "restore", // Same as auth since this is disabling automation
-      platform: "facebook",
-      success: true,
-      affectedItems: 0,
-      error: undefined
-    }, req.user?.id);
-    res.json({ success: true });
+  app.post("/api/logout", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      console.log(`Logging out user: ${req.user?.id}`);
+      await storage.removeFacebookAuth(req.user?.id);
+      console.log(`Facebook auth removed successfully for user: ${req.user?.id}`);
+      
+      storage.addHistoryEntry({
+        timestamp: new Date(),
+        action: "restore", // Same as auth since this is disabling automation
+        platform: "facebook",
+        success: true,
+        affectedItems: 0,
+        error: undefined
+      }, req.user?.id);
+      
+      res.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ error: "Failed to logout", message: error instanceof Error ? error.message : "Unknown error" });
+    }
   });
   
   // Get history entries
