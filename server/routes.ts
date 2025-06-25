@@ -421,10 +421,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/logout", (req, res) => {
-    (req as any).session = null;
-    res.json({ success: true });
-  });
+
 
   app.get("/api/user", (req, res) => {
     const authHeader = req.headers.authorization;
@@ -620,20 +617,7 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
-  
-  // Logout/disconnect
-  app.post("/api/logout", requireAuth, (req: AuthenticatedRequest, res) => {
-    storage.removeFacebookAuth(req.user?.id);
-    storage.addHistoryEntry({
-      timestamp: new Date(),
-      action: "restore", // Same as auth since this is disabling automation
-      platform: "facebook",
-      success: true,
-      affectedItems: 0,
-      error: undefined
-    }, req.user?.id);
-    res.json({ success: true });
-  });
+
   
   // Get history entries
   app.get("/api/history", requireAuth, (req: AuthenticatedRequest, res) => {
