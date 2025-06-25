@@ -195,6 +195,8 @@ export class MemStorage implements IStorage {
         const { authTokens } = await import('@shared/schema');
         const { eq, and } = await import('drizzle-orm');
         
+        console.log('[FACEBOOK AUTH] Database modules imported successfully');
+        
         console.log(`Querying database for user ${userId} Facebook auth...`);
         const dbResults = await db.select()
           .from(authTokens)
