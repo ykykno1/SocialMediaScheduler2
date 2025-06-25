@@ -272,38 +272,57 @@ export class MemStorage implements IStorage {
     
     // Also save to database for persistence across server restarts
     try {
-      if (typeof require !== 'undefined') {
-        const { db } = await import('./db');
-        const { authTokens } = await import('@shared/schema');
-        const { nanoid } = await import('nanoid');
-        const { eq, and } = await import('drizzle-orm');
-        
-        // Delete existing Facebook auth for this user
-        await db.delete(authTokens).where(
-          and(
-            eq(authTokens.userId, userId),
-            eq(authTokens.platform, 'facebook')
-          )
-        );
-        
-        // Insert new auth token
-        await db.insert(authTokens).values({
-          id: nanoid(),
-          userId,
-          platform: 'facebook',
-          accessToken: token.accessToken,
-          expiresAt: token.expiresIn ? new Date(Date.now() + token.expiresIn * 1000) : null,
-          additionalData: JSON.stringify({
-            pageAccess: token.pageAccess,
-            isManualToken: token.isManualToken,
-            facebookUserId: token.userId
-          })
-        });
-        
-        console.log(`Facebook auth saved to database for user: ${userId}`);
-      }
+      console.log('[FACEBOOK SAVE] Starting database save operation...');
+      console.log('[FACEBOOK SAVE] Importing database modules...');
+      const { db } = await import('./db');
+      const { authTokens } = await import('@shared/schema');
+      const { nanoid } = await import('nanoid');
+      const { eq, and } = await import('drizzle-orm');
+      
+      console.log('[FACEBOOK SAVE] Modules imported successfully');
+      console.log(`[FACEBOOK SAVE] Deleting existing Facebook auth for user: ${userId}`);
+      
+      // Delete existing Facebook auth for this user
+      const deleteResult = await db.delete(authTokens).where(
+        and(
+          eq(authTokens.userId, userId),
+          eq(authTokens.platform, 'facebook')
+        )
+      );
+      
+      console.log('[FACEBOOK SAVE] Delete operation completed');
+      
+      const newTokenId = nanoid();
+      const insertData = {
+        id: newTokenId,
+        userId,
+        platform: 'facebook' as const,
+        accessToken: token.accessToken,
+        expiresAt: token.expiresIn ? new Date(Date.now() + token.expiresIn * 1000) : null,
+        additionalData: JSON.stringify({
+          pageAccess: token.pageAccess,
+          isManualToken: token.isManualToken,
+          facebookUserId: token.userId
+        })
+      };
+      
+      console.log('[FACEBOOK SAVE] Preparing insert data:', {
+        id: newTokenId,
+        userId,
+        platform: 'facebook',
+        hasAccessToken: !!token.accessToken,
+        accessTokenLength: token.accessToken?.length,
+        expiresAt: insertData.expiresAt
+      });
+      
+      // Insert new auth token
+      const insertResult = await db.insert(authTokens).values(insertData);
+      
+      console.log('[FACEBOOK SAVE] Insert operation completed');
+      console.log(`[FACEBOOK SAVE] Facebook auth saved to database for user: ${userId}`);
     } catch (error) {
-      console.warn('Failed to save Facebook auth to database:', error);
+      console.error('[FACEBOOK SAVE] Failed to save Facebook auth to database:', error);
+      console.error('[FACEBOOK SAVE] Error stack:', error.stack);
       // Continue with memory storage even if database save fails
     }
     
