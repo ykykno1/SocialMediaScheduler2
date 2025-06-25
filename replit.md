@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 25, 2025. Fixed Facebook disconnect functionality:
+  - Added dedicated "התנתק מפייסבוק" button in FacebookSection component
+  - Created separate /api/facebook/disconnect endpoint that only removes Facebook tokens
+  - Button includes confirmation dialog and proper error handling
+  - Fixed token validation issue that was preventing disconnect functionality
+  - Facebook disconnect now works independently without affecting other platform connections
+  - Maintained existing Facebook connection integrity and post/page display functionality
 - June 25, 2025. Enhanced Facebook posts with media display:
   - Added support for displaying post images and videos in UI
   - Updated Facebook API request to fetch full_picture, picture, attachments with media data
