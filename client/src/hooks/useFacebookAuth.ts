@@ -89,14 +89,13 @@ export default function useFacebookAuth() {
       
       const { appId, redirectUri } = await configRes.json();
       
-      // בקשת הרשאות תקפות בלבד
-      // שימוש רק בהרשאות שנתמכות בגרסה 22.0 של Facebook API
-      // הסרנו את כל הרשאות העמודים שאינן תקפות
+      // בקשת הרשאות כולל הרשאות עמודים
+      // הוספנו pages_show_list ו-pages_read_engagement לגישה לעמודים
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
-        `scope=public_profile,email,user_posts`;
+        `scope=public_profile,email,user_posts,pages_show_list,pages_read_engagement`;
       
       // Open popup window
       const width = 600;

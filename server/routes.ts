@@ -195,10 +195,20 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
-  app.post("/api/logout", (req, res) => {
-    // For JWT authentication, logout is handled client-side by removing the token
-    // No server-side action needed since JWT tokens are stateless
-    res.json({ success: true, message: "Logged out successfully" });
+  app.post("/api/logout", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Remove all stored tokens for this user
+      await storage.removeAuthToken('facebook', req.user.id);
+      await storage.removeAuthToken('youtube', req.user.id);
+      await storage.removeAuthToken('instagram', req.user.id);
+      await storage.removeAuthToken('tiktok', req.user.id);
+      
+      console.log(`User ${req.user.id} logged out - all tokens removed`);
+      res.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ error: "Logout failed" });
+    }
   });
   
   // YouTube OAuth - Public endpoints (must be before any auth middleware)
