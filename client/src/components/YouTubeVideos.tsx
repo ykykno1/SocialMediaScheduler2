@@ -39,7 +39,7 @@ const YouTubeVideos = () => {
 
   // Check if "Hide All" was recently used (within last 5 minutes)
   const now = Date.now();
-  const hasHiddenAll = lastHideAllTime && (now - lastHideAllTime) < 5 * 60 * 1000;
+  const hasHiddenAll = Boolean(lastHideAllTime && (now - lastHideAllTime) < 5 * 60 * 1000);
   
   const handleHideVideo = (videoId: string) => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר סרטון זה? סרטון זה יהפוך לפרטי ולא יהיה נגיש לציבור.")) {
