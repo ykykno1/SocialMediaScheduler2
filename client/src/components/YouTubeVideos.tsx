@@ -27,6 +27,8 @@ const YouTubeVideos = () => {
   const [hideAllDisabled, setHideAllDisabled] = useState(false);
   console.log('YouTube component rendered with hideAllDisabled:', hideAllDisabled);
   console.log('Component version: v2.0 - With logout button');
+  console.log('Videos data:', videos);
+  console.log('First video:', videos[0]);
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
@@ -183,7 +185,7 @@ const YouTubeVideos = () => {
                     <div className="flex items-start space-x-4 p-4">
                       <div className="relative">
                         <img
-                          src={video.thumbnailUrl}
+                          src={video.thumbnail}
                           alt={video.title}
                           className="w-40 h-24 object-cover rounded-md"
                           onError={(e) => {
@@ -215,9 +217,6 @@ const YouTubeVideos = () => {
                           <span>{new Date(video.publishedAt).toLocaleDateString('he-IL')}</span>
                           {video.viewCount && (
                             <span>{parseInt(video.viewCount).toLocaleString('he-IL')} צפיות</span>
-                          )}
-                          {video.likeCount && (
-                            <span>{parseInt(video.likeCount).toLocaleString('he-IL')} לייקים</span>
                           )}
                         </div>
                         
