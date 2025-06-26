@@ -200,3 +200,9 @@ export default function useYouTubeAuth() {
     channelTitle: (authStatus as any)?.channelTitle
   };
 }
+"""
+
+# Save the code to a .ts file
+output_path = Path("/mnt/data/useYouTubeAuth.ts")
+output_path.write_text(corrected_code, encoding='utf-8')
+output_path.name

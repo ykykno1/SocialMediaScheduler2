@@ -126,14 +126,6 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- June 26, 2025. Attempted to fix YouTube "Hide All" button and add logout functionality:
-  - Created backup of YouTubeVideos component (YouTubeVideos-backup.tsx)
-  - Added logout button with confirmation dialog to YouTube interface
-  - Implemented state management for "Hide All" button to remain disabled after use
-  - Added YouTubeVideos component to youtube.tsx page
-  - Issue persists: Changes appear in code but not in browser interface despite file reloads
-  - May be related to component loading, caching, or routing configuration
-  - All backend functionality working (API calls successful, hide/show operations working)
 - June 26, 2025. Identified and documented Facebook API limitations for page access:
   - Discovered Facebook API v22.0 no longer supports page management permissions (pages_show_list, pages_read_engagement, pages_manage_posts, pages_manage_metadata)
   - Facebook returns "Invalid Scopes" error for deprecated page permissions in newer API versions
