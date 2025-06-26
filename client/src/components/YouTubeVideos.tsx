@@ -27,6 +27,7 @@ const YouTubeVideos = () => {
   } = useYouTubeVideos();
   
   const [activeTab, setActiveTab] = useState("all");
+  const [hasHiddenAll, setHasHiddenAll] = useState(false);
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
@@ -51,12 +52,14 @@ const YouTubeVideos = () => {
   const handleHideAll = () => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר את כל הסרטונים? כל הסרטונים יהפכו לפרטיים ולא יהיו נגישים לציבור.")) {
       hideAllVideos();
+      setHasHiddenAll(true);
     }
   };
   
   const handleRestoreAll = () => {
     if (window.confirm("האם אתה בטוח שברצונך לשחזר את כל הסרטונים? כל הסרטונים יחזרו למצבם הקודם.")) {
       restoreAllVideos();
+      setHasHiddenAll(false);
     }
   };
 
@@ -301,11 +304,11 @@ const YouTubeVideos = () => {
           </Button>
           <Button 
             onClick={handleHideAll} 
-            disabled={isHiding || videos.filter(v => v.privacyStatus === "public").length === 0}
+            disabled={isHiding || videos.filter(v => v.privacyStatus === "public").length === 0 || hasHiddenAll}
             variant="default"
           >
             <EyeOff className="mr-2 h-4 w-4" />
-            {isHiding ? "מסתיר..." : "הסתר הכל"}
+            {isHiding ? "מסתיר..." : hasHiddenAll ? "הוסתר כבר" : "הסתר הכל"}
           </Button>
         </div>
       </CardFooter>
