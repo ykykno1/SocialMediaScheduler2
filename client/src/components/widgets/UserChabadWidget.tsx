@@ -29,12 +29,6 @@ const getHebrewDateAndParasha = (shabbatData?: any) => {
   
   // Convert to proper Hebrew date format
   const gregorianToHebrew = (date: Date) => {
-    // Hebrew months with proper Hebrew numerals
-    const hebrewMonths = [
-      'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר', 
-      'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
-    ];
-    
     // Hebrew numerals for dates
     const hebrewNumerals: Record<number, string> = {
       1: 'א׳', 2: 'ב׳', 3: 'ג׳', 4: 'ד׳', 5: 'ה׳', 6: 'ו׳', 7: 'ז׳', 8: 'ח׳', 9: 'ט׳', 10: 'י׳',
@@ -44,7 +38,8 @@ const getHebrewDateAndParasha = (shabbatData?: any) => {
     
     // Calculate Hebrew date for June 2025 (accurate mapping)
     // June 25, 2025 = 29 Sivan 5785 (approximately)
-    let hebrewDay, hebrewMonth, hebrewYear = 'תשפ״ה';
+    let hebrewDay: number, hebrewMonth: string;
+    const hebrewYear = 'תשפ״ה';
     
     const gregorianDay = date.getDate();
     const gregorianMonth = date.getMonth();
@@ -97,6 +92,13 @@ export function UserChabadWidget() {
   const [shabbatData, setShabbatData] = useState<any>(null);
   
   // Get Hebrew date and parasha info
+  const getParasha = (data: any) => {
+    if (data?.parasha) {
+      return data.parasha.replace('פרשת ', '');
+    }
+    return 'קורח';
+  };
+  
   const parashaInfo = getHebrewDateAndParasha(shabbatData);
   const { parasha, hebrewDate } = parashaInfo;
 

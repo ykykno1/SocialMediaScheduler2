@@ -36,7 +36,7 @@ export interface IStorage {
 
   // Legacy Facebook-specific auth (kept for backward compatibility)
   getFacebookAuth(userId?: string): FacebookAuth | null;
-  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth;
+  saveFacebookAuth(token: FacebookAuth, userId?: string): Promise<FacebookAuth>;
   removeFacebookAuth(userId?: string): void;
 
   // History operations

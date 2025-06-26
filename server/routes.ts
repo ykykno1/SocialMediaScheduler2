@@ -345,7 +345,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Check if user already exists
-      const existingUser = storage.getUserByEmail(email);
+      const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ error: "User already exists" });
       }
@@ -354,7 +354,7 @@ export function registerRoutes(app: Express): Server {
       const hashedPassword = await bcrypt.hash(password, 10);
       
       // Create user
-      const user = storage.createUser({
+      const user = await storage.createUser({
         email,
         password: hashedPassword,
         username: email.split('@')[0] // Use email prefix as username
@@ -385,7 +385,7 @@ export function registerRoutes(app: Express): Server {
       }
       
       // Get user by email
-      const user = storage.getUserByEmail(email);
+      const user = await storage.getUserByEmail(email);
       if (!user || !user.password) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
@@ -400,7 +400,9 @@ export function registerRoutes(app: Express): Server {
       const token = generateToken(user.id);
       
       // Update last active
-      storage.updateUser(user.id, { lastActive: new Date() });
+      await storage.updateUser(user.id, { 
+        updatedAt: new Date() 
+      });
       
       // Return user without password and include token
       const { password: _, ...userResponse } = user;
