@@ -235,6 +235,8 @@ export function registerRoutes(app: Express): Server {
       const domain = req.headers.host;
       const redirectUri = `https://${domain}/auth-callback.html`;
       
+      console.log(`YouTube auth URL - Domain: ${domain}, Redirect URI: ${redirectUri}`);
+      
       if (!clientId || !clientSecret) {
         return res.status(500).json({ error: "Google credentials not configured" });
       }
@@ -245,8 +247,10 @@ export function registerRoutes(app: Express): Server {
         `response_type=code&` +
         `scope=${encodeURIComponent('https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube')}&` +
         `access_type=offline&` +
-        `prompt=consent`;
+        `prompt=consent&` +
+        `state=youtube`;
       
+      console.log('Generated YouTube auth URL:', authUrl);
       res.json({ authUrl });
     } catch (error) {
       console.error('Error generating YouTube auth URL:', error);
