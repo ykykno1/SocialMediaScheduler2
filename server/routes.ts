@@ -772,10 +772,14 @@ export function registerRoutes(app: Express): Server {
       // Then, get posts from managed pages
       try {
         const pagesUrl = `https://graph.facebook.com/v22.0/me/accounts?fields=name,access_token,id&access_token=${auth.accessToken}`;
+        console.log(`Fetching pages from: ${pagesUrl}`);
         const pagesResponse = await fetch(pagesUrl);
+        
+        console.log(`Pages response status: ${pagesResponse.status}`);
         
         if (pagesResponse.ok) {
           const pagesData = await pagesResponse.json() as { data: Array<{ id: string; name: string; access_token: string }> };
+          console.log(`Pages API response:`, JSON.stringify(pagesData, null, 2));
           console.log(`Found ${pagesData.data?.length || 0} managed pages`);
           
           if (pagesData.data && pagesData.data.length > 0) {
