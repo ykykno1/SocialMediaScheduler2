@@ -25,9 +25,8 @@ const YouTubeVideos = () => {
   
   const [activeTab, setActiveTab] = useState("all");
   const [hideAllDisabled, setHideAllDisabled] = useState(false);
-  
-  console.log('New YouTube component loaded - v3.0');
-  console.log('hideAllDisabled state:', hideAllDisabled);
+  console.log('YouTube component rendered with hideAllDisabled:', hideAllDisabled);
+  console.log('Component version: v2.0 - With logout button');
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
@@ -54,7 +53,6 @@ const YouTubeVideos = () => {
       try {
         await hideAllVideos();
         setHideAllDisabled(true);
-        console.log('Hide all completed, disabled set to true');
       } catch (error) {
         console.error("Error hiding videos:", error);
       }
@@ -66,16 +64,9 @@ const YouTubeVideos = () => {
       try {
         await restoreAllVideos();
         setHideAllDisabled(false);
-        console.log('Restore all completed, disabled set to false');
       } catch (error) {
         console.error("Error restoring videos:", error);
       }
-    }
-  };
-
-  const handleLogout = () => {
-    if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב?")) {
-      logout();
     }
   };
 
@@ -128,12 +119,16 @@ const YouTubeVideos = () => {
           <div>
             <CardTitle className="flex items-center">
               <Youtube className="mr-2 h-5 w-5 text-red-600" />
-              סרטוני YouTube - גרסה חדשה
+              סרטוני YouTube
             </CardTitle>
             <CardDescription>ניהול הסרטונים בערוץ YouTube שלך</CardDescription>
           </div>
           <Button
-            onClick={handleLogout}
+            onClick={() => {
+              if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב?")) {
+                logout();
+              }
+            }}
             disabled={isLoggingOut}
             variant="outline"
             size="sm"

@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Youtube, Play, Eye, EyeOff, ExternalLink, Unlink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import YouTubeVideos from '@/components/YouTubeVideos';
 
 interface YouTubeVideo {
   id: string;
@@ -314,6 +315,9 @@ export default function YouTubePage() {
           </Card>
         ) : (
           <div className="space-y-6">
+            {/* YouTube Videos Component */}
+            <YouTubeVideos />
+            
             {/* Connection Status */}
             <Card>
               <CardHeader>
