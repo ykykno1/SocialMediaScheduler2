@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Eye, EyeOff, RefreshCw, Youtube, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, RefreshCw, Youtube, AlertCircle, LogOut } from "lucide-react";
 import useYouTubeVideos from '@/hooks/useYouTubeVideos';
+import useYouTubeAuth from '@/hooks/useYouTubeAuth';
 import ContentLockButton from './ContentLockButton';
 import { formatDistanceToNow } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -25,6 +26,8 @@ const YouTubeVideos = () => {
     isRestoring,
     refetch
   } = useYouTubeVideos();
+  
+  const { logout, isLoggingOut } = useYouTubeAuth();
   
   const [activeTab, setActiveTab] = useState("all");
   const [hideAllDisabled, setHideAllDisabled] = useState(false);
@@ -139,11 +142,25 @@ const YouTubeVideos = () => {
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Youtube className="mr-2 h-5 w-5 text-red-600" />
-          סרטוני YouTube
-        </CardTitle>
-        <CardDescription>ניהול הסרטונים בערוץ YouTube שלך</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center">
+              <Youtube className="mr-2 h-5 w-5 text-red-600" />
+              סרטוני YouTube
+            </CardTitle>
+            <CardDescription>ניהול הסרטונים בערוץ YouTube שלך</CardDescription>
+          </div>
+          <Button
+            onClick={logout}
+            disabled={isLoggingOut}
+            variant="outline"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {isLoggingOut ? "מתנתק..." : "התנתק מיוטיוב"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Alert className="mb-4 bg-blue-50 border-blue-200">
