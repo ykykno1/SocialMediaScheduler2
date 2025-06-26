@@ -31,6 +31,7 @@ const YouTubeVideos = () => {
   
   const [activeTab, setActiveTab] = useState("all");
   const [hideAllDisabled, setHideAllDisabled] = useState(false);
+  console.log('YouTube component rendered with hideAllDisabled:', hideAllDisabled);
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
@@ -52,10 +53,14 @@ const YouTubeVideos = () => {
     }
   };
   
-  const handleHideAll = () => {
+  const handleHideAll = async () => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר את כל הסרטונים? כל הסרטונים יהפכו לפרטיים ולא יהיו נגישים לציבור.")) {
-      hideAllVideos();
-      setHideAllDisabled(true);
+      try {
+        await hideAllVideos();
+        setHideAllDisabled(true);
+      } catch (error) {
+        console.error("Error hiding videos:", error);
+      }
     }
   };
   
@@ -151,14 +156,18 @@ const YouTubeVideos = () => {
             <CardDescription>ניהול הסרטונים בערוץ YouTube שלך</CardDescription>
           </div>
           <Button
-            onClick={logout}
+            onClick={() => {
+              if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב?")) {
+                logout();
+              }
+            }}
             disabled={isLoggingOut}
             variant="outline"
             size="sm"
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            {isLoggingOut ? "מתנתק..." : "התנתק מיוטיוב"}
+            {isLoggingOut ? "מתנתק..." : "התנתק"}
           </Button>
         </div>
       </CardHeader>
