@@ -27,9 +27,6 @@ const YouTubeVideos = () => {
   const [hideAllDisabled, setHideAllDisabled] = useState(false);
   console.log('YouTube component rendered with hideAllDisabled:', hideAllDisabled);
   console.log('Component version: v2.0 - With logout button');
-  console.log('Videos count:', videos.length);
-  console.log('isLoading:', isLoading);
-  console.log('error:', error);
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
@@ -52,62 +49,58 @@ const YouTubeVideos = () => {
   };
   
   const handleHideAll = async () => {
-    if (window.confirm("האם אתה בטוח שברצונך להסתיר את כל הסרטונים? כל הסרטונים יהפכו לפרטיים ולא יהיו נגישים לציבור.")) {
-      try {
-        await hideAllVideos();
-        setHideAllDisabled(true);
-      } catch (error) {
-        console.error("Error hiding videos:", error);
-      }
+    if (window.confirm("האם אתה בטוח שברצונך להסתיר את כל הסרטונים הציבוריים? פעולה זו תהפוך את כל הסרטונים לפרטיים.")) {
+      setHideAllDisabled(true);
+      console.log('Setting hideAllDisabled to true');
+      await hideAllVideos();
     }
   };
   
   const handleRestoreAll = async () => {
-    if (window.confirm("האם אתה בטוח שברצונך לשחזר את כל הסרטונים? כל הסרטונים יחזרו למצבם הקודם.")) {
-      try {
-        await restoreAllVideos();
-        setHideAllDisabled(false);
-      } catch (error) {
-        console.error("Error restoring videos:", error);
-      }
+    if (window.confirm("האם אתה בטוח שברצונך לשחזר את כל הסרטונים? פעולה זו תהפוך את כל הסרטונים לציבוריים.")) {
+      setHideAllDisabled(false);
+      console.log('Setting hideAllDisabled to false');
+      await restoreAllVideos();
     }
   };
 
-  // Loading state
+  const handleLogout = () => {
+    if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב?")) {
+      logout();
+    }
+  };
+
   if (isLoading) {
     return (
-      <Card>
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Youtube className="mr-2 h-5 w-5 text-red-600" />
-            סרטוני YouTube
+          <CardTitle className="flex items-center gap-2">
+            <Youtube className="h-6 w-6 text-red-500" />
+            טוען סרטוני YouTube...
           </CardTitle>
-          <CardDescription>ניהול הסרטונים בערוץ YouTube שלך</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-            טוען סרטונים...
+          <div className="flex items-center justify-center p-8">
+            <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <Card>
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="flex items-center text-red-600">
-            <AlertCircle className="mr-2 h-5 w-5" />
-            שגיאה בטעינת סרטונים
+          <CardTitle className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-6 w-6" />
+            שגיאה בטעינת הסרטונים
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-red-600 mb-4">{error.message}</p>
-          <Button onClick={() => refetch()}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+          <p className="text-red-600 mb-4">לא ניתן לטעון את רשימת הסרטונים</p>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
             נסה שוב
           </Button>
         </CardContent>
@@ -116,111 +109,147 @@ const YouTubeVideos = () => {
   }
 
   return (
-    <Card className="mb-6">
+    <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center">
-              <Youtube className="mr-2 h-5 w-5 text-red-600" />
-              סרטוני YouTube
-            </CardTitle>
-            <CardDescription>ניהול הסרטונים בערוץ YouTube שלך</CardDescription>
-          </div>
-          <Button
-            onClick={() => {
-              if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב?")) {
-                logout();
-              }
-            }}
-            disabled={isLoggingOut}
-            variant="outline"
+          <CardTitle className="flex items-center gap-2">
+            <Youtube className="h-6 w-6 text-red-500" />
+            ניהול סרטוני YouTube ({videos.length})
+          </CardTitle>
+          <Button 
+            onClick={handleLogout}
+            variant="destructive"
             size="sm"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            disabled={isLoggingOut}
           >
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="h-4 w-4 mr-2" />
             {isLoggingOut ? "מתנתק..." : "התנתק"}
           </Button>
         </div>
+        <CardDescription>
+          נהל את הפרטיות של הסרטונים שלך בערוץ YouTube
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-gray-600">
-            סה"כ {videos.length} סרטונים ({videos.filter(v => v.privacyStatus === "public").length} ציבוריים,
-            {videos.filter(v => v.privacyStatus === "private").length} פרטיים,
-            {videos.filter(v => v.privacyStatus === "unlisted").length} לא רשומים)
-          </div>
-          <div className="space-x-2">
-            <Button 
-              onClick={handleRestoreAll} 
-              disabled={isRestoring || videos.filter(v => v.privacyStatus === "private").length === 0}
-              variant="outline"
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              {isRestoring ? "משחזר..." : "שחזר הכל"}
-            </Button>
-            <Button 
-              onClick={handleHideAll} 
-              disabled={isHiding || videos.filter(v => v.privacyStatus === "public").length === 0 || hideAllDisabled}
-              variant="default"
-            >
-              <EyeOff className="mr-2 h-4 w-4" />
-              {isHiding ? "מסתיר..." : hideAllDisabled ? "הוסתר כבר" : "הסתר הכל"}
-            </Button>
-          </div>
+      
+      <CardContent className="space-y-6">
+        <div className="flex gap-2 flex-wrap">
+          <Button 
+            onClick={handleHideAll}
+            variant="destructive"
+            disabled={hideAllDisabled || isHiding || videos.filter(v => v.privacyStatus === "public").length === 0}
+          >
+            <EyeOff className="h-4 w-4 mr-2" />
+            {isHiding ? "מסתיר..." : "הסתר הכל"}
+          </Button>
+          
+          <Button 
+            onClick={handleRestoreAll}
+            variant="default"
+            disabled={isRestoring || videos.filter(v => v.privacyStatus === "private").length === 0}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            {isRestoring ? "משחזר..." : "שחזר הכל"}
+          </Button>
+          
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            רענן רשימה
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">הכל ({videos.length})</TabsTrigger>
-            <TabsTrigger value="public">ציבוריים ({videos.filter(v => v.privacyStatus === "public").length})</TabsTrigger>
-            <TabsTrigger value="private">פרטיים ({videos.filter(v => v.privacyStatus === "private").length})</TabsTrigger>
-            <TabsTrigger value="unlisted">לא רשומים ({videos.filter(v => v.privacyStatus === "unlisted").length})</TabsTrigger>
+            <TabsTrigger value="public">
+              ציבורי ({videos.filter(v => v.privacyStatus === "public").length})
+            </TabsTrigger>
+            <TabsTrigger value="private">
+              פרטי ({videos.filter(v => v.privacyStatus === "private").length})
+            </TabsTrigger>
+            <TabsTrigger value="unlisted">
+              לא רשום ({videos.filter(v => v.privacyStatus === "unlisted").length})
+            </TabsTrigger>
           </TabsList>
-          
-          <TabsContent value={activeTab} className="mt-4">
-            <div className="grid gap-4">
-              {filteredVideos.map((video) => (
-                <div key={video.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <h3 className="font-medium">{video.title}</h3>
-                    <p className="text-sm text-gray-500">פורסם: {new Date(video.publishedAt).toLocaleDateString('he-IL')}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant={video.privacyStatus === 'public' ? 'default' : 'secondary'}>
-                        {video.privacyStatus === 'public' ? 'ציבורי' : 
-                         video.privacyStatus === 'private' ? 'פרטי' : 'לא רשום'}
-                      </Badge>
+
+          <TabsContent value={activeTab} className="space-y-4">
+            {filteredVideos.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">
+                אין סרטונים להצגה בקטגוריה זו
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {filteredVideos.map((video) => (
+                  <Card key={video.id} className="overflow-hidden">
+                    <div className="flex items-start space-x-4 p-4">
+                      <div className="relative">
+                        <img
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          className="w-40 h-24 object-cover rounded-md"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwIiBoZWlnaHQ9IjkwIiB2aWV3Qm94PSIwIDAgMTYwIDkwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxNjAiIGhlaWdodD0iOTAiIGZpbGw9IiNmM2Y0ZjYiLz48dGV4dCB4PSI4MCIgeT0iNDUiIGZpbGw9IiM5Y2EzYWYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+YouTube</dGV4dD48L3N2Zz4=';
+                          }}
+                        />
+                        <Badge 
+                          className={`absolute bottom-1 right-1 text-xs ${
+                            video.privacyStatus === "public" 
+                              ? "bg-green-500 hover:bg-green-600" 
+                              : video.privacyStatus === "private"
+                              ? "bg-red-500 hover:bg-red-600"
+                              : "bg-yellow-500 hover:bg-yellow-600"
+                          }`}
+                        >
+                          {video.privacyStatus === "public" && "ציבורי"}
+                          {video.privacyStatus === "private" && "פרטי"}
+                          {video.privacyStatus === "unlisted" && "לא רשום"}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm leading-tight line-clamp-2 mb-2">
+                          {video.title}
+                        </h3>
+                        
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                          <span>{new Date(video.publishedAt).toLocaleDateString('he-IL')}</span>
+                          {video.viewCount && (
+                            <span>{parseInt(video.viewCount).toLocaleString('he-IL')} צפיות</span>
+                          )}
+                          {video.likeCount && (
+                            <span>{parseInt(video.likeCount).toLocaleString('he-IL')} לייקים</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          {video.privacyStatus === "public" ? (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleHideVideo(video.id)}
+                              className="text-xs"
+                            >
+                              <EyeOff className="h-3 w-3 mr-1" />
+                              הסתר
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleShowVideo(video.id)}
+                              className="text-xs"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              פרסם
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {video.privacyStatus === 'public' ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleHideVideo(video.id)}
-                      >
-                        <EyeOff className="mr-2 h-4 w-4" />
-                        הסתר
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleShowVideo(video.id)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        הצג
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              {filteredVideos.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  אין סרטונים להצגה בקטגוריה זו
-                </div>
-              )}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
