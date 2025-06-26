@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import PricingPage from "@/pages/pricing";
-import YouTubePage from "@/pages/youtube-oauth";
+import YouTubePage from "@/pages/youtube";
 import FacebookPage from "@/pages/facebook";
 import InstagramPage from "@/pages/instagram";
 import AdminPage from "@/pages/admin";
