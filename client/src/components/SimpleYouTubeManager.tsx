@@ -142,6 +142,36 @@ const SimpleYouTubeManager = () => {
     }
   };
 
+  const handleToggleVideo = async (videoId: string, currentStatus: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const newStatus = currentStatus === 'public' ? 'private' : 'public';
+      
+      const response = await fetch(`/api/youtube/video/${videoId}/privacy`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ privacyStatus: newStatus })
+      });
+      
+      if (response.ok) {
+        loadVideos();
+        toast({
+          title: "סטטוס עודכן",
+          description: `הסרטון ${newStatus === 'public' ? 'פורסם' : 'הוסתר'} בהצלחה`
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "נכשל בעדכון הסרטון",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -229,6 +259,23 @@ const SimpleYouTubeManager = () => {
                     {video.privacyStatus === 'public' ? 'ציבורי' : 'פרטי'}
                   </span>
                 </div>
+                <Button
+                  size="sm"
+                  variant={video.privacyStatus === 'public' ? 'destructive' : 'default'}
+                  onClick={() => handleToggleVideo(video.id, video.privacyStatus)}
+                >
+                  {video.privacyStatus === 'public' ? (
+                    <>
+                      <EyeOff className="mr-1 h-3 w-3" />
+                      הסתר
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-1 h-3 w-3" />
+                      פרסם
+                    </>
+                  )}
+                </Button>
               </div>
             ))}
           </div>

@@ -274,26 +274,7 @@ export default function YouTubePage() {
         )}
 
         {/* YouTube Videos Component */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Youtube className="h-6 w-6 text-red-500" />
-              סרטוני YouTube
-            </h2>
-            <button 
-              onClick={() => {
-                if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב?")) {
-                  fetch('/api/youtube/disconnect', { method: 'POST' })
-                    .then(() => window.location.reload());
-                }
-              }}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-            >
-              התנתק מיוטיוב
-            </button>
-          </div>
-          <p className="text-gray-600">קומפוננט פשוט עם כפתור התנתקות</p>
-        </div>
+        <SimpleYouTubeManager />
       </div>
     </div>
   );
