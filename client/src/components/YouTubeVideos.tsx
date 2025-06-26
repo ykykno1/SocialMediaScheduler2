@@ -27,7 +27,7 @@ const YouTubeVideos = () => {
   } = useYouTubeVideos();
   
   const [activeTab, setActiveTab] = useState("all");
-  const [hasHiddenAll, setHasHiddenAll] = useState(false);
+  const [lastHideAllTime, setLastHideAllTime] = useState<number | null>(null);
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
@@ -36,6 +36,10 @@ const YouTubeVideos = () => {
     if (activeTab === "unlisted") return video.privacyStatus === "unlisted";
     return true;
   });
+
+  // Check if "Hide All" was recently used (within last 5 minutes)
+  const now = Date.now();
+  const hasHiddenAll = lastHideAllTime && (now - lastHideAllTime) < 5 * 60 * 1000;
   
   const handleHideVideo = (videoId: string) => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר סרטון זה? סרטון זה יהפוך לפרטי ולא יהיה נגיש לציבור.")) {
@@ -52,14 +56,14 @@ const YouTubeVideos = () => {
   const handleHideAll = () => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר את כל הסרטונים? כל הסרטונים יהפכו לפרטיים ולא יהיו נגישים לציבור.")) {
       hideAllVideos();
-      setHasHiddenAll(true);
+      setLastHideAllTime(Date.now());
     }
   };
   
   const handleRestoreAll = () => {
     if (window.confirm("האם אתה בטוח שברצונך לשחזר את כל הסרטונים? כל הסרטונים יחזרו למצבם הקודם.")) {
       restoreAllVideos();
-      setHasHiddenAll(false);
+      setLastHideAllTime(null);
     }
   };
 
