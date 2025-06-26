@@ -786,6 +786,7 @@ export function registerRoutes(app: Express): Server {
             // Get posts from each page
             for (const page of pagesData.data) {
               try {
+                console.log(`Processing page: ${page.name} (ID: ${page.id})`);
                 const pagePostsUrl = `https://graph.facebook.com/v22.0/${page.id}/posts?fields=id,message,created_time,privacy,attachments{media,subattachments,type,url},full_picture,picture,type,story&limit=25&access_token=${page.access_token}`;
                 const pagePostsResponse = await fetch(pagePostsUrl);
                 
@@ -801,12 +802,21 @@ export function registerRoutes(app: Express): Server {
                     allPosts = [...allPosts, ...pagePostsWithInfo];
                     console.log(`Got ${pagePostsData.data.length} posts from page: ${page.name}`);
                   }
+                } else {
+                  const pageError = await pagePostsResponse.json();
+                  console.error(`Error fetching posts from page ${page.name}:`, pageError);
                 }
               } catch (pageError) {
                 console.error(`Error fetching posts from page ${page.name}:`, pageError);
               }
             }
+          } else {
+            console.log("No pages found in data or data is empty");
           }
+        } else {
+          const errorData = await pagesResponse.json();
+          console.error("Facebook pages API error:", errorData);
+          console.error("Pages response failed with status:", pagesResponse.status);
         }
       } catch (pagesError) {
         console.error("Error fetching pages:", pagesError);
