@@ -273,52 +273,8 @@ export default function YouTubePage() {
           </div>
         )}
 
-        {!isConnected ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Youtube className="h-5 w-5 text-red-500" />
-                Connect YouTube Channel
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                התחבר לערוץ YouTube שלך כדי להסתיר אוטומטית את הסרטונים שלך בשבת ולשחזר אותם אחר כך.
-              </p>
-              
-              {error && error.includes('OAuth') && (
-                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-orange-800 text-sm mb-2">
-                    <strong>נדרשת הגדרה חד-פעמית:</strong> יש צורך להוסיף redirect URI ב-Google Cloud Console
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open('/oauth-setup', '_blank')}
-                    className="text-orange-700 border-orange-300"
-                  >
-                    הוראות תיקון מפורטות
-                    <ExternalLink className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-              )}
-              
-              <Button 
-                onClick={connectYouTube} 
-                disabled={loading}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                {loading ? 'מתחבר...' : 'התחבר ל-YouTube'}
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {/* YouTube Videos Component */}
-            <YouTubeVideos />
-          </div>
-        )}
+        {/* YouTube Videos Component */}
+        <YouTubeVideos />
       </div>
     </div>
   );
