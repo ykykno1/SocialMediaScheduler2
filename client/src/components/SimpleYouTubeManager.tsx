@@ -197,7 +197,7 @@ const SimpleYouTubeManager = () => {
           <Button
             onClick={handleRestoreAll}
             variant="outline"
-            disabled={videos.filter(v => v.privacyStatus === "private").length === 0}
+            disabled={videos.filter((v: any) => v.privacyStatus === "private").length === 0}
           >
             <Eye className="mr-2 h-4 w-4" />
             שחזר הכל
@@ -205,7 +205,7 @@ const SimpleYouTubeManager = () => {
           <Button
             onClick={handleHideAll}
             variant="destructive"
-            disabled={hideAllDisabled || videos.filter(v => v.privacyStatus === "public").length === 0}
+            disabled={hideAllDisabled || videos.filter((v: any) => v.privacyStatus === "public").length === 0}
           >
             <EyeOff className="mr-2 h-4 w-4" />
             הסתר הכל
@@ -214,7 +214,7 @@ const SimpleYouTubeManager = () => {
         
         {videos.length > 0 && (
           <div className="grid gap-3">
-            {videos.slice(0, 5).map((video) => (
+            {videos.slice(0, 5).map((video: any) => (
               <div key={video.id} className="flex items-center gap-3 p-3 border rounded">
                 <img 
                   src={video.thumbnailUrl} 
