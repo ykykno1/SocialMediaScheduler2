@@ -333,101 +333,23 @@ export default function FacebookSection() {
                 </Button>
               </div>
 
-              {/* Pages connection status */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-blue-800 font-medium">
-                      חיבור לעמודי פייסבוק
+              {/* Pages status information */}
+              <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-1">
+                    <p className="text-xs text-orange-800 font-medium">
+                      מצב עמודי פייסבוק
                     </p>
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-orange-700 mt-1">
                       {pages && pages.length > 0 
                         ? `מחובר ל-${pages.length} עמודים` 
-                        : "לא מחובר לעמודים - נדרשות הרשאות נוספות"}
+                        : "לא נמצאו עמודי פייסבוק"}
+                    </p>
+                    <p className="text-xs text-orange-600 mt-2">
+                      <strong>הגבלה טכנית:</strong> פייסבוק הסיר את הרשאות הגישה לעמודים מהגרסה החדשה של ה-API. 
+                      כרגע ניתן לגשת רק לפוסטים האישיים.
                     </p>
                   </div>
-                  {(!pages || pages.length === 0) && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          // Get fresh config and initiate Facebook login with pages permissions
-                          const configResponse = await fetch('/api/facebook-config');
-                          const config = await configResponse.json();
-                          
-                          const scope = 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata';
-                          const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
-                            `client_id=${config.appId}&` +
-                            `redirect_uri=${encodeURIComponent(config.redirectUri)}&` +
-                            `scope=${encodeURIComponent(scope)}&` +
-                            `response_type=code&` +
-                            `state=facebook_pages`;
-                          
-                          // Open in popup
-                          const popup = window.open(authUrl, 'facebook-auth', 'width=600,height=600,scrollbars=yes,resizable=yes');
-                          
-                          // Listen for the auth result
-                          const handleMessage = async (event: MessageEvent) => {
-                            if (event.origin !== window.location.origin) return;
-                            
-                            if (event.data.code && event.data.platform === 'facebook_pages') {
-                              window.removeEventListener('message', handleMessage);
-                              popup?.close();
-                              
-                              try {
-                                // Send auth code to server
-                                const token = localStorage.getItem('auth_token');
-                                const response = await fetch('/api/auth-callback', {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                  },
-                                  body: JSON.stringify({
-                                    code: event.data.code,
-                                    redirectUri: config.redirectUri
-                                  })
-                                });
-                                
-                                if (response.ok) {
-                                  alert('התחברת בהצלחה לעמודי פייסבוק!');
-                                  window.location.reload();
-                                } else {
-                                  const errorData = await response.json();
-                                  alert(`שגיאה בהתחברות: ${errorData.error}`);
-                                }
-                              } catch (error) {
-                                console.error('Auth callback error:', error);
-                                alert('שגיאה בעיבוד האימות');
-                              }
-                            } else if (event.data.error) {
-                              window.removeEventListener('message', handleMessage);
-                              popup?.close();
-                              alert(`שגיאה באימות: ${event.data.error}`);
-                            }
-                          };
-                          
-                          window.addEventListener('message', handleMessage);
-                          
-                          // Handle popup closed manually
-                          const checkClosed = setInterval(() => {
-                            if (popup?.closed) {
-                              clearInterval(checkClosed);
-                              window.removeEventListener('message', handleMessage);
-                            }
-                          }, 1000);
-                          
-                        } catch (error) {
-                          console.error('Error starting pages auth:', error);
-                          alert('שגיאה בהתחלת התחברות לעמודים');
-                        }
-                      }}
-                      className="text-xs"
-                    >
-                      התחבר לעמודים
-                    </Button>
-                  )}
                 </div>
               </div>
 

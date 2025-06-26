@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 26, 2025. Identified and documented Facebook API limitations for page access:
+  - Discovered Facebook API v22.0 no longer supports page management permissions (pages_show_list, pages_read_engagement, pages_manage_posts, pages_manage_metadata)
+  - Facebook returns "Invalid Scopes" error for deprecated page permissions in newer API versions
+  - Updated UI to clearly explain technical limitation that only personal Facebook posts are accessible
+  - Removed non-functional "Connect to Pages" button and replaced with informative status message
+  - Facebook integration now correctly displays 3 personal posts while clearly indicating page access is not available
+  - Maintained all existing functionality: personal posts display, logout, disconnect features work properly
 - June 25, 2025. Fixed Facebook disconnect functionality:
   - Added dedicated "התנתק מפייסבוק" button in FacebookSection component
   - Created separate /api/facebook/disconnect endpoint that only removes Facebook tokens
