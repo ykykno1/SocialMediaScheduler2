@@ -27,7 +27,7 @@ const YouTubeVideos = () => {
   } = useYouTubeVideos();
   
   const [activeTab, setActiveTab] = useState("all");
-  const [lastHideAllTime, setLastHideAllTime] = useState<number | null>(null);
+  const [hideAllDisabled, setHideAllDisabled] = useState(false);
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
@@ -36,10 +36,6 @@ const YouTubeVideos = () => {
     if (activeTab === "unlisted") return video.privacyStatus === "unlisted";
     return true;
   });
-
-  // Check if "Hide All" was recently used (within last 5 minutes)
-  const now = Date.now();
-  const hasHiddenAll = Boolean(lastHideAllTime && (now - lastHideAllTime) < 5 * 60 * 1000);
   
   const handleHideVideo = (videoId: string) => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר סרטון זה? סרטון זה יהפוך לפרטי ולא יהיה נגיש לציבור.")) {
@@ -56,14 +52,14 @@ const YouTubeVideos = () => {
   const handleHideAll = () => {
     if (window.confirm("האם אתה בטוח שברצונך להסתיר את כל הסרטונים? כל הסרטונים יהפכו לפרטיים ולא יהיו נגישים לציבור.")) {
       hideAllVideos();
-      setLastHideAllTime(Date.now());
+      setHideAllDisabled(true);
     }
   };
   
   const handleRestoreAll = () => {
     if (window.confirm("האם אתה בטוח שברצונך לשחזר את כל הסרטונים? כל הסרטונים יחזרו למצבם הקודם.")) {
       restoreAllVideos();
-      setLastHideAllTime(null);
+      setHideAllDisabled(false);
     }
   };
 
@@ -308,11 +304,11 @@ const YouTubeVideos = () => {
           </Button>
           <Button 
             onClick={handleHideAll} 
-            disabled={isHiding || videos.filter(v => v.privacyStatus === "public").length === 0 || hasHiddenAll}
+            disabled={isHiding || videos.filter(v => v.privacyStatus === "public").length === 0 || hideAllDisabled}
             variant="default"
           >
             <EyeOff className="mr-2 h-4 w-4" />
-            {isHiding ? "מסתיר..." : hasHiddenAll ? "הוסתר כבר" : "הסתר הכל"}
+            {isHiding ? "מסתיר..." : hideAllDisabled ? "הוסתר כבר" : "הסתר הכל"}
           </Button>
         </div>
       </CardFooter>
