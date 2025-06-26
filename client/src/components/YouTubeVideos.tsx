@@ -27,6 +27,9 @@ const YouTubeVideos = () => {
   const [hideAllDisabled, setHideAllDisabled] = useState(false);
   console.log('YouTube component rendered with hideAllDisabled:', hideAllDisabled);
   console.log('Component version: v2.0 - With logout button');
+  console.log('Videos count:', videos.length);
+  console.log('isLoading:', isLoading);
+  console.log('error:', error);
   
   const filteredVideos = videos.filter(video => {
     if (activeTab === "all") return true;
