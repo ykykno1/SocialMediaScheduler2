@@ -2964,7 +2964,45 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Lock/unlock YouTube video with password verification
+  app.post("/api/youtube/lock-video", requireAuth, async (req: AuthenticatedRequest, res) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
 
+    const { videoId, password, action } = req.body;
+
+    if (action === 'lock' && !password) {
+      return res.status(400).json({ error: "Password required for locking" });
+    }
+
+    try {
+      if (action === 'lock') {
+        // בדוק סיסמה
+        const user = await storage.getUserById(userId);
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        const isValidPassword = await storage.verifyPassword(user.email, password);
+        if (!isValidPassword) {
+          return res.status(400).json({ message: "סיסמה שגויה" });
+        }
+
+        // נעל את הסרטון
+        await storage.setVideoLockStatus(userId, videoId, true, "user_lock");
+      } else if (action === 'unlock') {
+        // בטל נעילה
+        await storage.setVideoLockStatus(userId, videoId, false, "user_unlock");
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Video lock error:', error);
+      res.status(500).json({ error: 'Failed to toggle video lock' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
