@@ -1,76 +1,84 @@
 /**
  * Migration script for auth tokens from legacy table to encrypted table
  */
-import { db } from "./db";
-import { authTokens, encryptedAuthTokens } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { db } from './db.js';
+import { authTokens, encryptedAuthTokens } from '../shared/schema.js';
+import { tokenEncryption } from './encryption.js';
+import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 export async function migrateAuthTokens(): Promise<{ migrated: number; skipped: number; errors: number }> {
-  console.log('🔄 Starting auth token migration...');
-  
   let migrated = 0;
   let skipped = 0;
   let errors = 0;
 
+  console.log('Starting auth token migration to encrypted table...');
+
   try {
     // Get all tokens from legacy table
     const legacyTokens = await db.select().from(authTokens);
-    console.log(`Found ${legacyTokens.length} tokens in legacy table`);
+    console.log(`Found ${legacyTokens.length} legacy tokens to migrate`);
 
     for (const token of legacyTokens) {
       try {
         // Check if already migrated
-        const [existing] = await db.select().from(encryptedAuthTokens)
+        const existing = await db.select().from(encryptedAuthTokens)
           .where(and(
-            eq(encryptedAuthTokens.platform, token.platform),
-            eq(encryptedAuthTokens.userId, token.userId)
+            eq(encryptedAuthTokens.userId, token.userId),
+            eq(encryptedAuthTokens.platform, token.platform)
           ));
 
-        if (existing) {
-          console.log(`⏭️  Token already migrated: ${token.platform} for user ${token.userId}`);
+        if (existing.length > 0) {
+          console.log(`Token already migrated for user ${token.userId} platform ${token.platform}`);
           skipped++;
           continue;
         }
 
-        // Migrate token to encrypted table
+        // Encrypt the tokens
+        const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
+        let encryptedRefreshToken = null;
+        
+        if (token.refreshToken) {
+          encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
+        }
+
+        // Insert into encrypted table
         await db.insert(encryptedAuthTokens).values({
           id: nanoid(),
           userId: token.userId,
           platform: token.platform,
-          encryptedAccessToken: null, // Will be encrypted later
-          encryptedRefreshToken: null, // Will be encrypted later
-          tokenHash: null, // Will be computed later
-          expiresAt: token.expiresAt,
-          scopes: null,
+          encryptedAccessToken: encryptedAccessToken.encryptedToken,
+          encryptedRefreshToken: encryptedRefreshToken?.encryptedToken || null,
+          tokenHash: encryptedAccessToken.tokenHash,
+          encryptionMetadata: encryptedAccessToken.metadata,
+          expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
+          scopes: token.additionalData ? JSON.stringify(JSON.parse(token.additionalData).scopes || []) : null,
           encryptionKeyVersion: 1,
-          createdAt: new Date(),
-          lastUsed: token.timestamp || new Date(),
-          legacyAccessToken: token.accessToken, // Store temporarily for migration
+          legacyAccessToken: token.accessToken, // Keep for fallback
           legacyRefreshToken: token.refreshToken,
           migrationStatus: 'migrated'
         });
 
-        console.log(`✅ Migrated token: ${token.platform} for user ${token.userId}`);
+        console.log(`✓ Migrated token for user ${token.userId} platform ${token.platform}`);
         migrated++;
 
       } catch (error) {
-        console.error(`❌ Error migrating token ${token.platform} for user ${token.userId}:`, error);
+        console.error(`✗ Error migrating token for user ${token.userId}:`, error);
         errors++;
       }
     }
 
-    console.log(`📊 Migration completed: ${migrated} migrated, ${skipped} skipped, ${errors} errors`);
+    console.log(`Migration completed: ${migrated} migrated, ${skipped} skipped, ${errors} errors`);
     return { migrated, skipped, errors };
 
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('Migration failed:', error);
     throw error;
   }
 }
 
-// Auto-run migration if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run migration if called directly
+if (require.main === module) {
   migrateAuthTokens()
     .then(result => {
       console.log('Migration result:', result);

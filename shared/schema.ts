@@ -302,9 +302,10 @@ export const encryptedAuthTokens = pgTable("encrypted_auth_tokens", {
   id: varchar("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => secureUsers.id),
   platform: varchar("platform").$type<SupportedPlatform>().notNull(),
-  encryptedAccessToken: text("encrypted_access_token"), // bytea stored as text for Drizzle
-  encryptedRefreshToken: text("encrypted_refresh_token"), // bytea stored as text for Drizzle
+  encryptedAccessToken: text("encrypted_access_token"), // Encrypted token data
+  encryptedRefreshToken: text("encrypted_refresh_token"), // Encrypted refresh token
   tokenHash: varchar("token_hash"), // For lookup without decryption
+  encryptionMetadata: text("encryption_metadata"), // IV, authTag, etc.
   expiresAt: timestamp("expires_at"),
   scopes: text("scopes"), // Array stored as JSON string
   encryptionKeyVersion: integer("encryption_key_version").default(1),

@@ -4,7 +4,7 @@
 import crypto from 'crypto';
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '32-character-default-key-for-dev';
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = 'aes-256-cbc';
 
 export class TokenEncryption {
   private static instance: TokenEncryption;
@@ -26,17 +26,20 @@ export class TokenEncryption {
    * Encrypt a token string
    */
   encrypt(token: string): { encrypted: string; authTag: string; iv: string } {
-    const iv = crypto.randomBytes(12); // 96-bit IV for GCM
-    const cipher = crypto.createCipherGCM(ALGORITHM, this.encryptionKey, iv);
+    const iv = crypto.randomBytes(16); // 128-bit IV for CBC
+    const cipher = crypto.createCipher(ALGORITHM, this.encryptionKey);
     
     let encrypted = cipher.update(token, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     
-    const authTag = cipher.getAuthTag();
+    // Create HMAC for integrity
+    const hmac = crypto.createHmac('sha256', this.encryptionKey);
+    hmac.update(encrypted + iv.toString('hex'));
+    const authTag = hmac.digest('hex');
     
     return {
       encrypted,
-      authTag: authTag.toString('hex'),
+      authTag,
       iv: iv.toString('hex')
     };
   }
@@ -45,13 +48,16 @@ export class TokenEncryption {
    * Decrypt a token string
    */
   decrypt(encryptedData: { encrypted: string; authTag: string; iv: string }): string {
-    const decipher = crypto.createDecipherGCM(
-      ALGORITHM, 
-      this.encryptionKey, 
-      Buffer.from(encryptedData.iv, 'hex')
-    );
+    // Verify HMAC first
+    const hmac = crypto.createHmac('sha256', this.encryptionKey);
+    hmac.update(encryptedData.encrypted + encryptedData.iv);
+    const expectedAuthTag = hmac.digest('hex');
     
-    decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));
+    if (expectedAuthTag !== encryptedData.authTag) {
+      throw new Error('Authentication failed - token may be tampered');
+    }
+    
+    const decipher = crypto.createDecipher(ALGORITHM, this.encryptionKey);
     
     let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');

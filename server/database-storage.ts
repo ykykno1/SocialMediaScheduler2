@@ -49,15 +49,41 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
       
       if (encryptedToken) {
-        // Use legacy tokens during migration phase
-        const accessToken = encryptedToken.legacyAccessToken;
-        const refreshToken = encryptedToken.legacyRefreshToken;
+        let accessToken: string;
+        let refreshToken: string | undefined;
+        
+        // Try to decrypt if encrypted tokens exist
+        if (encryptedToken.encryptedAccessToken && encryptedToken.encryptionMetadata) {
+          try {
+            const { tokenEncryption } = await import('./encryption.js');
+            accessToken = tokenEncryption.decryptFromStorage(
+              encryptedToken.encryptedAccessToken, 
+              encryptedToken.encryptionMetadata
+            );
+            
+            if (encryptedToken.encryptedRefreshToken) {
+              refreshToken = tokenEncryption.decryptFromStorage(
+                encryptedToken.encryptedRefreshToken,
+                encryptedToken.encryptionMetadata
+              );
+            }
+          } catch (decryptError) {
+            console.warn('Failed to decrypt token, falling back to legacy:', decryptError);
+            // Fallback to legacy tokens if decryption fails
+            accessToken = encryptedToken.legacyAccessToken || '';
+            refreshToken = encryptedToken.legacyRefreshToken || undefined;
+          }
+        } else {
+          // Use legacy tokens if no encrypted version exists yet
+          accessToken = encryptedToken.legacyAccessToken || '';
+          refreshToken = encryptedToken.legacyRefreshToken || undefined;
+        }
         
         if (accessToken) {
           return {
             platform: encryptedToken.platform as SupportedPlatform,
             accessToken: accessToken,
-            refreshToken: refreshToken || undefined,
+            refreshToken: refreshToken,
             expiresAt: encryptedToken.expiresAt?.getTime(),
             timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
             userId: encryptedToken.userId,
@@ -90,6 +116,7 @@ export class DatabaseStorage implements IStorage {
   async saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken> {
     try {
       const validatedToken = authSchema.parse(token);
+      const { tokenEncryption } = await import('./encryption.js');
       
       // Delete existing token from both tables
       await db.delete(encryptedAuthTokens)
@@ -98,22 +125,31 @@ export class DatabaseStorage implements IStorage {
       await db.delete(authTokens)
         .where(and(eq(authTokens.platform, token.platform), eq(authTokens.userId, userId)));
 
-      // Insert new token into encrypted table with legacy tokens for migration
+      // Encrypt the tokens
+      const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
+      let encryptedRefreshToken = null;
+      
+      if (token.refreshToken) {
+        encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
+      }
+
+      // Insert new token into encrypted table with real encryption
       await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         userId,
         platform: token.platform,
-        encryptedAccessToken: null, // Will be encrypted later
-        encryptedRefreshToken: null, // Will be encrypted later
-        tokenHash: null, // Will be computed later
+        encryptedAccessToken: encryptedAccessToken.encryptedToken,
+        encryptedRefreshToken: encryptedRefreshToken?.encryptedToken || null,
+        tokenHash: encryptedAccessToken.tokenHash,
+        encryptionMetadata: encryptedAccessToken.metadata,
         expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
         scopes: null,
         encryptionKeyVersion: 1,
         createdAt: new Date(),
         lastUsed: new Date(),
-        legacyAccessToken: token.accessToken, // Store temporarily for migration
+        legacyAccessToken: token.accessToken, // Keep for fallback during migration
         legacyRefreshToken: token.refreshToken || null,
-        migrationStatus: 'pending'
+        migrationStatus: 'migrated'
       });
 
       return validatedToken;
