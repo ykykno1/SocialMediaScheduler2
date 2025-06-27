@@ -92,21 +92,8 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      // Fallback to old tokens table if not found in encrypted table
-      const [token] = await db.select().from(authTokens)
-        .where(and(eq(authTokens.platform, platform), eq(authTokens.userId, userId)));
-      
-      if (!token) return null;
-
-      return {
-        platform: token.platform as SupportedPlatform,
-        accessToken: token.accessToken,
-        refreshToken: token.refreshToken || undefined,
-        expiresAt: token.expiresAt?.getTime(),
-        timestamp: token.timestamp?.getTime() || Date.now(),
-        userId: token.userId,
-        additionalData: token.additionalData ? JSON.parse(token.additionalData) : undefined
-      };
+      // No token found
+      return null;
     } catch (error) {
       console.error('Error getting auth token:', error);
       return null;
@@ -118,12 +105,9 @@ export class DatabaseStorage implements IStorage {
       const validatedToken = authSchema.parse(token);
       const { tokenEncryption } = await import('./encryption.js');
       
-      // Delete existing token from both tables
+      // Delete existing token from encrypted table
       await db.delete(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
-      
-      await db.delete(authTokens)
-        .where(and(eq(authTokens.platform, token.platform), eq(authTokens.userId, userId)));
 
       // Encrypt the tokens
       const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
