@@ -341,7 +341,7 @@ export function registerRoutes(app: Express): Server {
       console.log('Disconnecting YouTube for user:', req.user.id);
       
       // Remove YouTube token from storage
-      const removed = await storage.removeAuthToken('youtube', req.user.id);
+      const removed = storage.removeAuthToken('youtube', req.user.id);
       
       if (removed) {
         console.log('YouTube token removed successfully for user:', req.user.id);

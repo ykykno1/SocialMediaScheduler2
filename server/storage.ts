@@ -32,7 +32,7 @@ export interface IStorage {
   // Generic auth token operations
   getAuthToken(platform: SupportedPlatform, userId: string): AuthToken | null;
   saveAuthToken(token: AuthToken, userId: string): AuthToken;
-  removeAuthToken(platform: SupportedPlatform, userId: string): void;
+  removeAuthToken(platform: SupportedPlatform, userId: string): boolean;
 
   // Legacy Facebook-specific auth (kept for backward compatibility)
   getFacebookAuth(userId?: string): FacebookAuth | null;
@@ -207,17 +207,59 @@ export class MemStorage implements IStorage {
     return validatedToken;
   }
 
-  removeAuthToken(platform: SupportedPlatform, userId?: string): void {
-    if (!userId) return;
+  removeAuthToken(platform: SupportedPlatform, userId?: string): boolean {
+    if (!userId) return false;
 
     const userTokens = this.userAuthTokens.get(userId);
-    if (userTokens) {
+    let hadToken = false;
+    
+    // Check if token existed before removing
+    if (userTokens && userTokens[platform]) {
+      hadToken = true;
       userTokens[platform] = null;
     }
 
-    // Sync with legacy Facebook auth if applicable
+    // Also check legacy Facebook auth storage
     if (platform === 'facebook') {
-      this.userFacebookAuth.set(userId, null);
+      const existingFbAuth = this.userFacebookAuth.get(userId);
+      if (existingFbAuth) {
+        hadToken = true;
+        this.userFacebookAuth.set(userId, null);
+      }
+    }
+
+    if (hadToken) {
+      // Remove from database asynchronously
+      this.removeAuthTokenFromDatabase(platform, userId).catch(error => {
+        console.error('Failed to remove auth token from database:', error);
+      });
+
+      console.log(`${platform} auth token removed for user: ${userId}`);
+      return true;
+    }
+    
+    console.log(`No ${platform} token found to remove for user: ${userId}`);
+    return false;
+  }
+
+  private async removeAuthTokenFromDatabase(platform: SupportedPlatform, userId: string): Promise<void> {
+    try {
+      console.log(`Removing ${platform} auth from database for user: ${userId}`);
+      
+      const { db } = await import('./db');
+      const { authTokens } = await import('@shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+
+      await db.delete(authTokens)
+        .where(and(
+          eq(authTokens.userId, userId),
+          eq(authTokens.platform, platform)
+        ));
+      
+      console.log(`${platform} auth removed from database for user: ${userId}`);
+    } catch (error) {
+      console.error(`Error removing ${platform} auth from database for user ${userId}:`, error);
+      throw error;
     }
   }
 
