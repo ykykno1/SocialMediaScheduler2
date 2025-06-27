@@ -131,6 +131,13 @@ export default function useFacebookAuth() {
         }
       }, 1000);
       
+      // Store timer reference for cleanup
+      setTimeout(() => {
+        if (pollTimer) {
+          clearInterval(pollTimer);
+        }
+      }, 60000); // Clean up after 1 minute
+      
     } catch (error) {
       console.error('Facebook login error:', error);
       toast({
@@ -157,6 +164,12 @@ export default function useFacebookAuth() {
       // Handle successful auth with code
       if (event.data.code && event.data.platform === 'facebook') {
         console.log('Facebook auth code received, exchanging for token');
+        // Close popup first
+        if (popupWindow && !popupWindow.closed) {
+          popupWindow.close();
+        }
+        setPopupWindow(null);
+        
         // Exchange code for token on the server
         exchangeCodeMutation.mutate({
           code: event.data.code,

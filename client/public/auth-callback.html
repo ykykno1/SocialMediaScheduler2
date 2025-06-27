@@ -137,21 +137,29 @@
                 statusElement.className = 'status success';
                 messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
                 
-                // Send code to parent window
+                // Send code to parent window multiple times to ensure delivery
                 console.log('Sending code to parent:', params.code);
                 console.log('Platform:', params.state || 'facebook');
+                
+                const messageData = {
+                    code: params.code,
+                    platform: params.state || 'facebook',
+                    success: true
+                };
+                
                 if (window.opener) {
-                    window.opener.postMessage({
-                        code: params.code,
-                        platform: params.state || 'facebook',
-                        success: true
-                    }, window.location.origin);
-                    console.log('Message sent to parent window');
+                    // Send message multiple times with intervals
+                    for (let i = 0; i < 3; i++) {
+                        setTimeout(() => {
+                            window.opener.postMessage(messageData, window.location.origin);
+                            console.log(`Message sent to parent window (attempt ${i + 1})`);
+                        }, i * 500);
+                    }
                 } else {
                     console.error('No parent window found');
                 }
                 
-                // Close the window after a delay
+                // Close the window after ensuring message delivery
                 setTimeout(() => window.close(), 2000);
                 return;
             }
@@ -171,8 +179,8 @@
                     }, window.location.origin);
                 }
                 
-                // Close the window after a delay
-                setTimeout(() => window.close(), 2000);
+                // Close the window after a longer delay to ensure message is received
+                setTimeout(() => window.close(), 3000);
                 return;
             }
             
