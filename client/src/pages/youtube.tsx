@@ -234,79 +234,73 @@ export default function YouTubePage() {
     const video = videos.find(v => v.id === videoId);
     if (!video) return;
 
-    // בקש סיסמה אם מנעל סרטון
-    if (!video.isLocked) {
-      const password = prompt('הזן את הסיסמה שלך כדי לנעול את הסרטון:');
-      if (!password) return;
-
-      try {
-        const token = localStorage.getItem('auth_token');
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      if (video.isLocked) {
+        // בטל נעילה - בקש סיסמה
+        const password = prompt("הכנס את הסיסמה שלך כדי לבטל את נעילת הסרטון:");
+        if (!password) return;
         
-        const response = await fetch('/api/youtube/lock-video', {
+        const response = await fetch(`/api/youtube/video/${videoId}/unlock`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ videoId, password, action: 'lock' })
+          body: JSON.stringify({ password })
         });
         
         if (response.ok) {
           await loadVideos();
           toast({
-            title: "הצלחה!",
-            description: "הסרטון ננעל בהצלחה",
+            title: "נעילת הסרטון בוטלה",
+            description: "הסרטון שוחזר למצב המקורי ויכלל במבצעי הסתרה/הצגה",
           });
         } else {
           const error = await response.json();
           toast({
             title: "שגיאה",
-            description: error.message || "סיסמה שגויה",
+            description: error.error || 'שגיאה בביטול נעילת הסרטון',
             variant: "destructive"
           });
         }
-      } catch (error) {
-        toast({
-          title: "שגיאה",
-          description: "שגיאה בנעילת הסרטון",
-          variant: "destructive"
-        });
-      }
-    } else {
-      // בטל נעילה ללא סיסמה
-      try {
-        const token = localStorage.getItem('auth_token');
-        
-        const response = await fetch('/api/youtube/lock-video', {
+      } else {
+        // נעל סרטון - ללא סיסמה
+        const response = await fetch(`/api/youtube/video/${videoId}/lock`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ videoId, action: 'unlock' })
+          body: JSON.stringify({ reason: "user_manual" })
         });
         
         if (response.ok) {
           await loadVideos();
+          
+          const isHidden = video.isHidden;
           toast({
-            title: "הצלחה!",
-            description: "הנעילה בוטלה בהצלחה",
+            title: "הסרטון ננעל",
+            description: isHidden 
+              ? "הסרטון לא ישוחזר בצאת השבת" 
+              : "הסרטון נשאר גלוי ולא יוסתר בשבת",
           });
         } else {
           const error = await response.json();
           toast({
             title: "שגיאה",
-            description: error.message || "שגיאה בביטול הנעילה",
+            description: error.error || 'שגיאה בנעילת הסרטון',
             variant: "destructive"
           });
         }
-      } catch (error) {
-        toast({
-          title: "שגיאה",
-          description: "שגיאה בביטול הנעילה",
-          variant: "destructive"
-        });
       }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בעדכון נעילת הסרטון",
+        variant: "destructive"
+      });
     }
   };
 
