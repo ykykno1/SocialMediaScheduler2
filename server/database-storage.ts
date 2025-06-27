@@ -55,23 +55,40 @@ export class DatabaseStorage implements IStorage {
         // Try to decrypt if encrypted tokens exist
         if (encryptedToken.encryptedAccessToken && encryptedToken.encryptionMetadata) {
           try {
-            const { tokenEncryption } = await import('./encryption.js');
-            accessToken = tokenEncryption.decryptFromStorage(
+            // Try modern encryption first
+            const { modernTokenEncryption } = await import('./modern-encryption.js');
+            accessToken = modernTokenEncryption.decryptFromStorage(
               encryptedToken.encryptedAccessToken, 
               encryptedToken.encryptionMetadata
             );
             
             if (encryptedToken.encryptedRefreshToken) {
-              refreshToken = tokenEncryption.decryptFromStorage(
+              refreshToken = modernTokenEncryption.decryptFromStorage(
                 encryptedToken.encryptedRefreshToken,
                 encryptedToken.encryptionMetadata
               );
             }
-          } catch (decryptError) {
-            console.warn('Failed to decrypt token, falling back to legacy:', decryptError);
-            // Fallback to legacy tokens if decryption fails
-            accessToken = encryptedToken.legacyAccessToken || '';
-            refreshToken = encryptedToken.legacyRefreshToken || undefined;
+          } catch (modernError) {
+            // Fallback to legacy encryption for old tokens
+            try {
+              const { tokenEncryption } = await import('./encryption.js');
+              accessToken = tokenEncryption.decryptFromStorage(
+                encryptedToken.encryptedAccessToken, 
+                encryptedToken.encryptionMetadata
+              );
+              
+              if (encryptedToken.encryptedRefreshToken) {
+                refreshToken = tokenEncryption.decryptFromStorage(
+                  encryptedToken.encryptedRefreshToken,
+                  encryptedToken.encryptionMetadata
+                );
+              }
+            } catch (legacyError) {
+              console.warn('Failed to decrypt with both methods, using legacy tokens:', legacyError);
+              // Fallback to legacy tokens if decryption fails
+              accessToken = encryptedToken.legacyAccessToken || '';
+              refreshToken = encryptedToken.legacyRefreshToken || undefined;
+            }
           }
         } else {
           // Use legacy tokens if no encrypted version exists yet
