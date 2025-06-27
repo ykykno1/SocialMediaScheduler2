@@ -589,10 +589,74 @@ export function registerRoutes(app: Express): Server {
   // Exchange Facebook code for token
   app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
-      const { code, redirectUri } = req.body;
+      const { code, redirectUri, platform } = req.body;
       
-      if (!code || !redirectUri) {
-        return res.status(400).json({ error: "Missing code or redirectUri" });
+      if (!code) {
+        return res.status(400).json({ error: "Missing code" });
+      }
+
+      // Handle YouTube OAuth callback
+      if (platform === 'youtube') {
+        const clientId = process.env.YOUTUBE_CLIENT_ID || "351828412701-rt3ts08rsials5q7tmqr9prdjtu7qdke.apps.googleusercontent.com";
+        const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+        const domain = req.get('host');
+        const actualRedirectUri = `https://${domain}/auth-callback.html`;
+
+        if (!clientSecret) {
+          return res.status(500).json({ error: "YouTube Client Secret not configured" });
+        }
+
+        // Exchange code for tokens
+        const tokenUrl = "https://oauth2.googleapis.com/token";
+        const tokenData = new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: actualRedirectUri,
+          grant_type: "authorization_code"
+        });
+
+        const tokenResponse = await fetch(tokenUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: tokenData
+        });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          console.error("YouTube token exchange error:", errorData);
+          return res.status(400).json({ error: "Failed to exchange code for token", details: errorData });
+        }
+
+        const tokens = await tokenResponse.json();
+        
+        // Save YouTube token
+        const authToken: AuthToken = {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token || '',
+          expiresIn: tokens.expires_in,
+          timestamp: Date.now()
+        };
+
+        await storage.saveAuthToken(authToken, req.userId);
+        
+        // Add history entry
+        storage.addHistoryEntry({
+          action: "auth",
+          platform: "youtube",
+          timestamp: new Date(),
+          success: true,
+          details: "YouTube authentication successful"
+        });
+
+        return res.json({ success: true, message: "YouTube connected successfully" });
+      }
+
+      // Handle Facebook OAuth callback (existing code)
+      if (!redirectUri) {
+        return res.status(400).json({ error: "Missing redirectUri for Facebook" });
       }
       
       // Use the new Facebook App ID directly
