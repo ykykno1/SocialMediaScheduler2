@@ -11,7 +11,7 @@ export default function YouTubeSimplePage() {
 
   const checkConnection = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/youtube/auth-status', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -33,7 +33,7 @@ export default function YouTubeSimplePage() {
         description: "מוחק את הטוקנים",
       });
       
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       
       const response = await fetch('/api/youtube/disconnect', {
         method: 'POST',
@@ -68,7 +68,7 @@ export default function YouTubeSimplePage() {
   const connectYouTube = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       
       const response = await fetch('/api/youtube/auth-url', {
         headers: { 'Authorization': `Bearer ${token}` }
