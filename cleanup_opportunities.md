@@ -115,16 +115,17 @@
 3. ✅ יצרתי `docs/README.md` עם הסבר על התיקיות
 4. ✅ הקוד עכשיו נקי יותר בשורש
 
-### שלב 2: מחיקת קבצים כפולים ברורים (סיכון נמוך)
-1. מחיקת קבצי App-new.tsx, App-simple.tsx
-2. מחיקת קבצי auth-new.tsx, auth-simple.tsx
-3. מחיקת קבצי home-new.tsx, home-simple.tsx
-4. מחיקת קבצי youtube-new.tsx, youtube-simple.tsx
+### שלב 2: ✅ הושלם - מחיקת קבצים כפולים ברורים (בוצע)
+1. ✅ מחקתי קבצי App-new.tsx, App-simple.tsx
+2. ✅ מחקתי קבצי auth-new.tsx, auth-simple.tsx  
+3. ✅ מחקתי קבצי home-new.tsx, home-simple.tsx
+4. ✅ מחקתי קבצי youtube-new.tsx, youtube-simple.tsx
+5. ✅ מחקתי hooks כפולים: useAuth-clean.ts, useAuth.tsx
+6. ✅ מחקתי קבצי שרת כפולים: auth-new.ts, youtube-videos.ts, facebook-pages.ts
 
-### שלב 3: נקוי Attached Assets (סיכון אפס)
-1. מחיקת קבצי JavaScript ישנים שלא בשימוש
-2. מחיקת קבצי הדבקות זמניים
-3. מחיקת קבצי תמונות שלא בשימוש
+### שלב 3: ✅ הושלם - נקוי Attached Assets (בוצע)
+1. ✅ מחקתי את כל תיקיית attached_assets/ (33 קבצים)
+2. ✅ כללה קבצי JavaScript ישנים, הדבקות זמניים, תמונות
 
 ### שלב 4: איחוד Hooks (סיכון בינוני - דורש בדיקה)
 1. איחוד קבצי useAuth
