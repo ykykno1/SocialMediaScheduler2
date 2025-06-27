@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { unifiedStorage as storage } from './unified-storage.js';
+import { enhancedStorage as storage } from './enhanced-storage.js';
 import { requireAuth } from './middleware.js';
 import fetch from 'node-fetch';
 

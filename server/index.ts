@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 
 (async () => {
   // Auto-setup Instagram token
-  const { unifiedStorage } = await import("./unified-storage");
+  const { enhancedStorage } = await import("./enhanced-storage");
   
   const INSTAGRAM_TOKEN = "EAAWtnDD3MFgBO88vrSIDAsRkYte02YZB7Vwav5QA3jyMPYrFTGXOa99tqbhperJhaq7ddUNwJXUWdZBfc7ZB87qKlZAKwWRV0DO7Vq2QFkJ4wQa5qR9nqgSCZAfkV9sd4qjaNIshTY9tROeRAhpNOMWG9S0w60WOsoD6Bzokq9aZCWuTJZAZAkVkfSZAiUBZCJ1nDcIyfOggWPxlJt4K1wwDkmQRxgNsOZAuW4v4ZBYRsGkJwgDfjpiGsWzebrjTZAVDf";
 

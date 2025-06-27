@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import bcrypt from 'bcrypt';
-import { unifiedStorage as storage } from './unified-storage.js';
+import { enhancedStorage as storage } from './enhanced-storage.js';
 import { generateToken, verifyToken } from './middleware.js';
 
 interface AuthenticatedRequest extends Request {

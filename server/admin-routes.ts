@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { unifiedStorage as storage } from './unified-storage.js';
+import { enhancedStorage as storage } from './enhanced-storage.js';
 import { requireAuth } from './middleware.js';
 
 interface AuthenticatedRequest extends Request {
@@ -41,16 +41,23 @@ export function registerAdminRoutes(app: Express) {
       // Calculate user statistics
       const userStats = {
         total: users.length,
-        free: users.filter((u: any) => u.accountType === 'free').length,
-        youtube_pro: users.filter((u: any) => u.accountType === 'youtube_pro').length,
-        premium: users.filter((u: any) => u.accountType === 'premium').length
+        free: users.filter(u => u.accountType === 'free').length,
+        youtube_pro: users.filter(u => u.accountType === 'youtube_pro').length,
+        premium: users.filter(u => u.accountType === 'premium').length
       };
 
       // Calculate platform connections
       const platformStats = {
-        facebook: 0, // Will be calculated later with async calls
-        youtube: 0   // Will be calculated later with async calls
-      };
+        facebook: users.filter(u => {
+          try {
+            return storage.getAuthToken('facebook', u.id) !== null;
+          } catch {
+            return false;
+          }
+        }).length,
+        youtube: users.filter(u => {
+          try {
+            return storage.getAuthToken('youtube', u.id) !== null;
           } catch {
             return false;
           }
