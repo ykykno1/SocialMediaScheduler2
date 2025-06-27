@@ -2829,7 +2829,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: 'City name and ID are required' });
       }
 
-      const updatedUser = storage.updateUser(req.user.id, { shabbatCity: cityName, shabbatCityId: cityId });
+      const updatedUser = await storage.updateUser(req.user.id, { shabbatCity: cityName, shabbatCityId: cityId });
       
       res.json({
         success: true,

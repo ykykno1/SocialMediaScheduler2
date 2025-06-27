@@ -90,8 +90,14 @@ export default function Settings() {
         title: "הגדרות נשמרו",
         description: "מיקום השבת עודכן בהצלחה",
       });
-      // Invalidate queries to refresh data
+      // Invalidate and refetch queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/user/shabbat-location'] });
+      queryClient.refetchQueries({ queryKey: ['/api/user/shabbat-location'] });
+      
+      // Force window reload to ensure all components update
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     },
     onError: (error: any) => {
       toast({
@@ -180,18 +186,16 @@ export default function Settings() {
               </DropdownMenu>
             </div>
 
-            {selectedCity !== (locationData?.shabbatCity || 'ירושלים') && (
-              <div className="flex justify-end pt-4 border-t">
-                <Button 
-                  onClick={handleSave}
-                  disabled={updateLocationMutation.isPending}
-                  className="gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {updateLocationMutation.isPending ? 'שומר...' : 'שמור שינויים'}
-                </Button>
-              </div>
-            )}
+            <div className="flex justify-end pt-4 border-t">
+              <Button 
+                onClick={handleSave}
+                disabled={updateLocationMutation.isPending}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {updateLocationMutation.isPending ? 'שומר...' : 'שמור שינויים'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

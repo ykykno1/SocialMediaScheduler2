@@ -88,9 +88,11 @@ export function UserChabadWidget() {
   const [iframeKey, setIframeKey] = useState(0);
 
   // Get user's saved Shabbat location
-  const { data: locationData, isLoading } = useQuery({
+  const { data: locationData, isLoading, refetch } = useQuery({
     queryKey: ['/api/user/shabbat-location'],
     retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   // State for Shabbat data from Chabad API
