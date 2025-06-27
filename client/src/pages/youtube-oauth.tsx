@@ -114,6 +114,8 @@ export default function YouTubeOAuthPage() {
           title: "התחברות הצליחה",
           description: "התחברת בהצלחה ל-YouTube",
         });
+        // רענון מצב החיבור וטעינת הסרטונים
+        await checkConnectionStatus();
         setLoading(false);
       } else {
         const errorData = result;
