@@ -57,16 +57,21 @@ export class DatabaseStorage implements IStorage {
           try {
             const { tokenEncryption } = await import('./encryption.js');
             console.log('Attempting to decrypt token for platform:', platform, 'user:', userId);
+            console.log('Token data structure:', {
+              hasEncryptedAccessToken: !!encryptedToken.encryptedAccessToken,
+              hasMetadata: !!encryptedToken.encryptionMetadata,
+              metadataPreview: encryptedToken.encryptionMetadata?.substring(0, 50)
+            });
             
             accessToken = tokenEncryption.decryptFromStorage(
-              encryptedToken.encryptedAccessToken, 
+              encryptedToken.encryptedAccessToken.toString(), 
               encryptedToken.encryptionMetadata
             );
             console.log('Access token decrypted successfully');
             
             if (encryptedToken.encryptedRefreshToken) {
               refreshToken = tokenEncryption.decryptFromStorage(
-                encryptedToken.encryptedRefreshToken,
+                encryptedToken.encryptedRefreshToken.toString(),
                 encryptedToken.encryptionMetadata
               );
               console.log('Refresh token decrypted successfully');
