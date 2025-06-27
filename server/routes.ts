@@ -1858,8 +1858,24 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // YouTube routes are defined above as public endpoints
-  
+  // YouTube disconnect route
+  app.post("/api/youtube/disconnect", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Remove YouTube auth token
+      await storage.removeAuthToken('youtube', userId);
+      
+      res.json({ 
+        success: true, 
+        message: "התנתקת בהצלחה מיוטיוב" 
+      });
+    } catch (error) {
+      console.error("Error disconnecting YouTube:", error);
+      res.status(500).json({ error: "שגיאה בהתנתקות מיוטיוב" });
+    }
+  });
+
   // Instagram Routes
   app.get("/api/instagram/auth-status", (req, res) => {
     const auth = storage.getAuthToken('instagram');
