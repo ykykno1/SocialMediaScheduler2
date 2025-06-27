@@ -85,6 +85,13 @@ export class DatabaseStorage implements IStorage {
               }
             } catch (legacyError) {
               console.warn('Failed to decrypt with both methods, using legacy tokens:', legacyError);
+              // If no legacy tokens either, token is corrupted - delete it
+              if (!encryptedToken.legacyAccessToken) {
+                console.error('Token corrupted and no legacy fallback, deleting token for platform:', platform);
+                await db.delete(encryptedAuthTokens)
+                  .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
+                return null;
+              }
               // Fallback to legacy tokens if decryption fails
               accessToken = encryptedToken.legacyAccessToken || '';
               refreshToken = encryptedToken.legacyRefreshToken || undefined;
