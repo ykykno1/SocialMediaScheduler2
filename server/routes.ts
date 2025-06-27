@@ -639,10 +639,10 @@ export function registerRoutes(app: Express): Server {
           refreshToken: tokens.refresh_token || '',
           expiresIn: tokens.expires_in,
           timestamp: Date.now(),
-          userId: req.userId
+          userId: req.user.id
         };
 
-        await storage.saveAuthToken(authToken, req.userId);
+        await storage.saveAuthToken(authToken, req.user.id);
         
         // Add history entry
         storage.addHistoryEntry({
