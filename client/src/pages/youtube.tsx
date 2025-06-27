@@ -342,7 +342,17 @@ export default function YouTubePage() {
                 <div className="flex gap-4">
                   <Button onClick={loadVideos} disabled={loading}>
                     <Play className="h-4 w-4 mr-2" />
-                    Refresh Videos
+                    רענן רשימת סרטונים
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={disconnectYouTube}
+                    disabled={loading}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                  >
+                    <Unlink className="h-4 w-4 mr-2" />
+                    התנתק מיוטיוב
                   </Button>
                   
                   {selectedVideos.length > 0 && (
