@@ -181,7 +181,7 @@ export class MemStorage implements IStorage {
     return userTokens?.[platform] || null;
   }
 
-  saveAuthToken(token: AuthToken, userId?: string): AuthToken {
+  async saveAuthToken(token: AuthToken, userId?: string): Promise<AuthToken> {
     if (!userId) throw new Error('User ID required for saving auth token');
 
     const validatedToken = authSchema.parse(token);
@@ -207,7 +207,7 @@ export class MemStorage implements IStorage {
     return validatedToken;
   }
 
-  removeAuthToken(platform: SupportedPlatform, userId?: string): void {
+  async removeAuthToken(platform: SupportedPlatform, userId?: string): Promise<void> {
     if (!userId) return;
 
     const userTokens = this.userAuthTokens.get(userId);
@@ -222,7 +222,7 @@ export class MemStorage implements IStorage {
   }
 
   // Legacy Facebook-specific auth (user-specific)
-  getFacebookAuth(userId?: string): FacebookAuth | null {
+  async getFacebookAuth(userId?: string): Promise<FacebookAuth | null> {
     console.log(`SYNC_FB_AUTH: Getting auth for userId=${userId}`);
     console.log(`SYNC_FB_AUTH: Memory map keys: [${Array.from(this.userFacebookAuth.keys()).join(', ')}]`);
     console.log(`SYNC_FB_AUTH: Memory map size: ${this.userFacebookAuth.size}`);

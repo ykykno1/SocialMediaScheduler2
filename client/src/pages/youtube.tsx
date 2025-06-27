@@ -330,9 +330,10 @@ export default function YouTubePage() {
                     size="sm" 
                     onClick={disconnectYouTube}
                     disabled={loading}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
                   >
                     <Unlink className="h-4 w-4 mr-2" />
-                    Disconnect
+                    התנתק מיוטיוב
                   </Button>
                 </CardTitle>
               </CardHeader>
