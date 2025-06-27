@@ -85,19 +85,21 @@ export default function Settings() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "הגדרות נשמרו",
         description: "מיקום השבת עודכן בהצלחה",
       });
-      // Invalidate and refetch queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/user/shabbat-location'] });
-      queryClient.refetchQueries({ queryKey: ['/api/user/shabbat-location'] });
       
-      // Force window reload to ensure all components update
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Clear all cache completely and force fresh data fetch
+      queryClient.clear();
+      queryClient.invalidateQueries({ queryKey: ['/api/user/shabbat-location'] });
+      queryClient.removeQueries({ queryKey: ['/api/user/shabbat-location'] });
+      
+      // Update the selected city immediately to match saved data
+      if (data && data.shabbatCity) {
+        setSelectedCity(data.shabbatCity);
+      }
     },
     onError: (error: any) => {
       toast({

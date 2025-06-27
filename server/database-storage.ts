@@ -368,8 +368,8 @@ export class DatabaseStorage implements IStorage {
         username: secureUser.username,
         password: secureUser.passwordHash, // Map password_hash to password
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
-        shabbatCity: null,
-        shabbatCityId: null,
+        shabbatCity: secureUser.shabbatCity,
+        shabbatCityId: secureUser.shabbatCityId,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -400,8 +400,8 @@ export class DatabaseStorage implements IStorage {
         username: secureUser.username,
         password: secureUser.passwordHash, // Map password_hash to password
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
-        shabbatCity: null,
-        shabbatCityId: null,
+        shabbatCity: secureUser.shabbatCity,
+        shabbatCityId: secureUser.shabbatCityId,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -442,8 +442,8 @@ export class DatabaseStorage implements IStorage {
         username: secureUser.username,
         password: secureUser.passwordHash,
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
-        shabbatCity: null,
-        shabbatCityId: null,
+        shabbatCity: secureUser.shabbatCity,
+        shabbatCityId: secureUser.shabbatCityId,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
