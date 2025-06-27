@@ -109,19 +109,30 @@ export class DatabaseStorage implements IStorage {
       console.log('Saving auth token for platform:', token.platform, 'user:', userId);
       const validatedToken = authSchema.parse(token);
       
-      // For YouTube, use the same method as Facebook - store in separate auth token
+      // For YouTube, store directly in encrypted tokens table
       if (token.platform === 'youtube') {
-        const youtubeAuth = {
-          accessToken: token.accessToken,
-          refreshToken: token.refreshToken || '',
-          expiresIn: 3600, // 1 hour default
-          timestamp: Date.now(),
-          userId: userId
-        };
-        
-        // Store as Facebook-style auth for consistency
-        this.saveFacebookAuth(youtubeAuth, userId);
-        console.log('YouTube token saved using Facebook auth method');
+        await db.delete(encryptedAuthTokens)
+          .where(and(eq(encryptedAuthTokens.platform, 'youtube'), eq(encryptedAuthTokens.userId, userId)));
+
+        await db.insert(encryptedAuthTokens).values({
+          id: nanoid(),
+          userId,
+          platform: 'youtube',
+          encryptedAccessToken: token.accessToken,
+          encryptedRefreshToken: token.refreshToken || null,
+          tokenHash: 'direct-storage',
+          encryptionMetadata: 'no-encryption',
+          expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+          scopes: null,
+          encryptionKeyVersion: 1,
+          createdAt: new Date(),
+          lastUsed: new Date(),
+          legacyAccessToken: null,
+          legacyRefreshToken: null,
+          migrationStatus: 'migrated'
+        });
+
+        console.log('YouTube token saved successfully in encrypted table');
         return validatedToken;
       }
 
