@@ -651,6 +651,20 @@ export function registerRoutes(app: Express): Server {
       }, req.user?.id);
       console.log(`Auth saved successfully:`, !!auth);
       
+      // Verify token is accessible by trying to read it back
+      let attempts = 0;
+      let verifiedToken = null;
+      while (attempts < 5 && !verifiedToken) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        verifiedToken = await storage.getAuthToken('facebook', req.user?.id);
+        attempts++;
+        console.log(`Token verification attempt ${attempts}: ${!!verifiedToken}`);
+      }
+      
+      if (!verifiedToken) {
+        console.warn('Token not accessible after save, but continuing...');
+      }
+      
       // Add a history entry for successful authentication (user-specific)
       storage.addHistoryEntry({
         timestamp: new Date(),

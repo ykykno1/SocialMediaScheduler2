@@ -119,7 +119,7 @@ export function UserChabadWidget() {
 
   // Force iframe refresh when location changes
   useEffect(() => {
-    if (locationData) {
+    if (locationData && typeof locationData === 'object' && 'shabbatCity' in locationData && 'shabbatCityId' in locationData) {
       setIframeKey(prev => prev + 1);
       console.log(`Loaded Chabad widget for ${locationData.shabbatCity} (ID: ${locationData.shabbatCityId})`);
     }
