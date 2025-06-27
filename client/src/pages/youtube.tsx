@@ -579,6 +579,30 @@ export default function YouTubePage() {
                           <p>צפיות: {parseInt(video.viewCount).toLocaleString()}</p>
                         )}
                       </div>
+                      
+                      <div className="flex gap-2 mt-3">
+                        {video.privacyStatus === 'public' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={() => hideVideo(video.id)}
+                          >
+                            <EyeOff className="h-4 w-4 mr-1" />
+                            הסתר
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
+                            onClick={() => showVideo(video.id)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            הצג
+                          </Button>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
