@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import PricingPage from "@/pages/pricing";
-import YouTubeClean from "@/pages/youtube-clean";
+import YouTubePage from "@/pages/youtube-oauth";
 import FacebookPage from "@/pages/facebook";
 import InstagramPage from "@/pages/instagram";
 import AdminPage from "@/pages/admin";
@@ -234,7 +234,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/pricing" component={PricingPage} />
-          <Route path="/youtube" component={YouTubeClean} />
+          <Route path="/youtube" component={YouTubePage} />
           <Route path="/facebook" component={FacebookPage} />
           <Route path="/instagram" component={InstagramPage} />
           <Route path="/settings" component={SettingsPage} />

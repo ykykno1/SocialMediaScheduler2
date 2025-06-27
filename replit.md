@@ -126,31 +126,6 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- June 27, 2025. LESSON LEARNED: שגיאה בניסיון להוסיף כפתור ניתוק:
-  - הבעיה: בעת הוספת כפתור ניתוק לדף youtube-clean.tsx, הקוד נשבר כליל
-  - השגיאה: ניסיון להוסיף יותר מדי פונקציות בבת אחת גרם לקריסת הממשק
-  - הלקח: כפתור ניתוק צריך להיות הוספה פשוטה ומדויקת ללא שינוי הארכיטקטורה הקיימת
-  - הפתרון הנכון: להוסיף רק כפתור ניתוק יחיד ולא לשנות את שאר הפונקציונליות
-  - הקוד שעבד: youtube-clean.tsx עם כל הסרטונים מוצגים, כפתורי הסתר/הצג פועלים
-  - מה שהתקלקל: ניסיון להוסיף בבת אחת: בחירת סרטונים, פעולות קבוצתיות, נעילת סרטונים
-  - מצב נוכחי: הקוד שוחזר לגרסה עובדת עם כפתור ניתוק מיוטיוב פועל
-  - כלל זהב: שינוי קטן אחד בכל פעם, בדיקה שהכל עובד, רק אז להמשיך
-
-- June 27, 2025. COMPLETED: YouTube integration fully restored with complete UI:
-  - Fixed YouTube OAuth connection and token saving (userId issue resolved)
-  - Fixed video list display - all videos now show with thumbnails and metadata
-  - Restored all missing UI components: video thumbnails, selection mechanism, bulk action buttons
-  - Hebrew interface with "הסתר נבחרים", "שחזר נבחרים", "בחר כל הציבוריים/פרטיים" buttons
-  - Video selection with visual indicators and privacy status badges working
-  - Complete YouTube management functionality restored and operational
-- June 27, 2025. COMPLETED: Modernized encryption mechanism and completed database optimization:
-  - Fixed deprecated crypto.createDecipher to modern AES-256-GCM encryption system
-  - Updated IStorage interface to support async operations for better database integration
-  - Cleaned up corrupted legacy encrypted tokens (deleted 2 problematic tokens)
-  - All new tokens now use secure encryption with proper error handling
-  - Facebook re-authentication working with new encryption system
-  - YouTube integration remains functional with backward compatibility
-  - System ready for production with modern security standards
 - June 27, 2025. COMPLETED: Final database cleanup and optimization:
   - Removed all legacy database tables (auth_tokens, users, safe_users, migration_audit, users_v2)
   - Fixed all foreign key relationships to point to secure_users table

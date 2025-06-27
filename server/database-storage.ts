@@ -44,59 +44,72 @@ export class DatabaseStorage implements IStorage {
   // Generic auth token operations
   async getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null> {
     try {
-      // For YouTube, check encrypted tokens first
-      if (platform === 'youtube') {
-        // First try encrypted tokens table
-        const [encryptedToken] = await db.select().from(encryptedAuthTokens)
-          .where(and(eq(encryptedAuthTokens.platform, 'youtube'), eq(encryptedAuthTokens.userId, userId)));
-        
-        if (encryptedToken && encryptedToken.encryptedAccessToken) {
-          console.log('Found YouTube token in encrypted storage');
-          return {
-            platform: 'youtube',
-            accessToken: encryptedToken.encryptedAccessToken.toString(),
-            refreshToken: encryptedToken.encryptedRefreshToken?.toString(),
-            expiresAt: encryptedToken.expiresAt?.getTime(),
-            timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
-            userId: userId,
-            additionalData: undefined
-          };
-        }
-        
-        // Fallback to Facebook auth storage if no encrypted token
-        const facebookAuth = await this.getFacebookAuth(userId);
-        if (facebookAuth) {
-          console.log('Found YouTube token using Facebook auth fallback');
-          return {
-            platform: 'youtube',
-            accessToken: facebookAuth.accessToken,
-            refreshToken: facebookAuth.refreshToken,
-            expiresAt: facebookAuth.expiresIn,
-            timestamp: facebookAuth.timestamp,
-            userId: userId,
-            additionalData: undefined
-          };
-        }
-        console.log('No YouTube token found');
-        return null;
-      }
-      
-      // For other platforms, use encrypted tokens table (unchanged)
+      // First try encrypted tokens table
       const [encryptedToken] = await db.select().from(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
       
-      if (encryptedToken && encryptedToken.encryptedAccessToken) {
-        return {
-          platform: encryptedToken.platform as SupportedPlatform,
-          accessToken: encryptedToken.encryptedAccessToken.toString(),
-          refreshToken: encryptedToken.encryptedRefreshToken?.toString(),
-          expiresAt: encryptedToken.expiresAt?.getTime(),
-          timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
-          userId: encryptedToken.userId,
-          additionalData: undefined
-        };
+      if (encryptedToken) {
+        let accessToken: string;
+        let refreshToken: string | undefined;
+        
+        // Try to decrypt if encrypted tokens exist
+        if (encryptedToken.encryptedAccessToken && encryptedToken.encryptionMetadata) {
+          try {
+            // Try modern encryption first
+            const { modernTokenEncryption } = await import('./modern-encryption.js');
+            accessToken = modernTokenEncryption.decryptFromStorage(
+              encryptedToken.encryptedAccessToken, 
+              encryptedToken.encryptionMetadata
+            );
+            
+            if (encryptedToken.encryptedRefreshToken) {
+              refreshToken = modernTokenEncryption.decryptFromStorage(
+                encryptedToken.encryptedRefreshToken,
+                encryptedToken.encryptionMetadata
+              );
+            }
+          } catch (modernError) {
+            // Fallback to legacy encryption for old tokens
+            try {
+              const { tokenEncryption } = await import('./encryption.js');
+              accessToken = tokenEncryption.decryptFromStorage(
+                encryptedToken.encryptedAccessToken, 
+                encryptedToken.encryptionMetadata
+              );
+              
+              if (encryptedToken.encryptedRefreshToken) {
+                refreshToken = tokenEncryption.decryptFromStorage(
+                  encryptedToken.encryptedRefreshToken,
+                  encryptedToken.encryptionMetadata
+                );
+              }
+            } catch (legacyError) {
+              console.warn('Failed to decrypt with both methods, using legacy tokens:', legacyError);
+              // Fallback to legacy tokens if decryption fails
+              accessToken = encryptedToken.legacyAccessToken || '';
+              refreshToken = encryptedToken.legacyRefreshToken || undefined;
+            }
+          }
+        } else {
+          // Use legacy tokens if no encrypted version exists yet
+          accessToken = encryptedToken.legacyAccessToken || '';
+          refreshToken = encryptedToken.legacyRefreshToken || undefined;
+        }
+        
+        if (accessToken) {
+          return {
+            platform: encryptedToken.platform as SupportedPlatform,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresAt: encryptedToken.expiresAt?.getTime(),
+            timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
+            userId: encryptedToken.userId,
+            additionalData: undefined
+          };
+        }
       }
       
+      // No token found
       return null;
     } catch (error) {
       console.error('Error getting auth token:', error);
@@ -106,59 +119,40 @@ export class DatabaseStorage implements IStorage {
 
   async saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken> {
     try {
-      console.log('Saving auth token for platform:', token.platform, 'user:', userId);
       const validatedToken = authSchema.parse(token);
+      const { tokenEncryption } = await import('./encryption.js');
       
-      // For YouTube, store directly in encrypted tokens table
-      if (token.platform === 'youtube') {
-        await db.delete(encryptedAuthTokens)
-          .where(and(eq(encryptedAuthTokens.platform, 'youtube'), eq(encryptedAuthTokens.userId, userId)));
-
-        await db.insert(encryptedAuthTokens).values({
-          id: nanoid(),
-          userId,
-          platform: 'youtube',
-          encryptedAccessToken: token.accessToken,
-          encryptedRefreshToken: token.refreshToken || null,
-          tokenHash: 'direct-storage',
-          encryptionMetadata: 'no-encryption',
-          expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
-          scopes: null,
-          encryptionKeyVersion: 1,
-          createdAt: new Date(),
-          lastUsed: new Date(),
-          legacyAccessToken: null,
-          legacyRefreshToken: null,
-          migrationStatus: 'migrated'
-        });
-
-        console.log('YouTube token saved successfully in encrypted table');
-        return validatedToken;
-      }
-
-      // For other platforms, use encrypted storage
+      // Delete existing token from encrypted table
       await db.delete(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
 
+      // Encrypt the tokens
+      const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
+      let encryptedRefreshToken = null;
+      
+      if (token.refreshToken) {
+        encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
+      }
+
+      // Insert new token into encrypted table with real encryption
       await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         userId,
         platform: token.platform,
-        encryptedAccessToken: token.accessToken,
-        encryptedRefreshToken: token.refreshToken || null,
-        tokenHash: 'direct-storage',
-        encryptionMetadata: 'no-encryption',
-        expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+        encryptedAccessToken: encryptedAccessToken.encryptedToken,
+        encryptedRefreshToken: encryptedRefreshToken?.encryptedToken || null,
+        tokenHash: encryptedAccessToken.tokenHash,
+        encryptionMetadata: encryptedAccessToken.metadata,
+        expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
         scopes: null,
         encryptionKeyVersion: 1,
         createdAt: new Date(),
         lastUsed: new Date(),
-        legacyAccessToken: null, // No longer using legacy tokens
-        legacyRefreshToken: null,
+        legacyAccessToken: token.accessToken, // Keep for fallback during migration
+        legacyRefreshToken: token.refreshToken || null,
         migrationStatus: 'migrated'
       });
 
-      console.log('Token saved successfully!');
       return validatedToken;
     } catch (error) {
       console.error('Error saving auth token:', error);
