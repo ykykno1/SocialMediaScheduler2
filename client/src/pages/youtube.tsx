@@ -552,6 +552,14 @@ export default function YouTubePage() {
                             )}
                           </Button>
                         </div>
+                        {video.isHidden && (
+                          <div className="absolute inset-0 bg-gray-500/60 rounded flex items-center justify-center">
+                            <div className="text-center">
+                              <EyeOff className="h-8 w-8 text-white mx-auto mb-2" />
+                              <span className="text-white text-sm font-medium">סרטון מוסתר</span>
+                            </div>
+                          </div>
+                        )}
                         {selectedVideos.includes(video.id) && (
                           <div className="absolute inset-0 bg-blue-500/20 rounded flex items-center justify-center">
                             <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
