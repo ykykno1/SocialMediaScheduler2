@@ -306,34 +306,6 @@ export default function YouTubeOAuthPage() {
     }
   };
 
-  const disconnectFromYouTube = async () => {
-    setLoading(true);
-    try {
-      const response = await apiRequest("POST", "/api/youtube/disconnect");
-
-      if (response.ok) {
-        setIsConnected(false);
-        setVideos([]);
-        setChannelTitle('');
-        toast({
-          title: "התנתקת מיוטיוב בהצלחה",
-          description: "החיבור ליוטיוב הוסר",
-        });
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'שגיאה בהתנתקות מיוטיוב');
-      }
-    } catch (error: any) {
-      toast({
-        title: "שגיאה בהתנתקות",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8" dir="rtl">
       <div className="max-w-6xl mx-auto">
@@ -402,17 +374,6 @@ export default function YouTubeOAuthPage() {
                   </Button>
                   <Button onClick={showAllVideos} disabled={loading} variant="outline">
                     הצג הכל
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב? זה יסיר את החיבור שלך לחשבון.")) {
-                        disconnectFromYouTube();
-                      }
-                    }} 
-                    disabled={loading} 
-                    variant="destructive"
-                  >
-                    התנתק מיוטיוב
                   </Button>
                 </div>
               </CardContent>
