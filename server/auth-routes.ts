@@ -1,22 +1,10 @@
 import type { Express, Request, Response } from "express";
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { enhancedStorage as storage } from '../enhanced-storage.js';
+import { enhancedStorage as storage } from './enhanced-storage.js';
+import { generateToken, verifyToken } from './middleware.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
-
-// Helper functions
-function generateToken(userId: string): string {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
-}
-
-function verifyToken(token: string): { userId: string } | null {
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    return decoded;
-  } catch (error) {
-    return null;
-  }
+interface AuthenticatedRequest extends Request {
+  user?: any;
 }
 
 export function registerAuthRoutes(app: Express) {
@@ -42,13 +30,13 @@ export function registerAuthRoutes(app: Express) {
       const user = await storage.createUser({
         email,
         password: hashedPassword,
-        username: email.split('@')[0] // Use email prefix as username
+        username: email.split('@')[0]
       });
       
       // Generate JWT token
       const token = generateToken(user.id);
       
-      // Return user without password and include token
+      // Return user without password
       const { password: _, ...userResponse } = user;
       res.json({
         ...userResponse,
@@ -88,7 +76,7 @@ export function registerAuthRoutes(app: Express) {
       // Update last active
       await storage.updateUser(user.id, { updatedAt: new Date() });
       
-      // Return user without password and include token
+      // Return user without password
       const { password: _, ...userResponse } = user;
       res.json({
         ...userResponse,
@@ -101,52 +89,28 @@ export function registerAuthRoutes(app: Express) {
     }
   });
 
-  // Logout route
+  // Logout route  
   app.post("/api/logout", async (req, res) => {
-    console.log("=== LOGOUT DEBUG: Starting logout process ===");
-    
-    // Get user ID from token
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    console.log(`=== LOGOUT DEBUG: Token found: ${!!token} ===`);
     
     if (token) {
       try {
         const decoded = verifyToken(token);
-        console.log(`=== LOGOUT DEBUG: Token decoded: ${!!decoded} ===`);
-        
         if (decoded) {
           const userId = decoded.userId;
-          console.log(`=== LOGOUT DEBUG: User ID: ${userId} ===`);
           
-          // Log before clearing
-          const fbAuthBefore = await storage.getFacebookAuth(userId);
-          console.log(`=== LOGOUT DEBUG: Facebook auth before clearing: ${!!fbAuthBefore} ===`);
-          
-          // Clear all platform tokens for this user
-          console.log(`=== LOGOUT DEBUG: Calling removeFacebookAuth for user: ${userId} ===`);
+          // Clear all platform tokens
           await storage.removeFacebookAuth(userId);
-          
-          console.log(`=== LOGOUT DEBUG: Calling removeAuthToken for other platforms ===`);
           await storage.removeAuthToken('youtube', userId);
           await storage.removeAuthToken('instagram', userId);
           await storage.removeAuthToken('tiktok', userId);
-          
-          // Log after clearing
-          const fbAuthAfter = await storage.getFacebookAuth(userId);
-          console.log(`=== LOGOUT DEBUG: Facebook auth after clearing: ${!!fbAuthAfter} ===`);
-          
-          console.log(`=== LOGOUT DEBUG: All tokens cleared for user: ${userId} ===`);
         }
       } catch (error) {
-        console.error(`=== LOGOUT DEBUG: Error during logout: ${error} ===`);
+        console.error("Logout error:", error);
       }
     }
     
-    console.log("=== LOGOUT DEBUG: Logout completed ===");
     res.json({ success: true, message: "Logged out successfully" });
   });
 }
-
-export { generateToken, verifyToken };
