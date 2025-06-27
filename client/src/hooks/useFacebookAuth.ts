@@ -177,6 +177,30 @@ export default function useFacebookAuth() {
         });
       }
       
+      // Handle auth errors (user cancelled, etc.)
+      if (event.data.error && event.data.platform === 'facebook') {
+        console.log('Facebook auth error received:', event.data.error);
+        // Close popup
+        if (popupWindow && !popupWindow.closed) {
+          popupWindow.close();
+        }
+        setPopupWindow(null);
+        
+        if (event.data.error === 'access_denied') {
+          toast({
+            title: 'התחברות בוטלה',
+            description: 'ההתחברות לפייסבוק בוטלה על ידי המשתמש',
+            variant: 'default',
+          });
+        } else {
+          toast({
+            title: 'שגיאת התחברות',
+            description: `שגיאה בהתחברות לפייסבוק: ${event.data.error}`,
+            variant: 'destructive',
+          });
+        }
+      }
+      
       // Handle successful auth with access token (implicit flow)
       if (event.data.access_token && event.data.platform === 'facebook') {
         // TODO: Handle implicit flow if needed
