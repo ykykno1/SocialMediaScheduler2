@@ -2860,6 +2860,29 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get available Shabbat cities
+  app.get('/api/shabbat-locations', async (req, res) => {
+    try {
+      const { shabbatLocations } = await import('../shared/schema.js');
+      const { eq } = await import('drizzle-orm');
+      
+      const locations = await db.select({
+        id: shabbatLocations.id,
+        name_hebrew: shabbatLocations.name_hebrew,
+        name_english: shabbatLocations.name_english,
+        chabad_id: shabbatLocations.chabad_id
+      })
+      .from(shabbatLocations)
+      .where(eq(shabbatLocations.is_active, true))
+      .orderBy(shabbatLocations.name_hebrew);
+      
+      res.json(locations);
+    } catch (error) {
+      console.error('Error getting Shabbat locations:', error);
+      res.status(500).json({ error: 'Failed to get locations' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

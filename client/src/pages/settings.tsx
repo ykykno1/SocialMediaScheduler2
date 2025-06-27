@@ -12,44 +12,10 @@ import { MapPin, ChevronDown, Save } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
-const MAJOR_CITIES = [
-  // Israeli Cities - updated correct codes
-  { name: 'ירושלים', chabadId: '247' },
-  { name: 'תל אביב', chabadId: '531' },
-  { name: 'חיפה', chabadId: '689' },
-  { name: 'באר שבע', chabadId: '688' },
-  { name: 'צפת', chabadId: '695' },
-  { name: 'אילת', chabadId: '687' },
-  { name: 'חולון', chabadId: '851' },
-  { name: 'אשקלון', chabadId: '700' },
-  { name: 'דימונה', chabadId: '843' },
-  { name: 'חריש', chabadId: '1702' },
-  { name: 'הרצליה', chabadId: '981' },
-  { name: 'קריית שמונה', chabadId: '871' },
-  { name: 'נס ציונה', chabadId: '1661' },
-  { name: 'פרדס חנה כרכור', chabadId: '1663' },
-  { name: 'רעננה', chabadId: '937' },
-  { name: 'פתח תקווה', chabadId: '852' },
-  { name: 'רחובות', chabadId: '703' },
-  { name: 'ראש העין', chabadId: '1659' },
-  { name: 'ראשון לציון', chabadId: '853' },
-  { name: 'טבריה', chabadId: '697' },
-  { name: 'נתניה', chabadId: '694' },
-  { name: 'רמת גן', chabadId: '849' },
-  { name: 'בת ים', chabadId: '850' },
-  // International Cities - updated correct codes
-  { name: 'ניו יורק', chabadId: '370' },
-  { name: 'לוס אנג\'לס', chabadId: '1481' },
-  { name: 'מיאמי', chabadId: '331' },
-  { name: 'פריז', chabadId: '394' },
-  { name: 'ברצלונה', chabadId: '44' },
-  { name: 'ליסבון', chabadId: '297' },
-  { name: 'רומא', chabadId: '449' },
-  { name: 'מוסקבה', chabadId: '347' },
-  { name: 'פראג', chabadId: '421' },
-  { name: 'אומן', chabadId: '801' },
-  { name: 'בנגקוק', chabadId: '42' }
-];
+interface City {
+  name: string;
+  chabadId: string;
+}
 
 export default function Settings() {
   const { toast } = useToast();
@@ -62,7 +28,19 @@ export default function Settings() {
     retry: false,
   });
 
+  // Get available cities from database
+  const { data: availableCities = [], isLoading: citiesLoading } = useQuery({
+    queryKey: ['/api/shabbat-locations'],
+    retry: false,
+  });
+
   const [selectedCity, setSelectedCity] = useState<string>(locationData?.shabbatCity || 'ירושלים');
+
+  // Convert database cities to City format
+  const cities: City[] = availableCities.map((city: any) => ({
+    name: city.name_hebrew,
+    chabadId: city.chabad_id
+  }));
 
   // Update location mutation
   const updateLocationMutation = useMutation({
@@ -96,7 +74,7 @@ export default function Settings() {
   };
 
   const handleSave = () => {
-    const cityData = MAJOR_CITIES.find(c => c.name === selectedCity);
+    const cityData = cities.find(c => c.name === selectedCity);
     if (cityData) {
       updateLocationMutation.mutate({
         cityName: cityData.name,
@@ -105,7 +83,7 @@ export default function Settings() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || citiesLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">טוען הגדרות...</div>
@@ -155,7 +133,7 @@ export default function Settings() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 max-h-64 overflow-y-auto">
-                  {MAJOR_CITIES.map((city) => (
+                  {cities.map((city) => (
                     <DropdownMenuItem
                       key={city.name}
                       onClick={() => handleCityChange(city.name)}
@@ -168,7 +146,7 @@ export default function Settings() {
               </DropdownMenu>
             </div>
 
-            {selectedCity !== locationData?.shabbatCity && (
+            {selectedCity !== (locationData?.shabbatCity || 'ירושלים') && (
               <div className="flex justify-end pt-4 border-t">
                 <Button 
                   onClick={handleSave}
