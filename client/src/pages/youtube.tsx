@@ -320,7 +320,7 @@ export default function YouTubePage() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Youtube className="h-5 w-5 text-red-500" />
-                    YouTube Connected
+                    YouTube מחובר
                     {user?.youtubeChannelTitle && (
                       <Badge variant="secondary">{user.youtubeChannelTitle}</Badge>
                     )}
@@ -330,9 +330,10 @@ export default function YouTubePage() {
                     size="sm" 
                     onClick={disconnectYouTube}
                     disabled={loading}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
                   >
                     <Unlink className="h-4 w-4 mr-2" />
-                    Disconnect
+                    התנתק מ-YouTube
                   </Button>
                 </CardTitle>
               </CardHeader>
