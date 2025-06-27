@@ -191,23 +191,29 @@ export class UnifiedStorage implements IUnifiedStorage {
         .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
       
       if (encryptedToken) {
-        const decryptedAccessToken = tokenEncryption.decryptFromStorage(
-          encryptedToken.encryptedAccessToken || '', 
-          encryptedToken.encryptionMetadata || ''
-        );
-        
-        return {
-          platform: encryptedToken.platform,
-          accessToken: decryptedAccessToken,
-          refreshToken: encryptedToken.encryptedRefreshToken ? 
-            tokenEncryption.decryptFromStorage(encryptedToken.encryptedRefreshToken, encryptedToken.encryptionMetadata || '') : undefined,
-          expiresIn: encryptedToken.expiresIn || undefined,
-          expiresAt: encryptedToken.expiresAt ? encryptedToken.expiresAt.getTime() : undefined,
-          timestamp: encryptedToken.createdAt ? encryptedToken.createdAt.getTime() : Date.now(),
-          userId: encryptedToken.userId || undefined,
-          isManualToken: encryptedToken.isManualToken || false,
-          additionalData: encryptedToken.additionalData ? JSON.parse(encryptedToken.additionalData) : undefined
-        };
+        try {
+          // Handle both old and new token formats
+          const encryptedData = encryptedToken.encryptedAccessToken || (encryptedToken as any).encryptedToken;
+          const metadata = encryptedToken.encryptionMetadata || '';
+          
+          const decryptedAccessToken = tokenEncryption.decryptFromStorage(encryptedData || '', metadata);
+          
+          return {
+            platform: encryptedToken.platform,
+            accessToken: decryptedAccessToken,
+            refreshToken: encryptedToken.encryptedRefreshToken ? 
+              tokenEncryption.decryptFromStorage(encryptedToken.encryptedRefreshToken, metadata) : undefined,
+            expiresIn: (encryptedToken as any).expiresIn || undefined,
+            expiresAt: encryptedToken.expiresAt ? encryptedToken.expiresAt.getTime() : undefined,
+            timestamp: encryptedToken.createdAt ? encryptedToken.createdAt.getTime() : Date.now(),
+            userId: encryptedToken.userId || undefined,
+            isManualToken: (encryptedToken as any).isManualToken || false,
+            additionalData: (encryptedToken as any).additionalData ? JSON.parse((encryptedToken as any).additionalData) : undefined
+          };
+        } catch (decryptError) {
+          console.error('Token decryption failed:', decryptError);
+          return null;
+        }
       }
       
       return null;
