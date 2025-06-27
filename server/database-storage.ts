@@ -55,42 +55,29 @@ export class DatabaseStorage implements IStorage {
         // Try to decrypt if encrypted tokens exist
         if (encryptedToken.encryptedAccessToken && encryptedToken.encryptionMetadata) {
           try {
-            // Try modern encryption first
-            const { modernTokenEncryption } = await import('./modern-encryption.js');
-            accessToken = modernTokenEncryption.decryptFromStorage(
+            const { tokenEncryption } = await import('./encryption.js');
+            console.log('Attempting to decrypt token for platform:', platform, 'user:', userId);
+            
+            accessToken = tokenEncryption.decryptFromStorage(
               encryptedToken.encryptedAccessToken, 
               encryptedToken.encryptionMetadata
             );
+            console.log('Access token decrypted successfully');
             
             if (encryptedToken.encryptedRefreshToken) {
-              refreshToken = modernTokenEncryption.decryptFromStorage(
+              refreshToken = tokenEncryption.decryptFromStorage(
                 encryptedToken.encryptedRefreshToken,
                 encryptedToken.encryptionMetadata
               );
+              console.log('Refresh token decrypted successfully');
             }
-          } catch (modernError) {
-            // Fallback to legacy encryption for old tokens
-            try {
-              const { tokenEncryption } = await import('./encryption.js');
-              accessToken = tokenEncryption.decryptFromStorage(
-                encryptedToken.encryptedAccessToken, 
-                encryptedToken.encryptionMetadata
-              );
-              
-              if (encryptedToken.encryptedRefreshToken) {
-                refreshToken = tokenEncryption.decryptFromStorage(
-                  encryptedToken.encryptedRefreshToken,
-                  encryptedToken.encryptionMetadata
-                );
-              }
-            } catch (legacyError) {
-              console.warn('Failed to decrypt token, may need re-authentication:', legacyError);
-              return null; // Force re-authentication instead of using legacy tokens
-            }
+          } catch (error) {
+            console.warn('Failed to decrypt token for', platform, ':', error.message);
+            return null;
           }
         } else {
           console.warn('No encrypted token found, may need re-authentication');
-          return null; // Force re-authentication instead of using legacy tokens
+          return null;
         }
         
         if (accessToken) {
