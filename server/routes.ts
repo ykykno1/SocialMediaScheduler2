@@ -598,7 +598,7 @@ export function registerRoutes(app: Express): Server {
       // Handle YouTube OAuth callback
       if (platform === 'youtube') {
         const clientId = process.env.YOUTUBE_CLIENT_ID || "351828412701-rt3ts08rsials5q7tmqr9prdjtu7qdke.apps.googleusercontent.com";
-        const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+        const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
         const domain = req.get('host');
         const actualRedirectUri = `https://${domain}/auth-callback.html`;
 
