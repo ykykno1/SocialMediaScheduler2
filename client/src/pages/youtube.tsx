@@ -231,30 +231,154 @@ export default function YouTubePage() {
   };
 
   const toggleVideoLock = async (videoId: string) => {
+    const video = videos.find(v => v.id === videoId);
+    if (!video) return;
+
+    // בקש סיסמה אם מנעל סרטון
+    if (!video.isLocked) {
+      const password = prompt('הזן את הסיסמה שלך כדי לנעול את הסרטון:');
+      if (!password) return;
+
+      try {
+        const token = localStorage.getItem('auth_token');
+        
+        const response = await fetch('/api/youtube/lock-video', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ videoId, password, action: 'lock' })
+        });
+        
+        if (response.ok) {
+          await loadVideos();
+          toast({
+            title: "הצלחה!",
+            description: "הסרטון ננעל בהצלחה",
+          });
+        } else {
+          const error = await response.json();
+          toast({
+            title: "שגיאה",
+            description: error.message || "סיסמה שגויה",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "שגיאה",
+          description: "שגיאה בנעילת הסרטון",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // בטל נעילה ללא סיסמה
+      try {
+        const token = localStorage.getItem('auth_token');
+        
+        const response = await fetch('/api/youtube/lock-video', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ videoId, action: 'unlock' })
+        });
+        
+        if (response.ok) {
+          await loadVideos();
+          toast({
+            title: "הצלחה!",
+            description: "הנעילה בוטלה בהצלחה",
+          });
+        } else {
+          const error = await response.json();
+          toast({
+            title: "שגיאה",
+            description: error.message || "שגיאה בביטול הנעילה",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "שגיאה",
+          description: "שגיאה בביטול הנעילה",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const hideVideo = async (videoId: string) => {
     try {
       const token = localStorage.getItem('auth_token');
       
-      const response = await fetch('/api/youtube/toggle-lock', {
+      const response = await fetch('/api/youtube/hide', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ videoId })
+        body: JSON.stringify({ videoIds: [videoId] })
       });
       
       if (response.ok) {
         await loadVideos();
         toast({
           title: "הצלחה!",
-          description: "סטטוס הנעילה עודכן",
+          description: "הסרטון הוסתר בהצלחה",
         });
       } else {
         const error = await response.json();
-        setError(error.error || 'Failed to toggle video lock');
+        toast({
+          title: "שגיאה",
+          description: error.error || "שגיאה בהסתרת הסרטון",
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      setError('Failed to toggle video lock');
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בהסתרת הסרטון",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const showVideo = async (videoId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch('/api/youtube/restore', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ videoIds: [videoId] })
+      });
+      
+      if (response.ok) {
+        await loadVideos();
+        toast({
+          title: "הצלחה!",
+          description: "הסרטון הוצג בהצלחה",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "שגיאה",
+          description: error.error || "שגיאה בהצגת הסרטון",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בהצגת הסרטון",
+        variant: "destructive"
+      });
     }
   };
 
