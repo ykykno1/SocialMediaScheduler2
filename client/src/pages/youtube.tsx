@@ -522,6 +522,12 @@ export default function YouTubePage() {
                           >
                             {video.privacyStatus === 'public' ? 'ציבורי' : 'פרטי'}
                           </Badge>
+                          {video.isHidden && (
+                            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                              <EyeOff className="h-3 w-3 mr-1" />
+                              הוסתר
+                            </Badge>
+                          )}
                           {video.isLocked && (
                             <Badge variant="destructive" className="bg-orange-500">
                               <Lock className="h-3 w-3" />
