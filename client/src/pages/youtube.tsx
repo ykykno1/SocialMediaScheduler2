@@ -86,6 +86,11 @@ export default function YouTubePage() {
   const disconnectYouTube = async () => {
     try {
       setLoading(true);
+      toast({
+        title: "מתנתק מיוטיוב...",
+        description: "מוחק את הטוקנים",
+      });
+      
       const token = localStorage.getItem('token');
       
       const response = await fetch('/api/youtube/disconnect', {
@@ -97,6 +102,10 @@ export default function YouTubePage() {
         setIsConnected(false);
         setVideos([]);
         setSelectedVideos([]);
+        toast({
+          title: "הותנקת בהצלחה מיוטיוב",
+          description: "כעת ניתן להתחבר מחדש",
+        });
       } else {
         const error = await response.json();
         setError(error.error || 'Failed to disconnect');
@@ -339,21 +348,25 @@ export default function YouTubePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-4">
+                <div className="flex gap-4 flex-wrap items-center">
                   <Button onClick={loadVideos} disabled={loading}>
                     <Play className="h-4 w-4 mr-2" />
                     רענן רשימת סרטונים
                   </Button>
                   
                   <Button 
-                    variant="outline" 
+                    variant="destructive" 
                     onClick={disconnectYouTube}
                     disabled={loading}
-                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                    className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     <Unlink className="h-4 w-4 mr-2" />
                     התנתק מיוטיוב
                   </Button>
+                  
+                  <span className="text-sm text-gray-500">
+                    DEBUG: כפתור התנתקות נוצר
+                  </span>
                   
                   {selectedVideos.length > 0 && (
                     <>
