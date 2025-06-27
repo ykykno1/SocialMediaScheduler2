@@ -415,7 +415,7 @@ export default function YouTubeOAuthPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4 mb-4">
-                  <Button onClick={loadVideos} disabled={loading}>
+                  <Button onClick={() => loadVideos()} disabled={loading}>
                     {loading ? (
                       <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                     ) : null}

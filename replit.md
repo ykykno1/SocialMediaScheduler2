@@ -126,6 +126,15 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 27, 2025. FIXED: Facebook double authentication issue by making saveFacebookAuth async:
+  - Fixed timing issue where Facebook tokens weren't fully saved before being read
+  - Changed saveFacebookAuth from synchronous to async function in DatabaseStorage
+  - Facebook now connects properly on first attempt instead of requiring double authentication
+  - Token encryption and saving process now properly waits for completion
+- June 27, 2025. ADDED: YouTube automatic refresh after connection:
+  - Added checkConnectionStatus() call after successful YouTube authentication
+  - YouTube videos now load automatically after connection without manual page refresh
+  - Improved user experience with seamless connection flow
 - June 27, 2025. ADDED: YouTube disconnect button with Hebrew UI in YouTube management page:
   - Fixed routing issue: App.tsx loads youtube-oauth.tsx for /youtube route, not youtube.tsx
   - Added prominent "התנתק מ-YouTube" button in correct file (youtube-oauth.tsx)

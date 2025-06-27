@@ -193,7 +193,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth {
+  async saveFacebookAuth(token: FacebookAuth, userId?: string): Promise<FacebookAuth> {
     if (!userId) throw new Error('User ID is required');
 
     try {
@@ -208,7 +208,7 @@ export class DatabaseStorage implements IStorage {
         isManualToken: token.isManualToken
       };
 
-      this.saveAuthToken(authToken, userId);
+      await this.saveAuthToken(authToken, userId);
       return token;
     } catch (error) {
       console.error('Error saving Facebook auth:', error);

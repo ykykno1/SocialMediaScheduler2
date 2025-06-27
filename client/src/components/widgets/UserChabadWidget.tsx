@@ -94,7 +94,7 @@ export function UserChabadWidget() {
     refetchOnWindowFocus: true,
     refetchInterval: false, // Disable automatic refetch to prevent reverting to default
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   // State for Shabbat data from Chabad API
