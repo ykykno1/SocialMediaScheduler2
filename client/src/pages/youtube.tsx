@@ -330,17 +330,16 @@ export default function YouTubePage() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Youtube className="h-5 w-5 text-red-500" />
-                    YouTube Connected
+                    ניהול YouTube
                     {user?.youtubeChannelTitle && (
                       <Badge variant="secondary">{user.youtubeChannelTitle}</Badge>
                     )}
                   </div>
                   <Button 
-                    variant="outline" 
+                    variant="destructive" 
                     size="sm" 
                     onClick={disconnectYouTube}
                     disabled={loading}
-                    className="text-red-600 hover:text-red-800 hover:bg-red-50"
                   >
                     <Unlink className="h-4 w-4 mr-2" />
                     התנתק מיוטיוב
@@ -353,20 +352,6 @@ export default function YouTubePage() {
                     <Play className="h-4 w-4 mr-2" />
                     רענן רשימת סרטונים
                   </Button>
-                  
-                  <Button 
-                    variant="destructive" 
-                    onClick={disconnectYouTube}
-                    disabled={loading}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    <Unlink className="h-4 w-4 mr-2" />
-                    התנתק מיוטיוב
-                  </Button>
-                  
-                  <span className="text-sm text-gray-500">
-                    DEBUG: כפתור התנתקות נוצר
-                  </span>
                   
                   {selectedVideos.length > 0 && (
                     <>
