@@ -44,11 +44,29 @@ export class DatabaseStorage implements IStorage {
   // Generic auth token operations
   async getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null> {
     try {
-      // For YouTube, use Facebook auth storage for simplicity
+      // For YouTube, check encrypted tokens first
       if (platform === 'youtube') {
+        // First try encrypted tokens table
+        const [encryptedToken] = await db.select().from(encryptedAuthTokens)
+          .where(and(eq(encryptedAuthTokens.platform, 'youtube'), eq(encryptedAuthTokens.userId, userId)));
+        
+        if (encryptedToken && encryptedToken.encryptedAccessToken) {
+          console.log('Found YouTube token in encrypted storage');
+          return {
+            platform: 'youtube',
+            accessToken: encryptedToken.encryptedAccessToken.toString(),
+            refreshToken: encryptedToken.encryptedRefreshToken?.toString(),
+            expiresAt: encryptedToken.expiresAt?.getTime(),
+            timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
+            userId: userId,
+            additionalData: undefined
+          };
+        }
+        
+        // Fallback to Facebook auth storage if no encrypted token
         const facebookAuth = await this.getFacebookAuth(userId);
         if (facebookAuth) {
-          console.log('Found YouTube token using Facebook auth storage');
+          console.log('Found YouTube token using Facebook auth fallback');
           return {
             platform: 'youtube',
             accessToken: facebookAuth.accessToken,
