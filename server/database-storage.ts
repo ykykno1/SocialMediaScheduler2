@@ -217,9 +217,13 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
-  addHistoryEntry(entry: Omit<HistoryEntry, 'id'>): HistoryEntry {
+  addHistoryEntry(entry: Omit<HistoryEntry, 'id'>, userId?: string): HistoryEntry {
     // This would need async implementation
-    const newEntry = { ...entry, id: nanoid() };
+    const newEntry = { 
+      ...entry, 
+      id: nanoid(),
+      userId: userId || entry.userId || 'unknown'
+    };
     return newEntry;
   }
 
