@@ -296,52 +296,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserById(id: string): Promise<User | null> {
     try {
-      console.log(`🔄 MIGRATION: getUserById called for ${id} - using NEW secure table`);
-      
-      // NEW SECURE VERSION: Query from secure_users table
-      const result = await db.execute(`
-        SELECT id, email, username, password_hash as password, 
-               account_tier as account_type, created_at, updated_at,
-               null as shabbat_city, null as shabbat_city_id
-        FROM secure_users 
-        WHERE id = $1 AND is_active = true
-      `, [id]);
-
-      if (result.rows.length === 0) {
-        console.log(`❌ MIGRATION: User ${id} not found in secure table`);
-        return null;
-      }
-
-      const row = result.rows[0];
-      const user = {
-        id: row.id as string,
-        email: row.email as string,
-        username: row.username as string,
-        password: row.password as string,
-        accountType: row.account_type as 'free' | 'youtube_pro' | 'premium',
-        shabbatCity: row.shabbat_city as string | null,
-        shabbatCityId: row.shabbat_city_id as string | null,
-        createdAt: row.created_at as Date,
-        updatedAt: row.updated_at as Date
-      };
-      
-      console.log(`✅ MIGRATION: Retrieved user ${user.email} from secure table`);
-      return user;
+      const [user] = await db.select().from(secureUsers).where(eq(secureUsers.id, id));
+      return user || null;
     } catch (error) {
-      console.error('❌ MIGRATION: Error in getUserById:', error);
-      
-      // FALLBACK: Use old table if new one fails (safety net)
-      try {
-        console.log(`🔄 MIGRATION: Falling back to old table for ${id}`);
-        const [user] = await db.select().from(users).where(eq(users.id, id));
-        if (user) {
-          console.log(`✅ MIGRATION: Retrieved user from old table as fallback`);
-        }
-        return user || null;
-      } catch (fallbackError) {
-        console.error('❌ MIGRATION: Both new and old getUserById failed:', fallbackError);
-        return null;
-      }
+      console.error('Error getting user by id:', error);
+      return null;
     }
   }
 

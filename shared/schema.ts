@@ -272,6 +272,20 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// NEW SECURE USERS TABLE - Enhanced security and organization
+export const secureUsers = pgTable("secure_users", {
+  id: varchar("id").primaryKey(),
+  email: varchar("email").unique().notNull(),
+  username: varchar("username").notNull(),
+  passwordHash: varchar("password_hash").notNull(),
+  accountTier: varchar("account_tier").$type<'free' | 'youtube_pro' | 'premium'>().notNull().default('free'),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  lastLogin: timestamp("last_login"),
+});
+
 export const authTokens = pgTable("auth_tokens", {
   id: varchar("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
