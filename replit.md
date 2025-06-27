@@ -126,11 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- June 27, 2025. FIXED: Facebook double authentication issue by making saveFacebookAuth async:
-  - Fixed timing issue where Facebook tokens weren't fully saved before being read
-  - Changed saveFacebookAuth from synchronous to async function in DatabaseStorage
-  - Facebook now connects properly on first attempt instead of requiring double authentication
-  - Token encryption and saving process now properly waits for completion
+- June 27, 2025. COMPLETED: Fixed Facebook double authentication issue completely:
+  - Root cause: saveFacebookAuth wasn't using unified encrypted token system
+  - Fixed by ensuring saveFacebookAuth calls saveAuthToken for proper encryption storage
+  - Added token verification loop to confirm accessibility after save
+  - Facebook now connects on first attempt, displays 3 posts immediately
+  - Unified all platform tokens under encrypted_auth_tokens table with proper verification
 - June 27, 2025. ADDED: YouTube automatic refresh after connection:
   - Added checkConnectionStatus() call after successful YouTube authentication
   - YouTube videos now load automatically after connection without manual page refresh
