@@ -126,20 +126,6 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- June 27, 2025. COMPLETED: Major server architecture refactoring - routes split successfully:
-  - Split massive server/routes.ts (2,872 lines) into 7 organized modules
-  - Created server/middleware.ts with JWT and authentication functions
-  - Created server/auth-routes.ts for user registration/login/logout
-  - Created server/facebook-routes.ts for Facebook API integration
-  - Created server/youtube-routes.ts for YouTube API and video management
-  - Created server/admin-routes.ts for admin panel functionality
-  - Created server/user-routes.ts for user profile and settings management
-  - Created server/oauth-routes.ts for OAuth flows and token management
-  - Created server/shabbat-routes.ts for Shabbat scheduling and timing
-  - Created server/routes-new.ts as main router orchestrator
-  - Legacy routes backed up as server/routes-legacy-backup.ts
-  - System fully operational: all functionality preserved during refactoring
-  - Clean modular architecture ready for scaling and maintenance
 - June 27, 2025. COMPLETED: Final database cleanup and optimization:
   - Removed all legacy database tables (auth_tokens, users, safe_users, migration_audit, users_v2)
   - Fixed all foreign key relationships to point to secure_users table
