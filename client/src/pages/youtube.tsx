@@ -14,6 +14,7 @@ interface YouTubeVideo {
   privacyStatus: 'public' | 'private' | 'unlisted';
   viewCount?: string;
   likeCount?: string;
+  isLocked?: boolean;
 }
 
 export default function YouTubePage() {
@@ -422,6 +423,32 @@ export default function YouTubePage() {
                     רענן רשימת סרטונים
                   </Button>
                   
+                  <Button 
+                    onClick={async () => {
+                      const publicVideos = videos.filter(v => v.privacyStatus === 'public').map(v => v.id);
+                      setSelectedVideos(publicVideos);
+                      await hideVideos();
+                    }} 
+                    disabled={loading || videos.filter(v => v.privacyStatus === 'public').length === 0}
+                    variant="destructive"
+                  >
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    הסתר הכל ({videos.filter(v => v.privacyStatus === 'public').length})
+                  </Button>
+                  
+                  <Button 
+                    onClick={async () => {
+                      const privateVideos = videos.filter(v => v.privacyStatus === 'private').map(v => v.id);
+                      setSelectedVideos(privateVideos);
+                      await restoreVideos();
+                    }} 
+                    disabled={loading || videos.filter(v => v.privacyStatus === 'private').length === 0}
+                    variant="default"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    הצג הכל ({videos.filter(v => v.privacyStatus === 'private').length})
+                  </Button>
+                  
                   {selectedVideos.length > 0 && (
                     <>
                       <Button 
@@ -489,12 +516,35 @@ export default function YouTubePage() {
                             e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%23ddd"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999">תמונה</text></svg>';
                           }}
                         />
-                        <div className="absolute top-2 right-2">
+                        <div className="absolute top-2 right-2 flex gap-1">
                           <Badge 
                             variant={video.privacyStatus === 'public' ? 'default' : 'secondary'}
                           >
                             {video.privacyStatus === 'public' ? 'ציבורי' : 'פרטי'}
                           </Badge>
+                          {video.isLocked && (
+                            <Badge variant="destructive" className="bg-orange-500">
+                              <Lock className="h-3 w-3" />
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="absolute top-2 left-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="bg-white/80 hover:bg-white/90 p-1 h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleVideoLock(video.id);
+                            }}
+                          >
+                            {video.isLocked ? (
+                              <Lock className="h-3 w-3 text-orange-600" />
+                            ) : (
+                              <Unlock className="h-3 w-3 text-gray-600" />
+                            )}
+                          </Button>
                         </div>
                         {selectedVideos.includes(video.id) && (
                           <div className="absolute inset-0 bg-blue-500/20 rounded flex items-center justify-center">
