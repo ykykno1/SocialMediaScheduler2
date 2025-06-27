@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from 'jsonwebtoken';
-import { enhancedStorage as storage } from './enhanced-storage.js';
+import { unifiedStorage as storage } from './unified-storage.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
