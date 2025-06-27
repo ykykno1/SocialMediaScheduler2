@@ -2687,14 +2687,19 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Admin users list
-  app.get("/api/admin/users", (req, res) => {
+  app.get("/api/admin/users", async (req, res) => {
     try {
-      const users = storage.getAllUsers();
-      console.log("getAllUsers returned:", users, "type:", typeof users, "length:", Array.isArray(users) ? users.length : 'not array');
+      const users = await storage.getAllUsers();
+      console.log("getAllUsers returned:", users?.length || 0, "users");
+      console.log("First user example:", users?.[0] ? { id: users[0].id, email: users[0].email, accountType: users[0].accountType } : 'none');
       
-      // Ensure we always return an array
-      const userArray = Array.isArray(users) ? users : [];
-      res.json(userArray);
+      // Remove passwords from response
+      const safeUsers = (users || []).map(user => {
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
+      
+      res.json(safeUsers);
     } catch (error) {
       console.error("Admin users error:", error);
       res.status(500).json({ error: "Internal server error" });

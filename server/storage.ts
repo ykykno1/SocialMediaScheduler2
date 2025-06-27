@@ -78,7 +78,7 @@ export interface IStorage {
   verifyPassword(email: string, password: string): User | null;
 
   // Admin operations
-  getAllUsers(): User[];
+  getAllUsers(): Promise<User[]>;
   upgradeUser(userId: string, accountType: string): boolean;
   deleteUser(userId: string): boolean;
 
@@ -709,7 +709,7 @@ export class MemStorage implements IStorage {
   }
 
   // Admin operations
-  getAllUsers(): User[] {
+  async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
 
