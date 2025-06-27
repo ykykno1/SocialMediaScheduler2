@@ -31,7 +31,7 @@ export interface IStorage {
 
   // Generic auth token operations
   getAuthToken(platform: SupportedPlatform, userId: string): AuthToken | null;
-  saveAuthToken(token: AuthToken, userId: string): AuthToken;
+  saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken>;
   removeAuthToken(platform: SupportedPlatform, userId: string): void;
 
   // Legacy Facebook-specific auth (kept for backward compatibility)
@@ -181,17 +181,55 @@ export class MemStorage implements IStorage {
     return userTokens?.[platform] || null;
   }
 
-  saveAuthToken(token: AuthToken, userId?: string): AuthToken {
+  async saveAuthToken(token: AuthToken, userId?: string): Promise<AuthToken> {
     if (!userId) throw new Error('User ID required for saving auth token');
 
     const validatedToken = authSchema.parse(token);
 
+    // Save to memory
     let userTokens = this.userAuthTokens.get(userId);
     if (!userTokens) {
       userTokens = { facebook: null, youtube: null, tiktok: null, instagram: null };
       this.userAuthTokens.set(userId, userTokens);
     }
     userTokens[token.platform] = validatedToken;
+
+    // Save to database
+    try {
+      const { db } = await import('./db');
+      const { authTokens } = await import('@shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+
+      // First delete existing token
+      await db.delete(authTokens)
+        .where(and(
+          eq(authTokens.userId, userId),
+          eq(authTokens.platform, token.platform)
+        ));
+
+      // Then insert new token
+      await db.insert(authTokens).values({
+        id: `${token.platform}_${userId}_${Date.now()}`,
+        platform: token.platform,
+        accessToken: token.accessToken,
+        refreshToken: token.refreshToken,
+        expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
+        timestamp: new Date(token.timestamp),
+        userId: userId,
+        additionalData: token.additionalData ? JSON.stringify({
+          ...token.additionalData,
+          expiresIn: token.expiresIn,
+          isManualToken: token.isManualToken
+        }) : JSON.stringify({
+          expiresIn: token.expiresIn,
+          isManualToken: token.isManualToken
+        })
+      });
+
+      console.log(`Saved ${token.platform} token to database for user: ${userId}`);
+    } catch (error) {
+      console.error(`Error saving ${token.platform} token to database:`, error);
+    }
 
     // Sync with legacy Facebook auth if applicable
     if (token.platform === 'facebook') {
