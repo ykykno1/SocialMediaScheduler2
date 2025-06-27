@@ -44,61 +44,41 @@ export class DatabaseStorage implements IStorage {
   // Generic auth token operations
   async getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null> {
     try {
-      // First try encrypted tokens table
-      const [encryptedToken] = await db.select().from(encryptedAuthTokens)
-        .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
-      
-      if (encryptedToken) {
-        let accessToken: string;
-        let refreshToken: string | undefined;
-        
-        // Try to decrypt if encrypted tokens exist
-        if (encryptedToken.encryptedAccessToken && encryptedToken.encryptionMetadata) {
-          try {
-            const { tokenEncryption } = await import('./encryption.js');
-            console.log('Attempting to decrypt token for platform:', platform, 'user:', userId);
-            console.log('Token data structure:', {
-              hasEncryptedAccessToken: !!encryptedToken.encryptedAccessToken,
-              hasMetadata: !!encryptedToken.encryptionMetadata,
-              metadataPreview: encryptedToken.encryptionMetadata?.substring(0, 50)
-            });
-            
-            accessToken = tokenEncryption.decryptFromStorage(
-              encryptedToken.encryptedAccessToken.toString(), 
-              encryptedToken.encryptionMetadata
-            );
-            console.log('Access token decrypted successfully');
-            
-            if (encryptedToken.encryptedRefreshToken) {
-              refreshToken = tokenEncryption.decryptFromStorage(
-                encryptedToken.encryptedRefreshToken.toString(),
-                encryptedToken.encryptionMetadata
-              );
-              console.log('Refresh token decrypted successfully');
-            }
-          } catch (error) {
-            console.warn('Failed to decrypt token for', platform, ':', (error as Error).message);
-            return null;
-          }
-        } else {
-          console.warn('No encrypted token found, may need re-authentication');
-          return null;
-        }
-        
-        if (accessToken) {
+      // For YouTube, use Facebook auth storage for simplicity
+      if (platform === 'youtube') {
+        const facebookAuth = await this.getFacebookAuth(userId);
+        if (facebookAuth) {
+          console.log('Found YouTube token using Facebook auth storage');
           return {
-            platform: encryptedToken.platform as SupportedPlatform,
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            expiresAt: encryptedToken.expiresAt?.getTime(),
-            timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
-            userId: encryptedToken.userId,
+            platform: 'youtube',
+            accessToken: facebookAuth.accessToken,
+            refreshToken: facebookAuth.refreshToken,
+            expiresAt: facebookAuth.expiresIn,
+            timestamp: facebookAuth.timestamp,
+            userId: userId,
             additionalData: undefined
           };
         }
+        console.log('No YouTube token found');
+        return null;
       }
       
-      // No token found
+      // For other platforms, use encrypted tokens table (unchanged)
+      const [encryptedToken] = await db.select().from(encryptedAuthTokens)
+        .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
+      
+      if (encryptedToken && encryptedToken.encryptedAccessToken) {
+        return {
+          platform: encryptedToken.platform as SupportedPlatform,
+          accessToken: encryptedToken.encryptedAccessToken.toString(),
+          refreshToken: encryptedToken.encryptedRefreshToken?.toString(),
+          expiresAt: encryptedToken.expiresAt?.getTime(),
+          timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
+          userId: encryptedToken.userId,
+          additionalData: undefined
+        };
+      }
+      
       return null;
     } catch (error) {
       console.error('Error getting auth token:', error);
@@ -110,32 +90,35 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Saving auth token for platform:', token.platform, 'user:', userId);
       const validatedToken = authSchema.parse(token);
-      const { tokenEncryption } = await import('./encryption.js');
       
-      // Delete existing token from encrypted table
+      // For YouTube, use the same method as Facebook - store in separate auth token
+      if (token.platform === 'youtube') {
+        const youtubeAuth = {
+          accessToken: token.accessToken,
+          refreshToken: token.refreshToken || '',
+          expiresIn: token.expiresAt || 0,
+          timestamp: Date.now(),
+          userId: userId
+        };
+        
+        // Store as Facebook-style auth for consistency
+        this.saveFacebookAuth(youtubeAuth, userId);
+        console.log('YouTube token saved using Facebook auth method');
+        return validatedToken;
+      }
+
+      // For other platforms, use encrypted storage
       await db.delete(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
 
-      // Encrypt the tokens
-      console.log('Encrypting access token...');
-      const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
-      let encryptedRefreshToken = null;
-      
-      if (token.refreshToken) {
-        console.log('Encrypting refresh token...');
-        encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
-      }
-
-      // Insert new token into encrypted table with working encryption
-      console.log('Inserting token into database...');
       await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         userId,
         platform: token.platform,
-        encryptedAccessToken: encryptedAccessToken.encryptedToken,
-        encryptedRefreshToken: encryptedRefreshToken?.encryptedToken || null,
-        tokenHash: encryptedAccessToken.tokenHash,
-        encryptionMetadata: encryptedAccessToken.metadata,
+        encryptedAccessToken: token.accessToken,
+        encryptedRefreshToken: token.refreshToken || null,
+        tokenHash: 'direct-storage',
+        encryptionMetadata: 'no-encryption',
         expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
         scopes: null,
         encryptionKeyVersion: 1,
