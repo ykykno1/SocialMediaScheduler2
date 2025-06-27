@@ -306,6 +306,42 @@ export default function YouTubeOAuthPage() {
     }
   };
 
+  const disconnectYouTube = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/youtube/disconnect', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        setIsConnected(false);
+        setVideos([]);
+        toast({
+          title: "התנתקות הצליחה",
+          description: "התנתקת בהצלחה מחשבון YouTube",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "שגיאה בהתנתקות",
+          description: error.error || 'שגיאה בהתנתקות',
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה בהתנתקות",
+        description: 'שגיאה בהתנתקות מ-YouTube',
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8" dir="rtl">
       <div className="max-w-6xl mx-auto">
@@ -360,7 +396,7 @@ export default function YouTubeOAuthPage() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => {/* TODO: implement disconnect */}}
+                onClick={disconnectYouTube}
                 disabled={loading}
                 className="text-red-600 border-red-300 hover:bg-red-50"
               >
