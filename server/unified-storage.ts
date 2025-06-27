@@ -197,7 +197,7 @@ export class UnifiedStorage implements IUnifiedStorage {
           const metadata = encryptedToken.encryptionMetadata || '';
           
           // Skip empty tokens
-          if (!encryptedData || encryptedData.trim() === '') {
+          if (!encryptedData || (typeof encryptedData === 'string' && encryptedData.trim() === '')) {
             console.log('Empty encrypted token found, skipping');
             return null;
           }
@@ -235,23 +235,19 @@ export class UnifiedStorage implements IUnifiedStorage {
       const { encrypted, authTag, iv } = tokenEncryption.encrypt(token.accessToken);
       const encryptionMetadata = JSON.stringify({ authTag, iv });
       
-      const tokenData = {
+      await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         platform: token.platform,
-        encryptedToken: encrypted,
-        encryptionMetadata: encryptionMetadata,
-        refreshToken: token.refreshToken || null,
-        expiresIn: token.expiresIn || null,
-        expiresAt: token.expiresAt || null,
-        timestamp: token.timestamp,
         userId: userId,
+        encryptedAccessToken: encrypted,
+        encryptionMetadata: encryptionMetadata,
+        encryptedRefreshToken: token.refreshToken ? tokenEncryption.encryptForStorage(token.refreshToken).encrypted : null,
+        expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
+        tokenHash: tokenEncryption.createTokenHash(token.accessToken),
         isManualToken: token.isManualToken || false,
-        additionalData: token.additionalData || null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      await db.insert(encryptedAuthTokens).values(tokenData)
+        additionalData: token.additionalData ? JSON.stringify(token.additionalData) : null,
+        createdAt: new Date()
+      })
         .onConflictDoUpdate({
           target: [encryptedAuthTokens.platform, encryptedAuthTokens.userId],
           set: {
