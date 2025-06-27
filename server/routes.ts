@@ -2690,7 +2690,11 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/admin/users", (req, res) => {
     try {
       const users = storage.getAllUsers();
-      res.json(users);
+      console.log("getAllUsers returned:", users, "type:", typeof users, "length:", Array.isArray(users) ? users.length : 'not array');
+      
+      // Ensure we always return an array
+      const userArray = Array.isArray(users) ? users : [];
+      res.json(userArray);
     } catch (error) {
       console.error("Admin users error:", error);
       res.status(500).json({ error: "Internal server error" });
