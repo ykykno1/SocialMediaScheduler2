@@ -297,6 +297,24 @@ export const authTokens = pgTable("auth_tokens", {
   additionalData: text("additional_data"), // JSON string
 });
 
+// NEW ENCRYPTED AUTH TOKENS TABLE - Enhanced security with encryption
+export const encryptedAuthTokens = pgTable("encrypted_auth_tokens", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
+  platform: varchar("platform").$type<SupportedPlatform>().notNull(),
+  encryptedAccessToken: text("encrypted_access_token"), // bytea stored as text for Drizzle
+  encryptedRefreshToken: text("encrypted_refresh_token"), // bytea stored as text for Drizzle
+  tokenHash: varchar("token_hash"), // For lookup without decryption
+  expiresAt: timestamp("expires_at"),
+  scopes: text("scopes"), // Array stored as JSON string
+  encryptionKeyVersion: integer("encryption_key_version").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUsed: timestamp("last_used").defaultNow(),
+  legacyAccessToken: text("legacy_access_token"), // Temporary for migration
+  legacyRefreshToken: text("legacy_refresh_token"), // Temporary for migration
+  migrationStatus: varchar("migration_status").default('pending'), // 'pending', 'migrated', 'verified'
+});
+
 export const historyEntries = pgTable("history_entries", {
   id: varchar("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, secureUsers as secureUsersTable, authTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
+import { users, secureUsers as secureUsersTable, authTokens, encryptedAuthTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
@@ -44,6 +44,29 @@ export class DatabaseStorage implements IStorage {
   // Generic auth token operations
   async getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null> {
     try {
+      // First try encrypted tokens table
+      const [encryptedToken] = await db.select().from(encryptedAuthTokens)
+        .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
+      
+      if (encryptedToken) {
+        // Use legacy tokens during migration phase
+        const accessToken = encryptedToken.legacyAccessToken;
+        const refreshToken = encryptedToken.legacyRefreshToken;
+        
+        if (accessToken) {
+          return {
+            platform: encryptedToken.platform as SupportedPlatform,
+            accessToken: accessToken,
+            refreshToken: refreshToken || undefined,
+            expiresAt: encryptedToken.expiresAt?.getTime(),
+            timestamp: encryptedToken.createdAt?.getTime() || Date.now(),
+            userId: encryptedToken.userId,
+            additionalData: undefined
+          };
+        }
+      }
+      
+      // Fallback to old tokens table if not found in encrypted table
       const [token] = await db.select().from(authTokens)
         .where(and(eq(authTokens.platform, platform), eq(authTokens.userId, userId)));
       
@@ -68,20 +91,29 @@ export class DatabaseStorage implements IStorage {
     try {
       const validatedToken = authSchema.parse(token);
       
-      // Delete existing token for this platform and user
+      // Delete existing token from both tables
+      await db.delete(encryptedAuthTokens)
+        .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
+      
       await db.delete(authTokens)
         .where(and(eq(authTokens.platform, token.platform), eq(authTokens.userId, userId)));
 
-      // Insert new token
-      await db.insert(authTokens).values({
+      // Insert new token into encrypted table with legacy tokens for migration
+      await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         userId,
         platform: token.platform,
-        accessToken: token.accessToken,
-        refreshToken: token.refreshToken,
+        encryptedAccessToken: null, // Will be encrypted later
+        encryptedRefreshToken: null, // Will be encrypted later
+        tokenHash: null, // Will be computed later
         expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
-        timestamp: new Date(),
-        additionalData: token.additionalData ? JSON.stringify(token.additionalData) : null
+        scopes: null,
+        encryptionKeyVersion: 1,
+        createdAt: new Date(),
+        lastUsed: new Date(),
+        legacyAccessToken: token.accessToken, // Store temporarily for migration
+        legacyRefreshToken: token.refreshToken || null,
+        migrationStatus: 'pending'
       });
 
       return validatedToken;
@@ -93,6 +125,11 @@ export class DatabaseStorage implements IStorage {
 
   async removeAuthToken(platform: SupportedPlatform, userId: string): Promise<void> {
     try {
+      // Remove from encrypted tokens table
+      await db.delete(encryptedAuthTokens)
+        .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
+        
+      // Remove from legacy tokens table as well
       await db.delete(authTokens)
         .where(and(eq(authTokens.platform, platform), eq(authTokens.userId, userId)));
     } catch (error) {
