@@ -40,16 +40,17 @@ export default function YouTubePage() {
         const userData = await userResponse.json();
         setUser(userData);
 
-        // Check platform status
-        const platformResponse = await fetch('/api/user/platforms', {
+        // Check YouTube connection status
+        const youtubeResponse = await fetch('/api/youtube/auth-status', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (platformResponse.ok) {
-          const platforms = await platformResponse.json();
-          setIsConnected(platforms.youtube);
+        if (youtubeResponse.ok) {
+          const youtubeStatus = await youtubeResponse.json();
+          setIsConnected(youtubeStatus.isAuthenticated);
           
-          if (platforms.youtube) {
+          if (youtubeStatus.isAuthenticated && youtubeStatus.channelTitle) {
+            setChannelTitle(youtubeStatus.channelTitle);
             loadVideos();
           }
         }
