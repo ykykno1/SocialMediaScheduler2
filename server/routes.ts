@@ -340,21 +340,14 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log('Disconnecting YouTube for user:', req.user.id);
       
-      // Remove YouTube token from storage
-      const removed = storage.removeAuthToken('youtube', req.user.id);
+      // Remove YouTube token from storage (like Facebook disconnect)
+      storage.removeAuthToken('youtube', req.user.id);
       
-      if (removed) {
-        console.log('YouTube token removed successfully for user:', req.user.id);
-        res.json({ 
-          success: true, 
-          message: "התנתקת מיוטיוב בהצלחה" 
-        });
-      } else {
-        console.log('No YouTube token found to remove for user:', req.user.id);
-        res.status(404).json({ 
-          error: "לא נמצא חיבור יוטיוב להסרה" 
-        });
-      }
+      console.log('YouTube token removed for user:', req.user.id);
+      res.json({ 
+        success: true, 
+        message: "התנתקת מיוטיוב בהצלחה" 
+      });
     } catch (error) {
       console.error("YouTube disconnect error:", error);
       res.status(500).json({ error: "שגיאה בהתנתקות מיוטיוב" });
