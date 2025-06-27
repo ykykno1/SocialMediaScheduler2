@@ -96,7 +96,7 @@ export class DatabaseStorage implements IStorage {
         const youtubeAuth = {
           accessToken: token.accessToken,
           refreshToken: token.refreshToken || '',
-          expiresIn: token.expiresAt || 0,
+          expiresIn: 3600, // 1 hour default
           timestamp: Date.now(),
           userId: userId
         };
@@ -119,7 +119,7 @@ export class DatabaseStorage implements IStorage {
         encryptedRefreshToken: token.refreshToken || null,
         tokenHash: 'direct-storage',
         encryptionMetadata: 'no-encryption',
-        expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
+        expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
         scopes: null,
         encryptionKeyVersion: 1,
         createdAt: new Date(),
