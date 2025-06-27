@@ -130,9 +130,11 @@ The application follows Jewish religious principles by automatically hiding soci
   - Added missing shabbat_city and shabbat_city_id columns to secure_users table
   - Updated getUserById, getUserByEmail, and updateUser functions to handle location fields
   - Fixed database schema synchronization issues preventing location saves
-  - Location settings now save properly to secure_users table (tested: Eilat ID 687 saved successfully)
-  - Widget refreshes automatically every 5 seconds and when window gains focus
-  - All user management functions now return correct Shabbat location data
+  - Fixed React Query cache issues preventing persistent location changes
+  - Disabled automatic widget refresh to prevent reverting to default location
+  - Location settings now save persistently (tested: Tel Aviv ID 531 saves correctly)
+  - Widget displays correct Shabbat times for selected city without reverting
+  - All user management functions return correct Shabbat location data
   - City dropdown shows all 45+ cities with authentic Chabad location codes
 - June 27, 2025. Completed comprehensive database security migration and cleanup:
   - Successfully implemented real AES-256-GCM encryption for all access tokens
