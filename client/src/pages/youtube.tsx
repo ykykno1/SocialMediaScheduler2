@@ -546,9 +546,9 @@ export default function YouTubePage() {
                             }}
                           >
                             {video.isLocked ? (
-                              <Unlock className="h-3 w-3 text-orange-600" />
+                              <Lock className="h-3 w-3 text-orange-600" />
                             ) : (
-                              <Lock className="h-3 w-3 text-gray-600" />
+                              <Unlock className="h-3 w-3 text-gray-600" />
                             )}
                           </Button>
                         </div>
