@@ -1,5 +1,7 @@
 import { DatabaseStorage } from './database-storage.js';
 import { db } from './db.js';
+import { secureUsers, encryptedAuthTokens, videoLockStatuses, videoStatuses, authTokens } from '../shared/schema.js';
+import { sql, lt } from 'drizzle-orm';
 
 /**
  * Enhanced storage with improved performance and monitoring
@@ -38,12 +40,10 @@ export class EnhancedStorage extends DatabaseStorage {
 
   private async logCurrentStatus() {
     try {
-      import { secureUsers, encryptedAuthTokens, videoLockStatuses, videoStatuses } from '../shared/schema.js';
-      
-      const [usersCount] = await db.select({ count: db.$count() }).from(secureUsers);
-      const [tokensCount] = await db.select({ count: db.$count() }).from(encryptedAuthTokens);
-      const [lockCount] = await db.select({ count: db.$count() }).from(videoLockStatuses);
-      const [statusCount] = await db.select({ count: db.$count() }).from(videoStatuses);
+      const [usersCount] = await db.select({ count: sql<number>`count(*)` }).from(secureUsers);
+      const [tokensCount] = await db.select({ count: sql<number>`count(*)` }).from(encryptedAuthTokens);
+      const [lockCount] = await db.select({ count: sql<number>`count(*)` }).from(videoLockStatuses);
+      const [statusCount] = await db.select({ count: sql<number>`count(*)` }).from(videoStatuses);
       
       console.log('Database migration status:', {
         secure_users: usersCount.count,
@@ -61,9 +61,6 @@ export class EnhancedStorage extends DatabaseStorage {
    */
   async cleanupExpiredTokens(): Promise<number> {
     try {
-      const { encryptedAuthTokens, authTokens } = await import('../shared/schema.js');
-      const { lt } = await import('drizzle-orm');
-      
       const now = new Date();
       
       // Clean up encrypted tokens
