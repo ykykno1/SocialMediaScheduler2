@@ -504,6 +504,23 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Specific Facebook disconnect endpoint
+  app.post("/api/youtube/disconnect", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // Remove YouTube tokens from all storage locations
+      await storage.removeAuthToken('youtube', userId);
+      
+      res.json({ success: true, message: "YouTube disconnected successfully" });
+    } catch (error) {
+      console.error("Error disconnecting YouTube:", error);
+      res.status(500).json({ error: "Failed to disconnect YouTube" });
+    }
+  });
+
   app.post("/api/facebook/disconnect", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
