@@ -13,7 +13,7 @@ import {
   historyEntries, 
   videoStatuses, 
   videoLockStatuses,
-  shabbatLocations
+
 } from "@shared/schema";
 import { eq, and, sql, lt } from "drizzle-orm";
 import { nanoid } from 'nanoid';
@@ -192,20 +192,21 @@ export class UnifiedStorage implements IUnifiedStorage {
       
       if (encryptedToken) {
         const decryptedAccessToken = tokenEncryption.decryptFromStorage(
-          encryptedToken.encryptedToken, 
-          encryptedToken.encryptionMetadata
+          encryptedToken.encryptedAccessToken || '', 
+          encryptedToken.encryptionMetadata || ''
         );
         
         return {
           platform: encryptedToken.platform,
           accessToken: decryptedAccessToken,
-          refreshToken: encryptedToken.refreshToken || undefined,
+          refreshToken: encryptedToken.encryptedRefreshToken ? 
+            tokenEncryption.decryptFromStorage(encryptedToken.encryptedRefreshToken, encryptedToken.encryptionMetadata || '') : undefined,
           expiresIn: encryptedToken.expiresIn || undefined,
-          expiresAt: encryptedToken.expiresAt || undefined,
-          timestamp: encryptedToken.timestamp,
+          expiresAt: encryptedToken.expiresAt ? encryptedToken.expiresAt.getTime() : undefined,
+          timestamp: encryptedToken.createdAt ? encryptedToken.createdAt.getTime() : Date.now(),
           userId: encryptedToken.userId || undefined,
-          isManualToken: encryptedToken.isManualToken || undefined,
-          additionalData: encryptedToken.additionalData || undefined
+          isManualToken: encryptedToken.isManualToken || false,
+          additionalData: encryptedToken.additionalData ? JSON.parse(encryptedToken.additionalData) : undefined
         };
       }
       
