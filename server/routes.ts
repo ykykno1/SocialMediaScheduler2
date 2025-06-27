@@ -5,8 +5,6 @@ interface AuthenticatedRequest extends Request {
 }
 import { createServer, type Server } from "http";
 import { enhancedStorage as storage } from './enhanced-storage.js';
-import { authMiddleware, requireAuth } from './middleware.js';
-import { registerAuthRoutes } from './auth-routes.js';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -65,8 +63,18 @@ async function testYouTubeConnection(accessToken: string) {
   return testResponse.ok;
 }
 
-// JWT helper functions now imported from middleware.ts
-import { generateToken, verifyToken } from './middleware.js';
+// JWT helper functions
+const generateToken = (userId: string) => {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
+};
+
+const verifyToken = (token: string) => {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: string };
+  } catch (error) {
+    return null;
+  }
+};
 
 // Extend Express Request type to include session
 declare module 'express-session' {
