@@ -105,7 +105,7 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Saving auth token for platform:', token.platform, 'user:', userId);
       const validatedToken = authSchema.parse(token);
-      const { tokenEncryption } = await import('./encryption.js');
+      const { simpleTokenEncryption } = await import('./simple-encryption.js');
       
       // Delete existing token from encrypted table
       await db.delete(encryptedAuthTokens)
@@ -113,23 +113,23 @@ export class DatabaseStorage implements IStorage {
 
       // Encrypt the tokens
       console.log('Encrypting access token...');
-      const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
+      const encryptedAccessToken = simpleTokenEncryption.encryptForStorage(token.accessToken);
       let encryptedRefreshToken = null;
       
       if (token.refreshToken) {
         console.log('Encrypting refresh token...');
-        encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
+        encryptedRefreshToken = simpleTokenEncryption.encryptForStorage(token.refreshToken);
       }
 
-      // Insert new token into encrypted table with real encryption
+      // Insert new token into encrypted table with simple encryption
       console.log('Inserting token into database...');
       await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         userId,
         platform: token.platform,
-        encryptedAccessToken: encryptedAccessToken.encryptedToken,
-        encryptedRefreshToken: encryptedRefreshToken?.encryptedToken || null,
-        tokenHash: encryptedAccessToken.tokenHash,
+        encryptedAccessToken: encryptedAccessToken.encrypted,
+        encryptedRefreshToken: encryptedRefreshToken?.encrypted || null,
+        tokenHash: 'simple-format',
         encryptionMetadata: encryptedAccessToken.metadata,
         expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
         scopes: null,
