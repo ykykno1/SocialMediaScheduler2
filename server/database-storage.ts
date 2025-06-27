@@ -116,6 +116,7 @@ export class DatabaseStorage implements IStorage {
 
   async saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken> {
     try {
+      console.log('Saving auth token for platform:', token.platform, 'user:', userId);
       const validatedToken = authSchema.parse(token);
       const { tokenEncryption } = await import('./encryption.js');
       
@@ -124,14 +125,17 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
 
       // Encrypt the tokens
+      console.log('Encrypting access token...');
       const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
       let encryptedRefreshToken = null;
       
       if (token.refreshToken) {
+        console.log('Encrypting refresh token...');
         encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
       }
 
       // Insert new token into encrypted table with real encryption
+      console.log('Inserting token into database...');
       await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         userId,
@@ -150,6 +154,7 @@ export class DatabaseStorage implements IStorage {
         migrationStatus: 'migrated'
       });
 
+      console.log('Token saved successfully!');
       return validatedToken;
     } catch (error) {
       console.error('Error saving auth token:', error);

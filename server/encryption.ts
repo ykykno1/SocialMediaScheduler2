@@ -1,9 +1,9 @@
 /**
- * Simple token encryption module for auth tokens
+ * Simplified token encryption module for auth tokens
  */
 import crypto from 'crypto';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '32-character-default-key-for-dev';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-32-chars!!';
 const ALGORITHM = 'aes-256-cbc';
 
 export class TokenEncryption {
@@ -86,21 +86,28 @@ export class TokenEncryption {
     tokenHash: string; 
     metadata: string;
   } {
-    const encrypted = this.encrypt(token);
-    const tokenHash = this.createTokenHash(token);
-    
-    // Store IV and authTag as metadata
-    const metadata = JSON.stringify({
-      iv: encrypted.iv,
-      authTag: encrypted.authTag,
-      version: 1
-    });
+    try {
+      console.log('Starting token encryption...');
+      const encrypted = this.encrypt(token);
+      const tokenHash = this.createTokenHash(token);
+      
+      // Store IV and authTag as metadata
+      const metadata = JSON.stringify({
+        iv: encrypted.iv,
+        authTag: encrypted.authTag,
+        version: 1
+      });
 
-    return {
-      encryptedToken: encrypted.encrypted,
-      tokenHash,
-      metadata
-    };
+      console.log('Token encryption successful');
+      return {
+        encryptedToken: encrypted.encrypted,
+        tokenHash,
+        metadata
+      };
+    } catch (error) {
+      console.error('Token encryption failed:', error);
+      throw new Error('Failed to encrypt token for storage');
+    }
   }
 
   /**
