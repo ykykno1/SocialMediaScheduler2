@@ -208,14 +208,14 @@ export class MemStorage implements IStorage {
         ));
 
       // Then insert new token
-      await db.insert(authTokens).values({
+      const insertData = {
         id: `${token.platform}_${userId}_${Date.now()}`,
+        userId: userId,
         platform: token.platform,
         accessToken: token.accessToken,
-        refreshToken: token.refreshToken,
+        refreshToken: token.refreshToken || null,
         expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
         timestamp: new Date(token.timestamp),
-        userId: userId,
         additionalData: token.additionalData ? JSON.stringify({
           ...token.additionalData,
           expiresIn: token.expiresIn,
@@ -224,7 +224,9 @@ export class MemStorage implements IStorage {
           expiresIn: token.expiresIn,
           isManualToken: token.isManualToken
         })
-      });
+      };
+      
+      await db.insert(authTokens).values(insertData);
 
       console.log(`Saved ${token.platform} token to database for user: ${userId}`);
     } catch (error) {
