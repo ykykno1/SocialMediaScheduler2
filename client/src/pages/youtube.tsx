@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Youtube, Play, Eye, EyeOff, ExternalLink, Unlink, Loader2 } from 'lucide-react';
+import { Youtube, Play, Eye, EyeOff, ExternalLink, Unlink, Loader2, Lock, Unlock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface YouTubeVideo {
@@ -226,6 +226,34 @@ export default function YouTubePage() {
       setError('Failed to restore videos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleVideoLock = async (videoId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch('/api/youtube/toggle-lock', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ videoId })
+      });
+      
+      if (response.ok) {
+        await loadVideos();
+        toast({
+          title: "הצלחה!",
+          description: "סטטוס הנעילה עודכן",
+        });
+      } else {
+        const error = await response.json();
+        setError(error.error || 'Failed to toggle video lock');
+      }
+    } catch (error) {
+      setError('Failed to toggle video lock');
     }
   };
 
