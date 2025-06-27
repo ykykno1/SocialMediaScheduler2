@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Youtube, Eye, EyeOff, Loader2, AlertCircle, Lock, Unlock, ExternalLink, RefreshCw } from 'lucide-react';
+import { Youtube, Eye, EyeOff, Loader2, AlertCircle, Lock, Unlock, ExternalLink, RefreshCw, Play, Unlink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface YouTubeVideo {
@@ -21,6 +21,7 @@ interface YouTubeVideo {
 export default function YouTubeCleanPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
+  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [channelTitle, setChannelTitle] = useState('');
   const { toast } = useToast();
@@ -136,6 +137,185 @@ export default function YouTubeCleanPage() {
         title: "שגיאה",
         description: error.message,
         variant: "destructive",
+      });
+    }
+  };
+
+  // Selection functions - copied from working version
+  const selectAllPublic = () => {
+    const publicVideos = videos.filter(v => v.privacyStatus === 'public').map(v => v.id);
+    setSelectedVideos(publicVideos);
+  };
+
+  const selectAllPrivate = () => {
+    const privateVideos = videos.filter(v => v.privacyStatus === 'private').map(v => v.id);
+    setSelectedVideos(privateVideos);
+  };
+
+  const toggleVideoSelection = (videoId: string) => {
+    setSelectedVideos(prev => 
+      prev.includes(videoId) 
+        ? prev.filter(id => id !== videoId)
+        : [...prev, videoId]
+    );
+  };
+
+  // Bulk hide/restore functions
+  const hideVideos = async () => {
+    if (selectedVideos.length === 0) return;
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch('/api/youtube/hide', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ videoIds: selectedVideos })
+      });
+      
+      if (response.ok) {
+        await loadVideos();
+        setSelectedVideos([]);
+        toast({
+          title: "הצלחה!",
+          description: `${selectedVideos.length} סרטונים הוסתרו בהצלחה`,
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "שגיאה",
+          description: error.error || 'שגיאה בהסתרת הסרטונים',
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בהסתרת הסרטונים",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const restoreVideos = async () => {
+    if (selectedVideos.length === 0) return;
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch('/api/youtube/restore', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ videoIds: selectedVideos })
+      });
+      
+      if (response.ok) {
+        await loadVideos();
+        setSelectedVideos([]);
+        toast({
+          title: "הצלחה!",
+          description: `${selectedVideos.length} סרטונים שוחזרו בהצלחה`,
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "שגיאה",
+          description: error.error || 'שגיאה בשחזור הסרטונים',
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בשחזור הסרטונים",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Lock/unlock functions - copied from working version
+  const toggleVideoLock = async (videoId: string) => {
+    const video = videos.find(v => v.id === videoId);
+    if (!video) return;
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      if (video.isLocked) {
+        // בטל נעילה - בקש סיסמה
+        const password = prompt("הכנס את הסיסמה שלך כדי לבטל את נעילת הסרטון:");
+        if (!password) return;
+        
+        const response = await fetch(`/api/youtube/video/${videoId}/unlock`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password })
+        });
+        
+        if (response.ok) {
+          await loadVideos();
+          toast({
+            title: "נעילת הסרטון בוטלה",
+            description: "הסרטון שוחזר למצב המקורי ויכלל במבצעי הסתרה/הצגה",
+          });
+        } else {
+          const error = await response.json();
+          toast({
+            title: "שגיאה",
+            description: error.error || 'שגיאה בביטול נעילת הסרטון',
+            variant: "destructive"
+          });
+        }
+      } else {
+        // נעל סרטון - ללא סיסמה
+        const response = await fetch(`/api/youtube/video/${videoId}/lock`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ reason: "user_manual" })
+        });
+        
+        if (response.ok) {
+          await loadVideos();
+          
+          const isHidden = video.isHidden;
+          toast({
+            title: "הסרטון ננעל",
+            description: isHidden 
+              ? "הסרטון לא ישוחזר בצאת השבת" 
+              : "הסרטון נשאר גלוי ולא יוסתר בשבת",
+          });
+        } else {
+          const error = await response.json();
+          toast({
+            title: "שגיאה",
+            description: error.error || 'שגיאה בנעילת הסרטון',
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בעדכון נעילת הסרטון",
+        variant: "destructive"
       });
     }
   };
