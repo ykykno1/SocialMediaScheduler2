@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 27, 2025. Fixed location settings saving functionality:
+  - Restored original city list with correct Chabad IDs from user requirements
+  - Removed problematic API-based city loading that broke dropdown functionality
+  - Fixed React imports and variable references in settings page
+  - Location settings now save properly when user selects city and clicks "שמור שינויים"
+  - Widget updates automatically when location is changed in settings
+  - All 35 cities (Israeli and international) available in dropdown with proper codes
 - June 27, 2025. Completed comprehensive database security migration and cleanup:
   - Successfully implemented real AES-256-GCM encryption for all access tokens
   - Created EnhancedStorage class combining all security improvements with zero downtime
