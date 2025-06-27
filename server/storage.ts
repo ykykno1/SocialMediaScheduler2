@@ -181,7 +181,7 @@ export class MemStorage implements IStorage {
     return userTokens?.[platform] || null;
   }
 
-  saveAuthToken(token: AuthToken, userId?: string): AuthToken {
+  async saveAuthToken(token: AuthToken, userId?: string): Promise<AuthToken> {
     if (!userId) throw new Error('User ID required for saving auth token');
 
     const validatedToken = authSchema.parse(token);
