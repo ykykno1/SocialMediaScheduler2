@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, authTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
+import { users, secureUsers, authTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
@@ -296,8 +296,26 @@ export class DatabaseStorage implements IStorage {
 
   async getUserById(id: string): Promise<User | null> {
     try {
-      const [user] = await db.select().from(secureUsers).where(eq(secureUsers.id, id));
-      return user || null;
+      const [secureUser] = await db.select().from(secureUsers).where(eq(secureUsers.id, id));
+      
+      if (!secureUser) {
+        return null;
+      }
+
+      // Map secure user fields to legacy User format
+      const user = {
+        id: secureUser.id,
+        email: secureUser.email,
+        username: secureUser.username,
+        password: secureUser.passwordHash, // Map password_hash to password
+        accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
+        shabbatCity: null,
+        shabbatCityId: null,
+        createdAt: secureUser.createdAt,
+        updatedAt: secureUser.updatedAt
+      };
+      
+      return user;
     } catch (error) {
       console.error('Error getting user by id:', error);
       return null;
