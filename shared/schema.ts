@@ -281,6 +281,8 @@ export const secureUsers = pgTable("secure_users", {
   accountTier: varchar("account_tier").$type<'free' | 'youtube_pro' | 'premium'>().notNull().default('free'),
   emailVerified: boolean("email_verified").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  shabbatCity: varchar("shabbat_city").default('ירושלים'),
+  shabbatCityId: varchar("shabbat_city_id").default('247'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   lastLogin: timestamp("last_login"),

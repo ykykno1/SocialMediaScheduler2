@@ -422,6 +422,8 @@ export class DatabaseStorage implements IStorage {
       if (updates.username) secureUpdates.username = updates.username;
       if (updates.password) secureUpdates.passwordHash = updates.password;
       if (updates.accountType) secureUpdates.accountTier = updates.accountType;
+      if (updates.shabbatCity) secureUpdates.shabbatCity = updates.shabbatCity;
+      if (updates.shabbatCityId) secureUpdates.shabbatCityId = updates.shabbatCityId;
       secureUpdates.updatedAt = new Date();
 
       const [secureUser] = await db.update(secureUsersTable)
