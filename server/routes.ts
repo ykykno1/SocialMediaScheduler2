@@ -2863,6 +2863,7 @@ export function registerRoutes(app: Express): Server {
   // Get available Shabbat cities
   app.get('/api/shabbat-locations', async (req, res) => {
     try {
+      const { db } = await import('./db.js');
       const { shabbatLocations } = await import('../shared/schema.js');
       const { eq } = await import('drizzle-orm');
       

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,24 +23,31 @@ export default function Settings() {
   const [showCitySelector, setShowCitySelector] = useState(false);
 
   // Get current user location
-  const { data: locationData, isLoading } = useQuery({
+  const { data: locationData, isLoading } = useQuery<{ shabbatCity: string; shabbatCityId: string }>({
     queryKey: ['/api/user/shabbat-location'],
     retry: false,
   });
 
   // Get available cities from database
-  const { data: availableCities = [], isLoading: citiesLoading } = useQuery({
+  const { data: availableCities = [], isLoading: citiesLoading } = useQuery<any[]>({
     queryKey: ['/api/shabbat-locations'],
     retry: false,
   });
 
-  const [selectedCity, setSelectedCity] = useState<string>(locationData?.shabbatCity || 'ירושלים');
+  const [selectedCity, setSelectedCity] = useState<string>('ירושלים');
 
   // Convert database cities to City format
   const cities: City[] = availableCities.map((city: any) => ({
     name: city.name_hebrew,
     chabadId: city.chabad_id
   }));
+
+  // Update selected city when location data loads
+  useEffect(() => {
+    if (locationData?.shabbatCity) {
+      setSelectedCity(locationData.shabbatCity);
+    }
+  }, [locationData]);
 
   // Update location mutation
   const updateLocationMutation = useMutation({
