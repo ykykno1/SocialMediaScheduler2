@@ -494,11 +494,83 @@ export default function YouTubeCleanPage() {
                     variant="destructive" 
                     size="sm" 
                     onClick={disconnectYouTube}
+                    disabled={loading}
                   >
-                    התנתק
+                    <Unlink className="h-4 w-4 mr-2" />
+                    התנתק מיוטיוב
                   </Button>
                 </CardTitle>
               </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 flex-wrap items-center">
+                  <Button onClick={loadVideos} disabled={loading}>
+                    <Play className="h-4 w-4 mr-2" />
+                    רענן רשימת סרטונים
+                  </Button>
+                  
+                  <Button 
+                    onClick={async () => {
+                      const publicVideos = videos.filter(v => v.privacyStatus === 'public').map(v => v.id);
+                      setSelectedVideos(publicVideos);
+                      await hideVideos();
+                    }} 
+                    disabled={loading || videos.filter(v => v.privacyStatus === 'public').length === 0}
+                    variant="destructive"
+                  >
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    הסתר הכל ({videos.filter(v => v.privacyStatus === 'public').length})
+                  </Button>
+                  
+                  <Button 
+                    onClick={async () => {
+                      const privateVideos = videos.filter(v => v.privacyStatus === 'private').map(v => v.id);
+                      setSelectedVideos(privateVideos);
+                      await restoreVideos();
+                    }} 
+                    disabled={loading || videos.filter(v => v.privacyStatus === 'private').length === 0}
+                    variant="default"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    הצג הכל ({videos.filter(v => v.privacyStatus === 'private').length})
+                  </Button>
+                  
+                  {selectedVideos.length > 0 && (
+                    <>
+                      <Button 
+                        onClick={hideVideos} 
+                        disabled={loading}
+                        variant="destructive"
+                      >
+                        <EyeOff className="h-4 w-4 mr-2" />
+                        הסתר נבחרים ({selectedVideos.length})
+                      </Button>
+                      
+                      <Button 
+                        onClick={restoreVideos} 
+                        disabled={loading}
+                        variant="default"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        שחזר נבחרים ({selectedVideos.length})
+                      </Button>
+                    </>
+                  )}
+                </div>
+                
+                {videos.length > 0 && (
+                  <div className="flex gap-2 mt-4">
+                    <Button size="sm" variant="outline" onClick={selectAllPublic}>
+                      בחר כל הציבוריים ({videos.filter(v => v.privacyStatus === 'public').length})
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={selectAllPrivate}>
+                      בחר כל הפרטיים ({videos.filter(v => v.privacyStatus === 'private').length})
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setSelectedVideos([])}>
+                      נקה בחירה
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
             </Card>
 
             {/* Video List - Starting Clean */}
@@ -533,61 +605,162 @@ export default function YouTubeCleanPage() {
                     לא נמצאו סרטונים
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {videos.map((video) => (
-                      <div key={video.id} className="border rounded-lg p-4">
-                        <div className="flex gap-4">
-                          {/* Thumbnail */}
-                          <img 
-                            src={video.thumbnail} 
-                            alt={video.title}
-                            className="w-24 h-16 object-cover rounded"
-                          />
-
-                          {/* Video Info */}
-                          <div className="flex-1">
-                            <h3 className="font-medium text-sm leading-tight">{video.title}</h3>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {new Date(video.publishedAt).toLocaleDateString('he-IL')}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              צפיות: {video.viewCount}
-                            </div>
-                          </div>
-
-                          {/* Status and Actions */}
-                          <div className="flex flex-col items-end gap-2">
-                            <Badge variant={video.isHidden ? "destructive" : "default"}>
-                              {video.isHidden ? "פרטי" : "פומבי"}
-                            </Badge>
-                            
-                            {/* Individual Hide/Show Button - like old version */}
-                            <Button 
-                              variant={video.isHidden ? "default" : "destructive"}
-                              size="sm"
-                              onClick={() => video.isHidden ? showVideo(video.id) : hideVideo(video.id)}
-                              disabled={loading}
-                            >
-                              {video.isHidden ? (
-                                <>
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  הצג
-                                </>
-                              ) : (
-                                <>
+                      <Card 
+                        key={video.id} 
+                        className={`cursor-pointer transition-all hover:shadow-md ${
+                          selectedVideos.includes(video.id) ? 'ring-2 ring-blue-500' : ''
+                        }`}
+                        onClick={() => toggleVideoSelection(video.id)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="relative mb-3">
+                            <img 
+                              src={video.thumbnail} 
+                              alt={video.title}
+                              className="w-full h-32 object-cover rounded"
+                              onError={(e) => {
+                                e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%23ddd"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999">תמונה</text></svg>';
+                              }}
+                            />
+                            <div className="absolute top-2 right-2 flex gap-1">
+                              <Badge 
+                                variant={video.privacyStatus === 'public' ? 'default' : 'secondary'}
+                              >
+                                {video.privacyStatus === 'public' ? 'ציבורי' : 'פרטי'}
+                              </Badge>
+                              {video.isHidden && (
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
                                   <EyeOff className="h-3 w-3 mr-1" />
-                                  הסתר
-                                </>
+                                  הוסתר
+                                </Badge>
                               )}
-                            </Button>
+                              {video.isLocked && (
+                                <Badge variant="destructive" className="bg-orange-500">
+                                  <Lock className="h-3 w-3" />
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <div className="absolute top-2 left-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="bg-white/80 hover:bg-white/90 p-1 h-6 w-6"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleVideoLock(video.id);
+                                }}
+                              >
+                                {video.isLocked ? (
+                                  <Lock className="h-3 w-3 text-orange-600" />
+                                ) : (
+                                  <Unlock className="h-3 w-3 text-gray-600" />
+                                )}
+                              </Button>
+                            </div>
+                            {video.isHidden && (
+                              <div className="absolute inset-0 bg-gray-500/60 rounded flex items-center justify-center">
+                                <div className="text-center">
+                                  <EyeOff className="h-8 w-8 text-white mx-auto mb-2" />
+                                  <span className="text-white text-sm font-medium">סרטון מוסתר</span>
+                                </div>
+                              </div>
+                            )}
+                            {selectedVideos.includes(video.id) && (
+                              <div className="absolute inset-0 bg-blue-500/20 rounded flex items-center justify-center">
+                                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-sm">✓</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      </div>
+                          
+                          <h3 className="font-semibold text-sm mb-2 line-clamp-2">
+                            {video.title}
+                          </h3>
+                          
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <p>פורסם: {new Date(video.publishedAt).toLocaleDateString('he-IL')}</p>
+                            {video.viewCount && (
+                              <p>צפיות: {parseInt(video.viewCount).toLocaleString()}</p>
+                            )}
+                          </div>
+                          
+                          <div className="flex gap-2 mt-3">
+                            {video.privacyStatus === 'public' ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  hideVideo(video.id);
+                                }}
+                              >
+                                <EyeOff className="h-4 w-4 mr-1" />
+                                הסתר
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  showVideo(video.id);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                הצג
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 )}
               </CardContent>
             </Card>
+
+            {/* הסבר על סרטונים נעולים וניהול */}
+            {videos.length > 0 && (
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="text-sm font-medium text-blue-900 mb-2">מידע על מצבי סרטונים</h3>
+                  <p className="text-sm text-blue-700">
+                    סרטונים המסומנים כ"פרטי" כבר מוסתרים מהציבור. ניתן להציגם בחזרה או להשאיר אותם מוסתרים.
+                    לחץ על סרטונים כדי לבחור אותם לפעולות קבוצתיות.
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <h3 className="text-sm font-medium text-orange-900 mb-2 flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    סרטונים נעולים
+                  </h3>
+                  <p className="text-sm text-orange-700 mb-2">
+                    סרטונים נעולים לא יושפעו מפעולות האסתרה והצגה האוטומטיות. הם ישארו במצבם הנוכחי עד שתבחר לשחרר את הנעילה.
+                  </p>
+                  <p className="text-sm text-orange-700">
+                    לנעילת סרטון: לחץ על כפתור המנעול. לביטול נעילה: יידרש הזנת סיסמה.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h3 className="text-sm font-medium text-green-900 mb-2">כיצד להשתמש בממשק</h3>
+                  <ul className="text-sm text-green-700 space-y-1">
+                    <li>• לחץ על סרטון כדי לבחור אותו לפעולות קבוצתיות</li>
+                    <li>• השתמש בכפתורי "בחר כל הציבוריים/פרטיים" לבחירה מהירה</li>
+                    <li>• כפתורי "הסתר/הצג" פועלים על סרטון בודד</li>
+                    <li>• כפתורי "הסתר/שחזר נבחרים" פועלים על כל הסרטונים הנבחרים</li>
+                    <li>• סרטונים נעולים מוגנים מפעולות אוטומטיות</li>
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
