@@ -352,10 +352,22 @@ export default function YouTubeOAuthPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>ערוץ YouTube: {channelTitle}</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700">
-                    מחובר
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Youtube className="h-5 w-5 text-red-500" />
+                    <span>ערוץ YouTube: {channelTitle}</span>
+                    <Badge variant="outline" className="bg-green-50 text-green-700">
+                      מחובר
+                    </Badge>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {/* TODO: implement disconnect */}}
+                    disabled={loading}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    התנתק מ-YouTube
+                  </Button>
                 </CardTitle>
                 <CardDescription>
                   נהל את כל הסרטונים בערוץ שלך

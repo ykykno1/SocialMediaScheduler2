@@ -127,10 +127,11 @@ The application follows Jewish religious principles by automatically hiding soci
 ## Changelog
 
 - June 27, 2025. ADDED: YouTube disconnect button with Hebrew UI in YouTube management page:
-  - Added prominent "התנתק מ-YouTube" button in YouTube page header when connected
-  - Button styled consistently with red theme matching YouTube branding
-  - Located in CardTitle alongside connection status for clear visibility
+  - Fixed routing issue: App.tsx loads youtube-oauth.tsx for /youtube route, not youtube.tsx
+  - Added prominent "התנתק מ-YouTube" button in correct file (youtube-oauth.tsx)
+  - Button styled with red theme and located in CardTitle alongside connection status
   - Visual interface ready (functionality to be implemented separately)
+  - Resolved file confusion between youtube.tsx and youtube-oauth.tsx
 - June 27, 2025. COMPLETED: Final database cleanup and optimization:
   - Removed all legacy database tables (auth_tokens, users, safe_users, migration_audit, users_v2)
   - Fixed all foreign key relationships to point to secure_users table
