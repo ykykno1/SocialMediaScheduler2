@@ -57,12 +57,18 @@ export class TokenEncryption {
       throw new Error('Authentication failed - token may be tampered');
     }
     
-    const decipher = crypto.createDecipher(ALGORITHM, this.encryptionKey);
-    
-    let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
+    try {
+      const decipher = crypto.createDecipher(ALGORITHM, this.encryptionKey);
+      
+      let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      return decrypted;
+    } catch (error) {
+      // Fallback for corrupted or incompatible tokens
+      console.warn('Legacy decryption failed, token may be corrupted:', error);
+      throw new Error('Token decryption failed - may need re-authentication');
+    }
   }
 
   /**
