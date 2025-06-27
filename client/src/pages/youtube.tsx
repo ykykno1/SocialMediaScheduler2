@@ -546,9 +546,9 @@ export default function YouTubePage() {
                             }}
                           >
                             {video.isLocked ? (
-                              <Lock className="h-3 w-3 text-orange-600" />
+                              <Unlock className="h-3 w-3 text-orange-600" />
                             ) : (
-                              <Unlock className="h-3 w-3 text-gray-600" />
+                              <Lock className="h-3 w-3 text-gray-600" />
                             )}
                           </Button>
                         </div>
@@ -592,6 +592,29 @@ export default function YouTubePage() {
                   <p className="text-gray-600">לא נמצאו סרטונים בערוץ</p>
                 </CardContent>
               </Card>
+            )}
+
+            {/* הסבר על סרטונים נעולים */}
+            {videos.length > 0 && (
+              <div className="mt-6 space-y-4">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="text-sm font-medium text-blue-900 mb-2">מידע על סרטונים מוסתרים</h3>
+                  <p className="text-sm text-blue-700">
+                    סרטונים המסומנים כ"פרטי" כבר מוסתרים מהציבור. ניתן להציגם בחזרה או להשאיר אותם מוסתרים.
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <h3 className="text-sm font-medium text-orange-900 mb-2 flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    סרטונים נעולים
+                  </h3>
+                  <p className="text-sm text-orange-700">
+                    סרטונים נעולים לא יוצגו באופן אוטומטי בצאת השבת. הם ישארו מוסתרים עד שתבחר להציגם ידנית.
+                    זה מאפשר לשמור סרטונים מסוימים פרטיים גם לאחר השבת.
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         )}
