@@ -196,7 +196,13 @@ export class UnifiedStorage implements IUnifiedStorage {
           const encryptedData = encryptedToken.encryptedAccessToken || (encryptedToken as any).encryptedToken;
           const metadata = encryptedToken.encryptionMetadata || '';
           
-          const decryptedAccessToken = tokenEncryption.decryptFromStorage(encryptedData || '', metadata);
+          // Skip empty tokens
+          if (!encryptedData || encryptedData.trim() === '') {
+            console.log('Empty encrypted token found, skipping');
+            return null;
+          }
+          
+          const decryptedAccessToken = tokenEncryption.decryptFromStorage(encryptedData, metadata);
           
           return {
             platform: encryptedToken.platform,
@@ -212,6 +218,7 @@ export class UnifiedStorage implements IUnifiedStorage {
           };
         } catch (decryptError) {
           console.error('Token decryption failed:', decryptError);
+          // No valid tokens found
           return null;
         }
       }
