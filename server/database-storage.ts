@@ -28,7 +28,7 @@ import {
 } from "@shared/schema";
 import { IStorage } from "./storage";
 
-export class DatabaseStorage implements IStorage {
+export class DatabaseStorage {
   
   // Settings operations
   getSettings(): Settings {
@@ -52,50 +52,30 @@ export class DatabaseStorage implements IStorage {
         let accessToken: string;
         let refreshToken: string | undefined;
         
-        // Try to decrypt if encrypted tokens exist
-        if (encryptedToken.encryptedAccessToken && encryptedToken.encryptionMetadata) {
+        // Use legacy tokens for reliability during migration period
+        if (encryptedToken.legacyAccessToken) {
+          accessToken = encryptedToken.legacyAccessToken;
+          refreshToken = encryptedToken.legacyRefreshToken || undefined;
+        } else if (encryptedToken.encryptedAccessToken && encryptedToken.encryptionMetadata) {
+          // Only try decryption if no legacy tokens
           try {
-            // Try modern encryption first
-            const { modernTokenEncryption } = await import('./modern-encryption.js');
-            accessToken = modernTokenEncryption.decryptFromStorage(
+            const { tokenEncryption } = await import('./encryption.js');
+            accessToken = tokenEncryption.decryptFromStorage(
               encryptedToken.encryptedAccessToken, 
               encryptedToken.encryptionMetadata
             );
             
             if (encryptedToken.encryptedRefreshToken) {
-              refreshToken = modernTokenEncryption.decryptFromStorage(
+              refreshToken = tokenEncryption.decryptFromStorage(
                 encryptedToken.encryptedRefreshToken,
                 encryptedToken.encryptionMetadata
               );
             }
-          } catch (modernError) {
-            // Fallback to legacy encryption for old tokens
-            try {
-              const { tokenEncryption } = await import('./encryption.js');
-              accessToken = tokenEncryption.decryptFromStorage(
-                encryptedToken.encryptedAccessToken, 
-                encryptedToken.encryptionMetadata
-              );
-              
-              if (encryptedToken.encryptedRefreshToken) {
-                refreshToken = tokenEncryption.decryptFromStorage(
-                  encryptedToken.encryptedRefreshToken,
-                  encryptedToken.encryptionMetadata
-                );
-              }
-            } catch (legacyError) {
-              console.warn('Failed to decrypt with both methods, using legacy tokens:', legacyError);
-              // If no legacy tokens either, token is corrupted - delete it
-              if (!encryptedToken.legacyAccessToken) {
-                console.error('Token corrupted and no legacy fallback, deleting token for platform:', platform);
-                await db.delete(encryptedAuthTokens)
-                  .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
-                return null;
-              }
-              // Fallback to legacy tokens if decryption fails
-              accessToken = encryptedToken.legacyAccessToken || '';
-              refreshToken = encryptedToken.legacyRefreshToken || undefined;
-            }
+          } catch (decryptError) {
+            console.warn('Failed to decrypt token, removing corrupted entry:', decryptError);
+            await db.delete(encryptedAuthTokens)
+              .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
+            return null;
           }
         } else {
           // Use legacy tokens if no encrypted version exists yet
