@@ -342,12 +342,36 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
     try {
-      const [user] = await db.update(users)
-        .set({ ...updates, updatedAt: new Date() })
-        .where(eq(users.id, id))
+      // Map legacy User fields to secure_users fields
+      const secureUpdates: any = {};
+      
+      if (updates.email) secureUpdates.email = updates.email;
+      if (updates.username) secureUpdates.username = updates.username;
+      if (updates.password) secureUpdates.passwordHash = updates.password;
+      if (updates.accountType) secureUpdates.accountTier = updates.accountType;
+      secureUpdates.updatedAt = new Date();
+
+      const [secureUser] = await db.update(secureUsersTable)
+        .set(secureUpdates)
+        .where(eq(secureUsersTable.id, id))
         .returning();
 
-      return user;
+      if (!secureUser) {
+        throw new Error('User not found');
+      }
+
+      // Return in legacy User format
+      return {
+        id: secureUser.id,
+        email: secureUser.email,
+        username: secureUser.username,
+        password: secureUser.passwordHash,
+        accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
+        shabbatCity: null,
+        shabbatCityId: null,
+        createdAt: secureUser.createdAt,
+        updatedAt: secureUser.updatedAt
+      };
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
@@ -397,9 +421,9 @@ export class DatabaseStorage implements IStorage {
         return false;
       }
 
-      await db.update(users)
-        .set({ accountType: accountType as 'free' | 'youtube_pro' | 'premium', updatedAt: new Date() })
-        .where(eq(users.id, userId));
+      await db.update(secureUsersTable)
+        .set({ accountTier: accountType as 'free' | 'youtube_pro' | 'premium', updatedAt: new Date() })
+        .where(eq(secureUsersTable.id, userId));
 
       return true;
     } catch (error) {
@@ -410,7 +434,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(userId: string): Promise<boolean> {
     try {
-      await db.delete(users).where(eq(users.id, userId));
+      await db.delete(secureUsersTable).where(eq(secureUsersTable.id, userId));
       return true;
     } catch (error) {
       console.error('Error deleting user:', error);
