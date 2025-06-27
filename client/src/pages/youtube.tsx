@@ -98,7 +98,6 @@ export default function YouTubePage() {
       });
       
       const token = localStorage.getItem('auth_token');
-      
       const response = await fetch('/api/youtube/disconnect', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -108,13 +107,14 @@ export default function YouTubePage() {
         setIsConnected(false);
         setVideos([]);
         setSelectedVideos([]);
+        setChannelTitle('');
         toast({
-          title: "הותנקת בהצלחה מיוטיוב",
-          description: "כעת ניתן להתחבר מחדש",
+          title: "הצלחה!",
+          description: "התנתקת בהצלחה מ-YouTube",
         });
       } else {
         const error = await response.json();
-        setError(error.error || 'Failed to disconnect');
+        setError(error.error || 'Failed to disconnect from YouTube');
       }
     } catch (error) {
       setError('Failed to disconnect from YouTube');
@@ -152,7 +152,7 @@ export default function YouTubePage() {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       
       const response = await fetch('/api/youtube/hide', {
         method: 'POST',
@@ -177,12 +177,34 @@ export default function YouTubePage() {
     }
   };
 
+  const selectAllPublic = () => {
+    const publicVideos = videos.filter(v => v.privacyStatus === 'public').map(v => v.id);
+    setSelectedVideos(publicVideos);
+  };
+
+  const selectAllPrivate = () => {
+    const privateVideos = videos.filter(v => v.privacyStatus === 'private').map(v => v.id);
+    setSelectedVideos(privateVideos);
+  };
+
+  const toggleVideoSelection = (videoId: string) => {
+    setSelectedVideos(prev => 
+      prev.includes(videoId) 
+        ? prev.filter(id => id !== videoId)
+        : [...prev, videoId]
+    );
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('he-IL');
+  };
+
   const restoreVideos = async () => {
     if (selectedVideos.length === 0) return;
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       
       const response = await fetch('/api/youtube/restore', {
         method: 'POST',
@@ -207,45 +229,11 @@ export default function YouTubePage() {
     }
   };
 
-  const toggleVideoSelection = (videoId: string) => {
-    setSelectedVideos(prev => 
-      prev.includes(videoId) 
-        ? prev.filter(id => id !== videoId)
-        : [...prev, videoId]
-    );
-  };
-
-  const selectAllPublic = () => {
-    const publicVideos = videos.filter(v => v.privacyStatus === 'public').map(v => v.id);
-    setSelectedVideos(publicVideos);
-  };
-
-  const selectAllPrivate = () => {
-    const privateVideos = videos.filter(v => v.privacyStatus === 'private').map(v => v.id);
-    setSelectedVideos(privateVideos);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('he-IL');
-  };
-
-  // Check URL params for connection status
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('youtube') === 'connected') {
-      setIsConnected(true);
-      loadVideos();
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (urlParams.get('youtube') === 'error') {
-      setError('Failed to connect to YouTube');
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    
     checkConnection();
-    
-    // Listen for OAuth callback messages
+  }, []);
+
+  useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       
@@ -384,8 +372,8 @@ export default function YouTubePage() {
                   <div className="flex items-center gap-2">
                     <Youtube className="h-5 w-5 text-red-500" />
                     ניהול YouTube
-                    {user?.youtubeChannelTitle && (
-                      <Badge variant="secondary">{user.youtubeChannelTitle}</Badge>
+                    {channelTitle && (
+                      <Badge variant="secondary">{channelTitle}</Badge>
                     )}
                   </div>
                   <Button 
@@ -406,16 +394,6 @@ export default function YouTubePage() {
                     רענן רשימת סרטונים
                   </Button>
                   
-                  <Button 
-                    onClick={disconnectYouTube}
-                    disabled={loading}
-                    variant="destructive"
-                    size="sm"
-                  >
-                    <Unlink className="h-4 w-4 mr-2" />
-                    התנתק מיוטיוב
-                  </Button>
-                  
                   {selectedVideos.length > 0 && (
                     <>
                       <Button 
@@ -424,7 +402,7 @@ export default function YouTubePage() {
                         variant="destructive"
                       >
                         <EyeOff className="h-4 w-4 mr-2" />
-                        Hide Selected ({selectedVideos.length})
+                        הסתר נבחרים ({selectedVideos.length})
                       </Button>
                       
                       <Button 
@@ -433,7 +411,7 @@ export default function YouTubePage() {
                         variant="default"
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        Restore Selected ({selectedVideos.length})
+                        שחזר נבחרים ({selectedVideos.length})
                       </Button>
                     </>
                   )}
@@ -442,13 +420,13 @@ export default function YouTubePage() {
                 {videos.length > 0 && (
                   <div className="flex gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={selectAllPublic}>
-                      Select All Public ({videos.filter(v => v.privacyStatus === 'public').length})
+                      בחר כל הציבוריים ({videos.filter(v => v.privacyStatus === 'public').length})
                     </Button>
                     <Button size="sm" variant="outline" onClick={selectAllPrivate}>
-                      Select All Private ({videos.filter(v => v.privacyStatus === 'private').length})
+                      בחר כל הפרטיים ({videos.filter(v => v.privacyStatus === 'private').length})
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setSelectedVideos([])}>
-                      Clear Selection
+                      נקה בחירה
                     </Button>
                   </div>
                 )}
@@ -459,7 +437,7 @@ export default function YouTubePage() {
             {loading && (
               <div className="text-center py-8">
                 <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p>Loading videos...</p>
+                <p>טוען סרטונים...</p>
               </div>
             )}
 
@@ -479,12 +457,15 @@ export default function YouTubePage() {
                           src={video.thumbnailUrl} 
                           alt={video.title}
                           className="w-full h-32 object-cover rounded"
+                          onError={(e) => {
+                            e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 300 180"><rect width="300" height="180" fill="%23ddd"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999">תמונה</text></svg>';
+                          }}
                         />
                         <div className="absolute top-2 right-2">
                           <Badge 
                             variant={video.privacyStatus === 'public' ? 'default' : 'secondary'}
                           >
-                            {video.privacyStatus}
+                            {video.privacyStatus === 'public' ? 'ציבורי' : 'פרטי'}
                           </Badge>
                         </div>
                         {selectedVideos.includes(video.id) && (
@@ -501,9 +482,9 @@ export default function YouTubePage() {
                       </h3>
                       
                       <div className="text-xs text-gray-500 space-y-1">
-                        <p>Published: {formatDate(video.publishedAt)}</p>
+                        <p>פורסם: {formatDate(video.publishedAt)}</p>
                         {video.viewCount && (
-                          <p>Views: {parseInt(video.viewCount).toLocaleString()}</p>
+                          <p>צפיות: {parseInt(video.viewCount).toLocaleString()}</p>
                         )}
                       </div>
                     </CardContent>
@@ -516,7 +497,7 @@ export default function YouTubePage() {
               <Card>
                 <CardContent className="text-center py-8">
                   <Youtube className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No videos found on your channel</p>
+                  <p className="text-gray-600">לא נמצאו סרטונים בערוץ</p>
                 </CardContent>
               </Card>
             )}
