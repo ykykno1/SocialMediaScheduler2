@@ -21,8 +21,10 @@ const YouTubeVideos = () => {
     showVideo, 
     hideAllVideos, 
     restoreAllVideos, 
+    disconnect,
     isHiding, 
     isRestoring,
+    isDisconnecting,
     refetch
   } = useYouTubeVideos();
   
@@ -176,6 +178,17 @@ const YouTubeVideos = () => {
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               רענן
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (window.confirm("האם אתה בטוח שברצונך להתנתק מיוטיוב? זה יסיר את החיבור שלך לחשבון.")) {
+                  disconnect();
+                }
+              }}
+              disabled={isDisconnecting}
+            >
+              {isDisconnecting ? "מתנתק..." : "התנתק מיוטיוב"}
             </Button>
           </div>
         </div>

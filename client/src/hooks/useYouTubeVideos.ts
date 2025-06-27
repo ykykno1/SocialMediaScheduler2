@@ -164,6 +164,46 @@ export default function useYouTubeVideos() {
     restoreAllMutation.mutate();
   };
 
+  // Disconnect from YouTube
+  const disconnectMutation = useMutation({
+    mutationFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/youtube/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'שגיאה בהתנתקות מיוטיוב');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "התנתקת מיוטיוב בהצלחה",
+        description: "החיבור ליוטיוב הוסר",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/youtube/videos'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/youtube/auth-status'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "שגיאה בהתנתקות מיוטיוב",
+        description: error instanceof Error ? error.message : 'שגיאה לא ידועה',
+        variant: "destructive",
+      });
+    }
+  });
+
+  const disconnect = () => {
+    disconnectMutation.mutate();
+  };
+
   return {
     videos,
     isLoading,
@@ -172,8 +212,10 @@ export default function useYouTubeVideos() {
     showVideo,
     hideAllVideos,
     restoreAllVideos,
+    disconnect,
     isHiding: hideVideoMutation.isPending || hideAllMutation.isPending,
     isRestoring: showVideoMutation.isPending || restoreAllMutation.isPending,
+    isDisconnecting: disconnectMutation.isPending,
     refetch
   };
 }

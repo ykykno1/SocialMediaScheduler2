@@ -334,6 +334,32 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: "Internal server error" });
     }
   });
+
+  // YouTube disconnect endpoint
+  app.post("/api/youtube/disconnect", requireAuth, async (req: any, res) => {
+    try {
+      console.log('Disconnecting YouTube for user:', req.user.id);
+      
+      // Remove YouTube token from storage
+      const removed = await storage.removeAuthToken('youtube', req.user.id);
+      
+      if (removed) {
+        console.log('YouTube token removed successfully for user:', req.user.id);
+        res.json({ 
+          success: true, 
+          message: "התנתקת מיוטיוב בהצלחה" 
+        });
+      } else {
+        console.log('No YouTube token found to remove for user:', req.user.id);
+        res.status(404).json({ 
+          error: "לא נמצא חיבור יוטיוב להסרה" 
+        });
+      }
+    } catch (error) {
+      console.error("YouTube disconnect error:", error);
+      res.status(500).json({ error: "שגיאה בהתנתקות מיוטיוב" });
+    }
+  });
   
   // Authentication routes
   app.post("/api/register", async (req, res) => {
