@@ -84,16 +84,13 @@ export class DatabaseStorage implements IStorage {
                 );
               }
             } catch (legacyError) {
-              console.warn('Failed to decrypt with both methods, using legacy tokens:', legacyError);
-              // Fallback to legacy tokens if decryption fails
-              accessToken = encryptedToken.legacyAccessToken || '';
-              refreshToken = encryptedToken.legacyRefreshToken || undefined;
+              console.warn('Failed to decrypt token, may need re-authentication:', legacyError);
+              return null; // Force re-authentication instead of using legacy tokens
             }
           }
         } else {
-          // Use legacy tokens if no encrypted version exists yet
-          accessToken = encryptedToken.legacyAccessToken || '';
-          refreshToken = encryptedToken.legacyRefreshToken || undefined;
+          console.warn('No encrypted token found, may need re-authentication');
+          return null; // Force re-authentication instead of using legacy tokens
         }
         
         if (accessToken) {
@@ -148,8 +145,8 @@ export class DatabaseStorage implements IStorage {
         encryptionKeyVersion: 1,
         createdAt: new Date(),
         lastUsed: new Date(),
-        legacyAccessToken: token.accessToken, // Keep for fallback during migration
-        legacyRefreshToken: token.refreshToken || null,
+        legacyAccessToken: null, // No longer using legacy tokens
+        legacyRefreshToken: null,
         migrationStatus: 'migrated'
       });
 
