@@ -241,6 +241,52 @@ export default function YouTubePage() {
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+    
+    checkConnection();
+    
+    // Listen for OAuth callback messages
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.platform === 'youtube' && event.data.code) {
+        console.log('Received YouTube auth code:', event.data.code);
+        setLoading(true);
+        
+        try {
+          const token = localStorage.getItem('auth_token');
+          const response = await fetch('/api/auth-callback', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              code: event.data.code,
+              platform: 'youtube'
+            })
+          });
+          
+          if (response.ok) {
+            toast({
+              title: "הצלחה!",
+              description: "התחברת בהצלחה ל-YouTube",
+            });
+            checkConnection();
+          } else {
+            const error = await response.json();
+            setError(`שגיאה בחיבור ל-YouTube: ${error.error || 'שגיאה לא ידועה'}`);
+          }
+        } catch (error) {
+          console.error('Error processing YouTube auth:', error);
+          setError('שגיאה בעיבוד האימות');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   return (

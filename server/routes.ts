@@ -634,10 +634,12 @@ export function registerRoutes(app: Express): Server {
         
         // Save YouTube token
         const authToken: AuthToken = {
+          platform: 'youtube',
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token || '',
           expiresIn: tokens.expires_in,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          userId: req.userId
         };
 
         await storage.saveAuthToken(authToken, req.userId);
