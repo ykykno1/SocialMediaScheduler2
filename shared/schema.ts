@@ -317,7 +317,7 @@ export const encryptedAuthTokens = pgTable("encrypted_auth_tokens", {
 
 export const historyEntries = pgTable("history_entries", {
   id: varchar("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
   timestamp: timestamp("timestamp").defaultNow(),
   action: varchar("action").$type<'hide' | 'restore'>().notNull(),
   platform: varchar("platform").$type<SupportedPlatform>().notNull(),
@@ -328,7 +328,7 @@ export const historyEntries = pgTable("history_entries", {
 
 export const videoStatuses = pgTable("video_statuses", {
   id: varchar("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
   videoId: varchar("video_id").notNull(),
   originalStatus: varchar("original_status").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -336,7 +336,7 @@ export const videoStatuses = pgTable("video_statuses", {
 
 export const videoLockStatuses = pgTable("video_lock_statuses", {
   id: varchar("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
   videoId: varchar("video_id").notNull(),
   platform: varchar("platform").$type<SupportedPlatform>().notNull().default('youtube'),
   isLocked: boolean("is_locked").notNull().default(false),

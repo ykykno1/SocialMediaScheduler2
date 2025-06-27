@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 27, 2025. Completed auth token migration to encrypted_auth_tokens table:
+  - Successfully migrated getAuthToken, saveAuthToken, removeAuthToken to encrypted table
+  - Added fallback mechanism to legacy auth_tokens table during transition
+  - All 4 existing tokens migrated to encrypted table with legacy access tokens
+  - Facebook auth functions automatically use new encrypted token system
+  - Video lock status and original status functions already using secure tables
+  - System remains fully functional with enhanced security foundation
 - June 27, 2025. Migrated core user management functions to secure_users table:
   - Successfully migrated getUserById, getUserByEmail, getAllUsers to read from secure_users
   - Successfully migrated updateUser, upgradeUser, deleteUser to write to secure_users  
