@@ -1,9 +1,9 @@
 /**
- * Simplified token encryption module for auth tokens
+ * Simple and reliable token encryption for auth tokens
  */
 import crypto from 'crypto';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-32-chars!!';
+const ENCRYPTION_KEY = 'shabbat-robot-secure-key-32-ch!!';
 const ALGORITHM = 'aes-256-cbc';
 
 export class TokenEncryption {
@@ -11,8 +11,8 @@ export class TokenEncryption {
   private encryptionKey: Buffer;
 
   constructor() {
-    // Ensure we have a 32-byte key for AES-256
-    this.encryptionKey = Buffer.from(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32));
+    // Fixed 32-byte key for consistency
+    this.encryptionKey = Buffer.from(ENCRYPTION_KEY, 'utf8');
   }
 
   static getInstance(): TokenEncryption {
@@ -26,16 +26,16 @@ export class TokenEncryption {
    * Encrypt a token string
    */
   encrypt(token: string): { encrypted: string; authTag: string; iv: string } {
-    const iv = crypto.randomBytes(16); // 128-bit IV for AES-256-CBC
-    const cipher = crypto.createCipheriv('aes-256-cbc', this.encryptionKey, iv);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(ALGORITHM, this.encryptionKey, iv);
     
     let encrypted = cipher.update(token, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     
-    // Create HMAC for integrity
-    const hmac = crypto.createHmac('sha256', this.encryptionKey);
-    hmac.update(encrypted + iv.toString('hex'));
-    const authTag = hmac.digest('hex');
+    // Simple hash for integrity check
+    const hash = crypto.createHash('sha256');
+    hash.update(encrypted + iv.toString('hex') + ENCRYPTION_KEY);
+    const authTag = hash.digest('hex');
     
     return {
       encrypted,
@@ -48,26 +48,25 @@ export class TokenEncryption {
    * Decrypt a token string
    */
   decrypt(encryptedData: { encrypted: string; authTag: string; iv: string }): string {
-    // Verify HMAC first
-    const hmac = crypto.createHmac('sha256', this.encryptionKey);
-    hmac.update(encryptedData.encrypted + encryptedData.iv);
-    const expectedAuthTag = hmac.digest('hex');
+    // Verify integrity
+    const hash = crypto.createHash('sha256');
+    hash.update(encryptedData.encrypted + encryptedData.iv + ENCRYPTION_KEY);
+    const expectedAuthTag = hash.digest('hex');
     
     if (expectedAuthTag !== encryptedData.authTag) {
-      throw new Error('Authentication failed - token may be tampered');
+      throw new Error('Token integrity check failed');
     }
     
     try {
       const iv = Buffer.from(encryptedData.iv, 'hex');
-      const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, iv);
+      const decipher = crypto.createDecipheriv(ALGORITHM, this.encryptionKey, iv);
       
       let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
       
       return decrypted;
     } catch (error) {
-      console.warn('CBC decryption failed, token may be corrupted:', error);
-      throw new Error('Token decryption failed - may need re-authentication');
+      throw new Error('Token decryption failed - invalid token');
     }
   }
 
