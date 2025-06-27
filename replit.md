@@ -126,12 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- June 27, 2025. Completed comprehensive database security migration with EnhancedStorage:
+- June 27, 2025. Completed comprehensive database security migration and cleanup:
   - Successfully implemented real AES-256-GCM encryption for all access tokens
   - Created EnhancedStorage class combining all security improvements with zero downtime
   - Added performance monitoring and automatic status logging
   - Enhanced database structure ready for scaling to thousands of users
-  - System running with 4 users in secure_users, 4 encrypted tokens, 3 legacy fallback tokens
+  - System running with 4 users in secure_users, 4 encrypted tokens, zero legacy tokens
+  - Cleaned up database: removed auth_tokens legacy table, users_v2 empty table
+  - Restored complete city list: 45 active cities in shabbat_locations table
   - All authentication, Facebook integration, YouTube auth, and admin panel fully functional
 - June 27, 2025. Completed auth token migration to encrypted_auth_tokens table:
   - Successfully migrated getAuthToken, saveAuthToken, removeAuthToken to encrypted table
