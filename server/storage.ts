@@ -30,14 +30,14 @@ export interface IStorage {
   saveSettings(settings: Settings): Settings;
 
   // Generic auth token operations
-  getAuthToken(platform: SupportedPlatform, userId: string): AuthToken | null;
-  saveAuthToken(token: AuthToken, userId: string): AuthToken;
-  removeAuthToken(platform: SupportedPlatform, userId: string): void;
+  getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null>;
+  saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken>;
+  removeAuthToken(platform: SupportedPlatform, userId: string): Promise<void>;
 
   // Legacy Facebook-specific auth (kept for backward compatibility)
-  getFacebookAuth(userId?: string): FacebookAuth | null;
-  saveFacebookAuth(token: FacebookAuth, userId?: string): FacebookAuth;
-  removeFacebookAuth(userId?: string): void;
+  getFacebookAuth(userId?: string): Promise<FacebookAuth | null>;
+  saveFacebookAuth(token: FacebookAuth, userId?: string): Promise<FacebookAuth>;
+  removeFacebookAuth(userId?: string): Promise<void>;
 
   // History operations
   getHistoryEntries(platform?: SupportedPlatform): HistoryEntry[];
@@ -63,24 +63,24 @@ export interface IStorage {
   clearPrivacyStatuses(platform: SupportedPlatform): void;
 
   // Video original status operations (for Shabbat restore)
-  saveVideoOriginalStatus(videoId: string, originalStatus: string, userId: string): void;
-  getVideoOriginalStatus(videoId: string, userId: string): string | null;
-  clearVideoOriginalStatus(videoId: string, userId: string): void;
-  getAllVideoOriginalStatuses(userId: string): Record<string, string>;
+  saveVideoOriginalStatus(videoId: string, originalStatus: string, userId: string): Promise<void>;
+  getVideoOriginalStatus(videoId: string, userId: string): Promise<string | null>;
+  clearVideoOriginalStatus(videoId: string, userId: string): Promise<void>;
+  getAllVideoOriginalStatuses(userId: string): Promise<Record<string, string>>;
 
   // User operations
-  createUser(userData: RegisterData): User;
-  getUserByEmail(email: string): User | null;
-  getUser(id: string): User | null;
-  getUserById(id: string): User | null;
-  updateUser(id: string, updates: Partial<User>): User;
+  createUser(userData: RegisterData): Promise<User>;
+  getUserByEmail(email: string): Promise<User | null>;
+  getUser(id: string): Promise<User | null>;
+  getUserById(id: string): Promise<User | null>;
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
   updateUserShabbatLocation(id: string, cityName: string, cityId: string): User;
-  verifyPassword(email: string, password: string): User | null;
+  verifyPassword(email: string, password: string): Promise<User | null>;
 
   // Admin operations
   getAllUsers(): Promise<User[]>;
-  upgradeUser(userId: string, accountType: string): boolean;
-  deleteUser(userId: string): boolean;
+  upgradeUser(userId: string, accountType: string): Promise<boolean>;
+  deleteUser(userId: string): Promise<boolean>;
 
   // Payment tracking operations
   addPayment(payment: { userId: string; amount: number; type: 'youtube_pro' | 'premium'; method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer'; description?: string; }): void;
@@ -175,7 +175,7 @@ export class MemStorage implements IStorage {
   }
 
   // Generic auth token operations (user-specific)
-  getAuthToken(platform: SupportedPlatform, userId?: string): AuthToken | null {
+  async getAuthToken(platform: SupportedPlatform, userId?: string): Promise<AuthToken | null> {
     if (!userId) return null;
     const userTokens = this.userAuthTokens.get(userId);
     return userTokens?.[platform] || null;

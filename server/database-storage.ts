@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, secureUsers as secureUsersTable, authTokens, encryptedAuthTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
+import { users, secureUsers as secureUsersTable, encryptedAuthTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
@@ -166,9 +166,7 @@ export class DatabaseStorage implements IStorage {
       await db.delete(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
         
-      // Remove from legacy tokens table as well
-      await db.delete(authTokens)
-        .where(and(eq(authTokens.platform, platform), eq(authTokens.userId, userId)));
+      // Legacy table no longer exists - only use encrypted tokens
     } catch (error) {
       console.error('Error removing auth token:', error);
     }
