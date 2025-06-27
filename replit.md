@@ -126,6 +126,16 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 27, 2025. LESSON LEARNED: שגיאה בניסיון להוסיף כפתור ניתוק:
+  - הבעיה: בעת הוספת כפתור ניתוק לדף youtube-clean.tsx, הקוד נשבר כליל
+  - השגיאה: ניסיון להוסיף יותר מדי פונקציות בבת אחת גרם לקריסת הממשק
+  - הלקח: כפתור ניתוק צריך להיות הוספה פשוטה ומדויקת ללא שינוי הארכיטקטורה הקיימת
+  - הפתרון הנכון: להוסיף רק כפתור ניתוק יחיד ולא לשנות את שאר הפונקציונליות
+  - הקוד שעבד: youtube-clean.tsx עם כל הסרטונים מוצגים, כפתורי הסתר/הצג פועלים
+  - מה שהתקלקל: ניסיון להוסיף בבת אחת: בחירת סרטונים, פעולות קבוצתיות, נעילת סרטונים
+  - מצב נוכחי: הקוד שוחזר לגרסה עובדת עם כפתור ניתוק מיוטיוב פועל
+  - כלל זהב: שינוי קטן אחד בכל פעם, בדיקה שהכל עובד, רק אז להמשיך
+
 - June 27, 2025. COMPLETED: YouTube integration fully restored with complete UI:
   - Fixed YouTube OAuth connection and token saving (userId issue resolved)
   - Fixed video list display - all videos now show with thumbnails and metadata
