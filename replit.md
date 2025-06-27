@@ -126,6 +126,15 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 27, 2025. Completed database security and performance migration:
+  - Enhanced database structure with improved security foundations
+  - Added encrypted_auth_tokens table with token hashing for security
+  - Created shabbat_locations table with standardized location data (5 cities)
+  - Added performance indexes on auth_tokens, history_entries, and video_statuses
+  - Implemented EnhancedStorage with backward compatibility (zero downtime)
+  - Added migration audit trail and safe_users view
+  - All 4 existing users and tokens migrated successfully
+  - System ready for scaling to thousands of users with secure architecture
 - June 27, 2025. Completed comprehensive code cleanup:
   - Removed 55+ unnecessary files including duplicates and unused assets
   - Organized project structure: moved research files to docs/research/ and testing files to docs/testing/
