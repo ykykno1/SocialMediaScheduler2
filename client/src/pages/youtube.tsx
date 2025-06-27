@@ -284,10 +284,10 @@ export default function YouTubePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
             <Youtube className="h-8 w-8 text-red-500" />
-            YouTube Management
+            ניהול YouTube
           </h1>
           <p className="text-gray-600">
-            Connect your YouTube channel to manage video visibility during Shabbat
+            התחבר לערוץ YouTube שלך כדי לנהל נראות סרטונים במהלך השבת
           </p>
         </div>
 
@@ -328,7 +328,7 @@ export default function YouTubePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Youtube className="h-5 w-5 text-red-500" />
-                Connect YouTube Channel
+                התחבר לערוץ YouTube
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -454,7 +454,7 @@ export default function YouTubePage() {
                     <CardContent className="p-4">
                       <div className="relative mb-3">
                         <img 
-                          src={video.thumbnailUrl} 
+                          src={video.thumbnail || video.thumbnailUrl} 
                           alt={video.title}
                           className="w-full h-32 object-cover rounded"
                           onError={(e) => {
