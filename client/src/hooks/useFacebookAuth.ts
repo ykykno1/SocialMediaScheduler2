@@ -80,6 +80,8 @@ export default function useFacebookAuth() {
   // Function to initiate Facebook login
   const login = useCallback(async () => {
     try {
+      console.log('Starting Facebook login');
+      
       // Get Facebook app configuration from server
       const configRes = await fetch('/api/facebook-config');
       
@@ -88,6 +90,7 @@ export default function useFacebookAuth() {
       }
       
       const { appId, redirectUri } = await configRes.json();
+      console.log('Facebook config received:', { appId, redirectUri });
       
       // בקשת הרשאות תקפות בלבד
       // שימוש רק בהרשאות שנתמכות בגרסה 22.0 של Facebook API
@@ -97,6 +100,8 @@ export default function useFacebookAuth() {
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `state=facebook&` +
         `scope=public_profile,email,user_posts`;
+      
+      console.log('Facebook auth URL:', authUrl);
       
       // Open popup window
       const width = 600;
@@ -114,8 +119,20 @@ export default function useFacebookAuth() {
         throw new Error('נחסם חלון קופץ. אנא אפשר חלונות קופצים ונסה שוב');
       }
       
+      console.log('Facebook popup opened');
       setPopupWindow(popup);
+      
+      // Add polling to check if popup is closed manually
+      const pollTimer = setInterval(() => {
+        if (popup.closed) {
+          console.log('Facebook popup was closed manually');
+          setPopupWindow(null);
+          clearInterval(pollTimer);
+        }
+      }, 1000);
+      
     } catch (error) {
+      console.error('Facebook login error:', error);
       toast({
         title: 'שגיאת התחברות',
         description: error instanceof Error ? error.message : 'אירעה שגיאה בהתחברות לפייסבוק',
@@ -127,11 +144,19 @@ export default function useFacebookAuth() {
   // Handle message from popup
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      console.log('Received message from popup:', event.data);
+      console.log('Event origin:', event.origin);
+      console.log('Window origin:', window.location.origin);
+      
       // Verify origin
-      if (event.origin !== window.location.origin) return;
+      if (event.origin !== window.location.origin) {
+        console.log('Origin mismatch, ignoring message');
+        return;
+      }
       
       // Handle successful auth with code
       if (event.data.code && event.data.platform === 'facebook') {
+        console.log('Facebook auth code received, exchanging for token');
         // Exchange code for token on the server
         exchangeCodeMutation.mutate({
           code: event.data.code,

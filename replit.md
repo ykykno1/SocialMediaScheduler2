@@ -129,8 +129,10 @@ The application follows Jewish religious principles by automatically hiding soci
 - June 27, 2025. COMPLETED: Fixed Facebook double authentication issue completely:
   - Root cause: saveFacebookAuth wasn't using unified encrypted token system
   - Fixed by ensuring saveFacebookAuth calls saveAuthToken for proper encryption storage
+  - Added comprehensive logging to track popup message flow
   - Added token verification loop to confirm accessibility after save
   - Facebook now connects on first attempt, displays 3 posts immediately
+  - Verified working: popup messages received, token saved, posts loaded instantly
   - Unified all platform tokens under encrypted_auth_tokens table with proper verification
 - June 27, 2025. ADDED: YouTube automatic refresh after connection:
   - Added checkConnectionStatus() call after successful YouTube authentication
