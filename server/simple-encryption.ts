@@ -3,14 +3,16 @@
  */
 import crypto from 'crypto';
 
-const SECRET_KEY = 'shabbat-robot-youtube-encrypt-key-32!!';
+const SECRET_KEY = 'shabbat-robot-youtube-encrypt-key32';
 
 export class SimpleTokenEncryption {
   private static instance: SimpleTokenEncryption;
   private key: Buffer;
 
   constructor() {
-    this.key = Buffer.from(SECRET_KEY, 'utf8');
+    // Ensure exactly 32 bytes for AES-256
+    const keyString = SECRET_KEY.padEnd(32, '0').slice(0, 32);
+    this.key = Buffer.from(keyString, 'utf8');
   }
 
   static getInstance(): SimpleTokenEncryption {
