@@ -353,6 +353,16 @@ export default function YouTubePage() {
                     רענן רשימת סרטונים
                   </Button>
                   
+                  <Button 
+                    onClick={disconnectYouTube}
+                    disabled={loading}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    <Unlink className="h-4 w-4 mr-2" />
+                    התנתק מיוטיוב
+                  </Button>
+                  
                   {selectedVideos.length > 0 && (
                     <>
                       <Button 
