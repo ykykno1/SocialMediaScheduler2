@@ -71,7 +71,8 @@ export default function YouTubePage() {
       
       if (response.ok) {
         const { authUrl } = await response.json();
-        window.location.href = authUrl;
+        console.log('Opening YouTube auth URL:', authUrl);
+        window.open(authUrl, '_self');
       } else {
         const error = await response.json();
         setError('שגיאה בהתחברות ל-YouTube: יש צורך בהגדרת Google OAuth');
