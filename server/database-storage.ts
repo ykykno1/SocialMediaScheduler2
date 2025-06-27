@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, secureUsers, authTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
+import { users, secureUsers as secureUsersTable, authTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
@@ -282,8 +282,26 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | null> {
     try {
-      const [user] = await db.select().from(users).where(eq(users.email, email));
-      return user || null;
+      const [secureUser] = await db.select().from(secureUsersTable).where(eq(secureUsersTable.email, email));
+      
+      if (!secureUser) {
+        return null;
+      }
+
+      // Map secure user fields to legacy User format
+      const user = {
+        id: secureUser.id,
+        email: secureUser.email,
+        username: secureUser.username,
+        password: secureUser.passwordHash, // Map password_hash to password
+        accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
+        shabbatCity: null,
+        shabbatCityId: null,
+        createdAt: secureUser.createdAt,
+        updatedAt: secureUser.updatedAt
+      };
+      
+      return user;
     } catch (error) {
       console.error('Error getting user by email:', error);
       return null;
@@ -296,7 +314,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUserById(id: string): Promise<User | null> {
     try {
-      const [secureUser] = await db.select().from(secureUsers).where(eq(secureUsers.id, id));
+      const [secureUser] = await db.select().from(secureUsersTable).where(eq(secureUsersTable.id, id));
       
       if (!secureUser) {
         return null;
@@ -352,7 +370,20 @@ export class DatabaseStorage implements IStorage {
   // Admin operations
   async getAllUsers(): Promise<User[]> {
     try {
-      return await db.select().from(users);
+      const secureUserList = await db.select().from(secureUsersTable);
+      
+      // Map all secure users to legacy User format
+      return secureUserList.map(secureUser => ({
+        id: secureUser.id,
+        email: secureUser.email,
+        username: secureUser.username,
+        password: secureUser.passwordHash, // Map password_hash to password
+        accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
+        shabbatCity: null,
+        shabbatCityId: null,
+        createdAt: secureUser.createdAt,
+        updatedAt: secureUser.updatedAt
+      }));
     } catch (error) {
       console.error('Error getting all users:', error);
       return [];
