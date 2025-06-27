@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- June 27, 2025. Migrated core user management functions to secure_users table:
+  - Successfully migrated getUserById, getUserByEmail, getAllUsers to read from secure_users
+  - Successfully migrated updateUser, upgradeUser, deleteUser to write to secure_users  
+  - All functions maintain backward compatibility with legacy User format
+  - Zero downtime migration preserving all existing functionality
+  - System authentication and admin panel working with new secure database structure
 - June 27, 2025. Completed database security and performance migration:
   - Enhanced database structure with improved security foundations
   - Added encrypted_auth_tokens table with token hashing for security
