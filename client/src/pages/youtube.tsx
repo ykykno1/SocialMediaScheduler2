@@ -134,7 +134,8 @@ export default function YouTubePage() {
       
       if (response.ok) {
         const videosData = await response.json();
-        setVideos(videosData);
+        console.log('Received videos data:', videosData);
+        setVideos(videosData.videos || videosData);
       } else {
         const error = await response.json();
         setError(error.error || 'Failed to load videos');
