@@ -20,6 +20,8 @@ interface UserShabbatSchedule {
   restoreTime: Date; // At Shabbat exit
 }
 
+import { hideAll, restoreAll } from "./simple-scheduler";
+
 export class ShabbatScheduler {
   private static instance: ShabbatScheduler;
   private cronJobs: Map<string, CronJob> = new Map();
@@ -220,7 +222,8 @@ export class ShabbatScheduler {
     const cronPattern = this.dateToCronPattern(hideTime);
 
     const hideJob = new CronJob(cronPattern, async () => {
-      await this.executeHideOperation(userId);
+      console.log("🕯️ SHABBAT SCHEDULER: Time to hide content for user", userId);
+hideAll(userId);
     }, null, true, 'Asia/Jerusalem');
 
     this.cronJobs.set(jobId, hideJob);
@@ -243,7 +246,8 @@ export class ShabbatScheduler {
     const cronPattern = this.dateToCronPattern(restoreTime);
 
     const restoreJob = new CronJob(cronPattern, async () => {
-      await this.executeRestoreOperation(userId);
+      console.log("✨ SHABBAT SCHEDULER: Time to restore content for user", userId);
+restoreAll(userId);
     }, null, true, 'Asia/Jerusalem');
 
     this.cronJobs.set(jobId, restoreJob);
@@ -283,10 +287,12 @@ export class ShabbatScheduler {
       // Immediate check if we're currently in Shabbat time
       if (now >= entryTime && now <= exitTime) {
         console.log(`Current time is during admin Shabbat - HIDING content immediately for user ${userId}`);
-        await this.executeHideOperation(userId);
+        console.log("🕯️ SHABBAT SCHEDULER: Time to hide content for user", userId);
+hideAll(userId);
       } else if (now > exitTime) {
         console.log(`Current time is after admin Shabbat - RESTORING content immediately for user ${userId}`);
-        await this.executeRestoreOperation(userId);
+        console.log("✨ SHABBAT SCHEDULER: Time to restore content for user", userId);
+restoreAll(userId);
       }
 
       // Schedule future operations
@@ -689,58 +695,3 @@ export class ShabbatScheduler {
 }
 
 export default ShabbatScheduler;
-
-
-
-// Example injection into schedule function:
-
-
-
-// 🔁 פונקציה שמחזירה זמני שבת לפי מזהה עיר של המשתמש
-import { db } from './db';
-import { adminSettings, secureUsers } from '../shared/schema';
-import { eq } from 'drizzle-orm';
-
-interface ShabbatTimes {
-  entryTime: Date;
-  exitTime: Date;
-  cityName: string;
-  cityId: string;
-}
-
-
-import { adminSettings } from '../shared/schema';
-
-async function getShabbatTimesForUser(userId: string): Promise<ShabbatTimes | null> {
-  const [user] = await db.select().from(secureUsers).where(eq(secureUsers.id, userId));
-  if (!user) return null;
-
-  if (user.shabbatCityId === 'admin' || user.shabbatCityId === 'manual') {
-    const entrySetting = await db
-      .select()
-      .from(adminSettings)
-      .where(eq(adminSettings.settingKey, 'manual_shabbat_entry'))
-      .then(results => results.find(r => r.userId === userId));
-
-    const exitSetting = await db
-      .select()
-      .from(adminSettings)
-      .where(eq(adminSettings.settingKey, 'manual_shabbat_exit'))
-      .then(results => results.find(r => r.userId === userId));
-
-    if (entrySetting && exitSetting) {
-      return {
-        entryTime: new Date(entrySetting.settingValue),
-        exitTime: new Date(exitSetting.settingValue),
-        cityName: 'הגדרה ידנית',
-        cityId: 'admin'
-      };
-    } else {
-      console.warn(`⚠️ Missing manual shabbat times for user ${userId}`);
-      return null;
-    }
-  }
-
-  console.warn(`⚠️ fetchChabadTimes() not implemented. Would fetch for cityId: ${user.shabbatCityId}`);
-  return null;
-}
