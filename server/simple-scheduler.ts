@@ -251,36 +251,273 @@ export class SimpleShabbatScheduler {
    * Execute hide operation for a user - public method for manual triggering
    */
   async executeHideOperation(userId: string): Promise<void> {
-    console.log(`🕐 SHABBAT SCHEDULER: Manual hide operation for user ${userId}`);
-    console.log(`Please use the 'Hide All' buttons manually for Facebook and YouTube`);
+    console.log(`🕐 SHABBAT SCHEDULER: Executing automatic hide operation for user ${userId}`);
     
-    // Add notification to history
+    let totalHidden = 0;
+    
+    // Hide YouTube videos using existing API routes
+    try {
+      const hiddenYouTube = await this.hideAllYouTubeVideos(userId);
+      totalHidden += hiddenYouTube;
+      console.log(`Hidden ${hiddenYouTube} YouTube videos for user ${userId}`);
+    } catch (error) {
+      console.error(`Error hiding YouTube videos for user ${userId}:`, error);
+    }
+    
+    // Hide Facebook posts using existing API routes
+    try {
+      const hiddenFacebook = await this.hideAllFacebookPosts(userId);
+      totalHidden += hiddenFacebook;
+      console.log(`Hidden ${hiddenFacebook} Facebook posts for user ${userId}`);
+    } catch (error) {
+      console.error(`Error hiding Facebook posts for user ${userId}:`, error);
+    }
+    
+    // Add to history
     storage.addHistoryEntry({
       platform: 'facebook' as any,
       action: 'hide',
       timestamp: new Date(),
       success: true,
-      affectedItems: 0,
-      error: `Manual hide operation triggered - use UI buttons`
+      affectedItems: totalHidden,
+      error: totalHidden === 0 ? 'No content found to hide' : undefined
     });
+    
+    console.log(`🕐 SHABBAT SCHEDULER: Hide operation completed for user ${userId}. Total items hidden: ${totalHidden}`);
   }
 
   /**
    * Execute restore operation for a user - public method for manual triggering
    */
   async executeRestoreOperation(userId: string): Promise<void> {
-    console.log(`🕐 SHABBAT SCHEDULER: Manual restore operation for user ${userId}`);
-    console.log(`Please use the 'Show All' buttons manually for Facebook and YouTube`);
+    console.log(`🕐 SHABBAT SCHEDULER: Executing automatic restore operation for user ${userId}`);
     
-    // Add notification to history
+    let totalRestored = 0;
+    
+    // Restore YouTube videos using existing logic
+    try {
+      const restoredYouTube = await this.restoreAllYouTubeVideos(userId);
+      totalRestored += restoredYouTube;
+      console.log(`Restored ${restoredYouTube} YouTube videos for user ${userId}`);
+    } catch (error) {
+      console.error(`Error restoring YouTube videos for user ${userId}:`, error);
+    }
+    
+    // Restore Facebook posts using existing logic
+    try {
+      const restoredFacebook = await this.restoreAllFacebookPosts(userId);
+      totalRestored += restoredFacebook;
+      console.log(`Restored ${restoredFacebook} Facebook posts for user ${userId}`);
+    } catch (error) {
+      console.error(`Error restoring Facebook posts for user ${userId}:`, error);
+    }
+    
+    // Add to history
     storage.addHistoryEntry({
       platform: 'facebook' as any,
       action: 'restore',
       timestamp: new Date(),
       success: true,
-      affectedItems: 0,
-      error: `Manual restore operation triggered - use UI buttons`
+      affectedItems: totalRestored,
+      error: totalRestored === 0 ? 'No content found to restore' : undefined
     });
+    
+    console.log(`🕐 SHABBAT SCHEDULER: Restore operation completed for user ${userId}. Total items restored: ${totalRestored}`);
+  }
+
+  /**
+   * Hide all YouTube videos for a user using existing API logic
+   */
+  private async hideAllYouTubeVideos(userId: string): Promise<number> {
+    const auth = await storage.getAuthToken('youtube', userId);
+    if (!auth?.accessToken) {
+      return 0;
+    }
+
+    try {
+      // Get user's videos using same logic as existing API
+      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&forMine=true&type=video&maxResults=50&access_token=${auth.accessToken}`);
+      
+      if (!videosResponse.ok) {
+        return 0;
+      }
+
+      const videosData = await videosResponse.json();
+      const videoIds = videosData.items?.map((item: any) => item.id.videoId).join(',') || '';
+      
+      if (!videoIds) {
+        return 0;
+      }
+
+      // Get detailed video info
+      const detailsResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoIds}&access_token=${auth.accessToken}`);
+      
+      if (!detailsResponse.ok) {
+        return 0;
+      }
+
+      const detailsData = await detailsResponse.json();
+      let hiddenCount = 0;
+
+      for (const video of detailsData.items || []) {
+        const videoId = video.id;
+        const currentPrivacyStatus = video.status.privacyStatus;
+        
+        // Only hide public videos
+        if (currentPrivacyStatus === 'public') {
+          // Save original status
+          await storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, userId);
+          
+          // Hide video using existing API logic
+          const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: videoId,
+              status: { privacyStatus: 'private' }
+            })
+          });
+          
+          if (updateResponse.ok) {
+            hiddenCount++;
+          }
+        }
+      }
+      
+      return hiddenCount;
+    } catch (error) {
+      console.error('Error hiding YouTube videos:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Restore all YouTube videos for a user using existing API logic
+   */
+  private async restoreAllYouTubeVideos(userId: string): Promise<number> {
+    const auth = await storage.getAuthToken('youtube', userId);
+    if (!auth?.accessToken) {
+      return 0;
+    }
+
+    try {
+      // Get all original statuses for this user
+      const originalStatuses = await storage.getAllVideoOriginalStatuses(userId);
+      let restoredCount = 0;
+      
+      for (const [videoId, originalStatus] of Object.entries(originalStatuses)) {
+        // Restore video using existing API logic
+        const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: videoId,
+            status: { privacyStatus: originalStatus }
+          })
+        });
+        
+        if (updateResponse.ok) {
+          // Clear the original status record
+          await storage.clearVideoOriginalStatus(videoId, userId);
+          restoredCount++;
+        }
+      }
+      
+      return restoredCount;
+    } catch (error) {
+      console.error('Error restoring YouTube videos:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Hide all Facebook posts for a user using existing API logic
+   */
+  private async hideAllFacebookPosts(userId: string): Promise<number> {
+    const auth = await storage.getFacebookAuth(userId);
+    if (!auth?.accessToken) {
+      return 0;
+    }
+
+    try {
+      // Get user's posts using same logic as existing API
+      const postsResponse = await fetch(`https://graph.facebook.com/v22.0/me/posts?fields=id,privacy&access_token=${auth.accessToken}`);
+      
+      if (!postsResponse.ok) {
+        return 0;
+      }
+
+      const postsData = await postsResponse.json();
+      const posts = postsData.data || [];
+      
+      let hiddenCount = 0;
+      
+      for (const post of posts) {
+        // Only hide public posts
+        if (post.privacy?.value === 'EVERYONE') {
+          // Hide post using existing API logic
+          const updateResponse = await fetch(`https://graph.facebook.com/v22.0/${post.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `privacy={"value":"SELF"}&access_token=${auth.accessToken}`
+          });
+          
+          if (updateResponse.ok) {
+            hiddenCount++;
+          }
+        }
+      }
+      
+      return hiddenCount;
+    } catch (error) {
+      console.error('Error hiding Facebook posts:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Restore all Facebook posts for a user using existing API logic
+   */
+  private async restoreAllFacebookPosts(userId: string): Promise<number> {
+    const auth = await storage.getFacebookAuth(userId);
+    if (!auth?.accessToken) {
+      return 0;
+    }
+
+    try {
+      // Get user's posts using same logic as existing API
+      const postsResponse = await fetch(`https://graph.facebook.com/v22.0/me/posts?fields=id,privacy&access_token=${auth.accessToken}`);
+      
+      if (!postsResponse.ok) {
+        return 0;
+      }
+
+      const postsData = await postsResponse.json();
+      const posts = postsData.data || [];
+      
+      let restoredCount = 0;
+      
+      for (const post of posts) {
+        // Only restore hidden posts
+        if (post.privacy?.value === 'SELF') {
+          // Restore post using existing API logic
+          const updateResponse = await fetch(`https://graph.facebook.com/v22.0/${post.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `privacy={"value":"EVERYONE"}&access_token=${auth.accessToken}`
+          });
+          
+          if (updateResponse.ok) {
+            restoredCount++;
+          }
+        }
+      }
+      
+      return restoredCount;
+    } catch (error) {
+      console.error('Error restoring Facebook posts:', error);
+      return 0;
+    }
   }
 }
 

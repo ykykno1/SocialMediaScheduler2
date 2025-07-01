@@ -126,6 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 1, 2025. COMPLETED: Fully functional automatic Shabbat content management system:
+  - Implemented SimpleShabbatScheduler that actually hides and restores content automatically
+  - Connected scheduler to existing YouTube and Facebook API functions without modifying them
+  - System now automatically hides public YouTube videos and Facebook posts at Shabbat entry time
+  - System automatically restores hidden content at Shabbat exit time
+  - Uses same API logic as manual buttons but triggered automatically by scheduler
+  - Tested and working: scheduler detects premium users, calculates correct times, executes operations
+  - Ready for production use with real automatic content management during Shabbat
 - July 1, 2025. IMPLEMENTED: Automatic Shabbat content management system:
   - Created ShabbatScheduler with CronJob-based timing for premium users
   - Added automatic hiding 1 hour before Shabbat entry per user's location
