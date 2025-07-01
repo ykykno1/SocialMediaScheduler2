@@ -20,6 +20,7 @@ import SettingsPage from "@/pages/settings";
 import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
+import TimingSettingsPage from "@/pages/timing-settings";
 import { Button } from "@/components/ui/button";
 import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -244,6 +245,7 @@ function Router() {
           <Route path="/facebook" component={FacebookPage} />
           <Route path="/instagram" component={InstagramPage} />
           <Route path="/settings" component={SettingsPage} />
+          <Route path="/timing-settings" component={TimingSettingsPage} />
           <Route path="/history" component={History} />
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
           <Route path="/data-deletion" component={DataDeletionPage} />

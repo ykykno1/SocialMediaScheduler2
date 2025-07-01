@@ -2944,6 +2944,40 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Save user timing preferences
+  app.post("/api/user/timing-preferences", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { hideTimingPreference, restoreTimingPreference } = req.body;
+      
+      if (!hideTimingPreference || !restoreTimingPreference) {
+        return res.status(400).json({ error: 'Both timing preferences are required' });
+      }
+
+      // Validate preferences
+      const validHideOptions = ['immediate', '15min', '30min', '1hour'];
+      const validRestoreOptions = ['immediate', '30min', '1hour'];
+      
+      if (!validHideOptions.includes(hideTimingPreference) || !validRestoreOptions.includes(restoreTimingPreference)) {
+        return res.status(400).json({ error: 'Invalid timing preference values' });
+      }
+
+      const updatedUser = await storage.updateUser(req.user.id, {
+        hideTimingPreference,
+        restoreTimingPreference
+      });
+      
+      res.json({
+        success: true,
+        message: 'Timing preferences updated successfully',
+        hideTimingPreference: updatedUser.hideTimingPreference,
+        restoreTimingPreference: updatedUser.restoreTimingPreference
+      });
+    } catch (error) {
+      console.error('Error updating timing preferences:', error);
+      res.status(500).json({ error: 'Failed to update timing preferences' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

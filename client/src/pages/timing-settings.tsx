@@ -44,10 +44,7 @@ export default function TimingSettingsPage() {
   // Save timing preferences
   const savePreferencesMutation = useMutation({
     mutationFn: async (preferences: TimingPreferences) => {
-      return await apiRequest('/api/user/timing-preferences', {
-        method: 'POST',
-        body: JSON.stringify(preferences),
-      });
+      return await apiRequest('/api/user/timing-preferences', 'POST', preferences);
     },
     onSuccess: () => {
       toast({
