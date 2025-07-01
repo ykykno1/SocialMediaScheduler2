@@ -383,7 +383,7 @@ export function UserChabadWidget() {
 
       {/* Chabad Widget Container */}
       <div className="w-full h-48 border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
-        {locationData?.shabbatCityId === 'admin' ? (
+        {(locationData && locationData.shabbatCityId === 'admin') ? (
           <AdminShabbatWidget />
         ) : (
           <iframe
