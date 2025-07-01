@@ -82,6 +82,15 @@ export class EnhancedStorage extends DatabaseStorage {
       return 0;
     }
   }
+
+  // Admin Shabbat times management - inherited from DatabaseStorage
+  async setAdminShabbatTimes(entryTime: Date, exitTime: Date): Promise<void> {
+    return super.setAdminShabbatTimes(entryTime, exitTime);
+  }
+
+  async getAdminShabbatTimes(): Promise<{ entryTime: Date | null; exitTime: Date | null; } | null> {
+    return super.getAdminShabbatTimes();
+  }
 }
 
 export const enhancedStorage = new EnhancedStorage();

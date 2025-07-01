@@ -242,6 +242,7 @@ function Router() {
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
           <Route path="/data-deletion" component={DataDeletionPage} />
           <Route path="/system-admin-secure-access" component={AdminPage} />
+          <Route path="/admin-shabbat-times" component={AdminShabbatPage} />
           <Route component={NotFound} />
         </Switch>
       </main>

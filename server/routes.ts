@@ -2909,6 +2909,41 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Admin endpoint to set custom Shabbat times for testing
+  app.post("/api/admin/set-shabbat-times", async (req, res) => {
+    try {
+      const { entryTime, exitTime } = req.body;
+      
+      if (!entryTime || !exitTime) {
+        return res.status(400).json({ error: 'Entry time and exit time are required' });
+      }
+
+      // Update admin location with custom times
+      await storage.setAdminShabbatTimes(new Date(entryTime), new Date(exitTime));
+      
+      res.json({ 
+        success: true, 
+        message: 'Admin Shabbat times updated successfully',
+        entryTime: new Date(entryTime),
+        exitTime: new Date(exitTime)
+      });
+    } catch (error) {
+      console.error('Error setting admin Shabbat times:', error);
+      res.status(500).json({ error: 'Failed to set Shabbat times' });
+    }
+  });
+
+  // Get admin location Shabbat times
+  app.get("/api/admin/shabbat-times", async (req, res) => {
+    try {
+      const adminTimes = await storage.getAdminShabbatTimes();
+      res.json(adminTimes);
+    } catch (error) {
+      console.error('Error getting admin Shabbat times:', error);
+      res.status(500).json({ error: 'Failed to get Shabbat times' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

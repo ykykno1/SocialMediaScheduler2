@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { users, secureUsers as secureUsersTable, encryptedAuthTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
 import {
@@ -598,6 +598,33 @@ export class DatabaseStorage {
   async getShabbatTimes(latitude: number, longitude: number): Promise<ShabbatTimes | null> {
     // This would use the same Hebcal API implementation as before
     return null;
+  }
+
+  // Admin Shabbat times management for testing
+  async setAdminShabbatTimes(entryTime: Date, exitTime: Date): Promise<void> {
+    await db.execute(sql`
+      UPDATE shabbat_locations 
+      SET manual_entry_time = ${entryTime}, manual_exit_time = ${exitTime}, updated_at = NOW()
+      WHERE id = 'admin'
+    `);
+  }
+
+  async getAdminShabbatTimes(): Promise<{ entryTime: Date | null; exitTime: Date | null; } | null> {
+    const result = await db.execute(sql`
+      SELECT manual_entry_time, manual_exit_time 
+      FROM shabbat_locations 
+      WHERE id = 'admin'
+    `);
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0] as any;
+    return {
+      entryTime: row.manual_entry_time,
+      exitTime: row.manual_exit_time
+    };
   }
 }
 
