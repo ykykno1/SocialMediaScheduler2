@@ -364,7 +364,10 @@ export const shabbatLocations = pgTable("shabbat_locations", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
-export type User = typeof users.$inferSelect;
+export type User = typeof users.$inferSelect & {
+  hideTimingPreference?: 'immediate' | '15min' | '30min' | '1hour';
+  restoreTimingPreference?: 'immediate' | '30min' | '1hour';
+};
 export type InsertUser = typeof users.$inferInsert;
 export type AuthTokenDb = typeof authTokens.$inferSelect;
 export type InsertAuthToken = typeof authTokens.$inferInsert;

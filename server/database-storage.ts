@@ -356,6 +356,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
+        hideTimingPreference: (secureUser as any).hideTimingPreference || '1hour',
+        restoreTimingPreference: (secureUser as any).restoreTimingPreference || 'immediate',
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -388,6 +390,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
+        hideTimingPreference: (secureUser as any).hideTimingPreference || '1hour',
+        restoreTimingPreference: (secureUser as any).restoreTimingPreference || 'immediate',
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -410,6 +414,8 @@ export class DatabaseStorage {
       if (updates.accountType) secureUpdates.accountTier = updates.accountType;
       if (updates.shabbatCity) secureUpdates.shabbatCity = updates.shabbatCity;
       if (updates.shabbatCityId) secureUpdates.shabbatCityId = updates.shabbatCityId;
+      if (updates.hideTimingPreference) secureUpdates.hideTimingPreference = updates.hideTimingPreference;
+      if (updates.restoreTimingPreference) secureUpdates.restoreTimingPreference = updates.restoreTimingPreference;
       secureUpdates.updatedAt = new Date();
 
       const [secureUser] = await db.update(secureUsersTable)
@@ -430,6 +436,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
+        hideTimingPreference: (secureUser as any).hideTimingPreference || '1hour',
+        restoreTimingPreference: (secureUser as any).restoreTimingPreference || 'immediate',
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
