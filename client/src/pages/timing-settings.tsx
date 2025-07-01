@@ -67,6 +67,10 @@ export default function TimingSettingsPage() {
         description: "העדפות התזמון נשמרו בהצלחה",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Also invalidate admin times if it's admin location
+      if (locationData && locationData.shabbatCity === 'מנהל') {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/shabbat-times'] });
+      }
     },
     onError: (error) => {
       console.error('Save error:', error);

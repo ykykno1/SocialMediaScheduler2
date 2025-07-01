@@ -236,9 +236,9 @@ export class ShabbatScheduler {
   }
 
   /**
-   * Execute hide operation for a user
+   * Execute hide operation for a user - public method for manual triggering
    */
-  private async executeHideOperation(userId: string): Promise<void> {
+  async executeHideOperation(userId: string): Promise<void> {
     try {
       console.log(`Executing hide operation for user ${userId}`);
       
@@ -281,9 +281,9 @@ export class ShabbatScheduler {
   }
 
   /**
-   * Execute restore operation for a user
+   * Execute restore operation for a user - public method for manual triggering
    */
-  private async executeRestoreOperation(userId: string): Promise<void> {
+  async executeRestoreOperation(userId: string): Promise<void> {
     try {
       console.log(`Executing restore operation for user ${userId}`);
       
