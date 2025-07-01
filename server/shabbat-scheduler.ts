@@ -20,8 +20,6 @@ interface UserShabbatSchedule {
   restoreTime: Date; // At Shabbat exit
 }
 
-import { hideAll, restoreAll } from "./simple-scheduler";
-
 export class ShabbatScheduler {
   private static instance: ShabbatScheduler;
   private cronJobs: Map<string, CronJob> = new Map();
