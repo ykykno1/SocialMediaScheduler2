@@ -3018,6 +3018,39 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Test endpoints for manual scheduler execution
+  app.post("/api/scheduler/test-hide", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      console.log(`Manual test hide operation for user: ${req.user.id}`);
+      
+      await shabbatScheduler.executeHideOperation(req.user.id);
+      
+      res.json({ 
+        success: true, 
+        message: "Hide operation executed successfully" 
+      });
+    } catch (error) {
+      console.error("Error executing hide operation:", error);
+      res.status(500).json({ error: "Failed to execute hide operation" });
+    }
+  });
+
+  app.post("/api/scheduler/test-restore", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      console.log(`Manual test restore operation for user: ${req.user.id}`);
+      
+      await shabbatScheduler.executeRestoreOperation(req.user.id);
+      
+      res.json({ 
+        success: true, 
+        message: "Restore operation executed successfully" 
+      });
+    } catch (error) {
+      console.error("Error executing restore operation:", error);
+      res.status(500).json({ error: "Failed to execute restore operation" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
