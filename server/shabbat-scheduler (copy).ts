@@ -66,13 +66,13 @@ export class ShabbatScheduler {
    */
   stop(): void {
     console.log('Stopping Shabbat scheduler...');
-
+    
     for (const [jobId, job] of this.cronJobs) {
       job.stop();
       job.destroy();
       console.log(`Stopped job: ${jobId}`);
     }
-
+    
     this.cronJobs.clear();
     this.isRunning = false;
     console.log('Shabbat scheduler stopped');
@@ -84,10 +84,10 @@ export class ShabbatScheduler {
   private async calculateAndScheduleForAllUsers(): Promise<void> {
     try {
       console.log('Calculating Shabbat times for all users...');
-
+      
       const allUsers = await storage.getAllUsers();
       console.log(`Total users in database: ${allUsers.length}`);
-
+      
       const premiumUsers = allUsers.filter(user => 
         user.accountType === 'premium' || user.accountType === 'youtube_pro'
       );
@@ -100,7 +100,7 @@ export class ShabbatScheduler {
           shabbatCity: user.shabbatCity,
           shabbatCityId: user.shabbatCityId
         });
-
+        
         try {
           await this.scheduleForUser(user.id, user.shabbatCity, user.shabbatCityId);
         } catch (error) {
@@ -209,7 +209,7 @@ export class ShabbatScheduler {
    */
   private scheduleHideOperation(userId: string, hideTime: Date): void {
     const now = new Date();
-
+    
     // Only schedule if the time is in the future
     if (hideTime <= now) {
       console.log(`Hide time for user ${userId} is in the past, skipping`);
@@ -218,7 +218,7 @@ export class ShabbatScheduler {
 
     const jobId = `hide-${userId}`;
     const cronPattern = this.dateToCronPattern(hideTime);
-
+    
     const hideJob = new CronJob(cronPattern, async () => {
       await this.executeHideOperation(userId);
     }, null, true, 'Asia/Jerusalem');
@@ -232,7 +232,7 @@ export class ShabbatScheduler {
    */
   private scheduleRestoreOperation(userId: string, restoreTime: Date): void {
     const now = new Date();
-
+    
     // Only schedule if the time is in the future
     if (restoreTime <= now) {
       console.log(`Restore time for user ${userId} is in the past, skipping`);
@@ -241,7 +241,7 @@ export class ShabbatScheduler {
 
     const jobId = `restore-${userId}`;
     const cronPattern = this.dateToCronPattern(restoreTime);
-
+    
     const restoreJob = new CronJob(cronPattern, async () => {
       await this.executeRestoreOperation(userId);
     }, null, true, 'Asia/Jerusalem');
@@ -304,7 +304,7 @@ export class ShabbatScheduler {
   async executeHideOperation(userId: string): Promise<void> {
     try {
       console.log(`Executing hide operation for user ${userId}`);
-
+      
       // Check if user has Facebook connected
       const facebookAuth = await storage.getAuthToken('facebook', userId);
       if (facebookAuth) {
@@ -330,7 +330,7 @@ export class ShabbatScheduler {
       console.log(`Hide operation completed for user ${userId}`);
     } catch (error) {
       console.error(`Error executing hide operation for user ${userId}:`, error);
-
+      
       // Add error to history
       storage.addHistoryEntry({
         platform: 'auto',
@@ -349,7 +349,7 @@ export class ShabbatScheduler {
   async executeRestoreOperation(userId: string): Promise<void> {
     try {
       console.log(`Executing restore operation for user ${userId}`);
-
+      
       // Check if user has Facebook connected
       const facebookAuth = await storage.getAuthToken('facebook', userId);
       if (facebookAuth) {
@@ -375,7 +375,7 @@ export class ShabbatScheduler {
       console.log(`Restore operation completed for user ${userId}`);
     } catch (error) {
       console.error(`Error executing restore operation for user ${userId}:`, error);
-
+      
       // Add error to history
       storage.addHistoryEntry({
         platform: 'auto',
@@ -394,10 +394,10 @@ export class ShabbatScheduler {
   private async hideFacebookPosts(userId: string, accessToken: string): Promise<void> {
     try {
       console.log(`Hiding Facebook posts for user ${userId}`);
-
+      
       // Get Facebook posts using the storage
       const posts = storage.getCachedPosts();
-
+      
       if (posts.length === 0) {
         console.log(`No Facebook posts found for user ${userId}`);
         return;
@@ -414,9 +414,9 @@ export class ShabbatScheduler {
       }
 
       console.log(`Attempting to hide ${postsToHide.length} Facebook posts for user ${userId}`);
-
+      
       let successCount = 0;
-
+      
       // Process each post
       for (const post of postsToHide) {
         try {
@@ -424,7 +424,7 @@ export class ShabbatScheduler {
           const formData = new URLSearchParams();
           formData.append('privacy', '{"value":"ONLY_ME"}');
           formData.append('access_token', accessToken);
-
+          
           const updateResponse = await fetch(updateUrl, { 
             method: 'POST',
             headers: {
@@ -445,7 +445,7 @@ export class ShabbatScheduler {
       }
 
       console.log(`Successfully hid ${successCount} Facebook posts for user ${userId}`);
-
+      
       // Add to history
       storage.addHistoryEntry({
         platform: 'facebook',
@@ -464,7 +464,7 @@ export class ShabbatScheduler {
   private async restoreFacebookPosts(userId: string, accessToken: string): Promise<void> {
     try {
       console.log(`Restoring Facebook posts for user ${userId}`);
-
+      
       // Call the existing show-all endpoint
       const response = await fetch(`http://localhost:5000/api/facebook/show-all`, {
         method: 'POST',
@@ -478,7 +478,7 @@ export class ShabbatScheduler {
       if (response.ok) {
         const data = await response.json();
         console.log(`Successfully restored Facebook posts for user ${userId}:`, data);
-
+        
         // Add to history
         storage.addHistoryEntry({
           platform: 'facebook',
@@ -501,25 +501,25 @@ export class ShabbatScheduler {
   private async hideYouTubePosts(userId: string, accessToken: string): Promise<void> {
     try {
       console.log(`Hiding YouTube videos for user ${userId}`);
-
+      
       // Get all user's videos from YouTube API
       let allVideos: any[] = [];
       let nextPageToken = '';
-
+      
       do {
         const listUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&forMine=true&type=video&maxResults=50&access_token=${accessToken}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
-
+        
         const listResponse = await fetch(listUrl);
-
+        
         if (!listResponse.ok) {
           console.error(`Failed to fetch YouTube videos for user ${userId}`);
           return;
         }
-
+        
         const listData = await listResponse.json();
         allVideos = allVideos.concat(listData.items || []);
         nextPageToken = listData.nextPageToken || '';
-
+        
       } while (nextPageToken);
 
       if (allVideos.length === 0) {
@@ -528,18 +528,18 @@ export class ShabbatScheduler {
       }
 
       console.log(`Found ${allVideos.length} YouTube videos for user ${userId}`);
-
+      
       let hiddenCount = 0;
       let errors: any[] = [];
 
       // Process each video
       for (const video of allVideos) {
         const videoId = video.id.videoId;
-
+        
         try {
           // Check if video is already locked (excluded from automation)
           const lockStatus = await storage.getVideoLockStatus(userId, videoId);
-
+          
           if (lockStatus?.isLocked) {
             console.log(`Skipping locked video ${videoId} for user ${userId}`);
             continue;
@@ -548,19 +548,19 @@ export class ShabbatScheduler {
           // Get current video details to check privacy status
           const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${accessToken}`;
           const detailsResponse = await fetch(detailsUrl);
-
+          
           if (detailsResponse.ok) {
             const detailsData = await detailsResponse.json();
             const videoDetails = detailsData.items?.[0];
-
+            
             if (videoDetails) {
               const currentPrivacyStatus = videoDetails.status.privacyStatus;
-
+              
               // Only hide if not already private
               if (currentPrivacyStatus !== 'private') {
                 // Save original status for restoration
                 await storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, userId);
-
+                
                 // Update video to private
                 const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${accessToken}`, {
                   method: 'PUT',
@@ -593,7 +593,7 @@ export class ShabbatScheduler {
       }
 
       console.log(`Successfully hid ${hiddenCount} YouTube videos for user ${userId}`);
-
+      
       // Add to history
       storage.addHistoryEntry({
         platform: 'youtube',
@@ -612,7 +612,7 @@ export class ShabbatScheduler {
   private async restoreYouTubePosts(userId: string, accessToken: string): Promise<void> {
     try {
       console.log(`Restoring YouTube videos for user ${userId}`);
-
+      
       // Call the existing show-all endpoint
       const response = await fetch(`http://localhost:5000/api/youtube/show-all`, {
         method: 'POST',
@@ -626,7 +626,7 @@ export class ShabbatScheduler {
       if (response.ok) {
         const data = await response.json();
         console.log(`Successfully restored YouTube videos for user ${userId}:`, data);
-
+        
         // Add to history
         storage.addHistoryEntry({
           platform: 'youtube',
@@ -650,7 +650,7 @@ export class ShabbatScheduler {
     const hours = date.getHours();
     const day = date.getDate();
     const month = date.getMonth() + 1;
-
+    
     return `${minutes} ${hours} ${day} ${month} *`;
   }
 
@@ -660,7 +660,7 @@ export class ShabbatScheduler {
   private clearUserJobs(userId: string): void {
     const hideJobId = `hide-${userId}`;
     const restoreJobId = `restore-${userId}`;
-
+    
     [hideJobId, restoreJobId].forEach(jobId => {
       const job = this.cronJobs.get(jobId);
       if (job) {
@@ -689,48 +689,3 @@ export class ShabbatScheduler {
 }
 
 export default ShabbatScheduler;
-// Import removed - using internal functions instead
-
-
-// Example injection into schedule function:
-function scheduleShabbatForUser(userId: string, hideTime: Date, restoreTime: Date) {
-  const now = new Date();
-
-  const timeUntilHide = hideTime.getTime() - now.getTime();
-  const timeUntilRestore = restoreTime.getTime() - now.getTime();
-
-  if (timeUntilHide > 0) {
-    setTimeout(() => {
-      console.log(`🕯️ Hiding content for user ${userId} at ${new Date().toISOString()}`);
-      // hideAll(userId); // Function not available - need to implement
-    }, timeUntilHide);
-  }
-
-  if (timeUntilRestore > 0) {
-    setTimeout(() => {
-      console.log(`✨ Restoring content for user ${userId} at ${new Date().toISOString()}`);
-      // restoreAll(userId); // Function not available - need to implement
-    }, timeUntilRestore);
-  }
-}
-
-
-// 🔁 פונקציה שמחזירה זמני שבת לפי מזהה עיר של המשתמש
-import { db } from './db';
-import { secureUsers } from '../shared/schema';
-import { eq } from 'drizzle-orm';
-
-interface ShabbatTimes {
-  entryTime: Date;
-  exitTime: Date;
-  cityName: string;
-  cityId: string;
-}
-
-async function getShabbatTimesForUser(userId: string): Promise<ShabbatTimes | null> {
-  const [user] = await db.select().from(secureUsers).where(eq(secureUsers.id, userId));
-  if (!user) return null;
-
-  console.warn(`⚠️ fetchChabadTimes() not implemented. Would fetch for cityId: ${user.shabbatCityId}`);
-  return null;
-}

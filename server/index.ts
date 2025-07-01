@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { simpleScheduler } from "./simple-scheduler";
 import dotenv from "dotenv";
+// ShabbatScheduler temporarily disabled due to compilation errors
 
 // Load environment variables
 dotenv.config();
