@@ -392,41 +392,254 @@ export class ShabbatScheduler {
    * Hide Facebook posts for a user
    */
   private async hideFacebookPosts(userId: string, accessToken: string): Promise<void> {
-    // Implementation for hiding Facebook posts
-    // This would integrate with the Facebook API to set posts to private
-    console.log(`Hiding Facebook posts for user ${userId}`);
-    
-    // TODO: Implement Facebook posts hiding using Graph API
+    try {
+      console.log(`Hiding Facebook posts for user ${userId}`);
+      
+      // Get Facebook posts using the storage
+      const posts = storage.getCachedPosts();
+      
+      if (posts.length === 0) {
+        console.log(`No Facebook posts found for user ${userId}`);
+        return;
+      }
+
+      // Filter posts that should be hidden (visible posts only)
+      const postsToHide = posts.filter(post => 
+        !post.isHidden && !post.willBeHidden
+      );
+
+      if (postsToHide.length === 0) {
+        console.log(`No Facebook posts to hide for user ${userId}`);
+        return;
+      }
+
+      console.log(`Attempting to hide ${postsToHide.length} Facebook posts for user ${userId}`);
+      
+      let successCount = 0;
+      
+      // Process each post
+      for (const post of postsToHide) {
+        try {
+          const updateUrl = `https://graph.facebook.com/v22.0/${post.id}`;
+          const formData = new URLSearchParams();
+          formData.append('privacy', '{"value":"ONLY_ME"}');
+          formData.append('access_token', accessToken);
+          
+          const updateResponse = await fetch(updateUrl, { 
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+          });
+
+          if (updateResponse.ok) {
+            successCount++;
+            console.log(`Successfully hid Facebook post ${post.id}`);
+          } else {
+            console.error(`Failed to hide Facebook post ${post.id}`);
+          }
+        } catch (error) {
+          console.error(`Error hiding Facebook post ${post.id}:`, error);
+        }
+      }
+
+      console.log(`Successfully hid ${successCount} Facebook posts for user ${userId}`);
+      
+      // Add to history
+      storage.addHistoryEntry({
+        platform: 'facebook',
+        action: 'hide',
+        timestamp: new Date(),
+        details: `Automatic Shabbat hide: ${successCount} posts hidden`
+      });
+    } catch (error) {
+      console.error(`Error hiding Facebook posts for user ${userId}:`, error);
+    }
   }
 
   /**
    * Restore Facebook posts for a user
    */
   private async restoreFacebookPosts(userId: string, accessToken: string): Promise<void> {
-    // Implementation for restoring Facebook posts
-    console.log(`Restoring Facebook posts for user ${userId}`);
-    
-    // TODO: Implement Facebook posts restoration using Graph API
+    try {
+      console.log(`Restoring Facebook posts for user ${userId}`);
+      
+      // Call the existing show-all endpoint
+      const response = await fetch(`http://localhost:5000/api/facebook/show-all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Successfully restored Facebook posts for user ${userId}:`, data);
+        
+        // Add to history
+        storage.addHistoryEntry({
+          platform: 'facebook',
+          action: 'restore',
+          timestamp: new Date(),
+          userId: userId,
+          details: `Automatic Shabbat restore: ${data.restoredCount || 'all'} posts restored`
+        });
+      } else {
+        console.error(`Failed to restore Facebook posts for user ${userId}:`, response.statusText);
+      }
+    } catch (error) {
+      console.error(`Error restoring Facebook posts for user ${userId}:`, error);
+    }
   }
 
   /**
    * Hide YouTube videos for a user
    */
   private async hideYouTubePosts(userId: string, accessToken: string): Promise<void> {
-    // Implementation for hiding YouTube videos
-    console.log(`Hiding YouTube videos for user ${userId}`);
-    
-    // TODO: Implement YouTube videos hiding using YouTube Data API
+    try {
+      console.log(`Hiding YouTube videos for user ${userId}`);
+      
+      // Get all user's videos from YouTube API
+      let allVideos: any[] = [];
+      let nextPageToken = '';
+      
+      do {
+        const listUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&forMine=true&type=video&maxResults=50&access_token=${accessToken}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
+        
+        const listResponse = await fetch(listUrl);
+        
+        if (!listResponse.ok) {
+          console.error(`Failed to fetch YouTube videos for user ${userId}`);
+          return;
+        }
+        
+        const listData = await listResponse.json();
+        allVideos = allVideos.concat(listData.items || []);
+        nextPageToken = listData.nextPageToken || '';
+        
+      } while (nextPageToken);
+
+      if (allVideos.length === 0) {
+        console.log(`No YouTube videos found for user ${userId}`);
+        return;
+      }
+
+      console.log(`Found ${allVideos.length} YouTube videos for user ${userId}`);
+      
+      let hiddenCount = 0;
+      let errors: any[] = [];
+
+      // Process each video
+      for (const video of allVideos) {
+        const videoId = video.id.videoId;
+        
+        try {
+          // Check if video is already locked (excluded from automation)
+          const lockStatus = await storage.getVideoLockStatus(userId, videoId);
+          
+          if (lockStatus?.isLocked) {
+            console.log(`Skipping locked video ${videoId} for user ${userId}`);
+            continue;
+          }
+
+          // Get current video details to check privacy status
+          const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${accessToken}`;
+          const detailsResponse = await fetch(detailsUrl);
+          
+          if (detailsResponse.ok) {
+            const detailsData = await detailsResponse.json();
+            const videoDetails = detailsData.items?.[0];
+            
+            if (videoDetails) {
+              const currentPrivacyStatus = videoDetails.status.privacyStatus;
+              
+              // Only hide if not already private
+              if (currentPrivacyStatus !== 'private') {
+                // Save original status for restoration
+                await storage.saveVideoOriginalStatus(videoId, currentPrivacyStatus, userId);
+                
+                // Update video to private
+                const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${accessToken}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    id: videoId,
+                    status: {
+                      privacyStatus: 'private'
+                    }
+                  })
+                });
+
+                if (updateResponse.ok) {
+                  hiddenCount++;
+                  console.log(`Successfully hid YouTube video ${videoId} for user ${userId}`);
+                } else {
+                  const errorData = await updateResponse.json();
+                  errors.push({ videoId, error: errorData.error?.message });
+                  // Remove saved status if hiding failed
+                  await storage.clearVideoOriginalStatus(videoId, userId);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          errors.push({ videoId, error: (error as Error).message });
+        }
+      }
+
+      console.log(`Successfully hid ${hiddenCount} YouTube videos for user ${userId}`);
+      
+      // Add to history
+      storage.addHistoryEntry({
+        platform: 'youtube',
+        action: 'hide',
+        timestamp: new Date(),
+        details: `Automatic Shabbat hide: ${hiddenCount} videos hidden`
+      });
+    } catch (error) {
+      console.error(`Error hiding YouTube videos for user ${userId}:`, error);
+    }
   }
 
   /**
    * Restore YouTube videos for a user
    */
   private async restoreYouTubePosts(userId: string, accessToken: string): Promise<void> {
-    // Implementation for restoring YouTube videos
-    console.log(`Restoring YouTube videos for user ${userId}`);
-    
-    // TODO: Implement YouTube videos restoration using YouTube Data API
+    try {
+      console.log(`Restoring YouTube videos for user ${userId}`);
+      
+      // Call the existing show-all endpoint
+      const response = await fetch(`http://localhost:5000/api/youtube/show-all`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Successfully restored YouTube videos for user ${userId}:`, data);
+        
+        // Add to history
+        storage.addHistoryEntry({
+          platform: 'youtube',
+          action: 'restore',
+          timestamp: new Date(),
+          details: `Automatic Shabbat restore: ${data.restoredCount || 'all'} videos restored`
+        });
+      } else {
+        console.error(`Failed to restore YouTube videos for user ${userId}:`, response.statusText);
+      }
+    } catch (error) {
+      console.error(`Error restoring YouTube videos for user ${userId}:`, error);
+    }
   }
 
   /**
