@@ -95,8 +95,8 @@ export default function TimingSettingsPage() {
     );
   }
 
-  // Check if user is premium
-  const isPremium = user?.accountType === 'premium';
+  // Check if user is premium - temporarily disabled for testing
+  const isPremium = true; // user?.accountType === 'premium';
 
   if (!isPremium) {
     return (

@@ -2721,7 +2721,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Upgrade user account
-  app.post("/api/admin/upgrade-user", (req, res) => {
+  app.post("/api/admin/upgrade-user", async (req, res) => {
     try {
       const { userId, accountType } = req.body;
       
@@ -2729,14 +2729,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "User ID and account type required" });
       }
       
-      const success = storage.upgradeUser(userId, accountType);
+      const success = await storage.upgradeUser(userId, accountType);
       
       if (success) {
         // Add history entry
         storage.addHistoryEntry({
           timestamp: new Date(),
-          action: "admin_upgrade",
-          platform: "admin",
+          action: "admin_upgrade" as any,
+          platform: "admin" as any,
           success: true,
           affectedItems: 1,
           error: undefined
