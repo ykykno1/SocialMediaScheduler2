@@ -424,8 +424,8 @@ export class AutomaticScheduler {
     try {
       console.log(`📺 Hiding YouTube videos for user ${userId}`);
       
-      // Get user's videos
-      const videosUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${await this.getYouTubeChannelId(accessToken)}&type=video&maxResults=50&order=date`;
+      // Use the direct videos API instead of search API for better reliability
+      const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,status&mine=true&maxResults=50`;
       const videosResponse = await fetch(videosUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
@@ -437,20 +437,29 @@ export class AutomaticScheduler {
       const videosData = await videosResponse.json() as any;
       const videos = videosData.items || [];
       
+      console.log(`📺 API Response structure:`, {
+        totalItems: videos.length,
+        firstVideoStructure: videos[0] ? {
+          id: videos[0].id,
+          title: videos[0].snippet?.title,
+          privacyStatus: videos[0].status?.privacyStatus
+        } : 'No videos found'
+      });
+      
       let hiddenCount = 0;
       
       console.log(`📺 Found ${videos.length} videos to process`);
       
       for (const video of videos) {
         try {
-          // Get the correct video ID - in search API it's video.id directly
-          const videoId = video.id?.videoId || video.id;
+          // In videos API, the ID is directly in video.id (not video.id.videoId)
+          const videoId = video.id;
           if (!videoId) {
             console.log(`❌ No video ID found for video:`, video);
             continue;
           }
 
-          console.log(`📺 Processing video: ${videoId}`);
+          console.log(`📺 Processing video: ${videoId} (${video.snippet?.title})`);
           
           // Check if video is not already locked or hidden
           const lockStatus = await storage.getVideoLockStatus(userId, videoId);
@@ -459,8 +468,9 @@ export class AutomaticScheduler {
             continue; // Skip locked videos
           }
 
-          // Save original status before hiding
-          await storage.saveVideoOriginalStatus(videoId, 'public', userId);
+          // Save original status before hiding (get current status from video)
+          const originalStatus = video.status?.privacyStatus || 'public';
+          await storage.saveVideoOriginalStatus(videoId, originalStatus, userId);
           
           // Hide the video by setting it to private
           const updateUrl = `https://www.googleapis.com/youtube/v3/videos?part=status`;

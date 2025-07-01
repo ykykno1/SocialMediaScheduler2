@@ -64,6 +64,31 @@ export default function TestScheduler() {
     }
   };
 
+  const unlockAllVideos = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest("POST", "/api/youtube/unlock-all");
+      
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "הצלחה",
+          description: data.message || "כל הסרטונים שוחררו מחסימה",
+        });
+      } else {
+        throw new Error('שגיאה בשחרור החסימה');
+      }
+    } catch (error: any) {
+      toast({
+        title: "שגיאה",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <Card>
@@ -99,21 +124,37 @@ export default function TestScheduler() {
           </div>
 
           {/* כפתורי בדיקה */}
-          <div className="flex gap-4">
-            <Button 
-              onClick={testHideOperation} 
-              variant="destructive"
-              disabled={isLoading}
-            >
-              {isLoading ? 'מבצע...' : 'בדוק הסתרה'}
-            </Button>
-            <Button 
-              onClick={testRestoreOperation} 
-              variant="default"
-              disabled={isLoading}
-            >
-              {isLoading ? 'מבצע...' : 'בדוק שחזור'}
-            </Button>
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <Button 
+                onClick={testHideOperation} 
+                variant="destructive"
+                disabled={isLoading}
+              >
+                {isLoading ? 'מבצע...' : 'בדוק הסתרה'}
+              </Button>
+              <Button 
+                onClick={testRestoreOperation} 
+                variant="default"
+                disabled={isLoading}
+              >
+                {isLoading ? 'מבצע...' : 'בדוק שחזור'}
+              </Button>
+            </div>
+            
+            <div className="border-t pt-4">
+              <div className="text-sm font-medium mb-2">פתרון בעיות</div>
+              <Button 
+                onClick={unlockAllVideos} 
+                variant="outline"
+                disabled={isLoading}
+              >
+                {isLoading ? 'מבצע...' : 'שחרר כל הסרטונים מחסימה'}
+              </Button>
+              <div className="text-xs text-muted-foreground mt-1">
+                אם הסרטונים חסומים ולא מתעדכנים, לחץ כאן לשחרר אותם
+              </div>
+            </div>
           </div>
           
           <div className="text-sm text-muted-foreground">
