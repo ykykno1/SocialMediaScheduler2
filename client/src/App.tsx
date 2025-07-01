@@ -21,7 +21,7 @@ import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
 import { Button } from "@/components/ui/button";
-import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram } from "lucide-react";
+import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
@@ -117,6 +117,11 @@ function Navbar() {
       label: "הגדרות",
       href: "/settings",
       icon: <SettingsIcon className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "הגדרות תזמון",
+      href: "/timing-settings",
+      icon: <Clock className="h-4 w-4 mr-2" />,
     },
     {
       label: "היסטוריה",

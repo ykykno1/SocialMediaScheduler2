@@ -283,6 +283,9 @@ export const secureUsers = pgTable("secure_users", {
   isActive: boolean("is_active").notNull().default(true),
   shabbatCity: varchar("shabbat_city").default('ירושלים'),
   shabbatCityId: varchar("shabbat_city_id").default('247'),
+  // Custom timing preferences for premium users
+  hideTimingPreference: varchar("hide_timing_preference").$type<'immediate' | '15min' | '30min' | '1hour'>().default('1hour'),
+  restoreTimingPreference: varchar("restore_timing_preference").$type<'immediate' | '30min' | '1hour'>().default('immediate'),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   lastLogin: timestamp("last_login"),
