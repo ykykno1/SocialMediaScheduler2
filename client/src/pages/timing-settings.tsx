@@ -41,7 +41,7 @@ export default function TimingSettingsPage() {
   });
 
   // Get user's location data
-  const { data: locationData } = useQuery({
+  const { data: locationData } = useQuery<{shabbatCity: string; shabbatCityId: string}>({
     queryKey: ['/api/user/shabbat-location'],
   });
 
@@ -81,7 +81,7 @@ export default function TimingSettingsPage() {
     };
 
     // Add admin manual times if location is "מנהל"
-    if (locationData?.shabbatCity === 'מנהל') {
+    if (locationData && locationData.shabbatCity === 'מנהל') {
       preferences.adminEntryDateTime = adminEntryDate && adminEntryTime ? `${adminEntryDate}T${adminEntryTime}:00` : null;
       preferences.adminExitDateTime = adminExitDate && adminExitTime ? `${adminExitDate}T${adminExitTime}:00` : null;
     }
@@ -231,7 +231,7 @@ export default function TimingSettingsPage() {
             </div>
 
             {/* Admin Manual Date/Time Settings */}
-            {locationData?.shabbatCity === 'מנהל' && (
+            {locationData && locationData.shabbatCity === 'מנהל' && (
               <Card className="border-dashed border-2 border-amber-300 bg-amber-50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-amber-800">
