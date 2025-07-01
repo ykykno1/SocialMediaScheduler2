@@ -5,6 +5,7 @@ interface AuthenticatedRequest extends Request {
 }
 import { createServer, type Server } from "http";
 import { enhancedStorage as storage } from './enhanced-storage.js';
+import { ShabbatScheduler } from './shabbat-scheduler.js';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -3023,7 +3024,8 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log(`Manual test hide operation for user: ${req.user.id}`);
       
-      await shabbatScheduler.executeHideOperation(req.user.id);
+      const scheduler = ShabbatScheduler.getInstance();
+      await scheduler.executeHideOperation(req.user.id);
       
       res.json({ 
         success: true, 
@@ -3039,7 +3041,8 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log(`Manual test restore operation for user: ${req.user.id}`);
       
-      await shabbatScheduler.executeRestoreOperation(req.user.id);
+      const scheduler = ShabbatScheduler.getInstance();
+      await scheduler.executeRestoreOperation(req.user.id);
       
       res.json({ 
         success: true, 
