@@ -14,7 +14,7 @@ interface ShabbatTimes {
   cityId: string;
 }
 
-export class ShabbatScheduler {
+class ShabbatScheduler {
   private static instance: ShabbatScheduler;
   private cronJobs: Map<string, CronJob> = new Map();
   private isRunning = false;

@@ -3,7 +3,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
-import { ShabbatScheduler } from "./shabbat-scheduler";
+import { automaticScheduler } from "./automatic-scheduler";
 
 // Load environment variables
 dotenv.config();
@@ -60,8 +60,8 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Start the new Shabbat Scheduler
-  ShabbatScheduler.getInstance().start();
+  // Start the automatic Shabbat content scheduler
+  await automaticScheduler.start();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
