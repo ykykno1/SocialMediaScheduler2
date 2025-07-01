@@ -16,43 +16,8 @@ const getHebrewDateAndParasha = (shabbatData?: any) => {
     nextSaturday.setDate(now.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
   }
   
-  // Get current Torah portion from authentic source
-  const getCurrentParasha = () => {
-    const now = new Date();
-    
-    // Calculate which week of the year this is to determine the correct parasha
-    // This is a simplified calculation - in reality Torah portions follow a complex calendar
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const weekNumber = Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
-    
-    // Torah portions for 2025 (authentic cycle)
-    const torahPortions2025 = [
-      'בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ',
-      'ויגש', 'ויחי', 'שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה',
-      'כי תשא', 'ויקהל', 'פקודי', 'ויקרא', 'צו', 'שמיני', 'תזריע', 'מצורע', 'אחרי מות', 'קדושים',
-      'אמור', 'בהר', 'בחקתי', 'במדבר', 'נשא', 'בהעלתך', 'שלח לך', 'קרח', 'חקת', 'בלק',
-      'פינחס', 'מטות', 'מסעי', 'דברים', 'ואתחנן', 'עקב', 'ראה', 'שפטים', 'כי תצא', 'כי תבוא',
-      'נצבים', 'וילך', 'האזינו'
-    ];
-    
-    // For July 2025, the current parasha should be "פינחס" or "מטות-מסעי"
-    if (now.getMonth() === 6) { // July (month 6)
-      if (now.getDate() <= 5) return 'פינחס';
-      if (now.getDate() <= 12) return 'מטות-מסעי';
-      if (now.getDate() <= 19) return 'דברים';
-      if (now.getDate() <= 26) return 'ואתחנן';
-      return 'עקב';
-    }
-    
-    // Fallback based on shabbatData if available
-    if (shabbatData?.parasha) {
-      return shabbatData.parasha.replace('פרשת ', '');
-    }
-    
-    return 'פינחס'; // Current week fallback
-  };
-  
-  const parasha = getCurrentParasha();
+  // Get Torah portion from API or shabbatData
+  const parasha = shabbatData?.parasha ? shabbatData.parasha.replace('פרשת ', '') : null;
   
   // Convert to proper Hebrew date format
   const gregorianToHebrew = (date: Date) => {
@@ -127,9 +92,52 @@ export function UserChabadWidget() {
   // State for Shabbat data from Chabad API
   const [shabbatData, setShabbatData] = useState<any>(null);
   
+  // Fetch current Torah portion from external API
+  const { data: currentParasha } = useQuery({
+    queryKey: ['current-parasha'],
+    queryFn: async () => {
+      try {
+        const now = new Date();
+        // Get next Saturday date
+        const nextSat = new Date(now);
+        const daysUntilSat = (6 - now.getDay()) % 7;
+        nextSat.setDate(now.getDate() + (daysUntilSat === 0 ? 7 : daysUntilSat));
+        
+        // Use Hebcal API to get this week's Torah portion
+        const response = await fetch(`https://www.hebcal.com/hebcal?cfg=json&year=${nextSat.getFullYear()}&month=${nextSat.getMonth() + 1}&v=1&maj=on&min=on&nx=on&mf=on&ss=on&mod=on&s=on&lg=h&start=${nextSat.getFullYear()}-${String(nextSat.getMonth() + 1).padStart(2, '0')}-${String(nextSat.getDate()).padStart(2, '0')}&end=${nextSat.getFullYear()}-${String(nextSat.getMonth() + 1).padStart(2, '0')}-${String(nextSat.getDate()).padStart(2, '0')}`);
+        
+        if (!response.ok) throw new Error('API call failed');
+        
+        const data = await response.json();
+        const parashaEvent = data.items?.find((item: any) => 
+          item.category === 'parashat' || (item.title && item.title.includes('Parashat'))
+        );
+        
+        if (parashaEvent) {
+          // Extract Hebrew name if available, otherwise use English
+          let parashaName = parashaEvent.hebrew || parashaEvent.title;
+          if (parashaName) {
+            parashaName = parashaName.replace('פרשת ', '').replace('Parashat ', '');
+            return parashaName;
+          }
+        }
+        
+        return null;
+      } catch (error) {
+        console.error('Failed to fetch parasha:', error);
+        return null;
+      }
+    },
+    staleTime: 1000 * 60 * 60 * 6, // 6 hours
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+  });
+  
   // Get Hebrew date and parasha info
   const parashaInfo = getHebrewDateAndParasha(shabbatData);
-  const { parasha, hebrewDate } = parashaInfo;
+  const { hebrewDate } = parashaInfo;
+  
+  // Use API parasha if available, otherwise fallback to shabbatData
+  const displayParasha = currentParasha || shabbatData?.parasha?.replace('פרשת ', '') || 'טוען...';
 
   // Listen for messages from iframe with Shabbat data
   useEffect(() => {
@@ -312,7 +320,7 @@ export function UserChabadWidget() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              פרשת השבוע - פרשת {shabbatData?.parasha ? shabbatData.parasha.replace('פרשת ', '') : 'קורח'}
+              פרשת השבוע - פרשת {displayParasha}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               {hebrewDate}
