@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Clock, Settings, Crown } from "lucide-react";
+import { Clock, Settings, Crown, Calendar, MapPin } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface TimingPreferences {
@@ -27,10 +28,21 @@ export default function TimingSettingsPage() {
   
   const [hidePreference, setHidePreference] = useState<'immediate' | '15min' | '30min' | '1hour'>('1hour');
   const [restorePreference, setRestorePreference] = useState<'immediate' | '30min' | '1hour'>('immediate');
+  
+  // Admin manual date/time settings
+  const [adminEntryDate, setAdminEntryDate] = useState('');
+  const [adminEntryTime, setAdminEntryTime] = useState('');
+  const [adminExitDate, setAdminExitDate] = useState('');
+  const [adminExitTime, setAdminExitTime] = useState('');
 
   // Get current user data
   const { data: user, isLoading: userLoading } = useQuery<User>({
     queryKey: ['/api/user'],
+  });
+
+  // Get user's location data
+  const { data: locationData } = useQuery({
+    queryKey: ['/api/user/shabbat-location'],
   });
 
   // Load current preferences
@@ -63,10 +75,18 @@ export default function TimingSettingsPage() {
   });
 
   const handleSave = () => {
-    savePreferencesMutation.mutate({
+    const preferences: any = {
       hideTimingPreference: hidePreference,
       restoreTimingPreference: restorePreference
-    });
+    };
+
+    // Add admin manual times if location is "מנהל"
+    if (locationData?.shabbatCity === 'מנהל') {
+      preferences.adminEntryDateTime = adminEntryDate && adminEntryTime ? `${adminEntryDate}T${adminEntryTime}:00` : null;
+      preferences.adminExitDateTime = adminExitDate && adminExitTime ? `${adminExitDate}T${adminExitTime}:00` : null;
+    }
+
+    savePreferencesMutation.mutate(preferences);
   };
 
   const getTimingLabel = (value: string, type: 'hide' | 'restore') => {
@@ -209,6 +229,68 @@ export default function TimingSettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Admin Manual Date/Time Settings */}
+            {locationData?.shabbatCity === 'מנהל' && (
+              <Card className="border-dashed border-2 border-amber-300 bg-amber-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-amber-800">
+                    <Calendar className="h-5 w-5" />
+                    <MapPin className="h-5 w-5" />
+                    הגדרות זמן ידניות למנהל
+                  </CardTitle>
+                  <CardDescription className="text-amber-700">
+                    בחר תאריכים ושעות מדויקות לכניסת ויציאת השבת
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Entry Date/Time */}
+                    <div className="space-y-2">
+                      <Label className="text-red-800 font-medium">כניסת שבת</Label>
+                      <div className="space-y-2">
+                        <Input
+                          type="date"
+                          value={adminEntryDate}
+                          onChange={(e) => setAdminEntryDate(e.target.value)}
+                          className="text-right"
+                        />
+                        <Input
+                          type="time"
+                          value={adminEntryTime}
+                          onChange={(e) => setAdminEntryTime(e.target.value)}
+                          className="text-right"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Exit Date/Time */}
+                    <div className="space-y-2">
+                      <Label className="text-green-800 font-medium">יציאת שבת</Label>
+                      <div className="space-y-2">
+                        <Input
+                          type="date"
+                          value={adminExitDate}
+                          onChange={(e) => setAdminExitDate(e.target.value)}
+                          className="text-right"
+                        />
+                        <Input
+                          type="time"
+                          value={adminExitTime}
+                          onChange={(e) => setAdminExitTime(e.target.value)}
+                          className="text-right"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-amber-700 bg-amber-100 p-3 rounded-lg">
+                    <strong>הערה:</strong> כשהמיקום מוגדר כ"מנהל", המערכת תשתמש בתאריכים ובשעות שבחרת כאן 
+                    במקום לחשב אוטומטית לפי מיקום גיאוגרפי.
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Button 
               onClick={handleSave}
