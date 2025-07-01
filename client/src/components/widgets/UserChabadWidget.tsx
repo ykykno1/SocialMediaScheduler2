@@ -1,5 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+
+// Admin Shabbat Widget Component
+function AdminShabbatWidget() {
+  const { data: adminTimes } = useQuery<{ entryTime: string; exitTime: string }>({
+    queryKey: ['/api/admin/shabbat-times'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  const formatTime = (timeString: string) => {
+    if (!timeString) return 'לא הוגדר';
+    const date = new Date(timeString);
+    return date.toLocaleString('he-IL', {
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <div className="p-4 bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-700 dark:to-gray-800 h-full flex flex-col justify-center">
+      <div className="text-center space-y-3">
+        <div className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-4">
+          🛠️ מצב מנהל - בדיקות
+        </div>
+        
+        <div className="space-y-2 text-sm">
+          <div className="bg-white/70 dark:bg-gray-600/70 rounded-lg p-3">
+            <div className="font-semibold text-green-700 dark:text-green-300">כניסת שבת:</div>
+            <div className="text-gray-800 dark:text-gray-200">
+              {formatTime(adminTimes?.entryTime || '')}
+            </div>
+          </div>
+          
+          <div className="bg-white/70 dark:bg-gray-600/70 rounded-lg p-3">
+            <div className="font-semibold text-blue-700 dark:text-blue-300">יציאת שבת:</div>
+            <div className="text-gray-800 dark:text-gray-200">
+              {formatTime(adminTimes?.exitTime || '')}
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-xs text-gray-600 dark:text-gray-400 mt-3">
+          זמנים ידניים למצב בדיקה
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Helper function to get current Hebrew date and Torah portion
 const getHebrewDateAndParasha = (shabbatData?: any) => {
@@ -80,7 +132,7 @@ export function UserChabadWidget() {
   const [iframeKey, setIframeKey] = useState(0);
 
   // Get user's saved Shabbat location
-  const { data: locationData, isLoading, refetch } = useQuery({
+  const { data: locationData, isLoading, refetch } = useQuery<{ shabbatCity?: string; shabbatCityId?: string }>({
     queryKey: ['/api/user/shabbat-location'],
     retry: false,
     refetchOnWindowFocus: true,
@@ -302,7 +354,7 @@ export function UserChabadWidget() {
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td width="100%" class="clheading">
-                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${locationData?.shabbatCityId === 'admin' ? '531' : (locationData?.shabbatCityId || '531')}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he"></script>
+                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${(locationData && locationData.shabbatCityId === 'admin') ? '531' : ((locationData && locationData.shabbatCityId) || '531')}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he"></script>
             </td>
         </tr>
     </table>
@@ -331,13 +383,17 @@ export function UserChabadWidget() {
 
       {/* Chabad Widget Container */}
       <div className="w-full h-48 border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
-        <iframe
-          key={iframeKey}
-          srcDoc={createIframeContent()}
-          className="w-full h-full border-none"
-          style={{ minHeight: '200px' }}
-          title="זמני שבת"
-        />
+        {locationData?.shabbatCityId === 'admin' ? (
+          <AdminShabbatWidget />
+        ) : (
+          <iframe
+            key={iframeKey}
+            srcDoc={createIframeContent()}
+            className="w-full h-full border-none"
+            style={{ minHeight: '200px' }}
+            title="זמני שבת"
+          />
+        )}
       </div>
 
       {/* Footer */}
