@@ -2947,9 +2947,11 @@ export function registerRoutes(app: Express): Server {
   // Save user timing preferences
   app.post("/api/user/timing-preferences", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
+      console.log('Received timing preferences request body:', req.body);
       const { hideTimingPreference, restoreTimingPreference, adminEntryDateTime, adminExitDateTime } = req.body;
       
       if (!hideTimingPreference || !restoreTimingPreference) {
+        console.log('Missing required preferences:', { hideTimingPreference, restoreTimingPreference });
         return res.status(400).json({ error: 'Both timing preferences are required' });
       }
 
@@ -2958,6 +2960,7 @@ export function registerRoutes(app: Express): Server {
       const validRestoreOptions = ['immediate', '30min', '1hour'];
       
       if (!validHideOptions.includes(hideTimingPreference) || !validRestoreOptions.includes(restoreTimingPreference)) {
+        console.log('Invalid preference values:', { hideTimingPreference, restoreTimingPreference });
         return res.status(400).json({ error: 'Invalid timing preference values' });
       }
 
@@ -2968,18 +2971,28 @@ export function registerRoutes(app: Express): Server {
 
       // Handle admin manual times if provided
       if (adminEntryDateTime || adminExitDateTime) {
-        console.log('Saving admin manual times:', { adminEntryDateTime, adminExitDateTime });
+        console.log('Processing admin manual times:', { adminEntryDateTime, adminExitDateTime });
         
         // Save admin manual times using the existing storage method
         if (adminEntryDateTime && adminExitDateTime) {
-          const entryTime = new Date(adminEntryDateTime);
-          const exitTime = new Date(adminExitDateTime);
-          
-          await storage.setAdminShabbatTimes(entryTime, exitTime);
+          try {
+            const entryTime = new Date(adminEntryDateTime);
+            const exitTime = new Date(adminExitDateTime);
+            
+            console.log('Parsed dates:', { entryTime, exitTime });
+            
+            await storage.setAdminShabbatTimes(entryTime, exitTime);
+            console.log('Admin times saved successfully');
+          } catch (dateError) {
+            console.error('Error parsing or saving admin dates:', dateError);
+            return res.status(400).json({ error: 'Invalid date format for admin times' });
+          }
         }
       }
 
+      console.log('Updating user with data:', updateData);
       const updatedUser = await storage.updateUser(req.user.id, updateData);
+      console.log('User updated successfully:', updatedUser);
       
       res.json({
         success: true,
@@ -2989,7 +3002,7 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error('Error updating timing preferences:', error);
-      res.status(500).json({ error: 'Failed to update timing preferences' });
+      res.status(500).json({ error: 'Failed to update timing preferences', details: error.message });
     }
   });
 

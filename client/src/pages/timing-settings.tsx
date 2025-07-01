@@ -55,8 +55,11 @@ export default function TimingSettingsPage() {
 
   // Save timing preferences
   const savePreferencesMutation = useMutation({
-    mutationFn: async (preferences: TimingPreferences) => {
-      return await apiRequest('/api/user/timing-preferences', 'POST', preferences);
+    mutationFn: async (preferences: any) => {
+      console.log('Sending preferences:', preferences);
+      const response = await apiRequest('POST', '/api/user/timing-preferences', preferences);
+      console.log('Response:', response);
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -65,7 +68,8 @@ export default function TimingSettingsPage() {
       });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Save error:', error);
       toast({
         title: "שגיאה",
         description: "שגיאה בשמירת העדפות התזמון",
