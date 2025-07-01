@@ -133,7 +133,9 @@ export class SimpleShabbatScheduler {
 
   private scheduleNotification(userId: string, time: Date, action: 'hide' | 'restore'): void {
     try {
-      const cronPattern = this.dateToCronPattern(time);
+      // Ensure time is a Date object
+      const dateTime = time instanceof Date ? time : new Date(time);
+      const cronPattern = this.dateToCronPattern(dateTime);
       const jobKey = `${userId}_${action}`;
       
       const job = new CronJob(cronPattern, () => {
@@ -142,7 +144,7 @@ export class SimpleShabbatScheduler {
       
       this.cronJobs.set(jobKey, job);
       
-      console.log(`Scheduled ${action} notification for user ${userId} at ${time.toLocaleString('he-IL')}`);
+      console.log(`Scheduled ${action} notification for user ${userId} at ${dateTime.toLocaleString('he-IL')}`);
     } catch (error) {
       console.error(`Error scheduling ${action} notification for user ${userId}:`, error);
     }
@@ -243,6 +245,42 @@ export class SimpleShabbatScheduler {
   async refreshAdminUser(userId: string): Promise<void> {
     console.log(`Refreshing admin user ${userId} scheduler`);
     await this.scheduleAdminUser(userId);
+  }
+
+  /**
+   * Execute hide operation for a user - public method for manual triggering
+   */
+  async executeHideOperation(userId: string): Promise<void> {
+    console.log(`🕐 SHABBAT SCHEDULER: Manual hide operation for user ${userId}`);
+    console.log(`Please use the 'Hide All' buttons manually for Facebook and YouTube`);
+    
+    // Add notification to history
+    storage.addHistoryEntry({
+      platform: 'facebook' as any,
+      action: 'hide',
+      timestamp: new Date(),
+      success: true,
+      affectedItems: 0,
+      error: `Manual hide operation triggered - use UI buttons`
+    });
+  }
+
+  /**
+   * Execute restore operation for a user - public method for manual triggering
+   */
+  async executeRestoreOperation(userId: string): Promise<void> {
+    console.log(`🕐 SHABBAT SCHEDULER: Manual restore operation for user ${userId}`);
+    console.log(`Please use the 'Show All' buttons manually for Facebook and YouTube`);
+    
+    // Add notification to history
+    storage.addHistoryEntry({
+      platform: 'facebook' as any,
+      action: 'restore',
+      timestamp: new Date(),
+      success: true,
+      affectedItems: 0,
+      error: `Manual restore operation triggered - use UI buttons`
+    });
   }
 }
 
