@@ -439,16 +439,28 @@ export class AutomaticScheduler {
       
       let hiddenCount = 0;
       
+      console.log(`📺 Found ${videos.length} videos to process`);
+      
       for (const video of videos) {
         try {
+          // Get the correct video ID - in search API it's video.id directly
+          const videoId = video.id?.videoId || video.id;
+          if (!videoId) {
+            console.log(`❌ No video ID found for video:`, video);
+            continue;
+          }
+
+          console.log(`📺 Processing video: ${videoId}`);
+          
           // Check if video is not already locked or hidden
-          const lockStatus = await storage.getVideoLockStatus(userId, video.id.videoId);
+          const lockStatus = await storage.getVideoLockStatus(userId, videoId);
           if (lockStatus?.isLocked) {
+            console.log(`⏭️ Skipping locked video: ${videoId}`);
             continue; // Skip locked videos
           }
 
           // Save original status before hiding
-          await storage.saveVideoOriginalStatus(video.id.videoId, 'public', userId);
+          await storage.saveVideoOriginalStatus(videoId, 'public', userId);
           
           // Hide the video by setting it to private
           const updateUrl = `https://www.googleapis.com/youtube/v3/videos?part=status`;
@@ -459,17 +471,20 @@ export class AutomaticScheduler {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              id: video.id.videoId,
+              id: videoId,
               status: { privacyStatus: 'private' }
             })
           });
 
           if (updateResponse.ok) {
             hiddenCount++;
-            console.log(`✅ Hidden YouTube video: ${video.id.videoId}`);
+            console.log(`✅ Hidden YouTube video: ${videoId}`);
+          } else {
+            const errorText = await updateResponse.text();
+            console.error(`❌ Failed to hide video ${videoId}:`, updateResponse.status, errorText);
           }
         } catch (error) {
-          console.error(`❌ Failed to hide YouTube video ${video.id.videoId}:`, error);
+          console.error(`❌ Failed to hide YouTube video:`, error);
         }
       }
 
@@ -489,13 +504,17 @@ export class AutomaticScheduler {
       
       // Get all video original statuses for this user
       const originalStatuses = await storage.getAllVideoOriginalStatuses(userId);
+      console.log(`📺 Found ${Object.keys(originalStatuses).length} videos to restore:`, originalStatuses);
       let restoredCount = 0;
 
       for (const [videoId, originalStatus] of Object.entries(originalStatuses)) {
         try {
+          console.log(`📺 Processing restore for video: ${videoId} to ${originalStatus}`);
+          
           // Check if video is not locked
           const lockStatus = await storage.getVideoLockStatus(userId, videoId);
           if (lockStatus?.isLocked) {
+            console.log(`⏭️ Skipping locked video: ${videoId}`);
             continue; // Skip locked videos
           }
 
@@ -518,6 +537,9 @@ export class AutomaticScheduler {
             // Clear the original status after successful restoration
             await storage.clearVideoOriginalStatus(videoId, userId);
             console.log(`✅ Restored YouTube video: ${videoId} to ${originalStatus}`);
+          } else {
+            const errorText = await updateResponse.text();
+            console.error(`❌ Failed to restore video ${videoId}:`, updateResponse.status, errorText);
           }
         } catch (error) {
           console.error(`❌ Failed to restore YouTube video ${videoId}:`, error);
