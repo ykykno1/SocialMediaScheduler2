@@ -5,6 +5,7 @@ interface AuthenticatedRequest extends Request {
 }
 import { createServer, type Server } from "http";
 import { enhancedStorage as storage } from './enhanced-storage.js';
+import { automaticScheduler } from './automatic-scheduler.js';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -2879,12 +2880,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Shabbat scheduler management endpoints
+  // Automatic scheduler management endpoints
   app.get("/api/scheduler/status", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const simpleScheduler = SimpleShabbatScheduler.getInstance();
-      const status = simpleScheduler.getStatus();
-
+      const status = automaticScheduler.getStatus();
       res.json(status);
     } catch (error) {
       console.error('Error getting scheduler status:', error);
@@ -2894,13 +2893,16 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/scheduler/refresh", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const simpleScheduler = SimpleShabbatScheduler.getInstance();
-
-      // Restart scheduler to refresh all user schedules
-      simpleScheduler.stop();
-      await simpleScheduler.start();
-
-      res.json({ success: true, message: 'Scheduler refreshed successfully' });
+      // Refresh scheduler for specific user or all users
+      if (req.user?.id) {
+        await automaticScheduler.refreshUser(req.user.id);
+        res.json({ success: true, message: 'התזמון רוענן בהצלחה עבור המשתמש' });
+      } else {
+        // Restart entire scheduler for all users
+        automaticScheduler.stop();
+        await automaticScheduler.start();
+        res.json({ success: true, message: 'התזמון רוענן בהצלחה עבור כל המשתמשים' });
+      }
     } catch (error) {
       console.error('Error refreshing scheduler:', error);
       res.status(500).json({ error: 'Failed to refresh scheduler' });
@@ -2982,12 +2984,10 @@ export function registerRoutes(app: Express): Server {
             await storage.setAdminShabbatTimes(entryTime, exitTime);
             console.log('Admin times saved successfully');
 
-            // Refresh scheduler for admin user after manual time save
+            // Refresh automatic scheduler for admin user after manual time save
             try {
-              const simpleScheduler = SimpleShabbatScheduler.getInstance();
-
-              console.log('Triggering scheduler refresh for admin user after manual time save');
-              await simpleScheduler.refreshAdminUser(req.user.id);
+              console.log('Triggering automatic scheduler refresh for admin user after manual time save');
+              await automaticScheduler.refreshUser(req.user.id);
             } catch (schedulerError) {
               console.error('Error with scheduler operations:', schedulerError);
               // Don't fail the whole request if scheduler has issues
@@ -3020,12 +3020,11 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log(`Manual test hide operation for user: ${req.user.id}`);
 
-      const simpleScheduler = SimpleShabbatScheduler.getInstance();
-      await simpleScheduler.executeHideOperation(req.user.id);
+      await automaticScheduler.executeHideOperation(req.user.id);
 
       res.json({ 
         success: true, 
-        message: "Hide operation executed successfully" 
+        message: "בדיקת הסתרת תוכן בוצעה בהצלחה" 
       });
     } catch (error) {
       console.error("Error executing hide operation:", error);
@@ -3037,12 +3036,11 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log(`Manual test restore operation for user: ${req.user.id}`);
 
-      const simpleScheduler = SimpleShabbatScheduler.getInstance();
-      await simpleScheduler.executeRestoreOperation(req.user.id);
+      await automaticScheduler.executeRestoreOperation(req.user.id);
 
       res.json({ 
         success: true, 
-        message: "Restore operation executed successfully" 
+        message: "בדיקת שחזור תוכן בוצעה בהצלחה" 
       });
     } catch (error) {
       console.error("Error executing restore operation:", error);
