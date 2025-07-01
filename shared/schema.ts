@@ -348,6 +348,19 @@ export const videoLockStatuses = pgTable("video_lock_statuses", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const shabbatLocations = pgTable("shabbat_locations", {
+  id: varchar("id").primaryKey(),
+  cityName: varchar("city_name").notNull(),
+  cityId: varchar("city_id").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  // Special admin location with manual times
+  isAdminLocation: boolean("is_admin_location").notNull().default(false),
+  manualEntryTime: timestamp("manual_entry_time"), // Admin sets this manually
+  manualExitTime: timestamp("manual_exit_time"), // Admin sets this manually
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type AuthTokenDb = typeof authTokens.$inferSelect;
