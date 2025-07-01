@@ -126,6 +126,15 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 1, 2025. IMPLEMENTED: Automatic Shabbat content management system:
+  - Created ShabbatScheduler with CronJob-based timing for premium users
+  - Added automatic hiding 1 hour before Shabbat entry per user's location
+  - Added automatic restoration at Shabbat exit time
+  - Integrated with existing Shabbat times API and user location settings
+  - Scheduler calculates individual schedules for each premium user
+  - Added /api/scheduler/status and /api/scheduler/refresh endpoints
+  - System ready for Facebook and YouTube content automation
+  - Core premium feature now operational - requires Facebook/YouTube API integration completion
 - June 27, 2025. COMPLETED: Fixed Facebook authentication issue completely:
   - Root cause: Message delivery from popup window was unreliable
   - Fixed by implementing multiple message attempts with intervals in auth-callback.html

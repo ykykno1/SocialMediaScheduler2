@@ -2879,7 +2879,35 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Shabbat scheduler management endpoints
+  app.get("/api/scheduler/status", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const ShabbatScheduler = (await import("./shabbat-scheduler")).default;
+      const scheduler = ShabbatScheduler.getInstance();
+      const status = scheduler.getStatus();
+      
+      res.json(status);
+    } catch (error) {
+      console.error('Error getting scheduler status:', error);
+      res.status(500).json({ error: 'Failed to get scheduler status' });
+    }
+  });
 
+  app.post("/api/scheduler/refresh", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const ShabbatScheduler = (await import("./shabbat-scheduler")).default;
+      const scheduler = ShabbatScheduler.getInstance();
+      
+      // Restart scheduler to refresh all user schedules
+      scheduler.stop();
+      await scheduler.start();
+      
+      res.json({ success: true, message: 'Scheduler refreshed successfully' });
+    } catch (error) {
+      console.error('Error refreshing scheduler:', error);
+      res.status(500).json({ error: 'Failed to refresh scheduler' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
