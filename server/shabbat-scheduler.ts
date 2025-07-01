@@ -86,6 +86,8 @@ export class ShabbatScheduler {
       console.log('Calculating Shabbat times for all users...');
       
       const allUsers = await storage.getAllUsers();
+      console.log(`Total users in database: ${allUsers.length}`);
+      
       const premiumUsers = allUsers.filter(user => 
         user.accountType === 'premium' || user.accountType === 'youtube_pro'
       );
@@ -93,6 +95,12 @@ export class ShabbatScheduler {
       console.log(`Found ${premiumUsers.length} premium users for Shabbat scheduling`);
 
       for (const user of premiumUsers) {
+        console.log(`Processing user ${user.id}:`, {
+          accountType: user.accountType,
+          shabbatCity: user.shabbatCity,
+          shabbatCityId: user.shabbatCityId
+        });
+        
         try {
           await this.scheduleForUser(user.id, user.shabbatCity, user.shabbatCityId);
         } catch (error) {
@@ -261,8 +269,8 @@ export class ShabbatScheduler {
         return;
       }
 
-      const entryTime = adminTimes.entryTime;
-      const exitTime = adminTimes.exitTime;
+      const entryTime = new Date(adminTimes.entryTime);
+      const exitTime = new Date(adminTimes.exitTime);
       const now = new Date();
 
       console.log(`Scheduling admin user ${userId} with manual times:`);
