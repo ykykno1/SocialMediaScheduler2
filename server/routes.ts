@@ -2947,7 +2947,7 @@ export function registerRoutes(app: Express): Server {
   // Save user timing preferences
   app.post("/api/user/timing-preferences", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const { hideTimingPreference, restoreTimingPreference } = req.body;
+      const { hideTimingPreference, restoreTimingPreference, adminEntryDateTime, adminExitDateTime } = req.body;
       
       if (!hideTimingPreference || !restoreTimingPreference) {
         return res.status(400).json({ error: 'Both timing preferences are required' });
@@ -2961,10 +2961,25 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: 'Invalid timing preference values' });
       }
 
-      const updatedUser = await storage.updateUser(req.user.id, {
+      const updateData: any = {
         hideTimingPreference,
         restoreTimingPreference
-      });
+      };
+
+      // Handle admin manual times if provided
+      if (adminEntryDateTime || adminExitDateTime) {
+        console.log('Saving admin manual times:', { adminEntryDateTime, adminExitDateTime });
+        
+        // Save admin manual times using the existing storage method
+        if (adminEntryDateTime && adminExitDateTime) {
+          const entryTime = new Date(adminEntryDateTime);
+          const exitTime = new Date(adminExitDateTime);
+          
+          await storage.setAdminShabbatTimes(entryTime, exitTime);
+        }
+      }
+
+      const updatedUser = await storage.updateUser(req.user.id, updateData);
       
       res.json({
         success: true,
