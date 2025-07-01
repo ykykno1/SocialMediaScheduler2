@@ -302,7 +302,7 @@ export function UserChabadWidget() {
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td width="100%" class="clheading">
-                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${locationData?.shabbatCityId || '531'}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he"></script>
+                <script type="text/javascript" language="javascript" src="//he.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${locationData?.shabbatCityId === 'admin' ? '531' : (locationData?.shabbatCityId || '531')}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he"></script>
             </td>
         </tr>
     </table>

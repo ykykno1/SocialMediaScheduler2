@@ -234,12 +234,20 @@ export default function AdminPage() {
           </h1>
           <p className="text-gray-600">ניהול משתמשים ומערכת</p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => setIsAuthenticated(false)}
-        >
-          התנתק
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => window.open('/admin-shabbat-times', '_blank')}
+          >
+            ניהול זמני שבת
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsAuthenticated(false)}
+          >
+            התנתק
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

@@ -53,7 +53,8 @@ const MAJOR_CITIES = [
   { name: 'מוסקבה', chabadId: '347' },
   { name: 'פראג', chabadId: '421' },
   { name: 'אומן', chabadId: '801' },
-  { name: 'בנגקוק', chabadId: '42' }
+  { name: 'בנגקוק', chabadId: '42' },
+  { name: 'מנהל', chabadId: 'admin' }
 ];
 
 export default function Settings() {

@@ -11,6 +11,7 @@ import YouTubePage from "@/pages/youtube-oauth";
 import FacebookPage from "@/pages/facebook";
 import InstagramPage from "@/pages/instagram";
 import AdminPage from "@/pages/admin";
+import AdminShabbatPage from "@/pages/admin-shabbat";
 import AuthPage from "@/pages/auth";
 import HomePage from "@/pages/home";
 import Dashboard from "@/components/Dashboard";
