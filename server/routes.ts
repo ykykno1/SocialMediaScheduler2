@@ -2984,26 +2984,13 @@ export function registerRoutes(app: Express): Server {
             await storage.setAdminShabbatTimes(entryTime, exitTime);
             console.log('Admin times saved successfully');
             
-            // Trigger immediate check for users with admin location
+            // Refresh scheduler for admin user after manual time save
             try {
               const { ShabbatScheduler } = await import("./shabbat-scheduler");
               const scheduler = ShabbatScheduler.getInstance();
               
-              // Check if we should trigger hide/restore actions based on current time
-              const now = new Date();
-              console.log('Checking admin times against current time:', { now, entryTime, exitTime });
-              
-              if (now >= entryTime && now <= exitTime) {
-                console.log('Current time is during Shabbat - should hide content');
-                // Content should be hidden now
-                await scheduler.executeHideOperation(req.user.id);
-              } else if (now > exitTime) {
-                console.log('Current time is after Shabbat - should restore content');
-                // Content should be restored now
-                await scheduler.executeRestoreOperation(req.user.id);
-              } else {
-                console.log('Current time is before Shabbat - content should be visible');
-              }
+              console.log('Triggering scheduler refresh for admin user after manual time save');
+              await scheduler.refreshAdminUser(req.user.id);
             } catch (schedulerError) {
               console.error('Error with scheduler operations:', schedulerError);
               // Don't fail the whole request if scheduler has issues

@@ -113,6 +113,13 @@ export class ShabbatScheduler {
       return;
     }
 
+    // Special handling for admin users with manual times
+    if (cityId === 'admin') {
+      console.log(`User ${userId} is using admin location - checking manual times`);
+      await this.scheduleAdminUser(userId);
+      return;
+    }
+
     try {
       // Get Shabbat times for this user's location
       const shabbatTimes = await this.getShabbatTimesForCity(cityId);
@@ -233,6 +240,54 @@ export class ShabbatScheduler {
 
     this.cronJobs.set(jobId, restoreJob);
     console.log(`Scheduled restore operation for user ${userId} at ${restoreTime.toLocaleString('he-IL')}`);
+  }
+
+  /**
+   * Refresh scheduler for admin user when manual times change
+   */
+  async refreshAdminUser(userId: string): Promise<void> {
+    console.log(`Refreshing admin user ${userId} scheduler`);
+    await this.scheduleAdminUser(userId);
+  }
+
+  /**
+   * Schedule operations for admin user based on manual times
+   */
+  private async scheduleAdminUser(userId: string): Promise<void> {
+    try {
+      const adminTimes = await storage.getAdminShabbatTimes();
+      if (!adminTimes || !adminTimes.entryTime || !adminTimes.exitTime) {
+        console.log(`User ${userId} has admin location but no manual times set, skipping`);
+        return;
+      }
+
+      const entryTime = adminTimes.entryTime;
+      const exitTime = adminTimes.exitTime;
+      const now = new Date();
+
+      console.log(`Scheduling admin user ${userId} with manual times:`);
+      console.log(`  Entry: ${entryTime.toLocaleString('he-IL')}`);
+      console.log(`  Exit: ${exitTime.toLocaleString('he-IL')}`);
+
+      // Clear any existing jobs for this user
+      this.clearUserJobs(userId);
+
+      // Immediate check if we're currently in Shabbat time
+      if (now >= entryTime && now <= exitTime) {
+        console.log(`Current time is during admin Shabbat - HIDING content immediately for user ${userId}`);
+        await this.executeHideOperation(userId);
+      } else if (now > exitTime) {
+        console.log(`Current time is after admin Shabbat - RESTORING content immediately for user ${userId}`);
+        await this.executeRestoreOperation(userId);
+      }
+
+      // Schedule future operations
+      this.scheduleHideOperation(userId, entryTime);
+      this.scheduleRestoreOperation(userId, exitTime);
+
+    } catch (error) {
+      console.error(`Failed to schedule admin user ${userId}:`, error);
+    }
   }
 
   /**
