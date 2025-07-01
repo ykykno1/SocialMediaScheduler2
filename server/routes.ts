@@ -2883,9 +2883,8 @@ export function registerRoutes(app: Express): Server {
   // Shabbat scheduler management endpoints
   app.get("/api/scheduler/status", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const ShabbatScheduler = (await import("./shabbat-scheduler")).default;
-      const scheduler = ShabbatScheduler.getInstance();
-      const status = scheduler.getStatus();
+      const simpleScheduler = SimpleShabbatScheduler.getInstance();
+      const status = simpleScheduler.getStatus();
       
       res.json(status);
     } catch (error) {
@@ -2896,12 +2895,11 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/scheduler/refresh", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const ShabbatScheduler = (await import("./shabbat-scheduler")).default;
-      const scheduler = ShabbatScheduler.getInstance();
+      const simpleScheduler = SimpleShabbatScheduler.getInstance();
       
       // Restart scheduler to refresh all user schedules
-      scheduler.stop();
-      await scheduler.start();
+      simpleScheduler.stop();
+      await simpleScheduler.start();
       
       res.json({ success: true, message: 'Scheduler refreshed successfully' });
     } catch (error) {
@@ -2987,11 +2985,10 @@ export function registerRoutes(app: Express): Server {
             
             // Refresh scheduler for admin user after manual time save
             try {
-              const { ShabbatScheduler } = await import("./shabbat-scheduler");
-              const scheduler = ShabbatScheduler.getInstance();
+              const simpleScheduler = SimpleShabbatScheduler.getInstance();
               
               console.log('Triggering scheduler refresh for admin user after manual time save');
-              await scheduler.refreshAdminUser(req.user.id);
+              await simpleScheduler.refreshAdminUser(req.user.id);
             } catch (schedulerError) {
               console.error('Error with scheduler operations:', schedulerError);
               // Don't fail the whole request if scheduler has issues
@@ -3024,8 +3021,8 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log(`Manual test hide operation for user: ${req.user.id}`);
       
-      const scheduler = ShabbatScheduler.getInstance();
-      await scheduler.executeHideOperation(req.user.id);
+      const simpleScheduler = SimpleShabbatScheduler.getInstance();
+      await simpleScheduler.executeHideOperation(req.user.id);
       
       res.json({ 
         success: true, 
@@ -3041,8 +3038,8 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log(`Manual test restore operation for user: ${req.user.id}`);
       
-      const scheduler = ShabbatScheduler.getInstance();
-      await scheduler.executeRestoreOperation(req.user.id);
+      const simpleScheduler = SimpleShabbatScheduler.getInstance();
+      await simpleScheduler.executeRestoreOperation(req.user.id);
       
       res.json({ 
         success: true, 
