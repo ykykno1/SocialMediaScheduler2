@@ -689,35 +689,16 @@ export class ShabbatScheduler {
 }
 
 export default ShabbatScheduler;
-// Import removed - using internal functions instead
+
 
 
 // Example injection into schedule function:
-function scheduleShabbatForUser(userId: string, hideTime: Date, restoreTime: Date) {
-  const now = new Date();
 
-  const timeUntilHide = hideTime.getTime() - now.getTime();
-  const timeUntilRestore = restoreTime.getTime() - now.getTime();
-
-  if (timeUntilHide > 0) {
-    setTimeout(() => {
-      console.log(`🕯️ Hiding content for user ${userId} at ${new Date().toISOString()}`);
-      // hideAll(userId); // Function not available - need to implement
-    }, timeUntilHide);
-  }
-
-  if (timeUntilRestore > 0) {
-    setTimeout(() => {
-      console.log(`✨ Restoring content for user ${userId} at ${new Date().toISOString()}`);
-      // restoreAll(userId); // Function not available - need to implement
-    }, timeUntilRestore);
-  }
-}
 
 
 // 🔁 פונקציה שמחזירה זמני שבת לפי מזהה עיר של המשתמש
 import { db } from './db';
-import { secureUsers } from '../shared/schema';
+import { adminSettings, secureUsers } from '../shared/schema';
 import { eq } from 'drizzle-orm';
 
 interface ShabbatTimes {
@@ -727,9 +708,38 @@ interface ShabbatTimes {
   cityId: string;
 }
 
+
+import { adminSettings } from '../shared/schema';
+
 async function getShabbatTimesForUser(userId: string): Promise<ShabbatTimes | null> {
   const [user] = await db.select().from(secureUsers).where(eq(secureUsers.id, userId));
   if (!user) return null;
+
+  if (user.shabbatCityId === 'admin' || user.shabbatCityId === 'manual') {
+    const entrySetting = await db
+      .select()
+      .from(adminSettings)
+      .where(eq(adminSettings.settingKey, 'manual_shabbat_entry'))
+      .then(results => results.find(r => r.userId === userId));
+
+    const exitSetting = await db
+      .select()
+      .from(adminSettings)
+      .where(eq(adminSettings.settingKey, 'manual_shabbat_exit'))
+      .then(results => results.find(r => r.userId === userId));
+
+    if (entrySetting && exitSetting) {
+      return {
+        entryTime: new Date(entrySetting.settingValue),
+        exitTime: new Date(exitSetting.settingValue),
+        cityName: 'הגדרה ידנית',
+        cityId: 'admin'
+      };
+    } else {
+      console.warn(`⚠️ Missing manual shabbat times for user ${userId}`);
+      return null;
+    }
+  }
 
   console.warn(`⚠️ fetchChabadTimes() not implemented. Would fetch for cityId: ${user.shabbatCityId}`);
   return null;
