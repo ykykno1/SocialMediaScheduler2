@@ -461,11 +461,11 @@ export class AutomaticScheduler {
 
           console.log(`📺 Processing video: ${videoId} (${video.snippet?.title})`);
           
-          // Check if video is not already locked or hidden
+          // Check if video is locked (protected from automation) - skip completely
           const lockStatus = await storage.getVideoLockStatus(userId, videoId);
           if (lockStatus?.isLocked) {
-            console.log(`⏭️ Skipping locked video: ${videoId}`);
-            continue; // Skip locked videos
+            console.log(`🔒 Skipping locked video: ${videoId} - protected from automation`);
+            continue; // Skip locked videos completely - they should not be touched
           }
 
           // Save original status before hiding (get current status from video)
@@ -521,11 +521,11 @@ export class AutomaticScheduler {
         try {
           console.log(`📺 Processing restore for video: ${videoId} to ${originalStatus}`);
           
-          // Check if video is not locked
+          // Check if video is locked (protected from automation) - skip completely
           const lockStatus = await storage.getVideoLockStatus(userId, videoId);
           if (lockStatus?.isLocked) {
-            console.log(`⏭️ Skipping locked video: ${videoId}`);
-            continue; // Skip locked videos
+            console.log(`🔒 Skipping locked video: ${videoId} - protected from automation`);
+            continue; // Skip locked videos completely - they should not be touched
           }
 
           // Restore to original privacy status
