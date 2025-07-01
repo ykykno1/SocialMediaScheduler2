@@ -5,7 +5,7 @@ interface AuthenticatedRequest extends Request {
 }
 import { createServer, type Server } from "http";
 import { enhancedStorage as storage } from './enhanced-storage.js';
-import { ShabbatScheduler } from './shabbat-scheduler.js';
+import { SimpleShabbatScheduler } from './simple-scheduler.js';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';

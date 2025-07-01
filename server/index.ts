@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import ShabbatScheduler from "./shabbat-scheduler";
+import { simpleScheduler } from "./simple-scheduler";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -67,10 +67,9 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  // Initialize Shabbat scheduler for premium users
-  const shabbatScheduler = ShabbatScheduler.getInstance();
-  await shabbatScheduler.start();
-  console.log('Shabbat scheduler initialized for automatic content management');
+  // Initialize Simple Shabbat scheduler for premium users
+  await simpleScheduler.start();
+  console.log('Simple Shabbat scheduler initialized for automatic content management');
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
