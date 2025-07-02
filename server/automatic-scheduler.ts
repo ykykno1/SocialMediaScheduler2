@@ -436,8 +436,24 @@ export class AutomaticScheduler {
     try {
       console.log(`📺 Hiding YouTube videos for user ${userId}`);
       
-      // Use the direct videos API instead of search API for better reliability
-      const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,status&mine=true&maxResults=50`;
+      // First get channel ID to fetch user's videos
+      const channelResponse = await fetch('https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      
+      if (!channelResponse.ok) {
+        throw new Error(`Failed to get channel info: ${channelResponse.status}`);
+      }
+      
+      const channelData = await channelResponse.json() as any;
+      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+      
+      if (!uploadsPlaylistId) {
+        throw new Error('Could not find uploads playlist');
+      }
+      
+      // Get videos from uploads playlist
+      const videosUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50`;
       const videosResponse = await fetch(videosUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
@@ -452,17 +468,24 @@ export class AutomaticScheduler {
         throw new Error(`YouTube API error: ${videosResponse.status} - ${errorText}`);
       }
 
-      const videosData = await videosResponse.json() as any;
-      const videos = videosData.items || [];
+      const playlistData = await videosResponse.json() as any;
+      console.log(`📺 Got playlist items: ${playlistData.items?.length || 0} items`);
       
-      console.log(`📺 API Response structure:`, {
-        totalItems: videos.length,
-        firstVideoStructure: videos[0] ? {
-          id: videos[0].id,
-          title: videos[0].snippet?.title,
-          privacyStatus: videos[0].status?.privacyStatus
-        } : 'No videos found'
-      });
+      // Extract video IDs from playlist items
+      const videoIds = playlistData.items?.map((item: any) => {
+        // In playlist items, video ID is in snippet.resourceId.videoId
+        return item.snippet?.resourceId?.videoId;
+      }).filter(Boolean) || [];
+      
+      if (videoIds.length === 0) {
+        console.log(`📺 No videos found for user ${userId}`);
+        return { hiddenCount: 0 };
+      }
+      
+      console.log(`📺 Found ${videoIds.length} video IDs: ${videoIds.slice(0, 3).join(', ')}...`);
+      
+      // Now get full video details including privacy status
+      const videos = await this.getVideoDetails(videoIds, accessToken);
       
       let hiddenCount = 0;
       
@@ -692,6 +715,25 @@ export class AutomaticScheduler {
       console.error(`❌ Facebook restore operation failed:`, error);
       return { restoredCount: 0 };
     }
+  }
+
+  /**
+   * Get video details including privacy status
+   */
+  private async getVideoDetails(videoIds: string[], accessToken: string): Promise<any[]> {
+    const idsParam = videoIds.join(',');
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${idsParam}`;
+    
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get video details: ${response.status}`);
+    }
+    
+    const data = await response.json() as any;
+    return data.items || [];
   }
 
   /**
