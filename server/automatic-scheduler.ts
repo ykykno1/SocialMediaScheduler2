@@ -477,7 +477,7 @@ export class AutomaticScheduler {
             continue;
           }
 
-          console.log(`📺 Processing video: ${videoId} (${video.snippet?.title})`);
+          console.log(`\n📺 Processing video: ${videoId} (${video.snippet?.title})`);
           
           // Check if video is locked (protected from automation) - skip completely
           const lockStatus = await storage.getVideoLockStatus(userId, videoId);
