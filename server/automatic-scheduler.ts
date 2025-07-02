@@ -443,7 +443,13 @@ export class AutomaticScheduler {
       });
 
       if (!videosResponse.ok) {
-        throw new Error(`YouTube API error: ${videosResponse.status}`);
+        const errorText = await videosResponse.text();
+        console.error(`📺 YouTube API error response:`, {
+          status: videosResponse.status,
+          statusText: videosResponse.statusText,
+          body: errorText
+        });
+        throw new Error(`YouTube API error: ${videosResponse.status} - ${errorText}`);
       }
 
       const videosData = await videosResponse.json() as any;
