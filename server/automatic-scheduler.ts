@@ -312,13 +312,23 @@ export class AutomaticScheduler {
    */
   async executeHideOperation(userId: string): Promise<void> {
     try {
+      console.log(`\n🔥 =================================`);
+      console.log(`🔥 MANUAL HIDE OPERATION FOR USER: ${userId}`);
+      console.log(`🔥 =================================`);
       console.log(`🕯️ HIDE: Starting hide operation for user ${userId}`);
       
       let totalHidden = 0;
 
       // Hide YouTube videos
       try {
+        console.log(`🔍 Getting YouTube token for user ${userId}...`);
         const ytToken = await storage.getAuthToken('youtube', userId);
+        console.log(`🔍 YouTube token result:`, {
+          found: !!ytToken,
+          hasAccessToken: !!ytToken?.accessToken,
+          platform: ytToken?.platform
+        });
+        
         if (ytToken?.accessToken) {
           console.log(`📺 Hiding YouTube videos for user ${userId}`);
           
@@ -326,6 +336,8 @@ export class AutomaticScheduler {
           const result = await this.callYouTubeHideAPI(userId, ytToken.accessToken);
           totalHidden += result.hiddenCount || 0;
           console.log(`✅ YouTube: Hidden ${result.hiddenCount || 0} videos`);
+        } else {
+          console.log(`⚠️ No YouTube token found for user ${userId}`);
         }
       } catch (error) {
         console.error(`❌ YouTube hide failed for user ${userId}:`, error);
