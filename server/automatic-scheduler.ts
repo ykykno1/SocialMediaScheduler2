@@ -499,7 +499,7 @@ export class AutomaticScheduler {
           await storage.saveVideoOriginalStatus(videoId, currentStatus || 'public', userId);
           
           // Hide the video by setting it to private
-          const updateUrl = `https://www.googleapis.com/youtube/v3/videos?part=status`;
+          const updateUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,status`;
           const updateResponse = await fetch(updateUrl, {
             method: 'PUT',
             headers: {
@@ -508,6 +508,11 @@ export class AutomaticScheduler {
             },
             body: JSON.stringify({
               id: videoId,
+              snippet: {
+                title: video.snippet?.title || 'Video',
+                description: video.snippet?.description || '',
+                categoryId: video.snippet?.categoryId || '22'
+              },
               status: { privacyStatus: 'private' }
             })
           });
