@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 2, 2025. COMPLETED: Fixed manual timing scheduler and verified full automatic Shabbat system:
+  - Resolved manual time scheduling issues by adding proper null checking for expired times
+  - Fixed cron job creation to handle past times gracefully (skip expired schedules)
+  - Confirmed automatic scheduler creates jobs correctly for future times only
+  - System now properly schedules hide/restore operations based on admin manual times
+  - Manual timing interface fully functional - scheduler updates immediately when times change
 - July 2, 2025. COMPLETED: Fixed YouTube API integration and verified full system functionality:
   - Resolved YouTube API 400 Bad Request errors by implementing proper playlist-based approach
   - Fixed "No filter selected" error by using channels API followed by playlistItems API
