@@ -486,9 +486,17 @@ export class AutomaticScheduler {
             continue; // Skip locked videos completely - they should not be touched
           }
 
-          // Save original status before hiding (get current status from video)
-          const originalStatus = video.status?.privacyStatus || 'public';
-          await storage.saveVideoOriginalStatus(videoId, originalStatus, userId);
+          // Check if video is already private/unlisted
+          const currentStatus = video.status?.privacyStatus;
+          console.log(`📺 Video ${videoId} current status: ${currentStatus}`);
+          
+          if (currentStatus === 'private') {
+            console.log(`⏭️ Video ${videoId} already private, skipping`);
+            continue;
+          }
+          
+          // Save original status before hiding
+          await storage.saveVideoOriginalStatus(videoId, currentStatus || 'public', userId);
           
           // Hide the video by setting it to private
           const updateUrl = `https://www.googleapis.com/youtube/v3/videos?part=status`;
