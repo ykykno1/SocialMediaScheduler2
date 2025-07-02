@@ -149,19 +149,27 @@ export class AutomaticScheduler {
             await this.executeRestoreOperation(user.id);
           });
 
-          // Store the jobs
-          this.scheduledJobs.set(user.id, [
-            { task: hideJob, type: 'hide', userId: user.id, scheduledTime: hideTime },
-            { task: restoreJob, type: 'restore', userId: user.id, scheduledTime: restoreTime }
-          ]);
-
-          console.log(`✅ Scheduled both operations for ${user.email}`);
+          // Store the jobs (only if they were successfully created)
+          const jobs: ScheduledJob[] = [];
+          if (hideJob) {
+            jobs.push({ task: hideJob, type: 'hide' as const, userId: user.id, scheduledTime: hideTime });
+          }
+          if (restoreJob) {
+            jobs.push({ task: restoreJob, type: 'restore' as const, userId: user.id, scheduledTime: restoreTime });
+          }
+          
+          if (jobs.length > 0) {
+            this.scheduledJobs.set(user.id, jobs);
+            console.log(`✅ Scheduled ${jobs.length} operations for ${user.email}`);
+          }
         } else {
-          // Only store hide job if restore time has passed
-          this.scheduledJobs.set(user.id, [
-            { task: hideJob, type: 'hide', userId: user.id, scheduledTime: hideTime }
-          ]);
-          console.log(`✅ Scheduled hide operation for ${user.email} (restore time has passed)`);
+          // Only store hide job if restore time has passed and hide job was created
+          if (hideJob) {
+            this.scheduledJobs.set(user.id, [
+              { task: hideJob, type: 'hide' as const, userId: user.id, scheduledTime: hideTime }
+            ]);
+            console.log(`✅ Scheduled hide operation for ${user.email} (restore time has passed)`);
+          }
         }
       } else {
         console.log(`⚠️ Hide time has passed for user ${user.email}, checking if restore is needed`);
@@ -173,10 +181,12 @@ export class AutomaticScheduler {
             await this.executeRestoreOperation(user.id);
           });
 
-          this.scheduledJobs.set(user.id, [
-            { task: restoreJob, type: 'restore', userId: user.id, scheduledTime: restoreTime }
-          ]);
-          console.log(`✅ Scheduled restore operation for ${user.email}`);
+          if (restoreJob) {
+            this.scheduledJobs.set(user.id, [
+              { task: restoreJob, type: 'restore', userId: user.id, scheduledTime: restoreTime }
+            ]);
+            console.log(`✅ Scheduled restore operation for ${user.email}`);
+          }
         }
       }
 
@@ -285,8 +295,14 @@ export class AutomaticScheduler {
   /**
    * Create a cron job for a specific date/time
    */
-  private createCronJob(targetTime: Date, callback: () => void): cron.ScheduledTask {
+  private createCronJob(targetTime: Date, callback: () => void): cron.ScheduledTask | null {
     const cronPattern = this.dateToCronPattern(targetTime);
+    
+    if (!cronPattern) {
+      // Time has already passed, don't create a job
+      return null;
+    }
+    
     console.log(`⏱️ Creating cron job for ${targetTime.toLocaleString('he-IL')} with pattern: ${cronPattern}`);
     
     return cron.schedule(cronPattern, callback, {
@@ -299,10 +315,17 @@ export class AutomaticScheduler {
    * Convert Date to cron pattern
    */
   private dateToCronPattern(date: Date): string {
+    const now = new Date();
     const minute = date.getMinutes();
     const hour = date.getHours();
     const day = date.getDate();
     const month = date.getMonth() + 1;
+    
+    // If the time has already passed today, skip scheduling
+    if (date <= now) {
+      console.log(`⚠️ Time ${date.toLocaleString('he-IL')} has already passed (current: ${now.toLocaleString('he-IL')}), skipping...`);
+      return null; // Return null to indicate we should skip this job
+    }
     
     return `${minute} ${hour} ${day} ${month} *`;
   }
