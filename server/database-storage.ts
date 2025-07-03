@@ -325,15 +325,29 @@ export class DatabaseStorage {
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
-      const [user] = await db.insert(users).values({
+      const [secureUser] = await db.insert(secureUsersTable).values({
         id: nanoid(),
         email: userData.email,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         username: userData.username || userData.email.split('@')[0],
-        accountType: 'free'
+        accountTier: 'free',
+        emailVerified: false,
+        isActive: true,
+        registrationMethod: 'email'
       }).returning();
 
-      return user;
+      // Return in legacy User format for compatibility
+      return {
+        id: secureUser.id,
+        email: secureUser.email!,
+        password: secureUser.passwordHash!,
+        username: secureUser.username,
+        accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
+        shabbatCity: secureUser.shabbatCity,
+        shabbatCityId: secureUser.shabbatCityId,
+        createdAt: secureUser.createdAt,
+        updatedAt: secureUser.updatedAt
+      };
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;

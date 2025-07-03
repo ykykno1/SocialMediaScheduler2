@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 3, 2025. ADDRESSED: Three key user requests - logo navigation, code cleanup plan, and authentication enhancement start:
+  - Fixed logo click navigation: "רובוט שבת" logo now correctly returns to home page from all pages
+  - Created comprehensive cleanup list in cleanup_opportunities.md: identified 50+ files and code sections for potential cleanup
+  - Started authentication enhancement: added phone number and email verification infrastructure to database schema
+  - Added verification_codes table for SMS and email verification support
+  - Fixed database compatibility issues with new authentication fields
+  - Updated user registration system to use secure_users table with enhanced verification support
 - July 3, 2025. FIXED: Critical admin panel payment-to-upgrade issue:
   - Resolved bug where adding payments through admin panel didn't upgrade users
   - Modified /api/admin/payments route to automatically upgrade user account type when payment is added
