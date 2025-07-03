@@ -34,6 +34,34 @@ export default function ProfilePage() {
     email: user?.email || ''
   });
 
+  // Fetch user's full profile including timing preferences
+  const { data: userProfile } = useQuery({
+    queryKey: ['/api/user'],
+    enabled: !!user
+  });
+
+  // Helper function to get timing preference display text
+  const getTimingText = (preference: string | undefined, type: 'hide' | 'restore') => {
+    if (!preference) return 'לא מוגדר';
+    
+    if (type === 'hide') {
+      switch (preference) {
+        case 'immediate': return 'מיידי';
+        case '15min': return '15 דקות לפני';
+        case '30min': return '30 דקות לפני';
+        case '1hour': return 'שעה לפני';
+        default: return 'לא מוגדר';
+      }
+    } else {
+      switch (preference) {
+        case 'immediate': return 'מיידי';
+        case '30min': return '30 דקות אחרי';
+        case '1hour': return 'שעה אחרי';
+        default: return 'לא מוגדר';
+      }
+    }
+  };
+
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { username: string; email: string }) => {
@@ -255,6 +283,53 @@ export default function ProfilePage() {
                   <p className="text-sm font-medium">סטטוס חשבון</p>
                   <p className="text-sm text-green-600 font-medium">פעיל</p>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Shabbat Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              העדפות שבת
+            </CardTitle>
+            <CardDescription>
+              ההגדרות שלך לניהול תוכן אוטומטי לשבת
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">זמן הסתרה</p>
+                  <p className="text-sm text-muted-foreground">
+                    {getTimingText((userProfile as any)?.hideTimingPreference, 'hide')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div>
+                  <p className="text-sm font-medium">זמן שחזור</p>
+                  <p className="text-sm text-muted-foreground">
+                    {getTimingText((userProfile as any)?.restoreTimingPreference, 'restore')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <div>
+                <p className="text-sm font-medium">מיקום שבת</p>
+                <p className="text-sm text-muted-foreground">
+                  {(userProfile as any)?.shabbatCity || 'לא מוגדר'}
+                </p>
               </div>
             </div>
           </CardContent>

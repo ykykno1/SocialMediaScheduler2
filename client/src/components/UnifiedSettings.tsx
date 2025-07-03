@@ -17,7 +17,7 @@ const CITIES = [
   { name: 'באר שבע', chabadId: '197' },
   { name: 'אילת', chabadId: '103' },
   { name: 'צפת', chabadId: '540' },
-  { name: 'טבריה', chabadId: '531' },
+  { name: 'טבריה', chabadId: '697' },
   { name: 'נתניה', chabadId: '379' },
   { name: 'אשדוד', chabadId: '158' },
   { name: 'פתח תקווה', chabadId: '450' },
