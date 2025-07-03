@@ -37,21 +37,28 @@ export default function AdminShabbatPage() {
   }, [entryDateTime, exitDateTime, loading, times]);
 
   const fetchCurrentTimes = async () => {
+    console.log('🔧 [CLIENT] fetchCurrentTimes called');
     try {
       const response = await fetch('/api/admin/shabbat-times');
+      console.log('🔧 [CLIENT] Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('🔧 [CLIENT] Received data:', data);
         setTimes(data);
 
         if (data.entryTime) {
-          setEntryDateTime(new Date(data.entryTime).toISOString().slice(0, 16));
+          const entryISO = new Date(data.entryTime).toISOString().slice(0, 16);
+          console.log('🔧 [CLIENT] Setting entry time:', entryISO);
+          setEntryDateTime(entryISO);
         }
         if (data.exitTime) {
-          setExitDateTime(new Date(data.exitTime).toISOString().slice(0, 16));
+          const exitISO = new Date(data.exitTime).toISOString().slice(0, 16);
+          console.log('🔧 [CLIENT] Setting exit time:', exitISO);
+          setExitDateTime(exitISO);
         }
       }
     } catch (error) {
-      console.error('Error fetching times:', error);
+      console.error('🔧 [CLIENT] Error fetching times:', error);
     }
   };
 
