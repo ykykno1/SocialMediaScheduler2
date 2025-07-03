@@ -211,10 +211,18 @@ function UserProfile() {
 // Layout wrapper with dummy functions for the menu
 function AppLayoutWrapper({ children }: { children: ReactNode }) {
   const [activeView, setActiveView] = useState('main');
+  const [location, setLocation] = useLocation();
   
   const showSettings = () => setActiveView('settings');
   const showHistory = () => setActiveView('history');
   const showMain = () => setActiveView('main');
+
+  // Reset to main view when location changes to home
+  React.useEffect(() => {
+    if (location === '/') {
+      setActiveView('main');
+    }
+  }, [location]);
 
   return (
     <Layout onShowSettings={showSettings} onShowHistory={showHistory}>

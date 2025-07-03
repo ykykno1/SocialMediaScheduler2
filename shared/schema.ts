@@ -275,12 +275,17 @@ export const users = pgTable("users", {
 // NEW SECURE USERS TABLE - Enhanced security and organization
 export const secureUsers = pgTable("secure_users", {
   id: varchar("id").primaryKey(),
-  email: varchar("email").unique().notNull(),
+  email: varchar("email").unique(),
   username: varchar("username").notNull(),
-  passwordHash: varchar("password_hash").notNull(),
+  passwordHash: varchar("password_hash"),
   accountTier: varchar("account_tier").$type<'free' | 'youtube_pro' | 'premium'>().notNull().default('free'),
   emailVerified: boolean("email_verified").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  // Phone verification fields
+  phoneNumber: varchar("phone_number").unique(),
+  phoneVerified: boolean("phone_verified").notNull().default(false),
+  // Registration method
+  registrationMethod: varchar("registration_method").$type<'email' | 'phone'>().notNull().default('email'),
   shabbatCity: varchar("shabbat_city").default('ירושלים'),
   shabbatCityId: varchar("shabbat_city_id").default('247'),
   // Custom timing preferences for premium users
@@ -289,6 +294,20 @@ export const secureUsers = pgTable("secure_users", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   lastLogin: timestamp("last_login"),
+});
+
+// Verification codes table for email and SMS verification
+export const verificationCodes = pgTable("verification_codes", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").references(() => secureUsers.id),
+  email: varchar("email"),
+  phoneNumber: varchar("phone_number"), 
+  code: varchar("code").notNull(), // 6-digit verification code
+  type: varchar("type").$type<'email' | 'sms'>().notNull(),
+  purpose: varchar("purpose").$type<'registration' | 'password_reset' | 'phone_verification'>().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const authTokens = pgTable("auth_tokens", {
