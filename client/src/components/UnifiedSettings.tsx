@@ -87,6 +87,7 @@ const UnifiedSettings = () => {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [hidePreference, setHidePreference] = useState<'immediate' | '15min' | '30min' | '1hour'>('1hour');
   const [restorePreference, setRestorePreference] = useState<'immediate' | '30min' | '1hour'>('immediate');
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
   // Get current user data
   const { data: user, isLoading: userLoading } = useQuery<User>({
@@ -99,13 +100,20 @@ const UnifiedSettings = () => {
     retry: false,
   });
 
-  // Load current preferences
+  // Load current preferences from user data - only once when user data is loaded
   useEffect(() => {
-    if (user) {
+    if (user && !preferencesLoaded) {
+      console.log('Loading timing preferences from user data:', {
+        hideTimingPreference: user.hideTimingPreference,
+        restoreTimingPreference: user.restoreTimingPreference
+      });
+      
+      // Set preferences from user data, with fallbacks only if user data is missing
       setHidePreference((user.hideTimingPreference as any) || '1hour');
       setRestorePreference((user.restoreTimingPreference as any) || 'immediate');
+      setPreferencesLoaded(true);
     }
-  }, [user]);
+  }, [user, preferencesLoaded]);
 
   useEffect(() => {
     if (locationData) {
@@ -142,7 +150,19 @@ const UnifiedSettings = () => {
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Don't invalidate queries to prevent reloading and resetting preferences
+      // Instead, update the local cache with current values
+      queryClient.setQueryData(['/api/user'], (oldData: any) => {
+        if (oldData) {
+          return {
+            ...oldData,
+            hideTimingPreference: hidePreference,
+            restoreTimingPreference: restorePreference
+          };
+        }
+        return oldData;
+      });
+      
       toast({
         title: "העדפות תזמון עודכנו!",
         description: "ההגדרות שלך נשמרו בהצלחה",
