@@ -126,6 +126,11 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 3, 2025. ISSUE: Timezone handling problem identified in manual timing system:
+  - Root cause: Server runs in UTC but displays time in local timezone, causing confusion
+  - Server logs show times in local format while operating in UTC internally
+  - Manual timing fails because of timezone conversion mismatch between frontend and backend
+  - Clock display works correctly but admin timing system has fundamental timezone issue
 - July 3, 2025. ADDED: Local timezone clock throughout application:
   - Created comprehensive Clock component that automatically detects user's timezone
   - Displays current time, date, and timezone in Hebrew formatting
