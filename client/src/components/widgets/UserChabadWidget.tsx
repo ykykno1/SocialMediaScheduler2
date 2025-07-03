@@ -13,14 +13,14 @@ function AdminShabbatWidget() {
   const formatTime = (timeString: string) => {
     if (!timeString) return 'לא הוגדר';
     const date = new Date(timeString);
-    // Server already returns local time, no timezone conversion needed
     return date.toLocaleString('he-IL', {
       weekday: 'long',
       year: 'numeric', 
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Asia/Jerusalem'
     });
   };
 
