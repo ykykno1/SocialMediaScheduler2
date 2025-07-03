@@ -15,17 +15,17 @@ const Layout: React.FC<LayoutProps> = ({
   onShowHistory
 }) => {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 text-gray-800">
-      {/* Header */}
-      <header className="bg-[#3466ad] text-white shadow-md">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <h1 className="text-xl font-bold">רובוט שבת</h1>
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen flex flex-col bg-background text-foreground ios-fade-in">
+      {/* iOS-style Header with blur effect */}
+      <header className="bg-background/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-semibold ios-title text-primary">רובוט שבת</h1>
+          <div className="flex items-center gap-2">
             <Button 
               variant="ghost" 
               size="icon"
               onClick={onShowHistory}
-              className="p-2 rounded hover:bg-blue-600 transition text-white"
+              className="ios-button h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-secondary"
             >
               <History className="h-5 w-5" />
             </Button>
@@ -34,15 +34,19 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-grow container mx-auto px-4 py-6">
-        {children}
+      {/* iOS-style Main Content */}
+      <main className="flex-grow container mx-auto px-6 py-8">
+        <div className="ios-scale-in">
+          {children}
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white py-4 border-t mt-auto">
-        <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-          <p>© 2023 רובוט שבת | גרסה 1.0.0</p>
+      {/* iOS-style Footer */}
+      <footer className="bg-background/50 backdrop-blur-sm py-6 border-t border-border/50 mt-auto">
+        <div className="container mx-auto px-6 text-center">
+          <p className="text-sm ios-body text-muted-foreground">
+            © 2025 רובוט שבת | גרסה 2.0.0
+          </p>
         </div>
       </footer>
     </div>

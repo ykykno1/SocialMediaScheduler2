@@ -6,36 +6,38 @@ import { UserChabadWidget } from "@/components/widgets/UserChabadWidget";
 
 const Dashboard = () => {
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="text-center py-8">
-        <h1 className="text-3xl font-bold mb-2">ברוכים הבאים לרובוט שבת</h1>
-        <p className="text-gray-600 text-lg">נהל את התוכן שלך ברשתות החברתיות לשבת</p>
+    <div className="space-y-8">
+      {/* iOS-style Welcome Section */}
+      <div className="text-center py-12">
+        <h1 className="text-4xl font-semibold ios-title mb-4 text-foreground">ברוכים הבאים לרובוט שבת</h1>
+        <p className="ios-subtitle text-xl text-muted-foreground">נהל את התוכן שלך ברשתות החברתיות לשבת</p>
       </div>
 
       {/* Shabbat Timer Widget */}
-      <div className="flex justify-center mb-8">
-        <UserChabadWidget />
+      <div className="flex justify-center mb-10">
+        <div className="ios-scale-in">
+          <UserChabadWidget />
+        </div>
       </div>
 
-      {/* Platform Navigation Cards */}
+      {/* iOS-style Platform Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* YouTube Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+        <Card className="ios-card group">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <Youtube className="mr-2 h-6 w-6 text-red-600" />
-                יוטיוב
+                <Youtube className="mr-3 h-7 w-7 text-youtube" />
+                <span className="text-lg">יוטיוב</span>
               </div>
-              <ArrowLeft className="h-5 w-5 text-gray-400" />
+              <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="ios-body text-base">
               נהל סרטונים ביוטיוב - זמין לכל המשתמשים
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full">
+            <Button asChild className="w-full ios-button bg-primary text-primary-foreground hover:bg-primary/90">
               <Link href="/youtube">
                 כנס לניהול יוטיוב
               </Link>
@@ -44,21 +46,21 @@ const Dashboard = () => {
         </Card>
 
         {/* Facebook Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+        <Card className="ios-card group">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <Facebook className="mr-2 h-6 w-6 text-[#1877F2]" />
-                פייסבוק
+                <Facebook className="mr-3 h-7 w-7 text-facebook" />
+                <span className="text-lg">פייסבוק</span>
               </div>
-              <ArrowLeft className="h-5 w-5 text-gray-400" />
+              <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="ios-body text-base">
               נהל פוסטים בפייסבוק - פרימיום בלבד
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full" variant="outline">
+            <Button asChild className="w-full ios-button" variant="outline">
               <Link href="/facebook">
                 כנס לניהול פייסבוק
               </Link>
@@ -67,21 +69,21 @@ const Dashboard = () => {
         </Card>
 
         {/* Instagram Card */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+        <Card className="ios-card group">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <Instagram className="mr-2 h-6 w-6 text-[#E4405F]" />
-                אינסטגרם
+                <Instagram className="mr-3 h-7 w-7 text-instagram" />
+                <span className="text-lg">אינסטגרם</span>
               </div>
-              <ArrowLeft className="h-5 w-5 text-gray-400" />
+              <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="ios-body text-base">
               נהל פוסטים באינסטגרם - פרימיום בלבד
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full" variant="outline">
+            <Button asChild className="w-full ios-button" variant="outline">
               <Link href="/instagram">
                 כנס לניהול אינסטגרם
               </Link>
@@ -90,20 +92,20 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <SettingsIcon className="mr-2 h-5 w-5" />
+      {/* iOS-style Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+        <Card className="ios-card group">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center ios-title text-lg">
+              <SettingsIcon className="mr-3 h-6 w-6 text-primary" />
               הגדרות
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="ios-body text-base">
               נהל זמני שבת ושדרג חשבון
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline" className="w-full">
+            <Button asChild variant="outline" className="w-full ios-button">
               <Link href="/settings">
                 פתח הגדרות
               </Link>
@@ -111,18 +113,18 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <HistoryIcon className="mr-2 h-5 w-5" />
+        <Card className="ios-card group">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center ios-title text-lg">
+              <HistoryIcon className="mr-3 h-6 w-6 text-primary" />
               היסטוריה
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="ios-body text-base">
               צפה בפעולות שביצעת בעבר
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline" className="w-full">
+            <Button asChild variant="outline" className="w-full ios-button">
               <Link href="/history">
                 צפה בהיסטוריה
               </Link>
