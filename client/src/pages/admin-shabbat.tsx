@@ -21,8 +21,20 @@ export default function AdminShabbatPage() {
         const queryClient = useQueryClient();
 
   useEffect(() => {
+    console.log('🔧 [CLIENT] Component mounted, fetching times...');
     fetchCurrentTimes();
   }, []);
+
+  // Debug current state
+  useEffect(() => {
+    console.log('🔧 [CLIENT] State update:', {
+      entryDateTime,
+      exitDateTime,
+      loading,
+      times,
+      buttonDisabled: loading || !entryDateTime || !exitDateTime
+    });
+  }, [entryDateTime, exitDateTime, loading, times]);
 
   const fetchCurrentTimes = async () => {
     try {
@@ -195,7 +207,14 @@ export default function AdminShabbatPage() {
             </div>
 
             <Button 
-              onClick={handleSetTimes}
+              onClick={(e) => {
+                console.log('🔧 [CLIENT] Button clicked!');
+                console.log('🔧 [CLIENT] Loading:', loading);
+                console.log('🔧 [CLIENT] EntryDateTime:', entryDateTime);
+                console.log('🔧 [CLIENT] ExitDateTime:', exitDateTime);
+                console.log('🔧 [CLIENT] Button disabled?', loading || !entryDateTime || !exitDateTime);
+                handleSetTimes();
+              }}
               disabled={loading || !entryDateTime || !exitDateTime}
               className="w-full"
             >
