@@ -103,14 +103,19 @@ const UnifiedSettings = () => {
   // Load current preferences from user data - only once when user data is loaded
   useEffect(() => {
     if (user && !preferencesLoaded) {
+      console.log('Full user object from server:', user);
       console.log('Loading timing preferences from user data:', {
         hideTimingPreference: user.hideTimingPreference,
         restoreTimingPreference: user.restoreTimingPreference
       });
       
       // Set preferences from user data, with fallbacks only if user data is missing
-      setHidePreference((user.hideTimingPreference as any) || '1hour');
-      setRestorePreference((user.restoreTimingPreference as any) || 'immediate');
+      if (user.hideTimingPreference) {
+        setHidePreference(user.hideTimingPreference as any);
+      }
+      if (user.restoreTimingPreference) {
+        setRestorePreference(user.restoreTimingPreference as any);
+      }
       setPreferencesLoaded(true);
     }
   }, [user, preferencesLoaded]);
