@@ -2286,12 +2286,12 @@ export function registerRoutes(app: Express): Server {
       const userData = registerSchema.parse(req.body);
 
       // Check if user already exists
-      const existingUser = storage.getUserByEmail(userData.email);
+      const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
         return res.status(400).json({ error: "User already exists with this email" });
       }
 
-      const user = storage.createUser(userData);
+      const user = await storage.createUser(userData);
 
       // Don't return password in response
       const { password, ...userResponse } = user;
@@ -2310,13 +2310,13 @@ export function registerRoutes(app: Express): Server {
     try {
       const { email, password } = loginSchema.parse(req.body);
 
-      const user = storage.verifyPassword(email, password);
+      const user = await storage.verifyPassword(email, password);
       if (!user) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
       // Update last login
-      const updatedUser = storage.updateUser(user.id, { lastLogin: new Date() });
+      const updatedUser = await storage.updateUser(user.id, { lastLogin: new Date() });
 
       // Don't return password in response
       const { password: _, ...userResponse } = updatedUser;
@@ -2676,9 +2676,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Admin stats
-  app.get("/api/admin/stats", (req, res) => {
+  app.get("/api/admin/stats", async (req, res) => {
     try {
-      const users = storage.getAllUsers();
+      const users = await storage.getAllUsers();
       const totalUsers = users.length;
       const freeUsers = users.filter((u: any) => u.accountType === 'free').length;
       const youtubeProUsers = users.filter((u: any) => u.accountType === 'youtube_pro').length;
