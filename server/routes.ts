@@ -2942,29 +2942,26 @@ export function registerRoutes(app: Express): Server {
   // Admin endpoint to set custom Shabbat times for testing
   app.post("/api/admin/set-shabbat-times", async (req, res) => {
     try {
-      const { entryTime, exitTime, timezone } = req.body;
-
+      const { entryTime, exitTime } = req.body;
+      
       if (!entryTime || !exitTime) {
         return res.status(400).json({ error: 'Entry time and exit time are required' });
       }
 
-      // Store times exactly as entered - no timezone conversion
-      const entryTimeLocal = new Date(entryTime);
-      const exitTimeLocal = new Date(exitTime);
-      
-      console.log(`⏰ Storing times as entered (no timezone conversion):`);
-      console.log(`  Entry: ${entryTime} → stored as ${entryTimeLocal.toISOString()}`);
-      console.log(`  Exit: ${exitTime} → stored as ${exitTimeLocal.toISOString()}`);
-
       // Update admin location with custom times
-      await storage.setAdminShabbatTimes(entryTimeLocal, exitTimeLocal);
-
+      await storage.setAdminShabbatTimes(new Date(entryTime), new Date(exitTime));
+      
       // Refresh scheduler to pick up new times
-      console.log('🔄 Refreshing scheduler due to manual time update...');
-      automaticScheduler.stop();
-      await automaticScheduler.start();
-      console.log('✅ Scheduler refreshed with new manual times');
-
+      try {
+        const { SimpleShabbatScheduler } = await import('./simple-scheduler.js');
+        const simpleScheduler = SimpleShabbatScheduler.getInstance();
+        simpleScheduler.stop();
+        await simpleScheduler.start();
+        console.log('🔄 Scheduler refreshed with new manual times');
+      } catch (schedulerError) {
+        console.error('Error refreshing scheduler:', schedulerError);
+      }
+      
       res.json({ 
         success: true, 
         message: 'Admin Shabbat times updated successfully',
