@@ -62,8 +62,12 @@ app.use((req, res, next) => {
 
   // Start the automatic Shabbat content scheduler
   console.log('🤖 Starting automatic scheduler on server startup...');
-  await automaticScheduler.start();
-  console.log('🤖 Automatic scheduler started successfully');
+  try {
+    await automaticScheduler.start();
+    console.log('🤖 Automatic scheduler started successfully');
+  } catch (error) {
+    console.error('❌ Failed to start automatic scheduler:', error);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
