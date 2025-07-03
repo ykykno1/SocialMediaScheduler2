@@ -357,8 +357,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
-        hideTimingPreference: secureUser.hideTimingPreference || '1hour',
-        restoreTimingPreference: secureUser.restoreTimingPreference || 'immediate',
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -397,8 +397,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
-        hideTimingPreference: secureUser.hideTimingPreference || '1hour',
-        restoreTimingPreference: secureUser.restoreTimingPreference || 'immediate',
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -443,8 +443,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
-        hideTimingPreference: secureUser.hideTimingPreference || '1hour',
-        restoreTimingPreference: secureUser.restoreTimingPreference || 'immediate',
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
