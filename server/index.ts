@@ -3,7 +3,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
-// import { automaticScheduler } from "./automatic-scheduler";
+import { automaticScheduler } from "./automatic-scheduler";
 
 // Load environment variables
 dotenv.config();
@@ -86,5 +86,12 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start automatic scheduler
+    automaticScheduler.start().then(() => {
+      log("Automatic scheduler started");
+    }).catch((error) => {
+      console.error("Failed to start automatic scheduler:", error);
+    });
   });
 })();
