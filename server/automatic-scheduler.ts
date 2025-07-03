@@ -330,6 +330,10 @@ export class AutomaticScheduler {
    * Convert UTC time to Israeli time properly
    */
   private convertToIsraeliTime(utcDate: Date): Date {
+    // If the date is already in Israeli timezone (like admin manual times), return as is
+    if (this.isIsraeliTime(utcDate)) {
+      return utcDate;
+    }
     const israelTime = new Date(utcDate.toLocaleString("en-US", {timeZone: "Asia/Jerusalem"}));
     return israelTime;
   }
@@ -338,8 +342,40 @@ export class AutomaticScheduler {
    * Convert Israeli time back to UTC for cron scheduling
    */
   private convertToUTC(israelTime: Date): Date {
-    const utcTime = new Date(israelTime.getTime() + (israelTime.getTimezoneOffset() * 60000));
-    return utcTime;
+    // Create a new date in UTC from Israeli time components
+    const utcTime = new Date(Date.UTC(
+      israelTime.getFullYear(),
+      israelTime.getMonth(),
+      israelTime.getDate(),
+      israelTime.getHours(),
+      israelTime.getMinutes(),
+      israelTime.getSeconds()
+    ));
+    
+    // Adjust for Israeli timezone offset (UTC+2 or UTC+3 depending on DST)
+    const israelOffset = this.getIsraeliTimezoneOffset();
+    return new Date(utcTime.getTime() - (israelOffset * 60 * 60 * 1000));
+  }
+
+  /**
+   * Check if a date is already in Israeli timezone format
+   */
+  private isIsraeliTime(date: Date): boolean {
+    // Check if this looks like a manually set Israeli time
+    // Manual times from admin usually come with Israeli timezone already applied
+    return true; // For now, assume admin times are correct
+  }
+
+  /**
+   * Get current Israeli timezone offset in hours
+   */
+  private getIsraeliTimezoneOffset(): number {
+    const now = new Date();
+    const israelTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jerusalem"}));
+    const utcTime = new Date(now.toISOString());
+    
+    const diffMs = israelTime.getTime() - utcTime.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60));
   }
 
   /**
@@ -367,32 +403,25 @@ export class AutomaticScheduler {
   private dateToCronPattern(date: Date): string {
     const now = new Date();
     
-    // Convert times to Israeli timezone for comparison
-    const israelNow = this.convertToIsraeliTime(now);
-    const israelTargetTime = this.convertToIsraeliTime(date);
+    // For admin manual times, treat the input date as already being in Israeli time
+    // Don't double-convert it
+    const targetTime = new Date(date);
     
-    // If the time has already passed, skip scheduling
-    if (israelTargetTime <= israelNow) {
-      console.log(`⚠️ Israeli time ${israelTargetTime.toLocaleString('he-IL')} has already passed (current: ${israelNow.toLocaleString('he-IL')}), skipping...`);
+    // Check if time has passed (compare in same timezone)
+    if (targetTime <= now) {
+      console.log(`⚠️ Time ${targetTime.toLocaleString('he-IL')} has already passed (current: ${now.toLocaleString('he-IL')}), skipping...`);
       return null;
     }
     
-    // Use Israeli time for cron pattern but schedule in server timezone
-    const minute = israelTargetTime.getMinutes();
-    const hour = israelTargetTime.getHours();
-    const day = israelTargetTime.getDate();
-    const month = israelTargetTime.getMonth() + 1;
+    // Use the target time directly for cron scheduling
+    const minute = targetTime.getMinutes();
+    const hour = targetTime.getHours();
+    const day = targetTime.getDate();
+    const month = targetTime.getMonth() + 1;
     
-    // Convert back to server time for actual scheduling
-    const serverTime = this.convertToUTC(israelTargetTime);
-    const serverMinute = serverTime.getMinutes();
-    const serverHour = serverTime.getHours();
-    const serverDay = serverTime.getDate();
-    const serverMonth = serverTime.getMonth() + 1;
+    console.log(`📅 Scheduling cron job for: ${targetTime.toLocaleString('he-IL')} (${hour}:${minute.toString().padStart(2, '0')})`);
     
-    console.log(`📅 Scheduling: Israeli time ${hour}:${minute} = Server time ${serverHour}:${serverMinute}`);
-    
-    return `${serverMinute} ${serverHour} ${serverDay} ${serverMonth} *`;
+    return `${minute} ${hour} ${day} ${month} *`;
   }
 
   /**

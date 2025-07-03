@@ -2980,14 +2980,29 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: 'Entry time and exit time are required' });
       }
 
+      console.log(`🔧 Received admin times from client:`, { entryTime, exitTime });
+
+      // Parse the times and treat them as Israeli timezone
+      const entryDate = new Date(entryTime);
+      const exitDate = new Date(exitTime);
+
+      console.log(`🔧 Parsed dates:`, {
+        entry: entryDate.toLocaleString('he-IL'),
+        exit: exitDate.toLocaleString('he-IL'),
+        entryISO: entryDate.toISOString(),
+        exitISO: exitDate.toISOString()
+      });
+
       // Update admin location with custom times
-      await storage.setAdminShabbatTimes(new Date(entryTime), new Date(exitTime));
+      await storage.setAdminShabbatTimes(entryDate, exitDate);
 
       res.json({ 
         success: true, 
         message: 'Admin Shabbat times updated successfully',
-        entryTime: new Date(entryTime),
-        exitTime: new Date(exitTime)
+        entryTime: entryDate,
+        exitTime: exitDate,
+        entryTimeDisplay: entryDate.toLocaleString('he-IL', {timeZone: 'Asia/Jerusalem'}),
+        exitTimeDisplay: exitDate.toLocaleString('he-IL', {timeZone: 'Asia/Jerusalem'})
       });
     } catch (error) {
       console.error('Error setting admin Shabbat times:', error);

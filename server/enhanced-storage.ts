@@ -17,7 +17,7 @@ export class EnhancedStorage extends DatabaseStorage {
 
   private async setupImprovements() {
     if (this.isInitialized) return;
-    
+
     try {
       await this.addPerformanceIndexes();
       await this.logCurrentStatus();
@@ -44,7 +44,7 @@ export class EnhancedStorage extends DatabaseStorage {
       const [tokensCount] = await db.select({ count: sql<number>`count(*)` }).from(encryptedAuthTokens);
       const [lockCount] = await db.select({ count: sql<number>`count(*)` }).from(videoLockStatuses);
       const [statusCount] = await db.select({ count: sql<number>`count(*)` }).from(videoStatuses);
-      
+
       console.log('Database migration status:', {
         secure_users: usersCount.count,
         encrypted_auth_tokens: tokensCount.count,
@@ -62,20 +62,20 @@ export class EnhancedStorage extends DatabaseStorage {
   async cleanupExpiredTokens(): Promise<number> {
     try {
       const now = new Date();
-      
+
       // Clean up encrypted tokens
       const result1 = await db.delete(encryptedAuthTokens)
         .where(lt(encryptedAuthTokens.expiresAt, now));
-      
+
       // Clean up legacy tokens 
       const result2 = await db.delete(authTokens)
         .where(lt(authTokens.expiresAt, now));
-      
+
       const cleaned = (result1.rowCount || 0) + (result2.rowCount || 0);
       if (cleaned > 0) {
         console.log(`Cleaned up ${cleaned} expired tokens`);
       }
-      
+
       return cleaned;
     } catch (error) {
       console.error('Token cleanup failed:', error);
@@ -83,9 +83,23 @@ export class EnhancedStorage extends DatabaseStorage {
     }
   }
 
-  // Admin Shabbat times management - inherited from DatabaseStorage
+  // Admin Shabbat times management
   async setAdminShabbatTimes(entryTime: Date, exitTime: Date): Promise<void> {
-    return super.setAdminShabbatTimes(entryTime, exitTime);
+    // Ensure the times are stored correctly without timezone conversion issues
+    const correctedEntryTime = new Date(entryTime);
+    const correctedExitTime = new Date(exitTime);
+
+    this.adminShabbatTimes = {
+      entryTime: correctedEntryTime,
+      exitTime: correctedExitTime,
+      lastUpdated: new Date()
+    };
+
+    console.log(`🔧 Admin Shabbat times set:`);
+    console.log(`   Entry: ${correctedEntryTime.toLocaleString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
+    console.log(`   Exit: ${correctedExitTime.toLocaleString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
+    console.log(`   Entry ISO: ${correctedEntryTime.toISOString()}`);
+    console.log(`   Exit ISO: ${correctedExitTime.toISOString()}`);
   }
 
   async getAdminShabbatTimes(): Promise<{ entryTime: Date | null; exitTime: Date | null; } | null> {
