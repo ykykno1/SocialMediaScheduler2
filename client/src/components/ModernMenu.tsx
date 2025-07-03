@@ -118,12 +118,12 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
       {/* Menu Panel */}
       <div className={`
         fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-background border-l border-border z-50
-        transform transition-transform duration-300 ease-out shadow-2xl
+        transform transition-transform duration-300 ease-out shadow-2xl flex flex-col
         ${isOpen ? 'translate-x-0' : 'translate-x-full'}
       `}
       style={{ backgroundColor: 'var(--background)' }}>
         {/* Header */}
-        <div className="px-6 py-6 border-b border-border bg-background">
+        <div className="flex-shrink-0 px-6 py-6 border-b border-border bg-background">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold ios-title text-foreground">תפריט</h2>
             <Button
@@ -147,8 +147,8 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
           )}
         </div>
 
-        {/* Menu Items */}
-        <div className="px-4 py-4 bg-background">
+        {/* Menu Items - Scrollable */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 bg-background">
           <nav className="space-y-2">
             {menuItems.map((item, index) => (
               <button
@@ -177,7 +177,7 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border bg-background/80">
+        <div className="flex-shrink-0 p-6 border-t border-border bg-background/80">
           <p className="text-xs ios-caption text-muted-foreground text-center">
             רובוט שבת v2.0.0
           </p>
