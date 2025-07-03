@@ -127,7 +127,7 @@ export function UserChabadWidget() {
   const [iframeKey, setIframeKey] = useState(0);
 
   // Get user's saved Shabbat location
-  const { data: locationData, isLoading, refetch } = useQuery<{ shabbatCity?: string; shabbatCityId?: string }>({
+  const { data: locationData, isLoading } = useQuery<{ shabbatCity?: string; shabbatCityId?: string }>({
     queryKey: ['/api/user/shabbat-location'],
     retry: false,
     refetchOnWindowFocus: true,
@@ -136,8 +136,8 @@ export function UserChabadWidget() {
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
-  // Get admin times with automatic refresh
-  const { data: adminTimes, refetch: refetchAdminTimes } = useQuery<{ entryTime: string; exitTime: string }>({
+  // Get admin times with automatic refresh (only if in admin mode)
+  const { data: adminTimes } = useQuery<{ entryTime: string; exitTime: string }>({
     queryKey: ['/api/admin/shabbat-times'],
     refetchInterval: 5000, // Refresh every 5 seconds to catch manual updates
     enabled: locationData?.shabbatCityId === 'admin', // Only fetch if admin mode
@@ -363,38 +363,6 @@ export function UserChabadWidget() {
 </body>
 </html>`;
   };
-
-  const userLocationQuery = useQuery<{ shabbatCity?: string; shabbatCityId?: string }>({
-    queryKey: ['/api/user/shabbat-location'],
-    queryFn: () => apiRequest('GET', '/api/user/shabbat-location').then(res => res.json()),
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchInterval: false,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000
-  });
-
-  // Query for admin times if user location is admin
-  const adminTimesQuery = useQuery({
-    queryKey: ['/api/admin/shabbat-times'],
-    queryFn: () => apiRequest('GET', '/api/admin/shabbat-times').then(res => res.json()),
-    enabled: userLocationQuery?.data?.shabbatCityId === 'admin',
-    refetchInterval: 3000, // Poll every 3 seconds for admin mode
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true
-  });
-
-  const userLocation = userLocationQuery.data;
-  const adminTimes = adminTimesQuery.data;
-
-  // Force refresh when entering admin mode
-  useEffect(() => {
-    if (userLocation?.shabbatCityId === 'admin') {
-      adminTimesQuery.refetch();
-    }
-  }, [userLocation?.shabbatCityId]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
