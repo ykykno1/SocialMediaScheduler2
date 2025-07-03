@@ -3,11 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Youtube, Facebook, Instagram, ArrowLeft, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { Link } from "wouter";
 import { UserChabadWidget } from "@/components/widgets/UserChabadWidget";
+import Clock from "@/components/Clock";
 
 const Dashboard = () => {
   return (
     <div className="space-y-8">
-
+      {/* שעון מקומי */}
+      <div className="flex justify-center">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-gray-200/30 dark:border-gray-700/30">
+          <Clock 
+            className="justify-center" 
+            showDate={true} 
+            showTimezone={true} 
+          />
+        </div>
+      </div>
 
       {/* Shabbat Timer Widget */}
       <div className="flex justify-center mb-10">

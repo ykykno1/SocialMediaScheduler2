@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 3, 2025. ADDED: Local timezone clock throughout application:
+  - Created comprehensive Clock component that automatically detects user's timezone
+  - Displays current time, date, and timezone in Hebrew formatting
+  - Added clocks to multiple locations: hamburger menu, main dashboard, and header
+  - Clock updates every second and shows accurate local time for each user
+  - Desktop header shows compact time-only version, other locations show full details
+  - Uses browser's Intl API for accurate timezone detection and formatting
 - July 3, 2025. FIXED: Manual timing scheduler now fully operational:
   - Root issue: Automatic scheduler was disabled in server startup (commented out)
   - Added automatic scheduler activation on server startup in index.ts

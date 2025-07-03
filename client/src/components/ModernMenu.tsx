@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
+import ClockComponent from '@/components/Clock';
 
 interface ModernMenuProps {
   onShowSettings: () => void;
@@ -155,6 +156,14 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
             >
               <X className="h-4 w-4" />
             </Button>
+          </div>
+          {/* שעון מקומי */}
+          <div className="mt-3 p-2 bg-blue-50/50 dark:bg-blue-950/30 rounded-lg border border-blue-200/30 dark:border-blue-800/30">
+            <ClockComponent 
+              className="justify-center" 
+              showDate={true} 
+              showTimezone={true} 
+            />
           </div>
           {user && (
             <div className="mt-2 p-2 bg-secondary/50 rounded-lg">

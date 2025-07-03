@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import ModernMenu from './ModernMenu';
 import { Link } from 'wouter';
+import Clock from './Clock';
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,9 +19,19 @@ const Layout: React.FC<LayoutProps> = ({
       {/* iOS-style Header with blur effect */}
       <header className="bg-background/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-semibold ios-title text-primary hover:opacity-80 transition-opacity cursor-pointer">
-            רובוט שבת
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-2xl font-semibold ios-title text-primary hover:opacity-80 transition-opacity cursor-pointer">
+              רובוט שבת
+            </Link>
+            {/* שעון קטן בכותרת */}
+            <div className="hidden md:block bg-blue-50/50 dark:bg-blue-950/30 rounded-lg px-3 py-1 border border-blue-200/30 dark:border-blue-800/30">
+              <Clock 
+                className="" 
+                showDate={false} 
+                showTimezone={false} 
+              />
+            </div>
+          </div>
           <div className="flex items-center">
             <ModernMenu 
               onShowSettings={onShowSettings}
