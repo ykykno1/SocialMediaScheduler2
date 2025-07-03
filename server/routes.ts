@@ -2982,9 +2982,13 @@ export function registerRoutes(app: Express): Server {
 
       console.log(`🔧 [ADMIN TIMES UPDATE] Received from client:`, { entryTime, exitTime });
 
-      // Parse the times and treat them as Israeli timezone
+      // Parse the times and convert from client timezone to Israeli timezone  
       const entryDate = new Date(entryTime);
       const exitDate = new Date(exitTime);
+      
+      // Add 3 hours to compensate for timezone difference (client sends local time as UTC)
+      entryDate.setHours(entryDate.getHours() + 3);
+      exitDate.setHours(exitDate.getHours() + 3);
 
       console.log(`🔧 Parsed dates:`, {
         entry: entryDate.toLocaleString('he-IL'),
