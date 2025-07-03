@@ -91,10 +91,7 @@ const UnifiedSettings = () => {
   const [restorePreference, setRestorePreference] = useState<'immediate' | '30min' | '1hour'>('immediate');
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   
-  // State for manual admin times
-  const [adminEntryDateTime, setAdminEntryDateTime] = useState("");
-  const [adminExitDateTime, setAdminExitDateTime] = useState("");
-  const [adminTimesLoaded, setAdminTimesLoaded] = useState(false);
+
 
   // Get current user data
   const { data: user, isLoading: userLoading } = useQuery<User>({
@@ -107,12 +104,7 @@ const UnifiedSettings = () => {
     retry: false,
   });
 
-  // Get admin times when user is in admin mode
-  const { data: adminTimes } = useQuery<{ entryTime: string | null; exitTime: string | null }>({
-    queryKey: ['/api/admin/shabbat-times'],
-    enabled: selectedCity === 'admin',
-    retry: false,
-  });
+
 
   // Load current preferences from user data - only once when user data is loaded
   useEffect(() => {
@@ -143,18 +135,7 @@ const UnifiedSettings = () => {
     }
   }, [locationData]);
 
-  // Load admin times when available
-  useEffect(() => {
-    if (adminTimes && selectedCity === 'admin' && !adminTimesLoaded) {
-      if (adminTimes.entryTime) {
-        setAdminEntryDateTime(new Date(adminTimes.entryTime).toISOString().slice(0, 16));
-      }
-      if (adminTimes.exitTime) {
-        setAdminExitDateTime(new Date(adminTimes.exitTime).toISOString().slice(0, 16));
-      }
-      setAdminTimesLoaded(true);
-    }
-  }, [adminTimes, selectedCity, adminTimesLoaded]);
+
 
   // Update location mutation
   const updateLocationMutation = useMutation({
@@ -212,22 +193,31 @@ const UnifiedSettings = () => {
     },
   });
 
-  // Mutation for saving admin times
-  const saveAdminTimesMutation = useMutation({
-    mutationFn: async (timeData: { entryTime: string; exitTime: string }) => {
+  // Mutation for setting auto times
+  const setAutoTimesMutation = useMutation({
+    mutationFn: async () => {
+      const now = new Date();
+      const hideTime = new Date(now.getTime() + 1 * 60 * 1000); // 1 minute from now
+      const restoreTime = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutes from now
+
+      const timeData = {
+        entryTime: hideTime.toISOString(),
+        exitTime: restoreTime.toISOString()
+      };
+
       const res = await apiRequest('POST', '/api/admin/set-shabbat-times', timeData);
       return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/shabbat-times'] });
       toast({
-        title: "זמנים ידניים נשמרו!",
-        description: "הזמנים החדשים יחולו על המערכת האוטומטית",
+        title: "זמנים אוטומטיים הוגדרו!",
+        description: "הסתרה תתבצע תוך דקה ושחזור תוך דקותיים",
       });
     },
     onError: (error) => {
       toast({
-        title: "שגיאה בשמירת זמנים",
+        title: "שגיאה בהגדרת זמנים",
         description: error instanceof Error ? error.message : "אירעה שגיאה",
         variant: "destructive",
       });
@@ -252,29 +242,8 @@ const UnifiedSettings = () => {
     });
   };
 
-  const handleSaveAdminTimes = () => {
-    if (!adminEntryDateTime || !adminExitDateTime) {
-      toast({
-        title: "שגיאה",
-        description: "יש להזין גם זמן כניסה וגם זמן יציאה",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (new Date(adminEntryDateTime) >= new Date(adminExitDateTime)) {
-      toast({
-        title: "שגיאה", 
-        description: "זמן הכניסה חייב להיות לפני זמן היציאה",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    saveAdminTimesMutation.mutate({
-      entryTime: adminEntryDateTime,
-      exitTime: adminExitDateTime
-    });
+  const handleSetAutoTimes = () => {
+    setAutoTimesMutation.mutate();
   };
 
   if (userLoading || isLoading) {
@@ -379,40 +348,28 @@ const UnifiedSettings = () => {
               </p>
             </div>
             
-            {/* Manual time settings for admin mode */}
+            {/* Auto time settings for admin mode */}
             {selectedCity === 'admin' && (
-              <div className="mt-6 p-4 border rounded-lg bg-orange-50">
-                <h4 className="font-medium mb-4 text-orange-900">זמנים ידניים למנהל</h4>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="entry-time">זמן כניסת שבת</Label>
-                    <Input
-                      id="entry-time"
-                      type="datetime-local"
-                      value={adminEntryDateTime}
-                      onChange={(e) => setAdminEntryDateTime(e.target.value)}
-                      className="text-sm"
-                    />
+              <div className="mt-6 p-4 border rounded-lg bg-blue-50">
+                <h4 className="font-medium mb-4 text-blue-900">זמנים אוטומטיים למנהל</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-blue-800">הסתרה: דקה קדימה מהזמן הנוכחי</span>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="exit-time">זמן יציאת שבת</Label>
-                    <Input
-                      id="exit-time"
-                      type="datetime-local"
-                      value={adminExitDateTime}
-                      onChange={(e) => setAdminExitDateTime(e.target.value)}
-                      className="text-sm"
-                    />
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-blue-800">שחזור: שתי דקות קדימה מהזמן הנוכחי</span>
                   </div>
+                  <Button 
+                    onClick={handleSetAutoTimes}
+                    className="mt-4 w-full"
+                    disabled={setAutoTimesMutation.isPending}
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {setAutoTimesMutation.isPending ? 'מגדיר...' : 'הגדר זמנים אוטומטיים'}
+                  </Button>
                 </div>
-                <Button 
-                  onClick={handleSaveAdminTimes}
-                  className="mt-4 w-full"
-                  disabled={!adminEntryDateTime || !adminExitDateTime || saveAdminTimesMutation.isPending}
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {saveAdminTimesMutation.isPending ? 'שומר...' : 'שמור זמנים ידניים'}
-                </Button>
               </div>
             )}
           </CardContent>
