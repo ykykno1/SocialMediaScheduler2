@@ -6,38 +6,30 @@ import { useState, useEffect } from "react";
 
 const Navbar = () => {
   const [location] = useLocation();
-  const [showDebugPages, setShowDebugPages] = useState(() => {
-    return localStorage.getItem('showDebugPages') === 'true';
-  });
+  const [showDebugPages, setShowDebugPages] = useState(false);
 
+  // Check localStorage on every render and location change
   useEffect(() => {
+    const checkDebugSetting = () => {
+      const setting = localStorage.getItem('showDebugPages') === 'true';
+      setShowDebugPages(setting);
+    };
+
+    checkDebugSetting();
+    
     const handleDebugToggle = (event: CustomEvent) => {
       setShowDebugPages(event.detail.showDebugPages);
     };
 
-    const handleStorageChange = () => {
-      setShowDebugPages(localStorage.getItem('showDebugPages') === 'true');
-    };
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // User returned to tab, check localStorage again
-        setShowDebugPages(localStorage.getItem('showDebugPages') === 'true');
-      }
-    };
-
+    // Check again when route changes
+    checkDebugSetting();
+    
     window.addEventListener('debugPagesToggle', handleDebugToggle as EventListener);
-    window.addEventListener('storage', handleStorageChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleStorageChange);
     
     return () => {
       window.removeEventListener('debugPagesToggle', handleDebugToggle as EventListener);
-      window.removeEventListener('storage', handleStorageChange);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleStorageChange);
     };
-  }, []);
+  }, [location]); // Re-run when location changes
 
   const baseNavItems = [
     {
@@ -74,8 +66,7 @@ const Navbar = () => {
     ? [...baseNavItems, ...debugNavItems]
     : baseNavItems;
 
-  // Debug console log to see current state
-  console.log('Navbar: showDebugPages =', showDebugPages, 'localStorage =', localStorage.getItem('showDebugPages'));
+
 
   return (
     <nav className="flex flex-wrap items-center gap-2 mb-4">
