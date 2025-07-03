@@ -85,10 +85,17 @@ export class EnhancedStorage extends DatabaseStorage {
 
   // Admin Shabbat times management
   async setAdminShabbatTimes(entryTime: Date, exitTime: Date): Promise<void> {
+    console.log('🔧 [ENHANCED STORAGE] setAdminShabbatTimes called with:', { entryTime, exitTime });
+    
     // Ensure the times are stored correctly without timezone conversion issues
     const correctedEntryTime = new Date(entryTime);
     const correctedExitTime = new Date(exitTime);
 
+    // First, call the parent class method to save to database
+    console.log('🔧 [ENHANCED STORAGE] Calling parent setAdminShabbatTimes...');
+    await super.setAdminShabbatTimes(correctedEntryTime, correctedExitTime);
+
+    // Then update memory cache
     this.adminShabbatTimes = {
       entryTime: correctedEntryTime,
       exitTime: correctedExitTime,

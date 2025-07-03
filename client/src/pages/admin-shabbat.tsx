@@ -25,6 +25,14 @@ export default function AdminShabbatPage() {
     fetchCurrentTimes();
   }, []);
 
+  // Add mount debugging
+  console.log('🔧 [CLIENT] AdminShabbat component render, current state:', {
+    entryDateTime,
+    exitDateTime,
+    loading,
+    times
+  });
+
   // Debug current state
   useEffect(() => {
     console.log('🔧 [CLIENT] State update:', {
