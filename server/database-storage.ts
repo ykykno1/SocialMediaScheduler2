@@ -704,25 +704,35 @@ export class DatabaseStorage {
 
   // Admin Shabbat times management for testing
   async setAdminShabbatTimes(entryTime: Date, exitTime: Date): Promise<void> {
+    console.log('🔧 [DB SET ADMIN TIMES] Called with:', { entryTime, exitTime });
+    
     // First check if admin location exists
     const adminLocation = await db.execute(sql`
       SELECT id FROM shabbat_locations WHERE id = 'admin' OR is_admin_location = true
     `);
     
+    console.log('🔧 [DB SET ADMIN TIMES] Found admin locations:', adminLocation.rows.length);
+    
     if (adminLocation.rows.length === 0) {
+      console.log('🔧 [DB SET ADMIN TIMES] Creating new admin location...');
       // Create admin location if it doesn't exist
-      await db.execute(sql`
+      const result = await db.execute(sql`
         INSERT INTO shabbat_locations (id, name_hebrew, name_english, country, timezone, is_admin_location, manual_entry_time, manual_exit_time, is_active)
         VALUES ('admin', 'מנהל', 'Admin', 'ישראל', 'Asia/Jerusalem', true, ${entryTime}, ${exitTime}, true)
       `);
+      console.log('🔧 [DB SET ADMIN TIMES] Insert result:', result);
     } else {
+      console.log('🔧 [DB SET ADMIN TIMES] Updating existing admin location...');
       // Update existing admin location
-      await db.execute(sql`
+      const result = await db.execute(sql`
         UPDATE shabbat_locations 
         SET manual_entry_time = ${entryTime}, manual_exit_time = ${exitTime}
         WHERE id = 'admin' OR is_admin_location = true
       `);
+      console.log('🔧 [DB SET ADMIN TIMES] Update result:', result);
     }
+    
+    console.log('🔧 [DB SET ADMIN TIMES] Operation completed');
   }
 
   async getAdminShabbatTimes(): Promise<{ entryTime: Date | null; exitTime: Date | null; } | null> {
