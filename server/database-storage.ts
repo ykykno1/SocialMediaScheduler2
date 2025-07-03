@@ -486,7 +486,7 @@ export class DatabaseStorage {
     try {
       const secureUserList = await db.select().from(secureUsersTable);
       
-      // Map all secure users to legacy User format
+      // Map all secure users to legacy User format with timing preferences
       return secureUserList.map(secureUser => ({
         id: secureUser.id,
         email: secureUser.email,
@@ -495,6 +495,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
+        hideTimingPreference: secureUser.hideTimingPreference || 'immediate',
+        restoreTimingPreference: secureUser.restoreTimingPreference || 'immediate',
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       }));

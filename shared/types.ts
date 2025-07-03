@@ -7,6 +7,8 @@ export interface User {
   accountType: 'free' | 'youtube_pro' | 'premium';
   shabbatCity: string | null;
   shabbatCityId: string | null;
+  hideTimingPreference?: 'immediate' | '15min' | '30min' | '1hour';
+  restoreTimingPreference?: 'immediate' | '30min' | '1hour';
   createdAt: Date | null;
   updatedAt: Date | null;
 }
