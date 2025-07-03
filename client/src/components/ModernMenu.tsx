@@ -11,7 +11,9 @@ import {
   User,
   Shield,
   HelpCircle,
-  Home
+  Home,
+  TestTube,
+  Clock
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -80,6 +82,18 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
       icon: HelpCircle,
       label: 'עזרה ותמיכה',
       action: () => {}, // Will open help
+      disabled: false
+    },
+    {
+      icon: TestTube,
+      label: 'בדיקת סקדולר',
+      action: () => window.location.href = '/test-scheduler',
+      disabled: false
+    },
+    {
+      icon: Clock,
+      label: 'הגדרות תזמון',
+      action: () => window.location.href = '/timing-settings',
       disabled: false
     },
     {
