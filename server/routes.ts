@@ -522,7 +522,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/user", async (req, res) => {
+  app.get("/api/user", (req, res) => {
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
@@ -535,12 +535,12 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    const user = await storage.getUserById(decoded.userId);
+    const user = storage.getUserById(decoded.userId);
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }
 
-    // Return user without password but include timing preferences
+    // Return user without password
     const { password: _, ...userResponse } = user;
     res.json(userResponse);
   });
