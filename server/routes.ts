@@ -2981,6 +2981,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       console.log(`🔧 [ADMIN TIMES UPDATE] Received from client:`, { entryTime, exitTime });
+      console.log(`🔧 [ADMIN TIMES UPDATE] Server time now:`, new Date().toISOString());
 
       // Parse the times and convert from client timezone to Israeli timezone  
       const entryDate = new Date(entryTime);
