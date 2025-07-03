@@ -732,15 +732,21 @@ export class DatabaseStorage {
       WHERE id = 'admin'
     `);
     
+    console.log(`🔧 [DB GET ADMIN TIMES] Query result:`, result.rows);
+    
     if (result.rows.length === 0) {
+      console.log(`🔧 [DB GET ADMIN TIMES] No admin row found`);
       return null;
     }
 
     const row = result.rows[0] as any;
-    return {
+    const returnData = {
       entryTime: row.manual_entry_time,
       exitTime: row.manual_exit_time
     };
+    console.log(`🔧 [DB GET ADMIN TIMES] Returning:`, returnData);
+    
+    return returnData;
   }
 
   // Verification codes management

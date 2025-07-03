@@ -143,15 +143,16 @@ export function UserChabadWidget() {
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
-  // Get admin times with automatic refresh (only if in admin mode)
+  // Get admin times with aggressive refresh (only if in admin mode)
   const { data: adminTimes, refetch: refetchAdminTimes } = useQuery<{ entryTime: string; exitTime: string }>({
     queryKey: ['/api/admin/shabbat-times'],
-    refetchInterval: 3000, // Refresh every 3 seconds to catch manual updates
+    refetchInterval: 500, // Refresh every 0.5 seconds to catch manual updates immediately
     enabled: locationData?.shabbatCityId === 'admin', // Only fetch if admin mode
     staleTime: 0, // Always consider data stale to force updates
     gcTime: 0, // Don't cache old data
     refetchOnMount: true,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: true
   });
 
   // State for Shabbat data from Chabad API
@@ -227,10 +228,13 @@ export function UserChabadWidget() {
 
   // Force refresh when admin times change
   useEffect(() => {
-    if (locationData?.shabbatCityId === 'admin' && adminTimes) {
-      console.log('Admin times updated:', adminTimes);
-      // Force component re-render when admin times change
-      setForceUpdate(prev => prev + 1);
+    if (locationData?.shabbatCityId === 'admin') {
+      console.log('Admin times data received:', adminTimes);
+      if (adminTimes) {
+        console.log('Admin times updated - forcing re-render:', adminTimes);
+        // Force component re-render when admin times change
+        setForceUpdate(prev => prev + 1);
+      }
     }
   }, [adminTimes, locationData?.shabbatCityId]);
 

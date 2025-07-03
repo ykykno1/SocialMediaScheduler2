@@ -2980,7 +2980,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: 'Entry time and exit time are required' });
       }
 
-      console.log(`🔧 Received admin times from client:`, { entryTime, exitTime });
+      console.log(`🔧 [ADMIN TIMES UPDATE] Received from client:`, { entryTime, exitTime });
 
       // Parse the times and treat them as Israeli timezone
       const entryDate = new Date(entryTime);
@@ -3014,6 +3014,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/admin/shabbat-times", async (req, res) => {
     try {
       const adminTimes = await storage.getAdminShabbatTimes();
+      console.log(`🔧 [GET ADMIN TIMES] Returning:`, adminTimes);
       res.json(adminTimes);
     } catch (error) {
       console.error('Error getting admin Shabbat times:', error);
