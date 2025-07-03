@@ -177,7 +177,12 @@ function Navbar() {
     },
   ];
 
-  const navItems = showDebugPages 
+  // Add admin debug items directly if user is admin (premium account)
+  const { user } = useAuth();
+  const isAdmin = user?.accountType === 'premium';
+
+  // Show debug items for premium users (admins) or when explicitly enabled
+  const navItems = (isAdmin && showDebugPages) || showDebugPages
     ? [...baseNavItems, ...debugNavItems]
     : baseNavItems;
 
