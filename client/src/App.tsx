@@ -140,11 +140,6 @@ function Navbar() {
 
   const debugNavItems = [
     {
-      label: "הגדרות תזמון",
-      href: "/timing-settings",
-      icon: <Clock className="h-4 w-4 mr-2" />,
-    },
-    {
       label: "בדיקת סקדולר",
       href: "/test-scheduler",
       icon: <TestTube className="h-4 w-4 mr-2" />,
