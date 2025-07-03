@@ -143,6 +143,13 @@ function Navbar() {
   ];
 
   const navItems = baseNavItems;
+  
+  console.log('🔍 Navbar Debug:', {
+    totalItems: navItems.length,
+    itemLabels: navItems.map(item => item.label),
+    hasTestScheduler: navItems.some(item => item.href === '/test-scheduler'),
+    hasTimingSettings: navItems.some(item => item.href === '/timing-settings')
+  });
 
   return (
     <nav className="flex flex-wrap items-center gap-2 mb-4">
