@@ -2782,7 +2782,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Admin payment management
-  app.post("/api/admin/payments", (req, res) => {
+  app.post("/api/admin/payments", async (req, res) => {
     try {
       const { userId, amount, type, method, description } = req.body;
 
@@ -2800,9 +2800,29 @@ export function registerRoutes(app: Express): Server {
         description
       });
 
+      // Automatically upgrade user account based on payment type
+      const upgradeSuccess = await storage.upgradeUser(userId, type);
+      
+      if (upgradeSuccess) {
+        console.log(`User ${userId} automatically upgraded to ${type} after payment`);
+        
+        // Add history entry for the upgrade
+        storage.addHistoryEntry({
+          timestamp: new Date(),
+          action: "payment_upgrade" as any,
+          platform: "admin" as any,
+          success: true,
+          affectedItems: 1,
+          error: undefined
+        });
+      } else {
+        console.warn(`Failed to upgrade user ${userId} to ${type} after payment`);
+      }
+
       res.json({ 
         success: true, 
-        message: "Payment recorded successfully" 
+        message: "Payment recorded and user upgraded successfully",
+        userUpgraded: upgradeSuccess
       });
     } catch (error) {
       console.error("Admin payment error:", error);

@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 3, 2025. FIXED: Critical admin panel payment-to-upgrade issue:
+  - Resolved bug where adding payments through admin panel didn't upgrade users
+  - Modified /api/admin/payments route to automatically upgrade user account type when payment is added
+  - System now automatically upgrades users to premium/youtube_pro when payment is recorded
+  - Added proper logging and history tracking for automatic upgrades
+  - Admin payments now work as expected: payment + automatic user upgrade in single action
 - July 3, 2025. COMPLETED: Verified full integration with Chabad location system:
   - Confirmed automatic scheduler works perfectly with authentic Chabad city locations
   - System successfully fetches real Shabbat times from Chabad API for all supported cities
