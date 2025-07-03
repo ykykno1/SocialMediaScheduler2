@@ -91,6 +91,8 @@ const UnifiedSettings = () => {
   // Get current user data
   const { data: user, isLoading: userLoading } = useQuery<User>({
     queryKey: ['/api/user'],
+    staleTime: 0, // Always refetch from server
+    cacheTime: 0, // Don't cache the data
   });
 
   // Get current location
@@ -146,8 +148,17 @@ const UnifiedSettings = () => {
       const res = await apiRequest('POST', '/api/user/timing-preferences', preferences);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Force update the local state immediately with server response
+      if (data.hideTimingPreference) {
+        setHidePreference(data.hideTimingPreference);
+      }
+      if (data.restoreTimingPreference) {
+        setRestorePreference(data.restoreTimingPreference);
+      }
+      // Invalidate and refetch user data
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.refetchQueries({ queryKey: ['/api/user'] });
       toast({
         title: "העדפות תזמון עודכנו!",
         description: "ההגדרות שלך נשמרו בהצלחה",
