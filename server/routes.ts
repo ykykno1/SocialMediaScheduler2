@@ -3000,7 +3000,25 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/admin/shabbat-times", async (req, res) => {
     try {
       const adminTimes = await storage.getAdminShabbatTimes();
-      res.json(adminTimes);
+      
+      // If no times are set, return null
+      if (!adminTimes || !adminTimes.entryTime || !adminTimes.exitTime) {
+        return res.json({ entryTime: null, exitTime: null });
+      }
+
+      // Convert UTC times back to local time string format for display
+      // This prevents double timezone conversion in the frontend
+      const entryUTC = new Date(adminTimes.entryTime);
+      const exitUTC = new Date(adminTimes.exitTime);
+      
+      // Convert to local time string (removes timezone offset)
+      const entryLocal = new Date(entryUTC.getTime() - entryUTC.getTimezoneOffset() * 60000);
+      const exitLocal = new Date(exitUTC.getTime() - exitUTC.getTimezoneOffset() * 60000);
+      
+      res.json({
+        entryTime: entryLocal.toISOString().slice(0, -1), // Remove 'Z' to indicate local time
+        exitTime: exitLocal.toISOString().slice(0, -1)
+      });
     } catch (error) {
       console.error('Error getting admin Shabbat times:', error);
       res.status(500).json({ error: 'Failed to get Shabbat times' });
