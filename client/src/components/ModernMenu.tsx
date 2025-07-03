@@ -123,9 +123,9 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
       `}
       style={{ backgroundColor: 'var(--background)' }}>
         {/* Header */}
-        <div className="flex-shrink-0 px-6 py-6 border-b border-border bg-background">
+        <div className="flex-shrink-0 px-4 py-4 border-b border-border bg-background">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold ios-title text-foreground">תפריט</h2>
+            <h2 className="text-lg font-semibold ios-title text-foreground">תפריט</h2>
             <Button
               variant="ghost"
               size="icon"
@@ -136,10 +136,10 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
             </Button>
           </div>
           {user && (
-            <div className="mt-4 p-3 bg-secondary/50 rounded-xl">
-              <p className="text-sm ios-body text-muted-foreground">מחובר כ:</p>
-              <p className="font-medium ios-title text-foreground">{user.email}</p>
-              <p className="text-xs ios-caption text-muted-foreground mt-1">
+            <div className="mt-3 p-2 bg-secondary/50 rounded-lg">
+              <p className="text-xs ios-body text-muted-foreground">מחובר כ:</p>
+              <p className="font-medium ios-title text-foreground text-sm">{user.email}</p>
+              <p className="text-xs ios-caption text-muted-foreground">
                 חשבון {user.accountType === 'premium' ? 'פרימיום' : 
                        user.accountType === 'youtube_pro' ? 'יוטיוב פרו' : 'בסיסי'}
               </p>
@@ -148,25 +148,25 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
         </div>
 
         {/* Menu Items - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 bg-background">
-          <nav className="space-y-2">
+        <div className="flex-1 overflow-y-auto px-3 py-2 bg-background">
+          <nav className="space-y-1">
             {menuItems.map((item, index) => (
               <button
                 key={index}
                 onClick={() => handleAction(item.action)}
                 disabled={item.disabled}
                 className={`
-                  w-full flex items-center px-4 py-3 text-right rounded-xl transition-all duration-200
+                  w-full flex items-center px-3 py-2 text-right rounded-lg transition-all duration-200
                   ios-button group hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed
                   ${item.destructive ? 'hover:bg-destructive/10 hover:text-destructive' : ''}
                 `}
               >
                 <item.icon className={`
-                  h-5 w-5 ml-3 transition-colors
+                  h-4 w-4 ml-2 transition-colors
                   ${item.destructive ? 'text-destructive' : 'text-muted-foreground group-hover:text-foreground'}
                 `} />
                 <span className={`
-                  ios-body text-base font-medium
+                  ios-body text-sm font-medium
                   ${item.destructive ? 'text-destructive' : 'text-foreground'}
                 `}>
                   {item.label}
@@ -177,7 +177,7 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 p-6 border-t border-border bg-background/80">
+        <div className="flex-shrink-0 p-3 border-t border-border bg-background/80">
           <p className="text-xs ios-caption text-muted-foreground text-center">
             רובוט שבת v2.0.0
           </p>
