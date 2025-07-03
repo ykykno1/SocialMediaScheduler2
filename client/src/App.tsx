@@ -88,39 +88,7 @@ function useAuth() {
 function Navbar() {
   const [location] = useLocation();
   const { isAuthenticated } = useAuth();
-  const [showDebugPages, setShowDebugPages] = useState(false);
 
-  // Update state when localStorage changes
-  useEffect(() => {
-    const checkDebugPages = () => {
-      try {
-        const stored = localStorage.getItem('showDebugPages');
-        const shouldShow = stored === 'true';
-        console.log('🔍 App.tsx Debug Check:', { 
-          storedValue: stored, 
-          shouldShow,
-          currentPath: location 
-        });
-        setShowDebugPages(shouldShow);
-      } catch (e) {
-        console.error('localStorage error:', e);
-      }
-    };
-
-    // Check initially
-    checkDebugPages();
-
-    // Listen for storage changes
-    window.addEventListener('storage', checkDebugPages);
-    
-    // Also check every second to catch same-tab changes
-    const interval = setInterval(checkDebugPages, 1000);
-
-    return () => {
-      window.removeEventListener('storage', checkDebugPages);
-      clearInterval(interval);
-    };
-  }, [location]);
 
   if (!isAuthenticated) {
     return null; // Don't show navigation if not authenticated
@@ -162,9 +130,6 @@ function Navbar() {
       href: "/history",
       icon: <HistoryIcon className="h-4 w-4 mr-2" />,
     },
-  ];
-
-  const debugNavItems = [
     {
       label: "בדיקת סקדולר",
       href: "/test-scheduler",
@@ -177,17 +142,7 @@ function Navbar() {
     },
   ];
 
-  const navItems = showDebugPages 
-    ? [...baseNavItems, ...debugNavItems]
-    : baseNavItems;
-    
-  console.log('🔍 App.tsx Debug Check:', { 
-    storedValue: localStorage.getItem('showDebugPages'), 
-    showDebugPages,
-    currentPath: location,
-    navItemsCount: navItems.length,
-    hasDebugItems: navItems.some(item => item.href === '/test-scheduler')
-  });
+  const navItems = baseNavItems;
 
   return (
     <nav className="flex flex-wrap items-center gap-2 mb-4">
