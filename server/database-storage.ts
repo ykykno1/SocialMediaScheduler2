@@ -29,6 +29,7 @@ import {
 import { IStorage } from "./storage";
 
 export class DatabaseStorage {
+  public payments: Payment[] = [];
   
   // Settings operations
   getSettings(): Settings {
@@ -513,15 +514,88 @@ export class DatabaseStorage {
 
   // Payment tracking operations
   addPayment(payment: { userId: string; amount: number; type: 'youtube_pro' | 'premium'; method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer'; description?: string; }): void {
-    // Implementation not needed for current scope
+    try {
+      // Store payment in memory for now - can be extended to database later
+      if (!this.payments) {
+        this.payments = [];
+      }
+      
+      const newPayment = {
+        id: `payment_${Date.now()}`,
+        userId: payment.userId,
+        amount: payment.amount,
+        type: payment.type,
+        method: payment.method,
+        description: payment.description || '',
+        timestamp: new Date(),
+        isActive: true,
+        userEmail: '', // Will be filled when retrieved
+        username: ''   // Will be filled when retrieved
+      };
+      
+      this.payments.push(newPayment as any);
+      console.log('Payment added successfully:', newPayment);
+    } catch (error) {
+      console.error('Error adding payment:', error);
+    }
   }
 
   getPayments(): Payment[] {
-    return [];
+    try {
+      if (!this.payments) {
+        this.payments = [];
+      }
+      
+      // Add user details to payments
+      return this.payments.map(payment => {
+        // Try to get user details
+        let userDetails = { email: 'לא ידוע', username: 'לא ידוע' };
+        try {
+          // Since getUserById is async, we'll use a simple lookup for now  
+          userDetails = { email: (payment as any).userEmail || 'לא ידוע', username: (payment as any).username || 'לא ידוע' };
+        } catch (e) {
+          console.error('Error getting user details for payment:', e);
+        }
+        
+        return {
+          ...payment,
+          userEmail: userDetails.email,
+          username: userDetails.username
+        } as Payment;
+      });
+    } catch (error) {
+      console.error('Error getting payments:', error);
+      return [];
+    }
   }
 
   getRevenue(): { monthly: number; total: number; } {
-    return { monthly: 0, total: 0 };
+    try {
+      if (!this.payments) {
+        return { monthly: 0, total: 0 };
+      }
+      
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      let totalRevenue = 0;
+      let monthlyRevenue = 0;
+      
+      this.payments.forEach(payment => {
+        const paymentDate = new Date(payment.timestamp);
+        totalRevenue += payment.amount;
+        
+        if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+          monthlyRevenue += payment.amount;
+        }
+      });
+      
+      return { monthly: monthlyRevenue, total: totalRevenue };
+    } catch (error) {
+      console.error('Error calculating revenue:', error);
+      return { monthly: 0, total: 0 };
+    }
   }
 
   // Video lock status operations

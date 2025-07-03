@@ -89,7 +89,15 @@ function Navbar() {
     return null; // Don't show navigation if not authenticated
   }
 
-  const navItems = [
+  // Check if debug pages should be shown
+  let showDebugPages = false;
+  try {
+    showDebugPages = localStorage.getItem('showDebugPages') === 'true';
+  } catch (e) {
+    console.error('localStorage error:', e);
+  }
+
+  const baseNavItems = [
     {
       label: "בית",
       href: "/",
@@ -121,6 +129,14 @@ function Navbar() {
       icon: <SettingsIcon className="h-4 w-4 mr-2" />,
     },
     {
+      label: "היסטוריה",
+      href: "/history",
+      icon: <HistoryIcon className="h-4 w-4 mr-2" />,
+    },
+  ];
+
+  const debugNavItems = [
+    {
       label: "הגדרות תזמון",
       href: "/timing-settings",
       icon: <Clock className="h-4 w-4 mr-2" />,
@@ -130,12 +146,11 @@ function Navbar() {
       href: "/test-scheduler",
       icon: <TestTube className="h-4 w-4 mr-2" />,
     },
-    {
-      label: "היסטוריה",
-      href: "/history",
-      icon: <HistoryIcon className="h-4 w-4 mr-2" />,
-    },
   ];
+
+  const navItems = showDebugPages 
+    ? [...baseNavItems, ...debugNavItems]
+    : baseNavItems;
 
   return (
     <nav className="flex flex-wrap items-center gap-2 mb-4">
