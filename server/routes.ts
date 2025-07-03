@@ -2863,6 +2863,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get current server time
+  app.get("/api/current-time", (req, res) => {
+    const now = new Date();
+    const israelTime = new Date().toLocaleString('he-IL', { 
+      timeZone: 'Asia/Jerusalem',
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    res.json({
+      serverTime: now.toISOString(),
+      serverLocalTime: now.toString(),
+      israelTime: israelTime,
+      timestamp: now.getTime()
+    });
+  });
+
 
 
   // Update user Shabbat location
