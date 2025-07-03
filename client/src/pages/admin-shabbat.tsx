@@ -17,9 +17,13 @@ export default function AdminShabbatPage() {
   const [entryDateTime, setEntryDateTime] = useState("");
   const [exitDateTime, setExitDateTime] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userTimezone, setUserTimezone] = useState("");
 
   useEffect(() => {
     fetchCurrentTimes();
+    // זיהוי אזור זמן המשתמש
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setUserTimezone(timezone);
   }, []);
 
   const fetchCurrentTimes = async () => {
@@ -67,7 +71,8 @@ export default function AdminShabbatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           entryTime: entryDateTime,
-          exitTime: exitDateTime
+          exitTime: exitDateTime,
+          timezone: userTimezone
         })
       });
 
@@ -127,6 +132,11 @@ export default function AdminShabbatPage() {
             </CardTitle>
             <CardDescription>
               זמני השבת הנוכחיים שנקבעו למיקום מנהל
+              {userTimezone && (
+                <div className="text-sm text-muted-foreground mt-1">
+                  אזור זמן מזוהה: {userTimezone}
+                </div>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
