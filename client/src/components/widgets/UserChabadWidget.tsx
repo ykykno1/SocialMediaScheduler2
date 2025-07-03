@@ -4,9 +4,10 @@ import { apiRequest } from '@/lib/queryClient';
 
 // Admin Shabbat Widget Component
 function AdminShabbatWidget() {
-  const { data: adminTimes } = useQuery<{ entryTime: string; exitTime: string }>({
+  const { data: adminTimes, isFetching } = useQuery<{ entryTime: string; exitTime: string }>({
     queryKey: ['/api/admin/shabbat-times'],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 5000, // Refresh every 5 seconds for faster updates
+    refetchOnWindowFocus: true, // Also refetch when window gets focus
   });
 
   const formatTime = (timeString: string) => {
@@ -25,8 +26,11 @@ function AdminShabbatWidget() {
   return (
     <div className="p-4 bg-gradient-to-b from-blue-50 to-indigo-100 dark:from-gray-700 dark:to-gray-800 h-full flex flex-col justify-center">
       <div className="text-center space-y-3">
-        <div className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-4">
+        <div className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-4 flex items-center gap-2">
           🛠️ מצב מנהל - בדיקות
+          {isFetching && (
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+          )}
         </div>
         
         <div className="space-y-2 text-sm">
