@@ -18,7 +18,7 @@ export default function AdminShabbatPage() {
   const [entryDateTime, setEntryDateTime] = useState("");
   const [exitDateTime, setExitDateTime] = useState("");
   const [loading, setLoading] = useState(false);
-	const queryClient = useQueryClient();
+        const queryClient = useQueryClient();
 
   useEffect(() => {
     fetchCurrentTimes();
@@ -44,7 +44,10 @@ export default function AdminShabbatPage() {
   };
 
   const handleSetTimes = async () => {
+    console.log('🔧 [CLIENT] handleSetTimes called with:', { entryDateTime, exitDateTime });
+    
     if (!entryDateTime || !exitDateTime) {
+      console.log('🔧 [CLIENT] Missing times, showing error');
       toast({
         title: "שגיאה",
         description: "יש להזין גם זמן כניסה וגם זמן יציאה",
@@ -63,6 +66,8 @@ export default function AdminShabbatPage() {
     }
 
     setLoading(true);
+    console.log('🔧 [CLIENT] About to send times:', { entryDateTime, exitDateTime });
+    
     try {
       const response = await fetch('/api/admin/set-shabbat-times', {
         method: 'POST',
@@ -85,10 +90,10 @@ export default function AdminShabbatPage() {
           description: "זמני שבת עודכנו בהצלחה למיקום מנהל"
         });
 
-				// Invalidate all relevant cache after successful update
-				queryClient.invalidateQueries({ queryKey: ['/api/admin/shabbat-times'] });
-				queryClient.invalidateQueries({ queryKey: ['/api/user/shabbat-location'] });
-				queryClient.invalidateQueries();
+                                // Invalidate all relevant cache after successful update
+                                queryClient.invalidateQueries({ queryKey: ['/api/admin/shabbat-times'] });
+                                queryClient.invalidateQueries({ queryKey: ['/api/user/shabbat-location'] });
+                                queryClient.invalidateQueries();
       } else {
         throw new Error('Failed to set times');
       }
