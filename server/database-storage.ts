@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, secureUsers as secureUsersTable, encryptedAuthTokens, historyEntries, videoStatuses, videoLockStatuses } from "@shared/schema";
+import { users, secureUsers as secureUsersTable, encryptedAuthTokens, historyEntries, videoStatuses, videoLockStatuses, verificationCodes } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
@@ -29,6 +29,7 @@ import {
 import { IStorage } from "./storage";
 
 export class DatabaseStorage {
+  public payments: Payment[] = [];
   
   // Settings operations
   getSettings(): Settings {
@@ -324,15 +325,29 @@ export class DatabaseStorage {
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
-      const [user] = await db.insert(users).values({
+      const [secureUser] = await db.insert(secureUsersTable).values({
         id: nanoid(),
         email: userData.email,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         username: userData.username || userData.email.split('@')[0],
-        accountType: 'free'
+        accountTier: 'free',
+        emailVerified: false,
+        isActive: true,
+        registrationMethod: 'email'
       }).returning();
 
-      return user;
+      // Return in legacy User format for compatibility
+      return {
+        id: secureUser.id,
+        email: secureUser.email!,
+        password: secureUser.passwordHash!,
+        username: secureUser.username,
+        accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
+        shabbatCity: secureUser.shabbatCity,
+        shabbatCityId: secureUser.shabbatCityId,
+        createdAt: secureUser.createdAt,
+        updatedAt: secureUser.updatedAt
+      };
     } catch (error) {
       console.error('Error creating user:', error);
       throw error;
@@ -356,8 +371,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
-        hideTimingPreference: (secureUser as any).hideTimingPreference || '1hour',
-        restoreTimingPreference: (secureUser as any).restoreTimingPreference || 'immediate',
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -381,6 +396,12 @@ export class DatabaseStorage {
         return null;
       }
 
+      console.log('Raw secureUser from database:', secureUser);
+      console.log('Timing preferences from DB:', {
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference
+      });
+
       // Map secure user fields to legacy User format
       const user = {
         id: secureUser.id,
@@ -390,8 +411,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
-        hideTimingPreference: (secureUser as any).hideTimingPreference || '1hour',
-        restoreTimingPreference: (secureUser as any).restoreTimingPreference || 'immediate',
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -414,8 +435,8 @@ export class DatabaseStorage {
       if (updates.accountType) secureUpdates.accountTier = updates.accountType;
       if (updates.shabbatCity) secureUpdates.shabbatCity = updates.shabbatCity;
       if (updates.shabbatCityId) secureUpdates.shabbatCityId = updates.shabbatCityId;
-      if (updates.hideTimingPreference) secureUpdates.hideTimingPreference = updates.hideTimingPreference;
-      if (updates.restoreTimingPreference) secureUpdates.restoreTimingPreference = updates.restoreTimingPreference;
+      if (updates.hideTimingPreference !== undefined) secureUpdates.hideTimingPreference = updates.hideTimingPreference;
+      if (updates.restoreTimingPreference !== undefined) secureUpdates.restoreTimingPreference = updates.restoreTimingPreference;
       secureUpdates.updatedAt = new Date();
 
       const [secureUser] = await db.update(secureUsersTable)
@@ -436,8 +457,8 @@ export class DatabaseStorage {
         accountType: secureUser.accountTier as 'free' | 'youtube_pro' | 'premium',
         shabbatCity: secureUser.shabbatCity,
         shabbatCityId: secureUser.shabbatCityId,
-        hideTimingPreference: (secureUser as any).hideTimingPreference || '1hour',
-        restoreTimingPreference: (secureUser as any).restoreTimingPreference || 'immediate',
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference,
         createdAt: secureUser.createdAt,
         updatedAt: secureUser.updatedAt
       };
@@ -513,15 +534,88 @@ export class DatabaseStorage {
 
   // Payment tracking operations
   addPayment(payment: { userId: string; amount: number; type: 'youtube_pro' | 'premium'; method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer'; description?: string; }): void {
-    // Implementation not needed for current scope
+    try {
+      // Store payment in memory for now - can be extended to database later
+      if (!this.payments) {
+        this.payments = [];
+      }
+      
+      const newPayment = {
+        id: `payment_${Date.now()}`,
+        userId: payment.userId,
+        amount: payment.amount,
+        type: payment.type,
+        method: payment.method,
+        description: payment.description || '',
+        timestamp: new Date(),
+        isActive: true,
+        userEmail: '', // Will be filled when retrieved
+        username: ''   // Will be filled when retrieved
+      };
+      
+      this.payments.push(newPayment as any);
+      console.log('Payment added successfully:', newPayment);
+    } catch (error) {
+      console.error('Error adding payment:', error);
+    }
   }
 
   getPayments(): Payment[] {
-    return [];
+    try {
+      if (!this.payments) {
+        this.payments = [];
+      }
+      
+      // Add user details to payments
+      return this.payments.map(payment => {
+        // Try to get user details
+        let userDetails = { email: 'לא ידוע', username: 'לא ידוע' };
+        try {
+          // Since getUserById is async, we'll use a simple lookup for now  
+          userDetails = { email: (payment as any).userEmail || 'לא ידוע', username: (payment as any).username || 'לא ידוע' };
+        } catch (e) {
+          console.error('Error getting user details for payment:', e);
+        }
+        
+        return {
+          ...payment,
+          userEmail: userDetails.email,
+          username: userDetails.username
+        } as Payment;
+      });
+    } catch (error) {
+      console.error('Error getting payments:', error);
+      return [];
+    }
   }
 
   getRevenue(): { monthly: number; total: number; } {
-    return { monthly: 0, total: 0 };
+    try {
+      if (!this.payments) {
+        return { monthly: 0, total: 0 };
+      }
+      
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      let totalRevenue = 0;
+      let monthlyRevenue = 0;
+      
+      this.payments.forEach(payment => {
+        const paymentDate = new Date(payment.timestamp);
+        totalRevenue += payment.amount;
+        
+        if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+          monthlyRevenue += payment.amount;
+        }
+      });
+      
+      return { monthly: monthlyRevenue, total: totalRevenue };
+    } catch (error) {
+      console.error('Error calculating revenue:', error);
+      return { monthly: 0, total: 0 };
+    }
   }
 
   // Video lock status operations
@@ -647,6 +741,107 @@ export class DatabaseStorage {
       entryTime: row.manual_entry_time,
       exitTime: row.manual_exit_time
     };
+  }
+
+  // Verification codes management
+  async createVerificationCode(data: {
+    userId?: string;
+    email?: string;
+    phoneNumber?: string;
+    code: string;
+    type: 'email' | 'sms';
+    purpose: 'registration' | 'password_reset' | 'phone_verification';
+    expiresAt: Date;
+  }): Promise<string> {
+    const id = nanoid();
+    
+    await db.insert(verificationCodes).values({
+      id,
+      userId: data.userId || null,
+      email: data.email || null,
+      phoneNumber: data.phoneNumber || null,
+      code: data.code,
+      type: data.type,
+      purpose: data.purpose,
+      expiresAt: data.expiresAt,
+      isUsed: false
+    });
+
+    return id;
+  }
+
+  async verifyCode(code: string, email?: string, phoneNumber?: string): Promise<{
+    isValid: boolean;
+    purpose?: 'registration' | 'password_reset' | 'phone_verification';
+    userId?: string;
+    verificationId?: string;
+  }> {
+    const now = new Date();
+    
+    // Find the verification code
+    const [verification] = await db.select().from(verificationCodes)
+      .where(
+        and(
+          eq(verificationCodes.code, code),
+          eq(verificationCodes.isUsed, false),
+          email ? eq(verificationCodes.email, email) : 
+          phoneNumber ? eq(verificationCodes.phoneNumber, phoneNumber) : sql`1=1`
+        )
+      );
+
+    if (!verification) {
+      return { isValid: false };
+    }
+
+    // Check if expired
+    if (verification.expiresAt < now) {
+      return { isValid: false };
+    }
+
+    // Mark as used
+    await db.update(verificationCodes)
+      .set({ isUsed: true })
+      .where(eq(verificationCodes.id, verification.id));
+
+    return {
+      isValid: true,
+      purpose: verification.purpose,
+      userId: verification.userId || undefined,
+      verificationId: verification.id
+    };
+  }
+
+  async markUserAsVerified(userId: string, verificationType: 'email' | 'phone'): Promise<void> {
+    const updates: any = {};
+    
+    if (verificationType === 'email') {
+      updates.emailVerified = true;
+    } else if (verificationType === 'phone') {
+      updates.phoneVerified = true;
+    }
+
+    await db.update(secureUsersTable)
+      .set(updates)
+      .where(eq(secureUsersTable.id, userId));
+  }
+
+  async cleanupExpiredVerificationCodes(): Promise<number> {
+    const now = new Date();
+    
+    const result = await db.delete(verificationCodes)
+      .where(sql`expires_at < ${now} OR is_used = true`);
+    
+    return result.rowCount || 0;
+  }
+
+  // Mark existing users as verified during migration
+  async markExistingUsersAsVerified(): Promise<void> {
+    await db.update(secureUsersTable)
+      .set({ 
+        emailVerified: true, 
+        phoneVerified: false // Only mark email as verified, not phone
+      })
+      .where(eq(secureUsersTable.emailVerified, false));
   }
 }
 

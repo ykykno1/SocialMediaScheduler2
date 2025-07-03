@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>בדיקת פייסבוק ואינסטגרם</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>בדיקת חיבור פייסבוק ואינסטגרם</h1>
+    
+    <button onclick="checkUserInfo()">בדוק פרטי משתמש</button>
+    <button onclick="checkPages()">בדוק עמודים</button>
+    <button onclick="checkPermissions()">בדוק הרשאות</button>
+    <button onclick="requestMorePermissions()">בקש הרשאות נוספות</button>
+    
+    <div id="results" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+
+    <script>
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId: '1030763279018030',
+                cookie: true,
+                xfbml: true,
+                version: 'v22.0'
+            });
+        };
+
+        function showResult(title, data) {
+            const results = document.getElementById('results');
+            results.innerHTML += `<h3>${title}</h3><pre>${JSON.stringify(data, null, 2)}</pre><hr>`;
+        }
+
+        function checkUserInfo() {
+            FB.api('/me', function(response) {
+                showResult('פרטי משתמש', response);
+            });
+        }
+
+        function checkPages() {
+            FB.api('/me/accounts', function(response) {
+                showResult('עמודים שלי', response);
+            });
+        }
+
+        function checkPermissions() {
+            FB.api('/me/permissions', function(response) {
+                showResult('הרשאות נוכחיות', response);
+            });
+        }
+
+        function requestMorePermissions() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    showResult('הרשאות חדשות', response);
+                    checkPermissions();
+                } else {
+                    showResult('שגיאה', 'המשתמש ביטל את ההרשאה');
+                }
+            }, {scope: 'pages_show_list,pages_read_engagement,instagram_basic'});
+        }
+
+        (function(d, s, id){
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) {return;}
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
-import { SimpleShabbatScheduler } from "./simple-scheduler";
+// import { automaticScheduler } from "./automatic-scheduler";
 
 // Load environment variables
 dotenv.config();
@@ -86,13 +86,5 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
-    
-    // Start simple scheduler
-    const simpleScheduler = SimpleShabbatScheduler.getInstance();
-    simpleScheduler.start().then(() => {
-      log("Simple scheduler started");
-    }).catch((error) => {
-      console.error("Failed to start simple scheduler:", error);
-    });
   });
 })();

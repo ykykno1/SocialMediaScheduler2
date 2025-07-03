@@ -1,126 +1,74 @@
 # רשימת קוד לניקוי - אפליקציית רובוט שבת
 
-## קבצי שרת מיותרים (בטוח למחיקה)
+## קבצי שרת מיותרים
 - `server/shabbat-scheduler (copy) 1.ts` - עותק ישן של המתזמן
 - `server/migrate-auth-tokens.ts` - סקריפט מיגרציה חד-פעמי שכבר בוצע
 - `server/secure-user-storage.ts` - קבצי בדיקה שלא בשימוש
-- `server/test-migration.ts` - קבצי בדיקה מיותרים
-- `server/storage.ts` - קבצי storage ישנים
-- `server/services/` - תיקיה ריקה/מיותרת
-- `server/simple-scheduler.ts` - גרסה ישנה של המתזמן
-- `server/shabbat-scheduler.ts` - גרסה ישנה של המתזמן
+- `server/enhanced-storage.ts` - אפשר לאחד עם database-storage
 
-## קבצי בדיקה ותיעוד (בטוח למחיקה)
+## קבצי בדיקה
 - `test-automatic-scheduler.js` - קבצי בדיקה ישנים
 - `test-scheduler.js` - קבצי בדיקה ישנים
 - `application-status-report.md` - דוח מיותר
 - `perfect-app-prompt.md` - קבצי תיעוד מיותרים
-- `docs/research/` - תיקיית מחקר
-- `docs/testing/` - תיקיית בדיקות
 
-## תמונות ונכסים מיותרים
-- `attached_assets/Screenshot_20250703_191733_Replit_1751559479548.jpg` - צילום מסך ישן
-- `generated-icon.png` - אם לא בשימוש
+## קבצי תיעוד מיותרים
+- `docs/` - תיקיית מחקר (אם קיימת)
+- קבצי README נוספים
 
 ## קוד מיותר בקבצים קיימים
 
-### server/routes.ts - נקה:
-- קוד TikTok/Instagram שלא בשימוש (שורות 1800-2000)
-- console.log מיותר בכל הקבץ
-- טיפול שגיאות מיותר
+### server/routes.ts
+- פונקציות מיותרות לפלטפורמות שלא בשימוש (TikTok, Instagram)
 - endpoints ישנים שלא בשימוש
 - קוד debugging מיותר
 
-### server/database-storage.ts - נקה:
+### server/database-storage.ts
 - class MemStorage - לא בשימוש במערכת הנוכחית
 - פונקציות ישנות לניהול משתמשים
 - קוד ישן של payments
-- imports מיותרים
 
-### server/enhanced-storage.ts - בחן:
-- אפשר לאחד עם database-storage
-- או למחוק אם לא נחוץ
+### client/src/pages/
+- עמודים כפולים או לא בשימוש
+- קבצי auth מיותרים
+- עמודי בדיקה
 
-### server/encryption.ts - נקה:
-- console.log מיותר
-- error handling מיותר
+### client/src/components/
+- קומפוננטים לא בשימוש
+- גרסאות ישנות של קומפוננטים
+- hooks מיותרים
 
-### server/automatic-scheduler.ts - נקה:
+## תמונות ונכסים
+- `attached_assets/` - בדיקה איזה קבצים באמת בשימוש
+- `generated-icon.png` - אם לא בשימוש
+
+## קוד TypeScript
+- types מיותרים ב-`shared/schema.ts`
+- interfaces לא בשימוש
+- import statements מיותרים
+
+## קוד CSS
+- קלאסים לא בשימוש ב-`client/src/index.css`
+- אנימציות מיותרות
+- תמות שלא בשימוש
+
+## טוען מהמון packages
+- בדיקת `package.json` - איזה חבילות לא בשימוש
+- dependencies מיותרים
+- dev dependencies לא נחוצים
+
+## מסד נתונים
+- טבלאות ישנות (אם קיימות)
+- אינדקסים מיותרים
+- נתונים ישנים
+
+## לוגים וקונסול
 - console.log מיותר
 - debug prints שלא נחוצים
 - error handling מיותר
 
-## קוד TypeScript לניקוי
-
-### shared/schema.ts - נקה:
-- types מיותרים שלא בשימוש
-- interfaces לא בשימוש
-- fields מיותרים בטבלאות
-
-### shared/types.ts - נקה:
-- types מיותרים שלא בשימוש
-
-## קוד CSS לניקוי
-
-### client/src/index.css - נקה:
-- קלאסים שלא בשימוש
-- אנימציות מיותרות
-- תמות שלא בשימוש
-
-## Dependencies לבדיקה
-
-### package.json - בדוק:
-- @stripe/react-stripe-js - אם לא בשימוש
-- @stripe/stripe-js - אם לא בשימוש
-- stripe - אם לא בשימוש
-- @sendgrid/mail - אם לא בשימוש
-- googleapis - אם לא בשימוש
-- openid-client - אם לא בשימוש
-- passport - אם לא בשימוש
-- passport-local - אם לא בשימוש
-- memorystore - אם לא בשימוש
-- connect-pg-simple - אם לא בשימוש
-- node-cron - אם לא בשימוש
-- cron - אם לא בשימוש
-- nodemailer - אם לא בשימוש
-- tw-animate-css - אם לא בשימוש
-- react-resizable-panels - אם לא בשימוש
-- recharts - אם לא בשימוש
-- react-day-picker - אם לא בשימוש
-- input-otp - אם לא בשימוש
-- embla-carousel-react - אם לא בשימוש
-- vaul - אם לא בשימוש
-- cmdk - אם לא בשימוש
-
-## מסד נתונים לניקוי
-
-### ניתן לנקות:
-- טבלאות ישנות שלא בשימוש
-- אינדקסים מיותרים
-- נתונים ישנים
-
-## מערכת בנייה לניקוי
-
-### vite.config.ts - נקה:
-- הגדרות מיותרות
-- plugins לא בשימוש
-
-### tailwind.config.ts - נקה:
-- הגדרות מיותרות
-- plugins לא בשימוש
-
-### tsconfig.json - נקה:
-- הגדרות מיותרות
-
-## סיכום לניקוי
-- **קבצים למחיקה מיידית**: ~15 קבצים
-- **קוד למחיקה**: ~500-1000 שורות
-- **Dependencies למחיקה**: ~20 חבילות
-- **תמונות למחיקה**: ~2 קבצים
-- **תיקיות למחיקה**: ~2 תיקיות
-
-## הערות בטיחות:
-- בדיקה שכל מה שנמחק לא בשימוש
-- עדכון import statements אחרי מחיקה
-- בדיקה שהמערכת עובדת אחרי כל שלב
-- גיבוי לפני שינויים גדולים
+## הערות:
+- רק קבצים שאינם משפיעים על הפונקציונליות הבסיסית
+- לשמור backup לפני מחיקה
+- לבדוק שכל מה שנמחק לא בשימוש
+- לעדכן import statements אחרי מחיקה

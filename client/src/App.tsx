@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useEffect } from "react";
+import React, { ReactNode, useState } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -89,9 +89,16 @@ function Navbar() {
   const [location] = useLocation();
   const { isAuthenticated } = useAuth();
 
-
   if (!isAuthenticated) {
     return null; // Don't show navigation if not authenticated
+  }
+
+  // Check if debug pages should be shown
+  let showDebugPages = false;
+  try {
+    showDebugPages = localStorage.getItem('showDebugPages') === 'true';
+  } catch (e) {
+    console.error('localStorage error:', e);
   }
 
   const baseNavItems = [
@@ -130,26 +137,19 @@ function Navbar() {
       href: "/history",
       icon: <HistoryIcon className="h-4 w-4 mr-2" />,
     },
+  ];
+
+  const debugNavItems = [
     {
       label: "בדיקת סקדולר",
       href: "/test-scheduler",
       icon: <TestTube className="h-4 w-4 mr-2" />,
     },
-    {
-      label: "הגדרות תזמון",
-      href: "/timing-settings",
-      icon: <Clock className="h-4 w-4 mr-2" />,
-    },
   ];
 
-  const navItems = baseNavItems;
-  
-  console.log('🔍 Navbar Debug:', {
-    totalItems: navItems.length,
-    itemLabels: navItems.map(item => item.label),
-    hasTestScheduler: navItems.some(item => item.href === '/test-scheduler'),
-    hasTimingSettings: navItems.some(item => item.href === '/timing-settings')
-  });
+  const navItems = showDebugPages 
+    ? [...baseNavItems, ...debugNavItems]
+    : baseNavItems;
 
   return (
     <nav className="flex flex-wrap items-center gap-2 mb-4">
