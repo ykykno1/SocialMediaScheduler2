@@ -541,8 +541,15 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "User not found" });
       }
 
+      console.log('Full user from database:', user);
+      console.log('User timing preferences:', {
+        hideTimingPreference: user.hideTimingPreference,
+        restoreTimingPreference: user.restoreTimingPreference
+      });
+
       // Return user without password
       const { password: _, ...userResponse } = user;
+      console.log('User response being sent:', userResponse);
       res.json(userResponse);
     } catch (error) {
       console.error("Error fetching user:", error);

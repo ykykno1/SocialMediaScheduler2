@@ -382,6 +382,12 @@ export class DatabaseStorage {
         return null;
       }
 
+      console.log('Raw secureUser from database:', secureUser);
+      console.log('Timing preferences from DB:', {
+        hideTimingPreference: secureUser.hideTimingPreference,
+        restoreTimingPreference: secureUser.restoreTimingPreference
+      });
+
       // Map secure user fields to legacy User format
       const user = {
         id: secureUser.id,
@@ -415,8 +421,8 @@ export class DatabaseStorage {
       if (updates.accountType) secureUpdates.accountTier = updates.accountType;
       if (updates.shabbatCity) secureUpdates.shabbatCity = updates.shabbatCity;
       if (updates.shabbatCityId) secureUpdates.shabbatCityId = updates.shabbatCityId;
-      if (updates.hideTimingPreference) secureUpdates.hideTimingPreference = updates.hideTimingPreference;
-      if (updates.restoreTimingPreference) secureUpdates.restoreTimingPreference = updates.restoreTimingPreference;
+      if (updates.hideTimingPreference !== undefined) secureUpdates.hideTimingPreference = updates.hideTimingPreference;
+      if (updates.restoreTimingPreference !== undefined) secureUpdates.restoreTimingPreference = updates.restoreTimingPreference;
       secureUpdates.updatedAt = new Date();
 
       const [secureUser] = await db.update(secureUsersTable)
