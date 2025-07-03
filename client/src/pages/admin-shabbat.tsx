@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock, Settings } from "lucide-react";
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AdminShabbatTimes {
   entryTime: string | null;
@@ -17,6 +18,7 @@ export default function AdminShabbatPage() {
   const [entryDateTime, setEntryDateTime] = useState("");
   const [exitDateTime, setExitDateTime] = useState("");
   const [loading, setLoading] = useState(false);
+	const queryClient = useQueryClient();
 
   useEffect(() => {
     fetchCurrentTimes();
@@ -28,7 +30,7 @@ export default function AdminShabbatPage() {
       if (response.ok) {
         const data = await response.json();
         setTimes(data);
-        
+
         if (data.entryTime) {
           setEntryDateTime(new Date(data.entryTime).toISOString().slice(0, 16));
         }
@@ -77,11 +79,14 @@ export default function AdminShabbatPage() {
           entryTime: result.entryTime,
           exitTime: result.exitTime
         });
-        
+
         toast({
           title: "הצלחה!",
           description: "זמני שבת עודכנו בהצלחה למיקום מנהל"
         });
+
+				// Invalidate cache after successful update
+				queryClient.invalidateQueries({ queryKey: ['shabbatTimes'] });
       } else {
         throw new Error('Failed to set times');
       }
@@ -137,7 +142,7 @@ export default function AdminShabbatPage() {
               </div>
               <p className="text-blue-800">{formatDateTime(times.entryTime)}</p>
             </div>
-            
+
             <div className="p-4 bg-purple-50 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="h-4 w-4 text-purple-600" />
