@@ -1,6 +1,6 @@
-import { DatabaseStorage } from './database-storage.js';
-import { db } from './db.js';
-import { secureUsers, encryptedAuthTokens, videoLockStatuses, videoStatuses, authTokens } from '../shared/schema.js';
+import { DatabaseStorage } from './database-storage';
+import { db } from './db';
+import { secureUsers, encryptedAuthTokens, videoLockStatuses, videoStatuses, authTokens } from '../shared/schema';
 import { sql, lt } from 'drizzle-orm';
 
 /**

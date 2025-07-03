@@ -1,5 +1,5 @@
 import * as cron from 'node-cron';
-import { enhancedStorage as storage } from './enhanced-storage.js';
+import { enhancedStorage as storage } from './enhanced-storage';
 
 interface ShabbatTimes {
   entryTime: Date;
@@ -66,8 +66,8 @@ export class AutomaticScheduler {
     console.log('⏹️ Stopping Automatic Scheduler...');
     
     // Destroy all scheduled jobs
-    for (const [userId, jobs] of this.scheduledJobs.entries()) {
-      jobs.forEach(job => job.task.destroy());
+    for (const [userId, jobs] of Array.from(this.scheduledJobs.entries())) {
+      jobs.forEach((job: ScheduledJob) => job.task.destroy());
     }
     
     this.scheduledJobs.clear();
