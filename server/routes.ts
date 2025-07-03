@@ -7,6 +7,9 @@ import { createServer, type Server } from "http";
 import { enhancedStorage as storage } from './enhanced-storage.js';
 import { automaticScheduler } from './automatic-scheduler.js';
 import { emailService, generateVerificationCode } from './email-service.js';
+import { db } from './db.js';
+import * as schema from '../shared/schema.js';
+import { eq, and } from 'drizzle-orm';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -3165,11 +3168,24 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Email and verification code are required" });
       }
 
-      // Verify the code
-      const verification = await storage.verifyCode(verificationCode, email);
-      
-      if (!verification.isValid) {
-        return res.status(400).json({ error: "קוד אימות לא תקין או פג תוקף" });
+      // Just check if the code is valid without marking as used
+      const now = new Date();
+      const [verification] = await db.select().from(schema.verificationCodes)
+        .where(
+          and(
+            eq(schema.verificationCodes.code, verificationCode),
+            eq(schema.verificationCodes.email, email),
+            eq(schema.verificationCodes.isUsed, false)
+          )
+        );
+
+      if (!verification) {
+        return res.status(400).json({ error: "קוד אימות לא תקין" });
+      }
+
+      // Check if expired
+      if (verification.expiresAt < now) {
+        return res.status(400).json({ error: "קוד אימות פג תוקף" });
       }
 
       if (verification.purpose !== 'registration') {
