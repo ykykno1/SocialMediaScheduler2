@@ -101,10 +101,10 @@ export class SimpleShabbatScheduler {
       const restoreTime = this.calculateRestoreTime(shabbatTimes.exitTime, restorePreference);
 
       console.log(`⏰ User ${user.email} scheduling:`);
-      console.log(`        🕯️ Shabbat entry: ${shabbatTimes.entryTime.toLocaleString()}`);
-      console.log(`        ✨ Shabbat exit: ${shabbatTimes.exitTime.toLocaleString()}`);
-      console.log(`        📱 Hide preference: ${hidePreference} → Hide at: ${hideTime.toLocaleString()}`);
-      console.log(`        🔓 Restore preference: ${restorePreference} → Restore at: ${restoreTime.toLocaleString()}`);
+      console.log(`        🕯️ Shabbat entry: ${shabbatTimes.entryTime.toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}`);
+      console.log(`        ✨ Shabbat exit: ${shabbatTimes.exitTime.toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}`);
+      console.log(`        📱 Hide preference: ${hidePreference} → Hide at: ${hideTime.toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}`);
+      console.log(`        🔓 Restore preference: ${restorePreference} → Restore at: ${restoreTime.toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}`);
 
       // Clear existing jobs for this user
       this.clearUserJobs(user.id);
