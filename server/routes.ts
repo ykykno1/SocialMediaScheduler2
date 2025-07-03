@@ -188,13 +188,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/user", authMiddleware, (req: any, res) => {
-    res.json({
-      id: req.user.id,
-      email: req.user.email,
-      username: req.user.username
-    });
-  });
+  // Removed duplicate endpoint - using the full user endpoint below instead
 
   app.post("/api/logout", (req, res) => {
     // For JWT authentication, logout is handled client-side by removing the token
