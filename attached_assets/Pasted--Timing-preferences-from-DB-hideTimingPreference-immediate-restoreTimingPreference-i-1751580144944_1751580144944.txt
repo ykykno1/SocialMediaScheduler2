@@ -1,0 +1,46 @@
+
+Timing preferences from DB: {
+  hideTimingPreference: 'immediate',
+  restoreTimingPreference: 'immediate'
+}
+User authenticated successfully: phtLx68scJszZOMrBEPHL
+Raw secureUser from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  passwordHash: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountTier: 'premium',
+  emailVerified: true,
+  isActive: true,
+  phoneNumber: null,
+  phoneVerified: false,
+  registrationMethod: 'email',
+  shabbatCity: 'מנהל',
+  shabbatCityId: 'admin',
+  hideTimingPreference: 'immediate',
+  restoreTimingPreference: 'immediate',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-03T21:05:57.552Z,
+  lastLogin: 2025-06-27T12:09:46.135Z
+}
+Timing preferences from DB: {
+  hideTimingPreference: 'immediate',
+  restoreTimingPreference: 'immediate'
+}
+User authenticated successfully: phtLx68scJszZOMrBEPHL
+9:27:22 PM [express] GET /api/youtube/video/aW_AMAYu3Mg/lock-status 304 in 71ms :: {"isLocked":false…
+9:27:22 PM [express] GET /api/youtube/video/YkglwY4EcV0/lock-status 304 in 77ms :: {"isLocked":true,…
+9:27:22 PM [express] GET /api/youtube/video/oICKOU7q2is/lock-status 304 in 77ms :: {"isLocked":false…
+9:27:22 PM [express] GET /api/youtube/video/KF-AoJR2YrQ/lock-status 304 in 78ms :: {"isLocked":false…
+✨ EXECUTING RESTORE for user yk@gmail.com (phtLx68scJszZOMrBEPHL)
+✨ RESTORE: Starting restore operation for user phtLx68scJszZOMrBEPHL
+📺 Restoring YouTube videos for user phtLx68scJszZOMrBEPHL
+📺 Restoring YouTube videos for user phtLx68scJszZOMrBEPHL
+📺 Found 1 videos to restore: { YkglwY4EcV0: 'public' }
+📺 Processing restore for video: YkglwY4EcV0 to public
+🔒 Skipping locked video: YkglwY4EcV0 - protected from automation
+✅ YouTube: Restored 0 videos
+📘 Restoring Facebook posts for user phtLx68scJszZOMrBEPHL
+📘 Restoring Facebook posts for user phtLx68scJszZOMrBEPHL
+✅ Facebook: Restored 0 posts
+✅ RESTORE COMPLETE: User phtLx68scJszZOMrBEPHL, Total restored: 0
