@@ -126,12 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- July 3, 2025. FIXED: Development pages visibility and manual timing access restored:
+- July 3, 2025. FIXED: Manual timing scheduler now fully operational:
+  - Root issue: Automatic scheduler was disabled in server startup (commented out)
+  - Added automatic scheduler activation on server startup in index.ts
+  - Added automatic scheduler refresh when manual times are updated via API
   - Fixed missing development pages in hamburger menu navigation
   - Added "בדיקת סקדולר", "הגדרות תזמון", and "זמנים ידניים" to ModernMenu.tsx
-  - Manual time/date selection functionality was preserved but not accessible through UI
-  - All timing functionality now properly accessible: automatic preferences + manual override
-  - No functionality was lost during cleanup - everything working as designed
+  - Manual timing now works: sets future times → scheduler creates cron jobs → content hidden/restored automatically
+  - System correctly handles timezone differences and validates future vs past times
 - July 3, 2025. ADDRESSED: Three key user requests - logo navigation, code cleanup plan, and authentication enhancement start:
   - Fixed logo click navigation: "רובוט שבת" logo now correctly returns to home page from all pages
   - Created comprehensive cleanup list in cleanup_opportunities.md: identified 50+ files and code sections for potential cleanup
