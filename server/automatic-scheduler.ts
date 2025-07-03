@@ -206,69 +206,53 @@ export class AutomaticScheduler {
     try {
       console.log(`🌍 Fetching Shabbat times for ${cityName} (${cityId}) from Chabad API`);
       
-      // Try to get authentic Chabad times from the storage function
-      // The storage.getShabbatTimes function already calls the Chabad API
-      const shabbatTimesData = await storage.getShabbatTimes(0, 0);
+      // Call the Chabad API directly like the widget does
+      const response = await fetch(`https://www.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${cityId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he`);
       
-      if (shabbatTimesData && shabbatTimesData.candleLighting && shabbatTimesData.havdalah) {
-        const entryTime = new Date(shabbatTimesData.candleLighting);
-        const exitTime = new Date(shabbatTimesData.havdalah);
+      if (response.ok) {
+        const scriptContent = await response.text();
         
-        console.log(`✅ Got authentic Chabad times for ${cityName}: Entry ${entryTime.toLocaleString('he-IL')}, Exit ${exitTime.toLocaleString('he-IL')}`);
+        // Parse the JavaScript content to extract times
+        // The Chabad script contains: document.write() with HTML that includes the times
+        const timeRegex = /(\d{1,2}):(\d{2})/g;
+        const times: RegExpExecArray[] = [];
+        let match;
+        while ((match = timeRegex.exec(scriptContent)) !== null) {
+          times.push(match);
+        }
         
-        return {
-          entryTime,
-          exitTime,
-          cityName,
-          cityId
-        };
+        if (times.length >= 2) {
+          // Get Friday for this week
+          const now = new Date();
+          const friday = new Date();
+          const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+          if (daysUntilFriday === 0 && now.getDay() !== 5) {
+            friday.setDate(friday.getDate() + 7);
+          } else {
+            friday.setDate(friday.getDate() + daysUntilFriday);
+          }
+          
+          // First time is usually candle lighting (Friday)
+          const entryTime = new Date(friday);
+          entryTime.setHours(parseInt(times[0][1]), parseInt(times[0][2]), 0, 0);
+          
+          // Second time is usually Havdalah (Saturday)
+          const exitTime = new Date(friday);
+          exitTime.setDate(friday.getDate() + 1);
+          exitTime.setHours(parseInt(times[1][1]), parseInt(times[1][2]), 0, 0);
+          
+          console.log(`✅ Got authentic Chabad times for ${cityName}: Entry ${entryTime.toLocaleString('he-IL')}, Exit ${exitTime.toLocaleString('he-IL')}`);
+          
+          return {
+            entryTime,
+            exitTime,
+            cityName,
+            cityId
+          };
+        }
       }
 
-      // Fallback to calculated times if API fails (but log the issue)
-      console.log(`⚠️ Chabad API unavailable for ${cityName}, using fallback calculation`);
-      
-      // Get next Friday
-      const now = new Date();
-      const friday = new Date(now);
-      const daysUntilFriday = (5 - now.getDay() + 7) % 7;
-      if (daysUntilFriday === 0 && now.getDay() !== 5) {
-        friday.setDate(friday.getDate() + 7);
-      } else {
-        friday.setDate(friday.getDate() + daysUntilFriday);
-      }
-
-      const year = friday.getFullYear();
-      const month = friday.getMonth() + 1;
-      const day = friday.getDate();
-
-      // Fallback times for major cities
-      const fallbackTimes: Record<string, { entry: [number, number], exit: [number, number] }> = {
-        '531': { entry: [19, 25], exit: [20, 29] }, // Tel Aviv
-        '688': { entry: [19, 20], exit: [20, 25] }, // Beer Sheva
-        '695': { entry: [19, 20], exit: [20, 23] }, // Safed
-        '281': { entry: [19, 15], exit: [20, 25] }, // Jerusalem
-        '294': { entry: [19, 30], exit: [20, 35] }, // Haifa
-      };
-
-      const times = fallbackTimes[cityId];
-      if (times) {
-        const entryTime = new Date(year, month - 1, day);
-        entryTime.setHours(times.entry[0], times.entry[1], 0, 0);
-        
-        const exitTime = new Date(year, month - 1, day + 1);
-        exitTime.setHours(times.exit[0], times.exit[1], 0, 0);
-        
-        console.log(`📅 Using fallback times for ${cityName}: Entry ${entryTime.toLocaleString('he-IL')}, Exit ${exitTime.toLocaleString('he-IL')}`);
-        
-        return {
-          entryTime,
-          exitTime,
-          cityName,
-          cityId
-        };
-      }
-
-      console.log(`❌ No times available for city ${cityName} (${cityId})`);
+      console.log(`⚠️ Could not get authentic Chabad times for ${cityName} (${cityId})`);
       return null;
     } catch (error) {
       console.error(`❌ Error getting Shabbat times for ${cityName}:`, error);

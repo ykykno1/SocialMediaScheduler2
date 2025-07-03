@@ -2451,49 +2451,79 @@ export function registerRoutes(app: Express): Server {
         const month = fridayDate.getMonth() + 1;
         const day = fridayDate.getDate();
 
-        let shabbatEntryTime: Date;
-        let shabbatExitTime: Date;
-        let parasha: any;
-        let hebrewDate: string;
+        let shabbatEntryTime: Date | null = null;
+        let shabbatExitTime: Date | null = null;
+        let parasha: any = { hebrew: 'פרשת השבוע' };
+        let hebrewDate: string = '';
 
-        // Use Chabad-accurate times for Israeli cities, Hebcal for international
+        // Use authentic Chabad API for Israeli cities, Hebcal for international
         if (isIsraeliCity) {
-          // Chabad-accurate times for Israeli cities
-          const chabadTimes: Record<string, { entry: [number, number], exit: [number, number] }> = {
-            'Tel Aviv': { entry: [19, 29], exit: [20, 34] },
-            'Jerusalem': { entry: [19, 18], exit: [20, 21] },
-            'Haifa': { entry: [19, 28], exit: [20, 32] },
-            'Beer Sheva': { entry: [19, 20], exit: [20, 25] },
-            'Netanya': { entry: [19, 27], exit: [20, 31] },
-            'Ashdod': { entry: [19, 24], exit: [20, 28] },
-            'Petah Tikva': { entry: [19, 25], exit: [20, 29] },
-            'Rishon LeZion': { entry: [19, 25], exit: [20, 29] },
-            'Ashkelon': { entry: [19, 23], exit: [20, 27] },
-            'Rehovot': { entry: [19, 24], exit: [20, 28] },
-            'Bat Yam': { entry: [19, 26], exit: [20, 30] },
-            'Herzliya': { entry: [19, 27], exit: [20, 31] },
-            'Kfar Saba': { entry: [19, 26], exit: [20, 30] },
-            'Ra\'anana': { entry: [19, 26], exit: [20, 30] },
-            'Modi\'in': { entry: [19, 22], exit: [20, 26] },
-            'Eilat': { entry: [19, 15], exit: [20, 20] },
-            'Tiberias': { entry: [19, 22], exit: [20, 25] },
-            'Nazareth': { entry: [19, 24], exit: [20, 27] },
-            'Acre': { entry: [19, 29], exit: [20, 33] },
-            'Safed': { entry: [19, 20], exit: [20, 23] }
+          // Map city names to Chabad city IDs (same as the widget uses)
+          const chabadCityIds: Record<string, string> = {
+            'Jerusalem': '281',
+            'Tel Aviv': '531', 
+            'Haifa': '294',
+            'Beer Sheva': '688',
+            'Netanya': '569',
+            'Ashdod': '435',
+            'Petah Tikva': '576',
+            'Rishon LeZion': '580',
+            'Ashkelon': '570',
+            'Rehovot': '578',
+            'Bat Yam': '571',
+            'Herzliya': '572',
+            'Kfar Saba': '573',
+            'Ra\'anana': '574',
+            'Modi\'in': '575',
+            'Eilat': '577',
+            'Tiberias': '579',
+            'Nazareth': '581',
+            'Acre': '582',
+            'Safed': '695'
           };
 
-          const times = chabadTimes[city as string];
-          if (times) {
-            shabbatEntryTime = new Date(year, month - 1, day);
-            shabbatEntryTime.setHours(times.entry[0], times.entry[1], 0, 0);
+          const cityId = chabadCityIds[city as string];
+          if (cityId) {
+            try {
+              // Call Chabad API like the widget does
+              const response = await fetch(`https://www.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${cityId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he`);
+              
+              if (response.ok) {
+                const scriptContent = await response.text();
+                
+                // Parse times from Chabad response
+                const timeRegex = /(\d{1,2}):(\d{2})/g;
+                const times: RegExpExecArray[] = [];
+                let match;
+                while ((match = timeRegex.exec(scriptContent)) !== null) {
+                  times.push(match);
+                }
+                
+                if (times.length >= 2) {
+                  shabbatEntryTime = new Date(year, month - 1, day);
+                  shabbatEntryTime.setHours(parseInt(times[0][1]), parseInt(times[0][2]), 0, 0);
 
-            shabbatExitTime = new Date(year, month - 1, day + 1);
-            shabbatExitTime.setHours(times.exit[0], times.exit[1], 0, 0);
+                  shabbatExitTime = new Date(year, month - 1, day + 1);
+                  shabbatExitTime.setHours(parseInt(times[1][1]), parseInt(times[1][2]), 0, 0);
 
-            parasha = { hebrew: 'פרשת קורח' };
-            hebrewDate = '';
+                  parasha = { hebrew: 'פרשת השבוע' };
+                  hebrewDate = '';
 
-            console.log(`Using Chabad-accurate times for ${city}: Entry ${times.entry[0]}:${times.entry[1].toString().padStart(2, '0')}, Exit ${times.exit[0]}:${times.exit[1].toString().padStart(2, '0')}`);
+                  console.log(`✅ Got authentic Chabad times for ${city}: Entry ${times[0][1]}:${times[0][2]}, Exit ${times[1][1]}:${times[1][2]}`);
+                } else {
+                  throw new Error('Could not parse times from Chabad API');
+                }
+              } else {
+                throw new Error(`Chabad API returned ${response.status}`);
+              }
+            } catch (error) {
+              console.error(`⚠️ Failed to get Chabad times for ${city}:`, error);
+              // Return null to indicate failure - no fallback to old static times
+              return null;
+            }
+          } else {
+            console.error(`⚠️ City ${city} not found in Chabad city mapping`);
+            return null;
           }
         } else {
           // Use simple calculation for international cities
@@ -2512,6 +2542,11 @@ export function registerRoutes(app: Express): Server {
           console.log(`Using default international times for ${city}: Entry 19:30, Exit 20:30`);
         }
 
+        // Check if we got valid times
+        if (!shabbatEntryTime || !shabbatExitTime) {
+          return null;
+        }
+        
         return {
           shabbatEntryTime,
           shabbatExitTime,
@@ -2524,8 +2559,17 @@ export function registerRoutes(app: Express): Server {
       const firstShabbat = await getShabbatTimesForDate(nextFriday);
       const secondShabbat = await getShabbatTimesForDate(secondFriday);
 
-      console.log(`Using exact Mako times for ${city}: First Shabbat ${firstShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${firstShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
-      console.log(`Using exact Mako times for ${city}: Second Shabbat ${secondShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${secondShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
+      // If we couldn't get Chabad times, return error
+      if (!firstShabbat || !secondShabbat) {
+        return res.status(503).json({ 
+          error: "Unable to fetch authentic Shabbat times from Chabad API", 
+          city: city as string,
+          fallback: false 
+        });
+      }
+
+      console.log(`✅ Got authentic Chabad times for ${city}: First Shabbat ${firstShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${firstShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
+      console.log(`✅ Got authentic Chabad times for ${city}: Second Shabbat ${secondShabbat.shabbatEntryTime.toTimeString().slice(0,5)}/${secondShabbat.shabbatExitTime.toTimeString().slice(0,5)}`);
 
       // Format times for display (HH:MM format)
       const formatTime = (date: Date) => {
