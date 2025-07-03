@@ -364,6 +364,38 @@ export function UserChabadWidget() {
 </html>`;
   };
 
+  const userLocationQuery = useQuery<{ shabbatCity?: string; shabbatCityId?: string }>({
+    queryKey: ['/api/user/shabbat-location'],
+    queryFn: () => apiRequest('GET', '/api/user/shabbat-location').then(res => res.json()),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000
+  });
+
+  // Query for admin times if user location is admin
+  const adminTimesQuery = useQuery({
+    queryKey: ['/api/admin/shabbat-times'],
+    queryFn: () => apiRequest('GET', '/api/admin/shabbat-times').then(res => res.json()),
+    enabled: userLocationQuery?.data?.shabbatCityId === 'admin',
+    refetchInterval: 3000, // Poll every 3 seconds for admin mode
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
+  });
+
+  const userLocation = userLocationQuery.data;
+  const adminTimes = adminTimesQuery.data;
+
+  // Force refresh when entering admin mode
+  useEffect(() => {
+    if (userLocation?.shabbatCityId === 'admin') {
+      adminTimesQuery.refetch();
+    }
+  }, [userLocation?.shabbatCityId]);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
       {/* Header */}

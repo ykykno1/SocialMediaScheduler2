@@ -85,8 +85,10 @@ export default function AdminShabbatPage() {
           description: "זמני שבת עודכנו בהצלחה למיקום מנהל"
         });
 
-				// Invalidate cache after successful update
-				queryClient.invalidateQueries({ queryKey: ['shabbatTimes'] });
+				// Invalidate all relevant cache after successful update
+				queryClient.invalidateQueries({ queryKey: ['/api/admin/shabbat-times'] });
+				queryClient.invalidateQueries({ queryKey: ['/api/user/shabbat-location'] });
+				queryClient.invalidateQueries();
       } else {
         throw new Error('Failed to set times');
       }
