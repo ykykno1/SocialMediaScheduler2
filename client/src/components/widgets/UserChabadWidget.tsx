@@ -13,13 +13,16 @@ function AdminShabbatWidget() {
   const formatTime = (timeString: string) => {
     if (!timeString) return 'לא הוגדר';
     const date = new Date(timeString);
+    // Use the browser's local timezone
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     return date.toLocaleString('he-IL', {
       weekday: 'long',
       year: 'numeric', 
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: userTimezone
     });
   };
 
@@ -51,6 +54,10 @@ function AdminShabbatWidget() {
         
         <div className="text-xs text-gray-600 dark:text-gray-400 mt-3">
           זמנים ידניים למצב בדיקה
+          <br />
+          <span className="text-xs opacity-75">
+            אזור זמן מקומי: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+          </span>
         </div>
       </div>
     </div>
