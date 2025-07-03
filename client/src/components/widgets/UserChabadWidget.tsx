@@ -28,7 +28,7 @@ function AdminShabbatWidget() {
         <div className="text-lg font-bold text-blue-800 dark:text-blue-200 mb-4">
           🛠️ מצב מנהל - בדיקות
         </div>
-        
+
         <div className="space-y-2 text-sm">
           <div className="bg-white/70 dark:bg-gray-600/70 rounded-lg p-3">
             <div className="font-semibold text-green-700 dark:text-green-300">כניסת שבת:</div>
@@ -36,7 +36,7 @@ function AdminShabbatWidget() {
               {formatTime(adminTimes?.entryTime || '')}
             </div>
           </div>
-          
+
           <div className="bg-white/70 dark:bg-gray-600/70 rounded-lg p-3">
             <div className="font-semibold text-blue-700 dark:text-blue-300">יציאת שבת:</div>
             <div className="text-gray-800 dark:text-gray-200">
@@ -44,7 +44,7 @@ function AdminShabbatWidget() {
             </div>
           </div>
         </div>
-        
+
         <div className="text-xs text-gray-600 dark:text-gray-400 mt-3">
           זמנים ידניים למצב בדיקה
         </div>
@@ -56,7 +56,7 @@ function AdminShabbatWidget() {
 // Helper function to get current Hebrew date and Torah portion
 const getHebrewDateAndParasha = (shabbatData?: any) => {
   const now = new Date();
-  
+
   // Find the coming Saturday
   const nextSaturday = new Date(now);
   const daysUntilSaturday = (6 - now.getDay()) % 7;
@@ -67,10 +67,10 @@ const getHebrewDateAndParasha = (shabbatData?: any) => {
     // Show next Saturday
     nextSaturday.setDate(now.getDate() + (daysUntilSaturday === 0 ? 7 : daysUntilSaturday));
   }
-  
+
   // Get Torah portion from API or shabbatData
   const parasha = shabbatData?.parasha ? shabbatData.parasha.replace('פרשת ', '') : null;
-  
+
   // Convert to proper Hebrew date format
   const gregorianToHebrew = (date: Date) => {
     // Hebrew months with proper Hebrew numerals
@@ -78,21 +78,21 @@ const getHebrewDateAndParasha = (shabbatData?: any) => {
       'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר', 
       'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
     ];
-    
+
     // Hebrew numerals for dates
     const hebrewNumerals: Record<number, string> = {
       1: 'א׳', 2: 'ב׳', 3: 'ג׳', 4: 'ד׳', 5: 'ה׳', 6: 'ו׳', 7: 'ז׳', 8: 'ח׳', 9: 'ט׳', 10: 'י׳',
       11: 'י״א', 12: 'י״ב', 13: 'י״ג', 14: 'י״ד', 15: 'ט״ו', 16: 'ט״ז', 17: 'י״ז', 18: 'י״ח', 19: 'י״ט', 20: 'כ׳',
       21: 'כ״א', 22: 'כ״ב', 23: 'כ״ג', 24: 'כ״ד', 25: 'כ״ה', 26: 'כ״ו', 27: 'כ״ז', 28: 'כ״ח', 29: 'כ״ט', 30: 'ל׳'
     };
-    
+
     // Calculate Hebrew date for June 2025 (accurate mapping)
     // June 25, 2025 = 29 Sivan 5785 (approximately)
     let hebrewDay, hebrewMonth, hebrewYear = 'תשפ״ה';
-    
+
     const gregorianDay = date.getDate();
     const gregorianMonth = date.getMonth();
-    
+
     if (gregorianMonth === 5) { // June 2025
       if (gregorianDay <= 27) {
         // Late Sivan
@@ -115,16 +115,16 @@ const getHebrewDateAndParasha = (shabbatData?: any) => {
       hebrewMonth = 'תמוז';
       hebrewDay = 1;
     }
-    
+
     // Ensure day is within valid range
     hebrewDay = Math.min(30, Math.max(1, hebrewDay));
     const dayInHebrew = hebrewNumerals[hebrewDay as keyof typeof hebrewNumerals] || `${hebrewDay}`;
-    
+
     return `${dayInHebrew} ${hebrewMonth} ${hebrewYear}`;
   };
-  
+
   const hebrewDate = gregorianToHebrew(nextSaturday);
-  
+
   return { parasha, hebrewDate };
 };
 
@@ -143,7 +143,7 @@ export function UserChabadWidget() {
 
   // State for Shabbat data from Chabad API
   const [shabbatData, setShabbatData] = useState<any>(null);
-  
+
   // Fetch current Torah portion from external API
   const { data: currentParasha } = useQuery({
     queryKey: ['current-parasha'],
@@ -154,17 +154,17 @@ export function UserChabadWidget() {
         const nextSat = new Date(now);
         const daysUntilSat = (6 - now.getDay()) % 7;
         nextSat.setDate(now.getDate() + (daysUntilSat === 0 ? 7 : daysUntilSat));
-        
+
         // Use Hebcal API to get this week's Torah portion
         const response = await fetch(`https://www.hebcal.com/hebcal?cfg=json&year=${nextSat.getFullYear()}&month=${nextSat.getMonth() + 1}&v=1&maj=on&min=on&nx=on&mf=on&ss=on&mod=on&s=on&lg=h&start=${nextSat.getFullYear()}-${String(nextSat.getMonth() + 1).padStart(2, '0')}-${String(nextSat.getDate()).padStart(2, '0')}&end=${nextSat.getFullYear()}-${String(nextSat.getMonth() + 1).padStart(2, '0')}-${String(nextSat.getDate()).padStart(2, '0')}`);
-        
+
         if (!response.ok) throw new Error('API call failed');
-        
+
         const data = await response.json();
         const parashaEvent = data.items?.find((item: any) => 
           item.category === 'parashat' || (item.title && item.title.includes('Parashat'))
         );
-        
+
         if (parashaEvent) {
           // Extract Hebrew name if available, otherwise use English
           let parashaName = parashaEvent.hebrew || parashaEvent.title;
@@ -173,7 +173,7 @@ export function UserChabadWidget() {
             return parashaName;
           }
         }
-        
+
         return null;
       } catch (error) {
         console.error('Failed to fetch parasha:', error);
@@ -183,11 +183,11 @@ export function UserChabadWidget() {
     staleTime: 1000 * 60 * 60 * 6, // 6 hours
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
   });
-  
+
   // Get Hebrew date and parasha info
   const parashaInfo = getHebrewDateAndParasha(shabbatData);
   const { hebrewDate } = parashaInfo;
-  
+
   // Use API parasha if available, otherwise fallback to shabbatData
   const displayParasha = currentParasha || shabbatData?.parasha?.replace('פרשת ', '') || 'טוען...';
 
@@ -304,7 +304,7 @@ export function UserChabadWidget() {
             setTimeout(function() {
                 const elements = document.getElementsByTagName('*');
                 let shabbatData = {};
-                
+
                 for (let i = 0; i < elements.length; i++) {
                     const element = elements[i];
                     if (element.childNodes.length === 1 && element.childNodes[0].nodeType === 3) {
@@ -312,7 +312,7 @@ export function UserChabadWidget() {
                         if (text && text.includes('הדלקת נרות')) {
                             element.childNodes[0].nodeValue = text.replace('הדלקת נרות', 'כניסת שבת');
                         }
-                        
+
                         // Extract parasha name with more flexible patterns
                         if (text && (text.includes('פרשת') || text.includes('פרשה'))) {
                             // Try multiple patterns for parasha name extraction
@@ -328,7 +328,7 @@ export function UserChabadWidget() {
                                 console.log('Found parasha:', shabbatData.parasha);
                             }
                         }
-                        
+
                         // Also check for parasha in other Hebrew text patterns
                         if (text && text.match(/[א-ת]{2,}/)) {
                             // Log all Hebrew text for debugging
@@ -336,11 +336,11 @@ export function UserChabadWidget() {
                         }
                     }
                 }
-                
+
                 // Log all collected data for debugging
                 console.log('Complete shabbatData collected:', shabbatData);
                 console.log('Document HTML content sample:', document.documentElement.innerHTML.substring(0, 500));
-                
+
                 // Send data to parent
                 window.parent.postMessage({
                     type: 'shabbatData',
