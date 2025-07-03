@@ -13,7 +13,8 @@ import {
   HelpCircle,
   Home,
   TestTube,
-  Clock
+  Clock,
+  CalendarDays
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -94,6 +95,12 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
       icon: Clock,
       label: 'הגדרות תזמון',
       action: () => window.location.href = '/timing-settings',
+      disabled: false
+    },
+    {
+      icon: CalendarDays,
+      label: 'זמנים ידניים',
+      action: () => window.location.href = '/admin-shabbat-times',
       disabled: false
     },
     {
