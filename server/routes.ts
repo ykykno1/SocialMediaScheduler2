@@ -2948,35 +2948,16 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: 'Entry time and exit time are required' });
       }
 
-      // Convert user local time to UTC for storage
-      let entryTimeUTC: Date;
-      let exitTimeUTC: Date;
-
-      if (timezone) {
-        // Parse the datetime-local input as if it's in user's timezone
-        const entryLocal = new Date(entryTime);
-        const exitLocal = new Date(exitTime);
-        
-        // Get timezone offset and convert to UTC
-        const now = new Date();
-        const userTime = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
-        const utcTime = new Date(now.toLocaleString("en-US", {timeZone: "UTC"}));
-        const offsetMs = utcTime.getTime() - userTime.getTime();
-        
-        entryTimeUTC = new Date(entryLocal.getTime() + offsetMs);
-        exitTimeUTC = new Date(exitLocal.getTime() + offsetMs);
-        
-        console.log(`⏰ Converting times from ${timezone}:`);
-        console.log(`  Entry: ${entryTime} (local) → ${entryTimeUTC.toISOString()} (UTC)`);
-        console.log(`  Exit: ${exitTime} (local) → ${exitTimeUTC.toISOString()} (UTC)`);
-      } else {
-        // Fallback: treat as UTC
-        entryTimeUTC = new Date(entryTime);
-        exitTimeUTC = new Date(exitTime);
-      }
+      // Store times exactly as entered - no timezone conversion
+      const entryTimeLocal = new Date(entryTime);
+      const exitTimeLocal = new Date(exitTime);
+      
+      console.log(`⏰ Storing times as entered (no timezone conversion):`);
+      console.log(`  Entry: ${entryTime} → stored as ${entryTimeLocal.toISOString()}`);
+      console.log(`  Exit: ${exitTime} → stored as ${exitTimeLocal.toISOString()}`);
 
       // Update admin location with custom times
-      await storage.setAdminShabbatTimes(entryTimeUTC, exitTimeUTC);
+      await storage.setAdminShabbatTimes(entryTimeLocal, exitTimeLocal);
 
       // Refresh scheduler to pick up new times
       console.log('🔄 Refreshing scheduler due to manual time update...');
