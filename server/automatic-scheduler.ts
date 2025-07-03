@@ -133,7 +133,11 @@ export class AutomaticScheduler {
       const hideTime = this.calculateHideTime(shabbatTimes.entryTime, user.hideTimingPreference || '1hour');
       const restoreTime = this.calculateRestoreTime(shabbatTimes.exitTime, user.restoreTimingPreference || 'immediate');
 
-      console.log(`⏰ User ${user.email}: Hide at ${hideTime}, Restore at ${restoreTime}`);
+      console.log(`⏰ User ${user.email} scheduling:
+        🕯️ Shabbat entry: ${shabbatTimes.entryTime.toLocaleString('he-IL')}
+        ✨ Shabbat exit: ${shabbatTimes.exitTime.toLocaleString('he-IL')}
+        📱 Hide preference: ${user.hideTimingPreference || '1hour'} → Hide at: ${hideTime.toLocaleString('he-IL')}
+        🔓 Restore preference: ${user.restoreTimingPreference || 'immediate'} → Restore at: ${restoreTime.toLocaleString('he-IL')}`);
 
       // Schedule hide operation
       if (hideTime > new Date()) {

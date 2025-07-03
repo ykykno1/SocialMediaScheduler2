@@ -3029,6 +3029,15 @@ export function registerRoutes(app: Express): Server {
       const updatedUser = await storage.updateUser(req.user.id, updateData);
       console.log('User updated successfully:', updatedUser);
 
+      // Refresh automatic scheduler after timing preferences change
+      try {
+        console.log('Triggering automatic scheduler refresh after timing preferences update');
+        await automaticScheduler.refreshUser(req.user.id);
+      } catch (schedulerError) {
+        console.error('Error refreshing scheduler after timing preferences update:', schedulerError);
+        // Don't fail the whole request if scheduler has issues
+      }
+
       res.json({
         success: true,
         message: 'Timing preferences updated successfully',
