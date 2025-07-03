@@ -22,6 +22,7 @@ import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
 import TimingSettingsPage from "@/pages/timing-settings";
 import TestScheduler from "@/pages/test-scheduler";
+import AboutPage from "@/pages/about";
 import { Button } from "@/components/ui/button";
 import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram, Clock, TestTube } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -269,6 +270,7 @@ function Router() {
           <Route path="/timing-settings" component={TimingSettingsPage} />
           <Route path="/test-scheduler" component={TestScheduler} />
           <Route path="/history" component={History} />
+          <Route path="/about" component={AboutPage} />
           <Route path="/privacy-policy" component={PrivacyPolicyPage} />
           <Route path="/data-deletion" component={DataDeletionPage} />
           <Route path="/system-admin-secure-access" component={AdminPage} />
