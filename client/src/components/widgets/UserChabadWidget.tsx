@@ -3,12 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
 // Admin Shabbat Widget Component
-function AdminShabbatWidget() {
-  const { data: adminTimes } = useQuery<{ entryTime: string; exitTime: string }>({
-    queryKey: ['/api/admin/shabbat-times'],
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
-
+function AdminShabbatWidget({ adminTimes }: { adminTimes?: { entryTime: string; exitTime: string } }) {
   const formatTime = (timeString: string) => {
     if (!timeString) return 'לא הוגדר';
     const date = new Date(timeString);
@@ -139,6 +134,13 @@ export function UserChabadWidget() {
     refetchInterval: false, // Disable automatic refetch to prevent reverting to default
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+
+  // Get admin times with automatic refresh
+  const { data: adminTimes, refetch: refetchAdminTimes } = useQuery<{ entryTime: string; exitTime: string }>({
+    queryKey: ['/api/admin/shabbat-times'],
+    refetchInterval: 5000, // Refresh every 5 seconds to catch manual updates
+    enabled: locationData?.shabbatCityId === 'admin', // Only fetch if admin mode
   });
 
   // State for Shabbat data from Chabad API
@@ -384,7 +386,7 @@ export function UserChabadWidget() {
       {/* Chabad Widget Container */}
       <div className="w-full h-48 border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
         {(locationData && locationData.shabbatCityId === 'admin') ? (
-          <AdminShabbatWidget />
+          <AdminShabbatWidget adminTimes={adminTimes} />
         ) : (
           <iframe
             key={iframeKey}
