@@ -1,12 +1,28 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Home, Settings, History } from "lucide-react";
+import { Home, Settings, History, TestTube, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const Navbar = () => {
   const [location] = useLocation();
+  const [showDebugPages, setShowDebugPages] = useState(() => {
+    return localStorage.getItem('showDebugPages') === 'true';
+  });
 
-  const navItems = [
+  useEffect(() => {
+    const handleDebugToggle = (event: CustomEvent) => {
+      setShowDebugPages(event.detail.showDebugPages);
+    };
+
+    window.addEventListener('debugPagesToggle', handleDebugToggle as EventListener);
+    
+    return () => {
+      window.removeEventListener('debugPagesToggle', handleDebugToggle as EventListener);
+    };
+  }, []);
+
+  const baseNavItems = [
     {
       label: "בית",
       href: "/",
@@ -23,6 +39,23 @@ const Navbar = () => {
       icon: <History className="h-4 w-4 mr-2" />,
     },
   ];
+
+  const debugNavItems = [
+    {
+      label: "בדיקת סקדולר",
+      href: "/test-scheduler",
+      icon: <TestTube className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "הגדרות תזמון",
+      href: "/timing-settings",
+      icon: <Clock className="h-4 w-4 mr-2" />,
+    },
+  ];
+
+  const navItems = showDebugPages 
+    ? [...baseNavItems, ...debugNavItems]
+    : baseNavItems;
 
   return (
     <nav className="flex flex-wrap items-center gap-2 mb-4">

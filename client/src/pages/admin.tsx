@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, Users, DollarSign, Settings, Eye, EyeOff, Crown, Trash2, Gift } from "lucide-react";
+import { Shield, Users, DollarSign, Settings, Eye, EyeOff, Crown, Trash2, Gift, Code, TestTube } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,87 @@ interface Payment {
   method: 'manual' | 'coupon' | 'credit_card' | 'bank_transfer';
   description?: string;
   timestamp: string;
+}
+
+// Component for managing debug pages visibility
+function DebugPagesControl() {
+  const { toast } = useToast();
+  const [showDebugPages, setShowDebugPages] = useState(() => {
+    return localStorage.getItem('showDebugPages') === 'true';
+  });
+
+  const toggleDebugPages = () => {
+    const newValue = !showDebugPages;
+    setShowDebugPages(newValue);
+    localStorage.setItem('showDebugPages', newValue.toString());
+    
+    // Also save to global state for navbar
+    window.dispatchEvent(new CustomEvent('debugPagesToggle', { 
+      detail: { showDebugPages: newValue } 
+    }));
+    
+    toast({
+      title: newValue ? "עמודי פיתוח הופעלו" : "עמודי פיתוח הוסתרו",
+      description: newValue 
+        ? "עמודי בדיקת הסקדולר והגדרות התזמון כעת גלויים בתפריט"
+        : "עמודי פיתוח הוסתרו מהתפריט הראשי"
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Code className="h-5 w-5" />
+          ניהול עמודי פיתוח
+        </CardTitle>
+        <CardDescription>
+          שלוט בתצוגת עמודי הבדיקה והפיתוח עבור המשתמשים
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <TestTube className="h-4 w-4" />
+              <span className="font-medium">עמודי בדיקות</span>
+              <Badge variant={showDebugPages ? "default" : "secondary"}>
+                {showDebugPages ? "גלויים" : "מוסתרים"}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              עמוד בדיקת סקדולר (/test-scheduler) ועמוד הגדרות תזמון (/timing-settings)
+            </p>
+          </div>
+          <Button 
+            onClick={toggleDebugPages}
+            variant={showDebugPages ? "destructive" : "default"}
+            size="sm"
+          >
+            {showDebugPages ? (
+              <>
+                <EyeOff className="h-4 w-4 mr-2" />
+                הסתר עמודים
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4 mr-2" />
+                הצג עמודים
+              </>
+            )}
+          </Button>
+        </div>
+
+        <Alert>
+          <Settings className="h-4 w-4" />
+          <AlertDescription>
+            <strong>הערה:</strong> העמודים יישארו נגישים באמצעות URL ישיר גם כשהם מוסתרים מהתפריט.
+            זה מאפשר גישה לצרכי debug ללא הפרעה למשתמש הרגיל.
+          </AlertDescription>
+        </Alert>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function AdminPage() {
@@ -299,6 +380,7 @@ export default function AdminPage() {
           <TabsTrigger value="users">משתמשים</TabsTrigger>
           <TabsTrigger value="payments">ניהול תשלומים</TabsTrigger>
           <TabsTrigger value="settings">הגדרות מערכת</TabsTrigger>
+          <TabsTrigger value="debug">עמודי פיתוח</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="space-y-4">
@@ -535,6 +617,10 @@ export default function AdminPage() {
               </Alert>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="debug" className="space-y-4">
+          <DebugPagesControl />
         </TabsContent>
       </Tabs>
     </div>
