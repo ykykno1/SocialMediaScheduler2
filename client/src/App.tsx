@@ -1,3 +1,4 @@
+import React, { ReactNode, useState } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -23,6 +24,7 @@ import DataDeletionPage from "@/pages/data-deletion";
 import TimingSettingsPage from "@/pages/timing-settings";
 import TestScheduler from "@/pages/test-scheduler";
 import AboutPage from "@/pages/about";
+import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram, Clock, TestTube } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -210,6 +212,23 @@ function UserProfile() {
   );
 }
 
+// Layout wrapper with dummy functions for the menu
+function AppLayoutWrapper({ children }: { children: ReactNode }) {
+  const [activeView, setActiveView] = useState('main');
+  
+  const showSettings = () => setActiveView('settings');
+  const showHistory = () => setActiveView('history');
+  const showMain = () => setActiveView('main');
+
+  return (
+    <Layout onShowSettings={showSettings} onShowHistory={showHistory}>
+      {activeView === 'settings' && <Settings />}
+      {activeView === 'history' && <History />}
+      {activeView === 'main' && children}
+    </Layout>
+  );
+}
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -250,39 +269,24 @@ function Router() {
   }
 
   return (
-    <div className="container px-4 mx-auto max-w-6xl min-h-screen flex flex-col">
-      <header className="py-4">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-primary">רובוט שבת</h1>
-          <UserProfile />
-        </div>
-        <Navbar />
-      </header>
-      
-      <main className="flex-1 py-4">
-        <Switch>
-          <Route path="/" component={Dashboard} />
-          <Route path="/pricing" component={PricingPage} />
-          <Route path="/youtube" component={YouTubePage} />
-          <Route path="/facebook" component={FacebookPage} />
-          <Route path="/instagram" component={InstagramPage} />
-          <Route path="/settings" component={SettingsPage} />
-          <Route path="/timing-settings" component={TimingSettingsPage} />
-          <Route path="/test-scheduler" component={TestScheduler} />
-          <Route path="/history" component={History} />
-          <Route path="/about" component={AboutPage} />
-          <Route path="/privacy-policy" component={PrivacyPolicyPage} />
-          <Route path="/data-deletion" component={DataDeletionPage} />
-          <Route path="/system-admin-secure-access" component={AdminPage} />
-          <Route path="/admin-shabbat-times" component={AdminShabbatPage} />
-          <Route component={NotFound} />
-        </Switch>
-      </main>
-      
-      <footer className="py-4 text-sm text-muted-foreground text-center border-t">
-        © {new Date().getFullYear()} רובוט שבת - כל הזכויות שמורות
-      </footer>
-    </div>
+    <AppLayoutWrapper>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/pricing" component={PricingPage} />
+        <Route path="/youtube" component={YouTubePage} />
+        <Route path="/facebook" component={FacebookPage} />
+        <Route path="/instagram" component={InstagramPage} />
+        <Route path="/settings" component={SettingsPage} />
+        <Route path="/timing-settings" component={TimingSettingsPage} />
+        <Route path="/test-scheduler" component={TestScheduler} />
+        <Route path="/about" component={AboutPage} />
+        <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+        <Route path="/data-deletion" component={DataDeletionPage} />
+        <Route path="/system-admin-secure-access" component={AdminPage} />
+        <Route path="/admin-shabbat-times" component={AdminShabbatPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </AppLayoutWrapper>
   );
 }
 

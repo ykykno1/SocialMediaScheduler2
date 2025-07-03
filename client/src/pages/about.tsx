@@ -1,169 +1,154 @@
 import React from 'react';
-import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, Clock, Users, Zap } from 'lucide-react';
 import { Link } from 'wouter';
 
-interface AboutPageProps {
-  onShowSettings: () => void;
-  onShowHistory: () => void;
-}
-
-const AboutPage: React.FC<AboutPageProps> = ({ onShowSettings, onShowHistory }) => {
+const AboutPage: React.FC = () => {
   return (
-    <Layout onShowSettings={onShowSettings} onShowHistory={onShowHistory}>
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Hero Section */}
-        <div className="text-center py-12">
-          <h1 className="text-4xl font-semibold ios-title mb-4 text-foreground">אודות רובוט שבת</h1>
-          <p className="ios-subtitle text-xl text-muted-foreground max-w-2xl mx-auto">
-            האפליקציה המתקדמת לניהול תוכן ברשתות חברתיות במהלך שבת ומועדים
-          </p>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Hero Section */}
+      <div className="text-center py-12">
+        <h1 className="text-4xl font-bold mb-4">רובוט שבת</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          פתרון מתקדם לניהול תוכן ברשתות חברתיות במהלך שבת וחגים
+        </p>
+      </div>
 
-        {/* Mission Card */}
-        <Card className="ios-card">
+      {/* Features Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
           <CardHeader>
-            <CardTitle className="ios-title text-2xl">המשימה שלנו</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="ios-body text-lg leading-relaxed">
-              רובוט שבת נוצר כדי לעזור ליהודים שומרי מצוות לנהל את הנוכחות הדיגיטלית שלהם 
-              באופן אוטומטי במהלך שבת ומועדים. האפליקציה מאפשרת הסתרה ושחזור אוטומטי של תוכן 
-              ברשתות החברתיות, תוך שמירה על הקדושה והזמן המיוחד של השבת.
-            </p>
-            <p className="ios-body text-lg leading-relaxed">
-              אנו מאמינים שטכנולוגיה צריכה לשרת את הערכים שלנו, ולא להיפך. 
-              רובוט שבת מאפשר לכם ליהנות משבת שלווה מבלי לוותר על הנוכחות הדיגיטלית שלכם.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="ios-card">
-            <CardHeader>
-              <CardTitle className="flex items-center ios-title">
-                <Clock className="ml-3 h-6 w-6 text-primary" />
-                תזמון מדויק
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="ios-body">
-                תזמון אוטומטי מבוסס על זמני שבת אמיתיים מחב"ד, 
-                עם תמיכה ב-45+ עיר ברחבי העולם.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="ios-card">
-            <CardHeader>
-              <CardTitle className="flex items-center ios-title">
-                <Shield className="ml-3 h-6 w-6 text-primary" />
-                אבטחה מתקדמת
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="ios-body">
-                הצפנה ברמה בנקאית של כל הטוקנים והמידע האישי, 
-                עם אחסון מאובטח בבסיס נתונים מוגן.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="ios-card">
-            <CardHeader>
-              <CardTitle className="flex items-center ios-title">
-                <Users className="ml-3 h-6 w-6 text-primary" />
-                תמיכה מרובת פלטפורמות
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="ios-body">
-                יוטיוב, פייסבוק, אינסטגרם - כל הפלטפורמות החשובות 
-                במקום אחד עם ממשק אחיד ונוח.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="ios-card">
-            <CardHeader>
-              <CardTitle className="flex items-center ios-title">
-                <Zap className="ml-3 h-6 w-6 text-primary" />
-                פעולה אוטומטית
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="ios-body">
-                פעולה 24/7 גם כשהאפליקציה סגורה - 
-                המערכת פועלת באופן עצמאי בשרת.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Technology Stack */}
-        <Card className="ios-card">
-          <CardHeader>
-            <CardTitle className="ios-title text-2xl">טכנולוגיה מתקדמת</CardTitle>
-            <CardDescription className="ios-body">
-              האפליקציה בנויה עם הטכנולוגיות החדישות ביותר
+            <Shield className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle>בטיחות ואבטחה</CardTitle>
+            <CardDescription>
+              הצפנת נתונים מתקדמת וחיבור מאובטח לכל הפלטפורמות
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-secondary/20 rounded-xl">
-                <h4 className="font-semibold ios-title">Frontend</h4>
-                <p className="text-sm ios-caption text-muted-foreground">React + TypeScript</p>
-              </div>
-              <div className="text-center p-4 bg-secondary/20 rounded-xl">
-                <h4 className="font-semibold ios-title">Backend</h4>
-                <p className="text-sm ios-caption text-muted-foreground">Node.js + Express</p>
-              </div>
-              <div className="text-center p-4 bg-secondary/20 rounded-xl">
-                <h4 className="font-semibold ios-title">Database</h4>
-                <p className="text-sm ios-caption text-muted-foreground">PostgreSQL</p>
-              </div>
-              <div className="text-center p-4 bg-secondary/20 rounded-xl">
-                <h4 className="font-semibold ios-title">Security</h4>
-                <p className="text-sm ios-caption text-muted-foreground">AES-256 Encryption</p>
-              </div>
-            </div>
-          </CardContent>
         </Card>
 
-        {/* Call to Action */}
-        <Card className="ios-card bg-primary/5 border-primary/20">
-          <CardContent className="text-center py-8">
-            <h3 className="text-2xl font-semibold ios-title mb-4">מוכנים להתחיל?</h3>
-            <p className="ios-body text-lg mb-6 text-muted-foreground">
-              התחילו לנהל את התוכן שלכם באופן אוטומטי עוד היום
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild className="ios-button">
-                <Link href="/pricing">
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                  צפו במחירים
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="ios-button">
-                <Link href="/">
-                  חזרו לדף הבית
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
+        <Card>
+          <CardHeader>
+            <Clock className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle>תזמון אוטומטי</CardTitle>
+            <CardDescription>
+              הסתרה ושחזור אוטומטיים לפי זמני שבת מדויקים
+            </CardDescription>
+          </CardHeader>
         </Card>
 
-        {/* Version Info */}
-        <div className="text-center py-8">
-          <p className="text-sm ios-caption text-muted-foreground">
-            גרסה 2.0.0 | עדכון אחרון: יולי 2025
-          </p>
+        <Card>
+          <CardHeader>
+            <Users className="h-8 w-8 mb-2 text-primary" />
+            <CardTitle>תמיכה בכל הפלטפורמות</CardTitle>
+            <CardDescription>
+              יוטיוב, פייסבוק, אינסטגרם ועוד פלטפורמות בקרוב
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* How It Works */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">איך זה עובד?</CardTitle>
+          <CardDescription>
+            רובוט שבת מתחבר לחשבונות הרשתות החברתיות שלך ומנהל אוטומטית את הגלישות שלך
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3 rtl:space-x-reverse">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
+                1
+              </div>
+              <div>
+                <h3 className="font-semibold">התחברות לפלטפורמות</h3>
+                <p className="text-muted-foreground">
+                  חבר את חשבונות יוטיוב, פייסבוק ואינסטגרם שלך באופן מאובטח
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-3 rtl:space-x-reverse">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
+                2
+              </div>
+              <div>
+                <h3 className="font-semibold">הגדרת העדפות</h3>
+                <p className="text-muted-foreground">
+                  בחר את המיקום שלך להגדרת זמני שבת וקבע העדפות אישיות
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start space-x-3 rtl:space-x-reverse">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
+                3
+              </div>
+              <div>
+                <h3 className="font-semibold">ניהול אוטומטי</h3>
+                <p className="text-muted-foreground">
+                  המערכת מסתירה ומשחזרת תוכן אוטומטית לפי זמני שבת וחגים
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Technical Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">פרטים טכניים</CardTitle>
+          <CardDescription>
+            מידע על הטכנולוגיות והפלטפורמות הנתמכות
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-2">פלטפורמות נתמכות:</h3>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• יוטיוב (YouTube Data API v3)</li>
+                <li>• פייסבוק (Graph API v22.0)</li>
+                <li>• אינסטגרם (דרך Facebook Business API)</li>
+                <li>• טיקטוק (בפיתוח)</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-2">תכונות אבטחה:</h3>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• הצפנת AES-256-GCM</li>
+                <li>• OAuth 2.0 מאובטח</li>
+                <li>• אימות JWT</li>
+                <li>• הגנה על נתונים אישיים</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Call to Action */}
+      <div className="text-center py-8">
+        <h2 className="text-2xl font-bold mb-4">מוכן להתחיל?</h2>
+        <p className="text-muted-foreground mb-6">
+          הצטרף למאות משתמשים המנהלים את הנוכחות הדיגיטלית שלהם בצורה חכמה
+        </p>
+        <div className="space-x-4 rtl:space-x-reverse">
+          <Button asChild>
+            <Link href="/pricing">
+              צפה במחירים
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/">חזור לדף הבית</Link>
+          </Button>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
