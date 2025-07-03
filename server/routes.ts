@@ -4,7 +4,7 @@ interface AuthenticatedRequest extends Request {
   user?: any;
 }
 import { createServer, type Server } from "http";
-import { storage } from './database-storage';
+import { enhancedStorage as storage } from './enhanced-storage.js';
 import { automaticScheduler } from './automatic-scheduler.js';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
