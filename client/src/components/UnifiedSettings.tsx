@@ -102,8 +102,13 @@ const UnifiedSettings = () => {
   // Load current preferences
   useEffect(() => {
     if (user) {
-      setHidePreference((user.hideTimingPreference as any) || '1hour');
-      setRestorePreference((user.restoreTimingPreference as any) || 'immediate');
+      // Only set if we have actual values from the user
+      if (user.hideTimingPreference) {
+        setHidePreference(user.hideTimingPreference as any);
+      }
+      if (user.restoreTimingPreference) {
+        setRestorePreference(user.restoreTimingPreference as any);
+      }
     }
   }, [user]);
 
