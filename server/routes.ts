@@ -2863,11 +2863,13 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get current server time
+  // Get current server time with proper timezone handling
   app.get("/api/current-time", (req, res) => {
     const now = new Date();
-    const israelTime = new Date().toLocaleString('he-IL', { 
-      timeZone: 'Asia/Jerusalem',
+    
+    // Get Israeli time properly
+    const israelTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jerusalem"}));
+    const israelTimeFormatted = israelTime.toLocaleString('he-IL', { 
       year: 'numeric',
       month: '2-digit', 
       day: '2-digit',
@@ -2877,11 +2879,19 @@ export function registerRoutes(app: Express): Server {
       hour12: false
     });
     
+    // Calculate the timezone offset
+    const timezoneOffset = now.getTime() - israelTime.getTime();
+    const offsetHours = Math.round(timezoneOffset / (1000 * 60 * 60));
+    
     res.json({
       serverTime: now.toISOString(),
       serverLocalTime: now.toString(),
-      israelTime: israelTime,
-      timestamp: now.getTime()
+      israelTime: israelTimeFormatted,
+      israelTimeISO: israelTime.toISOString(),
+      timestamp: now.getTime(),
+      israelTimestamp: israelTime.getTime(),
+      timezoneOffsetHours: offsetHours,
+      serverTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
     });
   });
 

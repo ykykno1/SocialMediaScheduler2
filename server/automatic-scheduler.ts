@@ -277,10 +277,12 @@ export class AutomaticScheduler {
   }
 
   /**
-   * Calculate hide time based on user preference
+   * Calculate hide time based on user preference - with proper timezone handling
    */
   private calculateHideTime(shabbatEntry: Date, preference: string): Date {
-    const hideTime = new Date(shabbatEntry);
+    // Convert to Israeli time for accurate calculation
+    const israelTime = this.convertToIsraeliTime(shabbatEntry);
+    const hideTime = new Date(israelTime);
     
     switch (preference) {
       case 'immediate':
@@ -302,10 +304,12 @@ export class AutomaticScheduler {
   }
 
   /**
-   * Calculate restore time based on user preference
+   * Calculate restore time based on user preference - with proper timezone handling
    */
   private calculateRestoreTime(shabbatExit: Date, preference: string): Date {
-    const restoreTime = new Date(shabbatExit);
+    // Convert to Israeli time for accurate calculation
+    const israelTime = this.convertToIsraeliTime(shabbatExit);
+    const restoreTime = new Date(israelTime);
     
     switch (preference) {
       case 'immediate':
@@ -320,6 +324,22 @@ export class AutomaticScheduler {
     }
     
     return restoreTime;
+  }
+
+  /**
+   * Convert UTC time to Israeli time properly
+   */
+  private convertToIsraeliTime(utcDate: Date): Date {
+    const israelTime = new Date(utcDate.toLocaleString("en-US", {timeZone: "Asia/Jerusalem"}));
+    return israelTime;
+  }
+
+  /**
+   * Convert Israeli time back to UTC for cron scheduling
+   */
+  private convertToUTC(israelTime: Date): Date {
+    const utcTime = new Date(israelTime.getTime() + (israelTime.getTimezoneOffset() * 60000));
+    return utcTime;
   }
 
   /**
@@ -342,22 +362,37 @@ export class AutomaticScheduler {
   }
 
   /**
-   * Convert Date to cron pattern
+   * Convert Date to cron pattern - with proper timezone handling
    */
   private dateToCronPattern(date: Date): string {
     const now = new Date();
-    const minute = date.getMinutes();
-    const hour = date.getHours();
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
     
-    // If the time has already passed today, skip scheduling
-    if (date <= now) {
-      console.log(`⚠️ Time ${date.toLocaleString('he-IL')} has already passed (current: ${now.toLocaleString('he-IL')}), skipping...`);
-      return null; // Return null to indicate we should skip this job
+    // Convert times to Israeli timezone for comparison
+    const israelNow = this.convertToIsraeliTime(now);
+    const israelTargetTime = this.convertToIsraeliTime(date);
+    
+    // If the time has already passed, skip scheduling
+    if (israelTargetTime <= israelNow) {
+      console.log(`⚠️ Israeli time ${israelTargetTime.toLocaleString('he-IL')} has already passed (current: ${israelNow.toLocaleString('he-IL')}), skipping...`);
+      return null;
     }
     
-    return `${minute} ${hour} ${day} ${month} *`;
+    // Use Israeli time for cron pattern but schedule in server timezone
+    const minute = israelTargetTime.getMinutes();
+    const hour = israelTargetTime.getHours();
+    const day = israelTargetTime.getDate();
+    const month = israelTargetTime.getMonth() + 1;
+    
+    // Convert back to server time for actual scheduling
+    const serverTime = this.convertToUTC(israelTargetTime);
+    const serverMinute = serverTime.getMinutes();
+    const serverHour = serverTime.getHours();
+    const serverDay = serverTime.getDate();
+    const serverMonth = serverTime.getMonth() + 1;
+    
+    console.log(`📅 Scheduling: Israeli time ${hour}:${minute} = Server time ${serverHour}:${serverMinute}`);
+    
+    return `${serverMinute} ${serverHour} ${serverDay} ${serverMonth} *`;
   }
 
   /**

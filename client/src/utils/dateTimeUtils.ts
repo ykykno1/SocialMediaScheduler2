@@ -178,6 +178,33 @@ export class DateTimeUtils {
   }
 
   /**
+   * Convert server time to Israeli time
+   * @param {Date} serverTime - Time from server (usually UTC)
+   * @returns {Date} Israeli local time
+   */
+  static convertToIsraeliTime(serverTime: Date): Date {
+    return new Date(serverTime.toLocaleString("en-US", {timeZone: "Asia/Jerusalem"}));
+  }
+
+  /**
+   * Convert Israeli time to server time (UTC)
+   * @param {Date} israelTime - Israeli local time
+   * @returns {Date} Server time (UTC)
+   */
+  static convertToServerTime(israelTime: Date): Date {
+    const utcTime = new Date(israelTime.getTime() + (israelTime.getTimezoneOffset() * 60000));
+    return utcTime;
+  }
+
+  /**
+   * Get current Israeli time regardless of server timezone
+   * @returns {Date} Current Israeli time
+   */
+  static getCurrentIsraeliTime(): Date {
+    return this.convertToIsraeliTime(new Date());
+  }
+
+  /**
    * Get a formatted string for day of week (e.g., "יום שישי")
    * @param {Date} date - The date
    * @returns {string} The Hebrew day name

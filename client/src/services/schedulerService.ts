@@ -82,7 +82,7 @@ export class SchedulerService {
   }
   
   /**
-   * Check if hiding or restoring actions should be performed
+   * Check if hiding or restoring actions should be performed - with timezone awareness
    */
   private checkSchedule(): void {
     const settings = StorageService.getSettings();
@@ -92,7 +92,8 @@ export class SchedulerService {
       return;
     }
     
-    const now = new Date();
+    // Use Israeli time for comparisons
+    const now = DateTimeUtils.getCurrentIsraeliTime();
     const hideTime = DateTimeUtils.parseTime(settings.hideTime);
     const restoreTime = DateTimeUtils.parseTime(settings.restoreTime);
     
@@ -101,21 +102,27 @@ export class SchedulerService {
       return;
     }
     
-    // Check if it's time to hide content
-    const nextHideTime = DateTimeUtils.getNextShabbatEnter(settings.hideTime, settings.timeZone);
-    const nextRestoreTime = DateTimeUtils.getNextShabbatExit(settings.restoreTime, settings.timeZone);
+    // Calculate next Shabbat times in Israeli timezone
+    const nextHideTime = DateTimeUtils.getNextShabbatEnter(settings.hideTime, 'Asia/Jerusalem');
+    const nextRestoreTime = DateTimeUtils.getNextShabbatExit(settings.restoreTime, 'Asia/Jerusalem');
     
     if (!nextHideTime || !nextRestoreTime) {
       Logger.error('Failed to calculate next Shabbat times');
       return;
     }
     
-    // Check if we're within 1 minute of the scheduled times
+    // Convert to Israeli time for accurate comparison
+    const israelHideTime = DateTimeUtils.convertToIsraeliTime(nextHideTime);
+    const israelRestoreTime = DateTimeUtils.convertToIsraeliTime(nextRestoreTime);
+    
+    // Check if we're within 1 minute of the scheduled times (in Israeli time)
     const oneMinute = 60 * 1000; // 1 minute in milliseconds
     
-    if (Math.abs(now.getTime() - nextHideTime.getTime()) < oneMinute) {
+    if (Math.abs(now.getTime() - israelHideTime.getTime()) < oneMinute) {
+      Logger.info('Triggering hide content based on Israeli time schedule');
       this.hideAllContent();
-    } else if (Math.abs(now.getTime() - nextRestoreTime.getTime()) < oneMinute) {
+    } else if (Math.abs(now.getTime() - israelRestoreTime.getTime()) < oneMinute) {
+      Logger.info('Triggering restore content based on Israeli time schedule');
       this.restoreAllContent();
     }
   }
