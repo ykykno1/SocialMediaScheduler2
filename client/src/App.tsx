@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -88,17 +88,42 @@ function useAuth() {
 function Navbar() {
   const [location] = useLocation();
   const { isAuthenticated } = useAuth();
+  const [showDebugPages, setShowDebugPages] = useState(false);
+
+  // Update state when localStorage changes
+  useEffect(() => {
+    const checkDebugPages = () => {
+      try {
+        const stored = localStorage.getItem('showDebugPages');
+        const shouldShow = stored === 'true';
+        console.log('🔍 App.tsx Debug Check:', { 
+          storedValue: stored, 
+          shouldShow,
+          currentPath: location 
+        });
+        setShowDebugPages(shouldShow);
+      } catch (e) {
+        console.error('localStorage error:', e);
+      }
+    };
+
+    // Check initially
+    checkDebugPages();
+
+    // Listen for storage changes
+    window.addEventListener('storage', checkDebugPages);
+    
+    // Also check every second to catch same-tab changes
+    const interval = setInterval(checkDebugPages, 1000);
+
+    return () => {
+      window.removeEventListener('storage', checkDebugPages);
+      clearInterval(interval);
+    };
+  }, [location]);
 
   if (!isAuthenticated) {
     return null; // Don't show navigation if not authenticated
-  }
-
-  // Check if debug pages should be shown
-  let showDebugPages = false;
-  try {
-    showDebugPages = localStorage.getItem('showDebugPages') === 'true';
-  } catch (e) {
-    console.error('localStorage error:', e);
   }
 
   const baseNavItems = [
