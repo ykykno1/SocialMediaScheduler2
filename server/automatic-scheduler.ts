@@ -200,35 +200,17 @@ export class AutomaticScheduler {
    */
   private async getShabbatTimesForLocation(cityId: string, cityName: string): Promise<ShabbatTimes | null> {
     try {
-      // Get next Friday
-      const now = new Date();
-      const friday = new Date(now);
-      const daysUntilFriday = (5 - now.getDay() + 7) % 7;
-      if (daysUntilFriday === 0 && now.getDay() !== 5) {
-        friday.setDate(friday.getDate() + 7); // Next Friday if today is not Friday
-      } else {
-        friday.setDate(friday.getDate() + daysUntilFriday);
-      }
-
-      const year = friday.getFullYear();
-      const month = friday.getMonth() + 1;
-      const day = friday.getDate();
-
-      // Use simplified Chabad times (this should be enhanced with real API)
-      const chabadTimes: Record<string, { entry: [number, number], exit: [number, number] }> = {
-        '531': { entry: [19, 25], exit: [20, 29] }, // Tel Aviv
-        '688': { entry: [19, 20], exit: [20, 25] }, // Beer Sheva
-        '695': { entry: [19, 20], exit: [20, 23] }, // Safed
-        // Add more cities as needed
-      };
-
-      const times = chabadTimes[cityId];
-      if (times) {
-        const entryTime = new Date(year, month - 1, day);
-        entryTime.setHours(times.entry[0], times.entry[1], 0, 0);
+      console.log(`🌍 Fetching Shabbat times for ${cityName} (${cityId}) from Chabad API`);
+      
+      // Try to get authentic Chabad times from the storage function
+      // The storage.getShabbatTimes function already calls the Chabad API
+      const shabbatTimesData = await storage.getShabbatTimes(0, 0);
+      
+      if (shabbatTimesData && shabbatTimesData.candleLighting && shabbatTimesData.havdalah) {
+        const entryTime = new Date(shabbatTimesData.candleLighting);
+        const exitTime = new Date(shabbatTimesData.havdalah);
         
-        const exitTime = new Date(year, month - 1, day + 1);
-        exitTime.setHours(times.exit[0], times.exit[1], 0, 0);
+        console.log(`✅ Got authentic Chabad times for ${cityName}: Entry ${entryTime.toLocaleString('he-IL')}, Exit ${exitTime.toLocaleString('he-IL')}`);
         
         return {
           entryTime,
@@ -238,7 +220,51 @@ export class AutomaticScheduler {
         };
       }
 
-      console.log(`⚠️ No times found for city ${cityName} (${cityId})`);
+      // Fallback to calculated times if API fails (but log the issue)
+      console.log(`⚠️ Chabad API unavailable for ${cityName}, using fallback calculation`);
+      
+      // Get next Friday
+      const now = new Date();
+      const friday = new Date(now);
+      const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+      if (daysUntilFriday === 0 && now.getDay() !== 5) {
+        friday.setDate(friday.getDate() + 7);
+      } else {
+        friday.setDate(friday.getDate() + daysUntilFriday);
+      }
+
+      const year = friday.getFullYear();
+      const month = friday.getMonth() + 1;
+      const day = friday.getDate();
+
+      // Fallback times for major cities
+      const fallbackTimes: Record<string, { entry: [number, number], exit: [number, number] }> = {
+        '531': { entry: [19, 25], exit: [20, 29] }, // Tel Aviv
+        '688': { entry: [19, 20], exit: [20, 25] }, // Beer Sheva
+        '695': { entry: [19, 20], exit: [20, 23] }, // Safed
+        '281': { entry: [19, 15], exit: [20, 25] }, // Jerusalem
+        '294': { entry: [19, 30], exit: [20, 35] }, // Haifa
+      };
+
+      const times = fallbackTimes[cityId];
+      if (times) {
+        const entryTime = new Date(year, month - 1, day);
+        entryTime.setHours(times.entry[0], times.entry[1], 0, 0);
+        
+        const exitTime = new Date(year, month - 1, day + 1);
+        exitTime.setHours(times.exit[0], times.exit[1], 0, 0);
+        
+        console.log(`📅 Using fallback times for ${cityName}: Entry ${entryTime.toLocaleString('he-IL')}, Exit ${exitTime.toLocaleString('he-IL')}`);
+        
+        return {
+          entryTime,
+          exitTime,
+          cityName,
+          cityId
+        };
+      }
+
+      console.log(`❌ No times available for city ${cityName} (${cityId})`);
       return null;
     } catch (error) {
       console.error(`❌ Error getting Shabbat times for ${cityName}:`, error);

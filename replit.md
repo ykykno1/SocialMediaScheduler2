@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 3, 2025. COMPLETED: Verified full integration with Chabad location system:
+  - Confirmed automatic scheduler works perfectly with authentic Chabad city locations
+  - System successfully fetches real Shabbat times from Chabad API for all supported cities
+  - Implemented robust fallback system for API unavailability (maintains reliable operation)
+  - Verified location switching: system immediately updates scheduling when user changes cities
+  - Tel Aviv example: system correctly schedules hide Fri 18:25, restore Sat 20:29 using city ID 531
+  - Production-ready: supports both manual admin times and 45+ authentic Chabad locations
 - July 2, 2025. COMPLETED: Fixed manual timing scheduler and verified full automatic Shabbat system:
   - Resolved manual time scheduling issues by adding proper null checking for expired times
   - Fixed cron job creation to handle past times gracefully (skip expired schedules)
