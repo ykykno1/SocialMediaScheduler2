@@ -6,13 +6,19 @@ import { Home, Settings, History, TestTube, Clock } from "lucide-react";
 const Navbar = () => {
   const [location] = useLocation();
   
-  // Debug: check what's actually in localStorage
-  const localStorageValue = localStorage.getItem('showDebugPages');
-  console.log('Debug - localStorage value:', localStorageValue);
-  
-  // Always read from localStorage directly - no state needed
-  const showDebugPages = localStorageValue === 'true';
-  console.log('Debug - showDebugPages result:', showDebugPages);
+  // Read from localStorage and force check every render
+  let showDebugPages = false;
+  try {
+    const stored = localStorage.getItem('showDebugPages');
+    showDebugPages = stored === 'true';
+    console.log('🔍 Navbar Debug:', { 
+      storedValue: stored, 
+      showDebugPages,
+      currentPath: location 
+    });
+  } catch (e) {
+    console.error('localStorage error:', e);
+  }
 
   const baseNavItems = [
     {

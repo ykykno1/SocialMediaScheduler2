@@ -52,8 +52,18 @@ function DebugPagesControl() {
 
   const toggleDebugPages = () => {
     const newValue = !showDebugPages;
+    console.log('🔧 Admin toggle:', { 
+      currentValue: showDebugPages, 
+      newValue,
+      beforeLocalStorage: localStorage.getItem('showDebugPages')
+    });
+    
     setShowDebugPages(newValue);
     localStorage.setItem('showDebugPages', newValue.toString());
+    
+    console.log('🔧 After setting:', {
+      afterLocalStorage: localStorage.getItem('showDebugPages')
+    });
     
     // Force a page reload to ensure navbar updates
     setTimeout(() => {
