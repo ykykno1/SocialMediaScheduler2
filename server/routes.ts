@@ -3000,6 +3000,12 @@ export function registerRoutes(app: Express): Server {
       // Update admin location with custom times
       await storage.setAdminShabbatTimes(entryDate, exitDate);
 
+      // Refresh the automatic scheduler to pick up the new times
+      console.log('🔧 [ADMIN TIMES UPDATE] Refreshing automatic scheduler...');
+      automaticScheduler.stop();
+      await automaticScheduler.start();
+      console.log('🔧 [ADMIN TIMES UPDATE] Automatic scheduler refreshed');
+
       res.json({ 
         success: true, 
         message: 'Admin Shabbat times updated successfully',
