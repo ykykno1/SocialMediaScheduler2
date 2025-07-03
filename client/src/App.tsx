@@ -177,14 +177,17 @@ function Navbar() {
     },
   ];
 
-  // Add admin debug items directly if user is admin (premium account)
-  const { user } = useAuth();
-  const isAdmin = user?.accountType === 'premium';
-
-  // Show debug items for premium users (admins) or when explicitly enabled
-  const navItems = (isAdmin && showDebugPages) || showDebugPages
+  const navItems = showDebugPages 
     ? [...baseNavItems, ...debugNavItems]
     : baseNavItems;
+    
+  console.log('🔍 App.tsx Debug Check:', { 
+    storedValue: localStorage.getItem('showDebugPages'), 
+    showDebugPages,
+    currentPath: location,
+    navItemsCount: navItems.length,
+    hasDebugItems: navItems.some(item => item.href === '/test-scheduler')
+  });
 
   return (
     <nav className="flex flex-wrap items-center gap-2 mb-4">
