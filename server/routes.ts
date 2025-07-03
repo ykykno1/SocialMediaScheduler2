@@ -6,6 +6,7 @@ interface AuthenticatedRequest extends Request {
 import { createServer, type Server } from "http";
 import { enhancedStorage as storage } from './enhanced-storage.js';
 import { automaticScheduler } from './automatic-scheduler.js';
+import { emailService, generateVerificationCode } from './email-service.js';
 import fetch from 'node-fetch';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -3105,6 +3106,171 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Update user profile error:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Email verification endpoints
+  app.post("/api/auth/send-verification-email", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      // Check if email service is available
+      if (!emailService) {
+        return res.status(503).json({ 
+          error: "Email service not configured", 
+          details: "Please configure Gmail SMTP or Mailjet credentials" 
+        });
+      }
+
+      // Generate 6-digit verification code
+      const verificationCode = generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      // Save verification code to database
+      await storage.createVerificationCode({
+        email,
+        code: verificationCode,
+        type: 'email',
+        purpose: 'registration',
+        expiresAt
+      });
+
+      // Send verification email
+      const emailSent = await emailService.sendVerificationEmail(email, verificationCode);
+      
+      if (!emailSent) {
+        return res.status(500).json({ error: "Failed to send verification email" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "קוד אימות נשלח למייל שלך",
+        expiresIn: 15 // minutes
+      });
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      res.status(500).json({ error: "Failed to send verification email" });
+    }
+  });
+
+  app.post("/api/auth/verify-email", async (req, res) => {
+    try {
+      const { email, verificationCode } = req.body;
+      
+      if (!email || !verificationCode) {
+        return res.status(400).json({ error: "Email and verification code are required" });
+      }
+
+      // Verify the code
+      const verification = await storage.verifyCode(verificationCode, email);
+      
+      if (!verification.isValid) {
+        return res.status(400).json({ error: "קוד אימות לא תקין או פג תוקף" });
+      }
+
+      if (verification.purpose !== 'registration') {
+        return res.status(400).json({ error: "Invalid verification code purpose" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "כתובת המייל אומתה בהצלחה",
+        verified: true
+      });
+    } catch (error) {
+      console.error("Error verifying email:", error);
+      res.status(500).json({ error: "Failed to verify email" });
+    }
+  });
+
+  // Enhanced registration with email verification
+  app.post("/api/register-with-verification", async (req, res) => {
+    try {
+      const { email, username, password, verificationCode, registrationMethod = 'email' } = req.body;
+      
+      if (!email || !username || !password || !verificationCode) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+
+      // Verify the code first
+      const verification = await storage.verifyCode(verificationCode, email);
+      
+      if (!verification.isValid) {
+        return res.status(400).json({ error: "קוד אימות לא תקין או פג תוקף" });
+      }
+
+      if (verification.purpose !== 'registration') {
+        return res.status(400).json({ error: "Invalid verification code purpose" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "המייל כבר רשום במערכת" });
+      }
+
+      // Create user with verified email
+      const userData = {
+        email,
+        username,
+        password,
+        accountType: 'free' as const,
+        registrationMethod: registrationMethod as 'email' | 'phone',
+        emailVerified: true, // Mark as verified since we verified the code
+        phoneVerified: false
+      };
+
+      const newUser = await storage.createUser(userData);
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          userId: newUser.id, 
+          email: newUser.email 
+        }, 
+        JWT_SECRET, 
+        { expiresIn: '7d' }
+      );
+
+      res.json({
+        success: true,
+        message: "המשתמש נרשם בהצלחה",
+        token,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          username: newUser.username,
+          accountType: newUser.accountType,
+          emailVerified: true
+        }
+      });
+    } catch (error) {
+      console.error("Error during verified registration:", error);
+      res.status(500).json({ error: "Failed to register user" });
+    }
+  });
+
+  // SMS verification endpoints (placeholder for now)
+  app.post("/api/auth/send-verification-sms", async (req, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ error: "Phone number is required" });
+      }
+
+      // For now, return not implemented
+      res.status(501).json({ 
+        error: "SMS verification not yet implemented",
+        message: "אימות SMS יהיה זמין בקרוב"
+      });
+    } catch (error) {
+      console.error("Error sending verification SMS:", error);
+      res.status(500).json({ error: "Failed to send verification SMS" });
     }
   });
 

@@ -13,8 +13,11 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [registerData, setRegisterData] = useState({ email: "", password: "", confirmPassword: "" });
+  const [registerData, setRegisterData] = useState({ email: "", username: "", password: "", confirmPassword: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationStep, setVerificationStep] = useState<'email' | 'verify' | 'complete'>('email');
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationEmail, setVerificationEmail] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,9 +70,111 @@ export default function AuthPage() {
     }
   };
 
+  const sendVerificationEmail = async () => {
+    if (!registerData.email) {
+      toast({
+        title: "שגיאה",
+        description: "נא להזין כתובת מייל",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/send-verification-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: registerData.email }),
+      });
+
+      if (response.ok) {
+        setVerificationEmail(registerData.email);
+        setVerificationStep('verify');
+        toast({
+          title: "קוד אימות נשלח",
+          description: "בדוק את תיבת המייל שלך לקוד האימות",
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "שגיאה בשליחת אימות",
+          description: errorData.error || "שגיאה בשליחת קוד האימות",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "בדוק את החיבור לאינטרנט",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    if (!verificationCode) {
+      toast({
+        title: "שגיאה",
+        description: "נא להזין קוד אימות",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: verificationEmail, 
+          verificationCode 
+        }),
+      });
+
+      if (response.ok) {
+        setVerificationStep('complete');
+        toast({
+          title: "מייל אומת בהצלחה",
+          description: "עכשיו אפשר להשלים את הרישום",
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "שגיאה באימות",
+          description: errorData.error || "קוד אימות שגוי",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "בדוק את החיבור לאינטרנט",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registerData.email || !registerData.password || !registerData.confirmPassword) {
+    
+    if (verificationStep === 'email') {
+      await sendVerificationEmail();
+      return;
+    }
+
+    if (verificationStep === 'verify') {
+      await verifyEmailCode();
+      return;
+    }
+
+    // Final registration step
+    if (!registerData.username || !registerData.password || !registerData.confirmPassword) {
       toast({
         title: "שגיאה",
         description: "נא למלא את כל השדות",
@@ -89,13 +194,15 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/register", {
+      const response = await fetch("/api/register-with-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: registerData.email,
+          email: verificationEmail,
+          username: registerData.username,
           password: registerData.password,
-          username: registerData.email.split('@')[0]
+          verificationCode,
+          registrationMethod: 'email'
         }),
       });
 
@@ -104,12 +211,11 @@ export default function AuthPage() {
         // Store JWT token
         localStorage.setItem('auth_token', userData.token);
         // Store user data without token
-        const userDataWithoutToken = { ...userData };
-        delete userDataWithoutToken.token;
+        const userDataWithoutToken = { ...userData.user };
         queryClient.setQueryData(["/api/user"], userDataWithoutToken);
         toast({
           title: "נרשמת בהצלחה",
-          description: `ברוך הבא, ${userData.username || userData.email}`,
+          description: `ברוך הבא, ${userData.user.username}`,
         });
         setLocation("/");
       } else {
@@ -182,50 +288,119 @@ export default function AuthPage() {
             
             <TabsContent value="register" className="space-y-4">
               <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">אימייל</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    placeholder="הכנס את האימייל שלך"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">סיסמה</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    value={registerData.password}
-                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    placeholder="בחר סיסמה"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">אישור סיסמה</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={registerData.confirmPassword}
-                    onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                    placeholder="הכנס שוב את הסיסמה"
-                    required
-                  />
-                </div>
-                {registerData.password !== registerData.confirmPassword && registerData.confirmPassword && (
-                  <p className="text-red-500 text-sm">הסיסמאות אינן תואמות</p>
+                {/* Step 1: Email Entry */}
+                {verificationStep === 'email' && (
+                  <>
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-semibold">שלב 1: הזן כתובת מייל</h3>
+                      <p className="text-sm text-gray-600">נשלח לך קוד אימות לאימייל</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-email">אימייל</Label>
+                      <Input
+                        id="register-email"
+                        type="email"
+                        value={registerData.email}
+                        onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                        placeholder="הכנס את האימייל שלך"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      {isLoading ? "שולח קוד אימות..." : "שלח קוד אימות"}
+                    </Button>
+                  </>
                 )}
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isLoading || registerData.password !== registerData.confirmPassword}
-                >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  {isLoading ? "נרשם..." : "הרשם"}
-                </Button>
+
+                {/* Step 2: Verification Code */}
+                {verificationStep === 'verify' && (
+                  <>
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-semibold">שלב 2: אמת את המייל</h3>
+                      <p className="text-sm text-gray-600">
+                        הזן את קוד האימות שנשלח ל-{verificationEmail}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="verification-code">קוד אימות</Label>
+                      <Input
+                        id="verification-code"
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        placeholder="הזן קוד בן 6 ספרות"
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? "מאמת..." : "אמת קוד"}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full" 
+                      onClick={() => setVerificationStep('email')}
+                    >
+                      חזור לשלב הקודם
+                    </Button>
+                  </>
+                )}
+
+                {/* Step 3: Complete Registration */}
+                {verificationStep === 'complete' && (
+                  <>
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-semibold">שלב 3: השלם רישום</h3>
+                      <p className="text-sm text-gray-600">צור שם משתמש וסיסמה</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-username">שם משתמש</Label>
+                      <Input
+                        id="register-username"
+                        type="text"
+                        value={registerData.username}
+                        onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                        placeholder="בחר שם משתמש"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-password">סיסמה</Label>
+                      <Input
+                        id="register-password"
+                        type="password"
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        placeholder="צור סיסמה חזקה"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-confirm-password">אימות סיסמה</Label>
+                      <Input
+                        id="register-confirm-password"
+                        type="password"
+                        value={registerData.confirmPassword}
+                        onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                        placeholder="חזור על הסיסמה"
+                        required
+                      />
+                    </div>
+                    {registerData.password !== registerData.confirmPassword && registerData.confirmPassword && (
+                      <p className="text-red-500 text-sm">הסיסמאות אינן תואמות</p>
+                    )}
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isLoading || registerData.password !== registerData.confirmPassword}
+                    >
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      {isLoading ? "משלים רישום..." : "הרשם"}
+                    </Button>
+                  </>
+                )}
               </form>
             </TabsContent>
           </Tabs>
