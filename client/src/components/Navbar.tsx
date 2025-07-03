@@ -2,34 +2,12 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Home, Settings, History, TestTube, Clock } from "lucide-react";
-import { useState, useEffect } from "react";
 
 const Navbar = () => {
   const [location] = useLocation();
-  const [showDebugPages, setShowDebugPages] = useState(false);
-
-  // Check localStorage on every render and location change
-  useEffect(() => {
-    const checkDebugSetting = () => {
-      const setting = localStorage.getItem('showDebugPages') === 'true';
-      setShowDebugPages(setting);
-    };
-
-    checkDebugSetting();
-    
-    const handleDebugToggle = (event: CustomEvent) => {
-      setShowDebugPages(event.detail.showDebugPages);
-    };
-
-    // Check again when route changes
-    checkDebugSetting();
-    
-    window.addEventListener('debugPagesToggle', handleDebugToggle as EventListener);
-    
-    return () => {
-      window.removeEventListener('debugPagesToggle', handleDebugToggle as EventListener);
-    };
-  }, [location]); // Re-run when location changes
+  
+  // Always read from localStorage directly - no state needed
+  const showDebugPages = localStorage.getItem('showDebugPages') === 'true';
 
   const baseNavItems = [
     {

@@ -55,16 +55,16 @@ function DebugPagesControl() {
     setShowDebugPages(newValue);
     localStorage.setItem('showDebugPages', newValue.toString());
     
-    // Also save to global state for navbar
-    window.dispatchEvent(new CustomEvent('debugPagesToggle', { 
-      detail: { showDebugPages: newValue } 
-    }));
+    // Force a page reload to ensure navbar updates
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
     
     toast({
       title: newValue ? "עמודי פיתוח הופעלו" : "עמודי פיתוח הוסתרו",
       description: newValue 
-        ? "עמודי בדיקת הסקדולר והגדרות התזמון כעת גלויים בתפריט"
-        : "עמודי פיתוח הוסתרו מהתפריט הראשי"
+        ? "עמודי בדיקת הסקדולר והגדרות התזמון כעת גלויים בתפריט (הדף יטען מחדש)"
+        : "עמודי פיתוח הוסתרו מהתפריט הראשי (הדף יטען מחדש)"
     });
   };
 
