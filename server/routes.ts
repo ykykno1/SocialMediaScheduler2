@@ -2973,6 +2973,7 @@ export function registerRoutes(app: Express): Server {
 
   // Admin endpoint to set custom Shabbat times for testing
   app.post("/api/admin/set-shabbat-times", async (req, res) => {
+    console.log('🔧 [ADMIN ENDPOINT] POST /api/admin/set-shabbat-times called');
     try {
       const { entryTime, exitTime } = req.body;
 
