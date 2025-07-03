@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import ModernMenu from './ModernMenu';
 import { Link } from 'wouter';
+import Clock from './Clock';
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,7 +22,8 @@ const Layout: React.FC<LayoutProps> = ({
           <Link href="/" className="text-2xl font-semibold ios-title text-primary hover:opacity-80 transition-opacity cursor-pointer">
             רובוט שבת
           </Link>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            <Clock compact={true} showDate={false} showSeconds={false} />
             <ModernMenu 
               onShowSettings={onShowSettings}
               onShowHistory={onShowHistory}

@@ -11,9 +11,7 @@ const Dashboard = () => {
 
       {/* Shabbat Timer Widget */}
       <div className="flex justify-center mb-10">
-        <div className="ios-scale-in">
-          <UserChabadWidget />
-        </div>
+        <UserChabadWidget />
       </div>
 
       {/* iOS-style Platform Navigation Cards */}
