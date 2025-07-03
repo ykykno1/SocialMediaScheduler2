@@ -10,7 +10,8 @@ import {
   LogOut, 
   User,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Home
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -34,9 +35,15 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
 
   const menuItems = [
     {
+      icon: Home,
+      label: 'דף הבית',
+      action: () => window.location.href = '/',
+      disabled: false
+    },
+    {
       icon: User,
       label: 'פרופיל משתמש',
-      action: () => {}, // Will be handled by UserProfile component
+      action: () => window.location.href = '/profile',
       disabled: false
     },
     {

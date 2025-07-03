@@ -18,6 +18,7 @@ import HomePage from "@/pages/home";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import SettingsPage from "@/pages/settings";
+import ProfilePage from "@/pages/profile";
 import History from "@/components/History";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import DataDeletionPage from "@/pages/data-deletion";
@@ -267,6 +268,7 @@ function Router() {
     <AppLayoutWrapper>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/profile" component={ProfilePage} />
         <Route path="/pricing" component={PricingPage} />
         <Route path="/youtube" component={YouTubePage} />
         <Route path="/facebook" component={FacebookPage} />

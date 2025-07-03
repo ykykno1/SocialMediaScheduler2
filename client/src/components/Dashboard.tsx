@@ -7,11 +7,7 @@ import { UserChabadWidget } from "@/components/widgets/UserChabadWidget";
 const Dashboard = () => {
   return (
     <div className="space-y-8">
-      {/* iOS-style Welcome Section */}
-      <div className="text-center py-12">
-        <h1 className="text-4xl font-semibold ios-title mb-4 text-foreground">ברוכים הבאים לרובוט שבת</h1>
-        <p className="ios-subtitle text-xl text-muted-foreground">נהל את התוכן שלך ברשתות החברתיות לשבת</p>
-      </div>
+
 
       {/* Shabbat Timer Widget */}
       <div className="flex justify-center mb-10">

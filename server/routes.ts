@@ -3068,6 +3068,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update user profile
+  app.put("/api/user/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "No user ID in request" });
+      }
+
+      const { username, email } = req.body;
+      
+      if (!username || !email) {
+        return res.status(400).json({ error: "Username and email are required" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, { username, email });
+      
+      // Return user without password
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Update user profile error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

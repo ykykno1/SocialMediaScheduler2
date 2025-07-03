@@ -1,5 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import ModernMenu from './ModernMenu';
+import { Link } from 'wouter';
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,7 +18,9 @@ const Layout: React.FC<LayoutProps> = ({
       {/* iOS-style Header with blur effect */}
       <header className="bg-background/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold ios-title text-primary">רובוט שבת</h1>
+          <Link href="/" className="text-2xl font-semibold ios-title text-primary hover:opacity-80 transition-opacity cursor-pointer">
+            רובוט שבת
+          </Link>
           <div className="flex items-center">
             <ModernMenu 
               onShowSettings={onShowSettings}
