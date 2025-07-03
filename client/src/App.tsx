@@ -145,6 +145,11 @@ function Navbar() {
       href: "/test-scheduler",
       icon: <TestTube className="h-4 w-4 mr-2" />,
     },
+    {
+      label: "הגדרות תזמון",
+      href: "/timing-settings",
+      icon: <Clock className="h-4 w-4 mr-2" />,
+    },
   ];
 
   const navItems = showDebugPages 
