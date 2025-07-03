@@ -110,12 +110,13 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
 
       {/* Menu Panel */}
       <div className={`
-        fixed top-0 right-0 h-full w-80 bg-background/95 backdrop-blur-xl border-l border-border z-50
+        fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-background border-l border-border z-50
         transform transition-transform duration-300 ease-out shadow-2xl
         ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-      `}>
+      `}
+      style={{ backgroundColor: 'var(--background)' }}>
         {/* Header */}
-        <div className="px-6 py-6 border-b border-border">
+        <div className="px-6 py-6 border-b border-border bg-background">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold ios-title text-foreground">תפריט</h2>
             <Button
@@ -140,7 +141,7 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
         </div>
 
         {/* Menu Items */}
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 bg-background">
           <nav className="space-y-2">
             {menuItems.map((item, index) => (
               <button
