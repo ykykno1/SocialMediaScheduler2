@@ -3303,13 +3303,25 @@ export function registerRoutes(app: Express): Server {
   // Next operation countdown endpoint
   app.get("/api/scheduler/next-operation", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
+      // Disable caching for real-time updates
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       const userId = req.user.id;
       const status = automaticScheduler.getStatus();
       
       // Find this user's jobs
       const userJobs = status.userJobs?.find(uj => uj.userId === userId);
       
+      console.log(`🔍 Next operation check for user ${userId}:`);
+      console.log(`   User jobs found: ${!!userJobs}`);
+      console.log(`   Jobs count: ${userJobs?.jobs.length || 0}`);
+      
       if (!userJobs || userJobs.jobs.length === 0) {
+        console.log(`   ❌ No jobs scheduled for user`);
         return res.json({
           hasNextOperation: false,
           message: 'אין פעולות מתוזמנות'
@@ -3320,19 +3332,54 @@ export function registerRoutes(app: Express): Server {
       const now = new Date();
       let nextOperation = null;
       let minTime = null;
+      
+      console.log(`   📅 Current time: ${now.toISOString()}`);
+      console.log(`   🔍 Checking ${userJobs.jobs.length} jobs:`);
 
       for (const job of userJobs.jobs) {
         const jobTime = new Date(job.scheduledTime);
-        if (jobTime > now && (!minTime || jobTime < minTime)) {
+        const isFuture = jobTime > now;
+        console.log(`     Job: ${job.type} at ${jobTime.toISOString()} - Future: ${isFuture}`);
+        
+        if (isFuture && (!minTime || jobTime < minTime)) {
           minTime = jobTime;
           nextOperation = job;
+          console.log(`     ✅ Set as next operation`);
         }
       }
 
       if (!nextOperation) {
+        console.log(`   ❌ No future operations found`);
+        
+        // For demo purposes, create a demo countdown for next Friday
+        const now = new Date();
+        const nextFriday = new Date(now);
+        nextFriday.setDate(now.getDate() + (5 - now.getDay()) % 7);
+        nextFriday.setHours(19, 0, 0, 0); // 7 PM Friday
+        
+        if (nextFriday <= now) {
+          nextFriday.setDate(nextFriday.getDate() + 7); // Next week
+        }
+        
+        const timeUntilDemo = nextFriday.getTime() - now.getTime();
+        const hours = Math.floor(timeUntilDemo / (1000 * 60 * 60));
+        const minutes = Math.floor((timeUntilDemo % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeUntilDemo % (1000 * 60)) / 1000);
+        
+        console.log(`   🔄 Demo timer: Next Friday at ${nextFriday.toISOString()}`);
+        
         return res.json({
-          hasNextOperation: false,
-          message: 'אין פעולות עתידיות מתוזמנות'
+          hasNextOperation: true,
+          type: 'hide',
+          scheduledTime: nextFriday.toISOString(),
+          timeUntil: {
+            hours,
+            minutes,
+            seconds,
+            totalMilliseconds: timeUntilDemo
+          },
+          displayText: 'הסתרה',
+          isDemoTimer: true
         });
       }
 
@@ -3340,6 +3387,8 @@ export function registerRoutes(app: Express): Server {
       const hours = Math.floor(timeUntil / (1000 * 60 * 60));
       const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((timeUntil % (1000 * 60)) / 1000);
+
+      console.log(`   ⏰ Next operation: ${nextOperation.type} in ${hours}h ${minutes}m ${seconds}s`);
 
       res.json({
         hasNextOperation: true,

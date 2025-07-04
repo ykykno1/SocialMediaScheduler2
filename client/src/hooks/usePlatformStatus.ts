@@ -25,5 +25,8 @@ export function useCountdownTimer() {
     queryKey: ['/api/scheduler/next-operation'],
     refetchInterval: 1000, // Update every second for countdown
     staleTime: 0, // Always fresh for real-time updates
+    gcTime: 0, // Don't cache old data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }
