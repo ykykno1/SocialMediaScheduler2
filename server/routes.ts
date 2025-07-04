@@ -3267,6 +3267,98 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Update user profile
+  // Platform status endpoint for token validity indicators
+  app.get("/api/platform-status", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Check YouTube status
+      const youtubeToken = await storage.getAuthToken('youtube', userId);
+      const youtubeStatus = {
+        platform: 'youtube',
+        hasValidToken: !!youtubeToken?.accessToken,
+        isConnected: !!youtubeToken?.accessToken && (!youtubeToken.expiresAt || youtubeToken.expiresAt > Date.now()),
+        expiresAt: youtubeToken?.expiresAt
+      };
+
+      // Check Facebook status  
+      const facebookToken = await storage.getAuthToken('facebook', userId);
+      const facebookStatus = {
+        platform: 'facebook',
+        hasValidToken: !!facebookToken?.accessToken,
+        isConnected: !!facebookToken?.accessToken && (!facebookToken.expiresAt || facebookToken.expiresAt > Date.now()),
+        expiresAt: facebookToken?.expiresAt
+      };
+
+      res.json({
+        youtube: youtubeStatus,
+        facebook: facebookStatus
+      });
+    } catch (error) {
+      console.error('Error getting platform status:', error);
+      res.status(500).json({ error: 'Failed to get platform status' });
+    }
+  });
+
+  // Next operation countdown endpoint
+  app.get("/api/scheduler/next-operation", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.id;
+      const status = automaticScheduler.getStatus();
+      
+      // Find this user's jobs
+      const userJobs = status.userJobs?.find(uj => uj.userId === userId);
+      
+      if (!userJobs || userJobs.jobs.length === 0) {
+        return res.json({
+          hasNextOperation: false,
+          message: 'אין פעולות מתוזמנות'
+        });
+      }
+
+      // Find the next operation (earliest scheduled time)
+      const now = new Date();
+      let nextOperation = null;
+      let minTime = null;
+
+      for (const job of userJobs.jobs) {
+        const jobTime = new Date(job.scheduledTime);
+        if (jobTime > now && (!minTime || jobTime < minTime)) {
+          minTime = jobTime;
+          nextOperation = job;
+        }
+      }
+
+      if (!nextOperation) {
+        return res.json({
+          hasNextOperation: false,
+          message: 'אין פעולות עתידיות מתוזמנות'
+        });
+      }
+
+      const timeUntil = minTime.getTime() - now.getTime();
+      const hours = Math.floor(timeUntil / (1000 * 60 * 60));
+      const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeUntil % (1000 * 60)) / 1000);
+
+      res.json({
+        hasNextOperation: true,
+        type: nextOperation.type,
+        scheduledTime: minTime.toISOString(),
+        timeUntil: {
+          hours,
+          minutes, 
+          seconds,
+          totalMilliseconds: timeUntil
+        },
+        displayText: nextOperation.type === 'hide' ? 'הסתרה' : 'שחזור'
+      });
+    } catch (error) {
+      console.error('Error getting next operation:', error);
+      res.status(500).json({ error: 'Failed to get next operation' });
+    }
+  });
+
   app.put("/api/user/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;

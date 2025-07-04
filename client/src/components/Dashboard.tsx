@@ -3,8 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Youtube, Facebook, Instagram, ArrowLeft, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { Link } from "wouter";
 import { UserChabadWidget } from "@/components/widgets/UserChabadWidget";
+import { CountdownTimer } from "./CountdownTimer";
+import { usePlatformStatus } from "../hooks/usePlatformStatus";
 
 const Dashboard = () => {
+  const { data: platformStatus } = usePlatformStatus();
+
+  // Status indicator component
+  const StatusIndicator = ({ isConnected }: { isConnected: boolean }) => (
+    <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'} animate-pulse`} />
+  );
+
   return (
     <div className="space-y-8">
 
@@ -12,6 +21,13 @@ const Dashboard = () => {
       {/* Shabbat Timer Widget */}
       <div className="flex justify-center mb-10">
         <UserChabadWidget />
+      </div>
+
+      {/* Countdown Timer */}
+      <div className="flex justify-center mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
+          <CountdownTimer />
+        </div>
       </div>
 
       {/* iOS-style Platform Navigation Cards */}
@@ -23,6 +39,7 @@ const Dashboard = () => {
               <div className="flex items-center">
                 <Youtube className="mr-3 h-7 w-7 text-youtube" />
                 <span className="text-lg">יוטיוב</span>
+                <StatusIndicator isConnected={platformStatus?.youtube?.isConnected || false} />
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
@@ -46,6 +63,7 @@ const Dashboard = () => {
               <div className="flex items-center">
                 <Facebook className="mr-3 h-7 w-7 text-facebook" />
                 <span className="text-lg">פייסבוק</span>
+                <StatusIndicator isConnected={platformStatus?.facebook?.isConnected || false} />
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
@@ -69,6 +87,7 @@ const Dashboard = () => {
               <div className="flex items-center">
                 <Instagram className="mr-3 h-7 w-7 text-instagram" />
                 <span className="text-lg">אינסטגרם</span>
+                <StatusIndicator isConnected={false} />
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
