@@ -90,9 +90,11 @@ const Dashboard = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <Instagram className="mr-3 h-7 w-7 text-instagram" />
+                <div className="relative">
+                  <Instagram className="mr-3 h-7 w-7 text-instagram" />
+
+                </div>
                 <span className="text-lg">אינסטגרם</span>
-                <StatusIndicator isConnected={false} />
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
