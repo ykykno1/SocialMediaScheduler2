@@ -459,7 +459,6 @@ export class AutomaticScheduler {
     console.log(`⏱️ Creating cron job for ${targetTime.toLocaleString('he-IL')} with pattern: ${cronPattern}`);
     
     return cron.schedule(cronPattern, callback, {
-      scheduled: true,
       timezone: 'Asia/Jerusalem'
     });
   }
@@ -467,7 +466,7 @@ export class AutomaticScheduler {
   /**
    * Convert Date to cron pattern - with proper timezone handling
    */
-  private dateToCronPattern(date: Date): string {
+  private dateToCronPattern(date: Date): string | null {
     const now = new Date();
     
     // For admin manual times, treat the input date as already being in Israeli time
@@ -505,23 +504,18 @@ export class AutomaticScheduler {
 
       // Hide YouTube videos
       try {
-        console.log(`🔍 Getting YouTube token for user ${userId}...`);
-        const ytToken = await storage.getAuthToken('youtube', userId);
-        console.log(`🔍 YouTube token result:`, {
-          found: !!ytToken,
-          hasAccessToken: !!ytToken?.accessToken,
-          platform: ytToken?.platform
-        });
+        console.log(`🔍 Getting valid YouTube token for user ${userId}...`);
+        const validToken = await this.getValidYouTubeToken(userId);
         
-        if (ytToken?.accessToken) {
+        if (validToken) {
           console.log(`📺 Hiding YouTube videos for user ${userId}`);
           
           // Call the existing YouTube hide API endpoint directly
-          const result = await this.callYouTubeHideAPI(userId, ytToken.accessToken);
+          const result = await this.callYouTubeHideAPI(userId, validToken);
           totalHidden += result.hiddenCount || 0;
           console.log(`✅ YouTube: Hidden ${result.hiddenCount || 0} videos`);
         } else {
-          console.log(`⚠️ No YouTube token found for user ${userId}`);
+          console.log(`⚠️ No valid YouTube token available for user ${userId}`);
         }
       } catch (error) {
         console.error(`❌ YouTube hide failed for user ${userId}:`, error);
@@ -546,11 +540,11 @@ export class AutomaticScheduler {
       storage.addHistoryEntry({
         timestamp: new Date(),
         action: "hide",
-        platform: "automatic",
+        platform: "youtube",
         success: totalHidden > 0,
         affectedItems: totalHidden,
         error: totalHidden === 0 ? "No content was hidden" : undefined
-      }, userId);
+      });
 
       console.log(`✅ HIDE COMPLETE: User ${userId}, Total hidden: ${totalHidden}`);
       
@@ -570,11 +564,11 @@ export class AutomaticScheduler {
 
       // Restore YouTube videos
       try {
-        const ytToken = await storage.getAuthToken('youtube', userId);
-        if (ytToken?.accessToken) {
+        const validToken = await this.getValidYouTubeToken(userId);
+        if (validToken) {
           console.log(`📺 Restoring YouTube videos for user ${userId}`);
           
-          const result = await this.callYouTubeShowAPI(userId, ytToken.accessToken);
+          const result = await this.callYouTubeShowAPI(userId, validToken);
           totalRestored += result.restoredCount || 0;
           console.log(`✅ YouTube: Restored ${result.restoredCount || 0} videos`);
         }
@@ -600,16 +594,72 @@ export class AutomaticScheduler {
       storage.addHistoryEntry({
         timestamp: new Date(),
         action: "restore",
-        platform: "automatic",
+        platform: "youtube",
         success: totalRestored > 0,
         affectedItems: totalRestored,
         error: totalRestored === 0 ? "No content was restored" : undefined
-      }, userId);
+      });
 
       console.log(`✅ RESTORE COMPLETE: User ${userId}, Total restored: ${totalRestored}`);
       
     } catch (error) {
       console.error(`❌ Restore operation failed for user ${userId}:`, error);
+    }
+  }
+
+  /**
+   * Get and refresh YouTube token if needed
+   */
+  private async getValidYouTubeToken(userId: string): Promise<string | null> {
+    try {
+      const ytToken = await storage.getAuthToken('youtube', userId);
+      if (!ytToken?.accessToken) {
+        console.log(`⚠️ No YouTube token found for user ${userId}`);
+        return null;
+      }
+
+      // Check if token is expired and needs refresh
+      const now = Date.now();
+      const expiresAt = ytToken.expiresAt || 0;
+      
+      if (expiresAt <= now && ytToken.refreshToken) {
+        console.log(`🔄 YouTube token expired for user ${userId}, attempting refresh...`);
+        
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+        const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: clientId!,
+            client_secret: clientSecret!,
+            refresh_token: ytToken.refreshToken,
+            grant_type: 'refresh_token'
+          })
+        });
+
+        if (refreshResponse.ok) {
+          const tokens = await refreshResponse.json();
+          const updatedAuth = {
+            ...ytToken,
+            accessToken: tokens.access_token,
+            expiresAt: Date.now() + (tokens.expires_in * 1000)
+          };
+          
+          await storage.saveAuthToken(updatedAuth, userId);
+          console.log(`✅ YouTube token refreshed successfully for user ${userId}`);
+          return tokens.access_token;
+        } else {
+          console.error(`❌ Failed to refresh YouTube token for user ${userId}`);
+          return null;
+        }
+      }
+      
+      return ytToken.accessToken;
+    } catch (error) {
+      console.error(`❌ Error getting valid YouTube token for user ${userId}:`, error);
+      return null;
     }
   }
 

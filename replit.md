@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 4, 2025. CRITICAL FIX: Added automatic token refresh for inactive users:
+  - Identified critical issue: scheduler failed when users weren't actively using the app
+  - Problem: YouTube tokens expire hourly but scheduler had no refresh mechanism
+  - Solution: Added getValidYouTubeToken() function with automatic refresh logic
+  - Scheduler now refreshes expired tokens before hide/restore operations
+  - System works reliably even when users set preferences once and don't return
+  - Production-ready: automatic content management functions without user intervention
 - July 4, 2025. PREPARED: Railway deployment configuration:
   - Added railway.json with build and deployment settings
   - Created Procfile for Railway hosting
