@@ -3351,27 +3351,36 @@ export function registerRoutes(app: Express): Server {
       if (!nextOperation) {
         console.log(`   ❌ No future operations found`);
         
-        // For demo purposes, create a demo countdown for next Friday
+        // For demo purposes, create a demo countdown for next Friday in Israeli time
         const now = new Date();
-        const nextFriday = new Date(now);
-        nextFriday.setDate(now.getDate() + (5 - now.getDay()) % 7);
-        nextFriday.setHours(19, 0, 0, 0); // 7 PM Friday
         
-        if (nextFriday <= now) {
-          nextFriday.setDate(nextFriday.getDate() + 7); // Next week
+        // Convert current time to Israeli time (UTC+3)
+        const israelNow = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+        
+        // Calculate next Friday in Israeli time
+        const nextFriday = new Date(israelNow);
+        const daysUntilFriday = (5 - israelNow.getDay() + 7) % 7;
+        if (daysUntilFriday === 0 && israelNow.getHours() >= 19) {
+          nextFriday.setDate(israelNow.getDate() + 7); // Next week if it's already past Friday 7 PM
+        } else {
+          nextFriday.setDate(israelNow.getDate() + daysUntilFriday);
         }
+        nextFriday.setHours(19, 0, 0, 0); // 7 PM Friday Israeli time
         
-        const timeUntilDemo = nextFriday.getTime() - now.getTime();
+        // Convert back to UTC for calculation
+        const nextFridayUTC = new Date(nextFriday.getTime() - (3 * 60 * 60 * 1000));
+        
+        const timeUntilDemo = nextFridayUTC.getTime() - now.getTime();
         const hours = Math.floor(timeUntilDemo / (1000 * 60 * 60));
         const minutes = Math.floor((timeUntilDemo % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((timeUntilDemo % (1000 * 60)) / 1000);
         
-        console.log(`   🔄 Demo timer: Next Friday at ${nextFriday.toISOString()}`);
+        console.log(`   🔄 Demo timer: Next Friday at ${nextFriday.toISOString()} Israeli time (${nextFridayUTC.toISOString()} UTC)`);
         
         return res.json({
           hasNextOperation: true,
           type: 'hide',
-          scheduledTime: nextFriday.toISOString(),
+          scheduledTime: nextFridayUTC.toISOString(),
           timeUntil: {
             hours,
             minutes,
