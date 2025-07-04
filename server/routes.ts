@@ -3213,6 +3213,7 @@ export function registerRoutes(app: Express): Server {
       try {
         console.log('Triggering automatic scheduler refresh after timing preferences update');
         await automaticScheduler.refreshUser(req.user.id);
+        console.log('✅ Scheduler refresh completed after timing preferences update');
       } catch (schedulerError) {
         console.error('Error refreshing scheduler after timing preferences update:', schedulerError);
         // Don't fail the whole request if scheduler has issues
