@@ -1,0 +1,38 @@
+# Development files
+.replit
+replit.nix
+.env.local
+.env.development
+
+# Build artifacts
+node_modules/
+.next/
+.nuxt/
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+test-results/
+
+# Documentation drafts
+docs/testing/
+attached_assets/
+cleanup_opportunities.md
+perfect-app-prompt.md
+application-status-report.md
+test-*.js

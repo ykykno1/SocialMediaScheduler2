@@ -126,6 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 4, 2025. PREPARED: Railway deployment configuration:
+  - Added railway.json with build and deployment settings
+  - Created Procfile for Railway hosting
+  - Added .railwayignore to exclude development files
+  - Updated server configuration for production (secure cookies, configurable PORT)
+  - Created nixpacks.toml for optimal build process
+  - Added comprehensive Railway deployment guide (README-RAILWAY.md)
+  - Application ready for production deployment on Railway platform
 - July 4, 2025. COMPLETED: Full integration of authentic Chabad times with automatic scheduler:
   - Successfully implemented client-to-server time extraction system
   - Widget extracts authentic Chabad times (19:14/20:25) and sends to server via /api/chabad-times

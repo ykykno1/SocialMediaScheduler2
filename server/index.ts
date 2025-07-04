@@ -26,7 +26,7 @@ app.use(session({
   saveUninitialized: false,
   name: 'shabbat.sid',
   cookie: {
-    secure: false,
+    secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     sameSite: 'lax'
@@ -91,10 +91,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Start server on port 5000
-  const port = 5000;
+  // Start server on configured port
+  const port = process.env.PORT || 5000;
   server.listen({
-    port,
+    port: Number(port),
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
