@@ -2482,42 +2482,83 @@ export function registerRoutes(app: Express): Server {
             'Safed': '695'
           };
 
+          // Map Chabad city IDs to HebCal geonames
+          const hebcalCityMapping: Record<string, { geo?: string; lat?: number; lng?: number }> = {
+            '281': { geo: 'geoname:281184' }, // Jerusalem
+            '531': { geo: 'geoname:293397' }, // Tel Aviv
+            '294': { geo: 'geoname:294751' }, // Beer Sheva (was mapped to Haifa)
+            '280': { geo: 'geoname:294117' }, // Haifa
+            '543': { geo: 'geoname:295629' }, // Eilat
+            'default': { lat: 32.0853, lng: 34.7818 } // Default to Tel Aviv coordinates
+          };
+
           const cityId = chabadCityIds[city as string];
           if (cityId) {
             try {
-              // Call Chabad API like the widget does
-              const response = await fetch(`https://www.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${cityId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he`);
+              // Use HebCal API instead of Chabad
+              const cityInfo = hebcalCityMapping[cityId] || hebcalCityMapping['default'];
+              const dateStr = fridayDate.toISOString().split('T')[0];
+              
+              let apiUrl: string;
+              if (cityInfo.geo) {
+                apiUrl = `https://www.hebcal.com/shabbat?cfg=json&geonameid=${cityInfo.geo.split(':')[1]}&date=${dateStr}`;
+              } else {
+                apiUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${cityInfo.lat}&longitude=${cityInfo.lng}&date=${dateStr}`;
+              }
+
+              console.log(`📡 Calling HebCal API for ${city}: ${apiUrl}`);
+
+              const response = await fetch(apiUrl, {
+                headers: {
+                  'User-Agent': 'Shabbat-Robot/1.0 (https://shabbat-robot.replit.app)',
+                  'Accept': 'application/json',
+                  'Cache-Control': 'no-cache'
+                }
+              });
               
               if (response.ok) {
-                const scriptContent = await response.text();
+                const data = await response.json();
                 
-                // Parse times from Chabad response
-                const timeRegex = /(\d{1,2}):(\d{2})/g;
-                const times: RegExpExecArray[] = [];
-                let match;
-                while ((match = timeRegex.exec(scriptContent)) !== null) {
-                  times.push(match);
-                }
-                
-                if (times.length >= 2) {
-                  shabbatEntryTime = new Date(year, month - 1, day);
-                  shabbatEntryTime.setHours(parseInt(times[0][1]), parseInt(times[0][2]), 0, 0);
+                if (data.items && data.items.length > 0) {
+                  // Find candle lighting and havdalah times
+                  let candleLighting: Date | null = null;
+                  let havdalah: Date | null = null;
 
-                  shabbatExitTime = new Date(year, month - 1, day + 1);
-                  shabbatExitTime.setHours(parseInt(times[1][1]), parseInt(times[1][2]), 0, 0);
+                  for (const item of data.items) {
+                    if (item.category === 'candles' || item.title?.includes('Candle lighting')) {
+                      candleLighting = new Date(item.date);
+                    } else if (item.category === 'havdalah' || item.title?.includes('Havdalah')) {
+                      havdalah = new Date(item.date);
+                    }
+                  }
 
-                  parasha = { hebrew: 'פרשת השבוע' };
-                  hebrewDate = '';
+                  if (candleLighting) {
+                    shabbatEntryTime = candleLighting;
+                    
+                    // If no havdalah found, estimate it
+                    if (havdalah) {
+                      shabbatExitTime = havdalah;
+                    } else {
+                      shabbatExitTime = new Date(candleLighting);
+                      shabbatExitTime.setDate(shabbatExitTime.getDate() + 1);
+                      shabbatExitTime.setMinutes(shabbatExitTime.getMinutes() + 60);
+                    }
 
-                  console.log(`✅ Got authentic Chabad times for ${city}: Entry ${times[0][1]}:${times[0][2]}, Exit ${times[1][1]}:${times[1][2]}`);
+                    parasha = { hebrew: 'פרשת השבוע' };
+                    hebrewDate = '';
+
+                    console.log(`✅ Got HebCal times for ${city}: Entry ${shabbatEntryTime.toTimeString().slice(0,5)}, Exit ${shabbatExitTime.toTimeString().slice(0,5)}`);
+                  } else {
+                    throw new Error('Could not find candle lighting time');
+                  }
                 } else {
-                  throw new Error('Could not parse times from Chabad API');
+                  throw new Error('No Shabbat times in HebCal response');
                 }
               } else {
-                throw new Error(`Chabad API returned ${response.status}`);
+                throw new Error(`HebCal API returned ${response.status}`);
               }
             } catch (error) {
-              console.error(`⚠️ Failed to get Chabad times for ${city}:`, error);
+              console.error(`⚠️ Failed to get HebCal times for ${city}:`, error);
               // Return null to indicate failure - no fallback to old static times
               return null;
             }

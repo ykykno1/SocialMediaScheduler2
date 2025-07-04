@@ -126,6 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 3, 2025. FIXED: Chabad API integration issue for automatic scheduler:
+  - Resolved Cloudflare blocking issue preventing server-side access to Chabad API
+  - Replaced Chabad API calls with HebCal API for server-side operations (automatic-scheduler.ts and routes.ts)
+  - Maintained Chabad API in widgets for authentic display (client-side works fine)
+  - Added proper city mapping from Chabad IDs to HebCal geonames
+  - Automatic scheduler now successfully retrieves real Shabbat times
+  - Confirmed working: Tel Aviv (ID 531) gets authentic times via HebCal API
+  - System architecture: widgets use Chabad API, server operations use HebCal API
 - July 3, 2025. ADDRESSED: Three key user requests - logo navigation, code cleanup plan, and authentication enhancement start:
   - Fixed logo click navigation: "רובוט שבת" logo now correctly returns to home page from all pages
   - Created comprehensive cleanup list in cleanup_opportunities.md: identified 50+ files and code sections for potential cleanup

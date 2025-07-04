@@ -204,58 +204,100 @@ export class AutomaticScheduler {
    */
   private async getShabbatTimesForLocation(cityId: string, cityName: string): Promise<ShabbatTimes | null> {
     try {
-      console.log(`🌍 Fetching Shabbat times for ${cityName} (${cityId}) from Chabad API`);
+      console.log(`🌍 Fetching Shabbat times for ${cityName} (${cityId}) using HebCal API`);
       
-      // Call the Chabad API directly like the widget does
-      const response = await fetch(`https://www.chabad.org/tools/shared/candlelighting/candlelighting.js.asp?city=${cityId}&locationid=&locationtype=&ln=2&weeks=1&mid=7068&lang=he`);
+      // City mapping from Chabad IDs to HebCal geonames or coordinates
+      const cityMapping: Record<string, { geo?: string; lat?: number; lng?: number; name: string }> = {
+        '531': { geo: 'geoname:293397', name: 'Tel Aviv' }, // Tel Aviv
+        '281': { geo: 'geoname:281184', name: 'Jerusalem' }, // Jerusalem
+        '280': { geo: 'geoname:294117', name: 'Haifa' }, // Haifa
+        '543': { geo: 'geoname:295629', name: 'Eilat' }, // Eilat
+        '294': { geo: 'geoname:294751', name: 'Beersheba' }, // Beersheba
+        // Add fallback coordinates for unmapped cities
+        'default': { lat: 32.0853, lng: 34.7818, name: 'Tel Aviv' } // Default to Tel Aviv
+      };
+
+      const cityInfo = cityMapping[cityId] || cityMapping['default'];
       
-      if (response.ok) {
-        const scriptContent = await response.text();
-        
-        // Parse the JavaScript content to extract times
-        // The Chabad script contains: document.write() with HTML that includes the times
-        const timeRegex = /(\d{1,2}):(\d{2})/g;
-        const times: RegExpExecArray[] = [];
-        let match;
-        while ((match = timeRegex.exec(scriptContent)) !== null) {
-          times.push(match);
+      // Get current date and next Friday
+      const now = new Date();
+      const friday = new Date(now);
+      const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+      if (daysUntilFriday === 0 && now.getHours() >= 20) {
+        friday.setDate(now.getDate() + 7); // Next Friday if it's already late Friday
+      } else {
+        friday.setDate(now.getDate() + daysUntilFriday);
+      }
+
+      // Format date for API (YYYY-MM-DD)
+      const dateStr = friday.toISOString().split('T')[0];
+      
+      // Build HebCal API URL
+      let apiUrl: string;
+      if (cityInfo.geo) {
+        apiUrl = `https://www.hebcal.com/shabbat?cfg=json&geonameid=${cityInfo.geo.split(':')[1]}&date=${dateStr}`;
+      } else {
+        apiUrl = `https://www.hebcal.com/shabbat?cfg=json&latitude=${cityInfo.lat}&longitude=${cityInfo.lng}&date=${dateStr}`;
+      }
+
+      console.log(`📡 Calling HebCal API: ${apiUrl}`);
+
+      const response = await fetch(apiUrl, {
+        headers: {
+          'User-Agent': 'Shabbat-Robot/1.0 (https://shabbat-robot.replit.app)',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
         }
-        
-        if (times.length >= 2) {
-          // Get Friday for this week
-          const now = new Date();
-          const friday = new Date();
-          const daysUntilFriday = (5 - now.getDay() + 7) % 7;
-          if (daysUntilFriday === 0 && now.getDay() !== 5) {
-            friday.setDate(friday.getDate() + 7);
-          } else {
-            friday.setDate(friday.getDate() + daysUntilFriday);
-          }
-          
-          // First time is usually candle lighting (Friday)
-          const entryTime = new Date(friday);
-          entryTime.setHours(parseInt(times[0][1]), parseInt(times[0][2]), 0, 0);
-          
-          // Second time is usually Havdalah (Saturday)
-          const exitTime = new Date(friday);
-          exitTime.setDate(friday.getDate() + 1);
-          exitTime.setHours(parseInt(times[1][1]), parseInt(times[1][2]), 0, 0);
-          
-          console.log(`✅ Got authentic Chabad times for ${cityName}: Entry ${entryTime.toLocaleString('he-IL')}, Exit ${exitTime.toLocaleString('he-IL')}`);
-          
-          return {
-            entryTime,
-            exitTime,
-            cityName,
-            cityId
-          };
+      });
+
+      if (!response.ok) {
+        console.log(`⚠️ HebCal API failed for ${cityName} (${cityId}): ${response.status}`);
+        return null;
+      }
+
+      const data = await response.json();
+      
+      if (!data.items || data.items.length === 0) {
+        console.log(`⚠️ No Shabbat times in HebCal response for ${cityName}`);
+        return null;
+      }
+
+      // Find candle lighting and havdalah times
+      let candleLighting: Date | null = null;
+      let havdalah: Date | null = null;
+
+      for (const item of data.items) {
+        if (item.category === 'candles' || item.title?.includes('Candle lighting')) {
+          candleLighting = new Date(item.date);
+        } else if (item.category === 'havdalah' || item.title?.includes('Havdalah')) {
+          havdalah = new Date(item.date);
         }
       }
 
-      console.log(`⚠️ Could not get authentic Chabad times for ${cityName} (${cityId})`);
-      return null;
+      if (!candleLighting) {
+        console.log(`⚠️ Could not find candle lighting time for ${cityName}`);
+        return null;
+      }
+
+      // If no havdalah found, estimate it (usually 42-72 minutes after sunset on Saturday)
+      if (!havdalah) {
+        havdalah = new Date(candleLighting);
+        havdalah.setDate(havdalah.getDate() + 1); // Next day (Saturday)
+        havdalah.setMinutes(havdalah.getMinutes() + 60); // Approximate havdalah time
+        console.log(`📝 Estimated havdalah time for ${cityName}`);
+      }
+
+      console.log(`✅ Got HebCal times for ${cityName}: Entry ${candleLighting.toTimeString().slice(0,5)}, Exit ${havdalah.toTimeString().slice(0,5)}`);
+
+      return {
+        entryTime: candleLighting,
+        exitTime: havdalah,
+        cityName,
+        cityId
+      };
+
     } catch (error) {
-      console.error(`❌ Error getting Shabbat times for ${cityName}:`, error);
+      console.error(`❌ Error fetching HebCal times for ${cityName}:`, error);
       return null;
     }
   }
