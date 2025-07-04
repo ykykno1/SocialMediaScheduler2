@@ -1000,6 +1000,27 @@ export class AutomaticScheduler {
   }
 
   /**
+   * Clear all expired/old jobs across all users
+   */
+  public clearExpiredJobs(): void {
+    const now = new Date();
+    let clearedCount = 0;
+    
+    for (const [userId, jobs] of this.scheduledJobs.entries()) {
+      const expiredJobs = jobs.filter(job => job.scheduledTime < now);
+      if (expiredJobs.length > 0) {
+        console.log(`🧹 Found ${expiredJobs.length} expired jobs for user ${userId}`);
+        this.clearUserJobs(userId);
+        clearedCount++;
+      }
+    }
+    
+    if (clearedCount > 0) {
+      console.log(`✅ Cleared expired jobs for ${clearedCount} users`);
+    }
+  }
+
+  /**
    * Refresh scheduler for a specific user (called when user changes settings)
    */
   async refreshUser(userId: string): Promise<void> {
@@ -1011,6 +1032,11 @@ export class AutomaticScheduler {
       }
 
       console.log(`🔄 Refreshing scheduler for user ${user.email}`);
+      
+      // Clear any expired jobs first
+      this.clearExpiredJobs();
+      
+      // Schedule fresh jobs for this user
       await this.scheduleUserJobs(user);
       console.log(`✅ Refresh complete for user ${user.email}`);
     } catch (error) {

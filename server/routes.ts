@@ -3212,6 +3212,11 @@ export function registerRoutes(app: Express): Server {
       // Refresh automatic scheduler after timing preferences change
       try {
         console.log('Triggering automatic scheduler refresh after timing preferences update');
+        
+        // Clear any old/expired jobs first
+        automaticScheduler.clearExpiredJobs();
+        
+        // Refresh user schedule with new preferences
         await automaticScheduler.refreshUser(req.user.id);
         console.log('✅ Scheduler refresh completed after timing preferences update');
       } catch (schedulerError) {
