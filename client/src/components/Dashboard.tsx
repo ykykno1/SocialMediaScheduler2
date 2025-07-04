@@ -3,16 +3,51 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Youtube, Facebook, Instagram, ArrowLeft, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { Link } from "wouter";
 import { UserChabadWidget } from "@/components/widgets/UserChabadWidget";
+import { NextHideTimer } from "@/components/NextHideTimer";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 
 const Dashboard = () => {
+  const [shabbatTimes, setShabbatTimes] = useState<{ candleLighting: string; havdalah: string } | null>(null);
+
+  // Get user auth status and preferences
+  const { data: authStatus } = useQuery({
+    queryKey: ['/api/auth-status'],
+    enabled: true
+  });
+
+  // Listen for Shabbat times from the widget
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'shabbat-times') {
+        setShabbatTimes({
+          candleLighting: event.data.candleLighting,
+          havdalah: event.data.havdalah
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   return (
     <div className="space-y-8">
-
-
       {/* Shabbat Timer Widget */}
       <div className="flex justify-center mb-10">
         <UserChabadWidget />
       </div>
+
+      {/* Next Hide Timer */}
+      {authStatus?.user && shabbatTimes && (
+        <div className="flex justify-center mb-6">
+          <NextHideTimer 
+            shabbatTimes={shabbatTimes}
+            hideTimingPreference={(authStatus as any).user.hideTimingPreference}
+            restoreTimingPreference={(authStatus as any).user.restoreTimingPreference}
+          />
+        </div>
+      )}
 
       {/* iOS-style Platform Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

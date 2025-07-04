@@ -240,6 +240,13 @@ export function UserChabadWidget() {
             console.error('❌ שגיאה בחיבור לשרת:', error);
           }
         }
+
+        // Also send times to timer component
+        window.postMessage({
+          type: 'shabbat-times',
+          candleLighting: data.candleLighting,
+          havdalah: data.havdalah
+        }, '*');
       }
     };
 
