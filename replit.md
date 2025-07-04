@@ -126,6 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 4, 2025. COMPLETED: Full integration of authentic Chabad times with automatic scheduler:
+  - Successfully implemented client-to-server time extraction system
+  - Widget extracts authentic Chabad times (19:14/20:25) and sends to server via /api/chabad-times
+  - Server stores times in global cache and automatic scheduler uses them for precise scheduling
+  - Fixed authentication issues with proper auth_token usage
+  - System now schedules hide/restore operations using real Chabad times instead of HebCal fallback
+  - Verified working: Eilat example shows hide at 18:14, restore at 20:25 using authentic Chabad data
+  - Architecture complete: Widget displays Chabad times, server operations use same authentic times
 - July 3, 2025. FIXED: Chabad API integration issue for automatic scheduler:
   - Resolved Cloudflare blocking issue preventing server-side access to Chabad API
   - Replaced Chabad API calls with HebCal API for server-side operations (automatic-scheduler.ts and routes.ts)
