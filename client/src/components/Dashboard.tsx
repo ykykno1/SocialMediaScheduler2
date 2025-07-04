@@ -9,10 +9,7 @@ import { usePlatformStatus } from "../hooks/usePlatformStatus";
 const Dashboard = () => {
   const { data: platformStatus } = usePlatformStatus();
 
-  // Status indicator component
-  const StatusIndicator = ({ isConnected }: { isConnected: boolean }) => (
-    <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'} animate-pulse`} />
-  );
+
 
   return (
     <div className="space-y-8">
@@ -37,9 +34,13 @@ const Dashboard = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <Youtube className="mr-3 h-7 w-7 text-youtube" />
+                <div className="relative">
+                  <Youtube className="mr-3 h-7 w-7 text-youtube" />
+                  {platformStatus?.youtube?.isConnected && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                  )}
+                </div>
                 <span className="text-lg">יוטיוב</span>
-                <StatusIndicator isConnected={platformStatus?.youtube?.isConnected || false} />
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
@@ -61,9 +62,13 @@ const Dashboard = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <Facebook className="mr-3 h-7 w-7 text-facebook" />
+                <div className="relative">
+                  <Facebook className="mr-3 h-7 w-7 text-facebook" />
+                  {platformStatus?.facebook?.isConnected && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                  )}
+                </div>
                 <span className="text-lg">פייסבוק</span>
-                <StatusIndicator isConnected={platformStatus?.facebook?.isConnected || false} />
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </CardTitle>
