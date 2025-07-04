@@ -112,6 +112,20 @@ export class EnhancedStorage extends DatabaseStorage {
   async getAdminShabbatTimes(): Promise<{ entryTime: Date | null; exitTime: Date | null; } | null> {
     return super.getAdminShabbatTimes();
   }
+
+  /**
+   * Cache for Chabad times from widget
+   */
+  private chabadTimesCache: { candleLighting: string; havdalah: string } | null = null;
+  
+  setCachedChabadTimes(times: { candleLighting: string; havdalah: string }): void {
+    this.chabadTimesCache = times;
+    console.log('💾 Cached Chabad times:', times);
+  }
+  
+  getCachedChabadTimes(): { candleLighting: string; havdalah: string } | null {
+    return this.chabadTimesCache;
+  }
 }
 
 export const enhancedStorage = new EnhancedStorage();

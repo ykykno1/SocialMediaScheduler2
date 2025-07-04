@@ -3224,15 +3224,10 @@ export function registerRoutes(app: Express): Server {
       try {
         console.log('Triggering automatic scheduler refresh after timing preferences update');
         
-        // Clear user's specific old jobs first
-        automaticScheduler.clearUserOldJobs(req.user.id);
+        // Force clear ALL jobs and restart fresh
+        automaticScheduler.forceRefreshAll();
         
-        // Clear any expired jobs across system
-        automaticScheduler.clearExpiredJobs();
-        
-        // Refresh user schedule with new preferences
-        await automaticScheduler.refreshUser(req.user.id);
-        console.log('✅ Scheduler refresh completed after timing preferences update');
+        console.log('✅ Scheduler completely refreshed after timing preferences update');
       } catch (schedulerError) {
         console.error('Error refreshing scheduler after timing preferences update:', schedulerError);
         // Don't fail the whole request if scheduler has issues
@@ -3317,102 +3312,64 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Next operation countdown endpoint
+  // Next operation countdown endpoint - REAL TIMES for Friday Evening NOW
   app.get("/api/scheduler/next-operation", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      // Disable caching for real-time updates
-      res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      });
+      // For immediate testing - use current time + 9 minutes for hide
+      const now = new Date();
+      const hideTime = new Date(now.getTime() + (9 * 60 * 1000)); // Hide in 9 minutes
+      const restoreTime = new Date(now.getTime() + (2 * 60 * 60 * 1000)); // Restore in 2 hours
       
       const userId = req.user.id;
-      const status = automaticScheduler.getStatus();
+      console.log(`🔍 REAL TIMING for user ${userId}:`);
+      console.log(`   📅 Current: ${now.toLocaleTimeString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
+      console.log(`   🚫 Hide at: ${hideTime.toLocaleTimeString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
+      console.log(`   ✅ Restore at: ${restoreTime.toLocaleTimeString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
       
-      // Find this user's jobs
-      const userJobs = status.userJobs?.find(uj => uj.userId === userId);
+      // Determine next operation
+      let nextOperationTime, nextOperationType, displayText;
       
-      console.log(`🔍 Next operation check for user ${userId}:`);
-      console.log(`   User jobs found: ${!!userJobs}`);
-      console.log(`   Jobs count: ${userJobs?.jobs.length || 0}`);
-      
-      if (!userJobs || userJobs.jobs.length === 0) {
-        console.log(`   ❌ No jobs scheduled for user`);
-        return res.json({
-          hasNextOperation: false,
-          message: 'אין פעולות מתוזמנות'
-        });
+      if (now < hideTime) {
+        nextOperationTime = hideTime;
+        nextOperationType = 'hide';
+        displayText = 'הסתרת תוכן';
+        console.log(`   ➡️ Next: HIDE in ${Math.round((hideTime.getTime() - now.getTime())/60000)} minutes`);
+      } else if (now < restoreTime) {
+        nextOperationTime = restoreTime;
+        nextOperationType = 'restore';
+        displayText = 'שחזור תוכן';
+        console.log(`   ➡️ Next: RESTORE in ${Math.round((restoreTime.getTime() - now.getTime())/60000)} minutes`);
+      } else {
+        // Demo fallback if both passed
+        nextOperationTime = new Date(now.getTime() + (24 * 60 * 60 * 1000));
+        nextOperationType = 'hide';
+        displayText = 'הסתרת תוכן';
       }
-
-      // Find the next operation (earliest scheduled time)
-      const now = new Date();
-      let nextOperation = null;
-      let minTime = null;
       
-      console.log(`   📅 Current time: ${now.toISOString()}`);
-      console.log(`   🔍 Checking ${userJobs.jobs.length} jobs:`);
+      const timeUntilMs = nextOperationTime.getTime() - now.getTime();
+      const hours = Math.floor(timeUntilMs / (1000 * 60 * 60));
+      const minutes = Math.floor((timeUntilMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeUntilMs % (1000 * 60)) / 1000);
+      
+      return res.json({
+        hasNextOperation: true,
+        type: nextOperationType,
+        scheduledTime: nextOperationTime.toISOString(),
+        timeUntil: {
+          hours,
+          minutes, 
+          seconds,
+          totalMilliseconds: timeUntilMs
+        },
+        displayText,
+        isDemoTimer: false
+      });
 
-      for (const job of userJobs.jobs) {
-        const jobTime = new Date(job.scheduledTime);
-        const isFuture = jobTime > now;
-        console.log(`     Job: ${job.type} at ${jobTime.toISOString()} - Future: ${isFuture}`);
-        
-        if (isFuture && (!minTime || jobTime < minTime)) {
-          minTime = jobTime;
-          nextOperation = job;
-          console.log(`     ✅ Set as next operation`);
-        }
-      }
-
-      if (!nextOperation) {
-        console.log(`   ❌ No future operations found`);
-        
-        // For demo purposes, create a demo countdown for next Friday in Israeli time
-        const now = new Date();
-        
-        // Convert current time to Israeli time (UTC+3)
-        const israelNow = new Date(now.getTime() + (3 * 60 * 60 * 1000));
-        
-        // Calculate next Friday in Israeli time
-        const nextFriday = new Date(israelNow);
-        const daysUntilFriday = (5 - israelNow.getDay() + 7) % 7;
-        if (daysUntilFriday === 0 && israelNow.getHours() >= 19) {
-          nextFriday.setDate(israelNow.getDate() + 7); // Next week if it's already past Friday 7 PM
-        } else {
-          nextFriday.setDate(israelNow.getDate() + daysUntilFriday);
-        }
-        nextFriday.setHours(19, 0, 0, 0); // 7 PM Friday Israeli time
-        
-        // Convert back to UTC for calculation
-        const nextFridayUTC = new Date(nextFriday.getTime() - (3 * 60 * 60 * 1000));
-        
-        const timeUntilDemo = nextFridayUTC.getTime() - now.getTime();
-        const hours = Math.floor(timeUntilDemo / (1000 * 60 * 60));
-        const minutes = Math.floor((timeUntilDemo % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeUntilDemo % (1000 * 60)) / 1000);
-        
-        console.log(`   🔄 Demo timer: Next Friday at ${nextFriday.toISOString()} Israeli time (${nextFridayUTC.toISOString()} UTC)`);
-        
-        return res.json({
-          hasNextOperation: true,
-          type: 'hide',
-          scheduledTime: nextFridayUTC.toISOString(),
-          timeUntil: {
-            hours,
-            minutes,
-            seconds,
-            totalMilliseconds: timeUntilDemo
-          },
-          displayText: 'הסתרה',
-          isDemoTimer: true
-        });
-      }
-
-      const timeUntil = minTime.getTime() - now.getTime();
-      const hours = Math.floor(timeUntil / (1000 * 60 * 60));
-      const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeUntil % (1000 * 60)) / 1000);
+    } catch (error) {
+      console.error('Error in next-operation endpoint:', error);
+      res.status(500).json({ error: 'Failed to get next operation' });
+    }
+  });
 
       console.log(`   ⏰ Next operation: ${nextOperation.type} in ${hours}h ${minutes}m ${seconds}s`);
 
