@@ -3087,6 +3087,17 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.post("/api/scheduler/force-clear", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      console.log('Force clear scheduler requested by user:', req.user.id);
+      automaticScheduler.forceRefreshAll();
+      res.json({ success: true, message: 'כל המשימות הישנות נוקו והתזמון התחדש' });
+    } catch (error) {
+      console.error('Error in force clear scheduler:', error);
+      res.status(500).json({ error: 'Failed to force clear scheduler' });
+    }
+  });
+
   // Admin endpoint to set custom Shabbat times for testing
   app.post("/api/admin/set-shabbat-times", async (req, res) => {
     console.log('🔧 [ADMIN ENDPOINT] POST /api/admin/set-shabbat-times called');
@@ -3213,7 +3224,10 @@ export function registerRoutes(app: Express): Server {
       try {
         console.log('Triggering automatic scheduler refresh after timing preferences update');
         
-        // Clear any old/expired jobs first
+        // Clear user's specific old jobs first
+        automaticScheduler.clearUserOldJobs(req.user.id);
+        
+        // Clear any expired jobs across system
         automaticScheduler.clearExpiredJobs();
         
         // Refresh user schedule with new preferences
