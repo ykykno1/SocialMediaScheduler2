@@ -8,6 +8,13 @@ import { automaticScheduler } from "./automatic-scheduler";
 // Load environment variables
 dotenv.config();
 
+// Initialize global Chabad times cache
+declare global {
+  var chabadTimesCache: Map<string, { candleLighting: string; havdalah: string; timestamp: number }> | undefined;
+}
+
+global.chabadTimesCache = global.chabadTimesCache || new Map();
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

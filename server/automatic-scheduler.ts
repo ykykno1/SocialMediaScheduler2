@@ -120,8 +120,8 @@ export class AutomaticScheduler {
           console.log(`⚙️ User ${user.email} using admin manual times: ${adminTimes.entryTime} - ${adminTimes.exitTime}`);
         }
       } else if (user.shabbatCityId) {
-        // Use location-based Shabbat times
-        shabbatTimes = await this.getShabbatTimesForLocation(user.shabbatCityId, user.shabbatCity);
+        // Use location-based Shabbat times (prefer Chabad from cache)
+        shabbatTimes = await this.getShabbatTimesForLocation(user.shabbatCityId, user.shabbatCity, user.id);
       }
 
       if (!shabbatTimes) {
@@ -200,11 +200,52 @@ export class AutomaticScheduler {
   }
 
   /**
-   * Get Shabbat times for a location
+   * Get Shabbat times for a location - prefer Chabad times from cache
    */
-  private async getShabbatTimesForLocation(cityId: string, cityName: string): Promise<ShabbatTimes | null> {
+  private async getShabbatTimesForLocation(cityId: string, cityName: string, userId?: string): Promise<ShabbatTimes | null> {
     try {
-      console.log(`🌍 Fetching Shabbat times for ${cityName} (${cityId}) using HebCal API`);
+      // First check if we have authentic Chabad times in cache
+      if (userId && global.chabadTimesCache) {
+        const cacheKey = `${userId}-${cityId}`;
+        const cachedTimes = global.chabadTimesCache.get(cacheKey);
+        
+        if (cachedTimes && (Date.now() - cachedTimes.timestamp) < 24 * 60 * 60 * 1000) { // 24 hours cache
+          console.log(`🕯️ Using authentic Chabad times for ${cityName}: ${cachedTimes.candleLighting} / ${cachedTimes.havdalah}`);
+          
+          // Convert times to Date objects for today's Shabbat
+          const now = new Date();
+          const friday = new Date(now);
+          const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+          if (daysUntilFriday === 0 && now.getHours() >= 20) {
+            friday.setDate(now.getDate() + 7);
+          } else {
+            friday.setDate(now.getDate() + daysUntilFriday);
+          }
+          
+          const saturday = new Date(friday);
+          saturday.setDate(friday.getDate() + 1);
+          
+          // Parse Chabad times (format: HH:MM)
+          const [entryHour, entryMin] = cachedTimes.candleLighting.split(':').map(Number);
+          const [exitHour, exitMin] = cachedTimes.havdalah.split(':').map(Number);
+          
+          const entryTime = new Date(friday);
+          entryTime.setHours(entryHour, entryMin, 0, 0);
+          
+          const exitTime = new Date(saturday);
+          exitTime.setHours(exitHour, exitMin, 0, 0);
+          
+          return {
+            entryTime,
+            exitTime,
+            cityName,
+            cityId
+          };
+        }
+      }
+      
+      // Fallback to HebCal API if no Chabad times available
+      console.log(`🌍 Fetching Shabbat times for ${cityName} (${cityId}) using HebCal API (fallback)`);
       
       // City mapping from Chabad IDs to HebCal geonames or coordinates
       const cityMapping: Record<string, { geo?: string; lat?: number; lng?: number; name: string }> = {

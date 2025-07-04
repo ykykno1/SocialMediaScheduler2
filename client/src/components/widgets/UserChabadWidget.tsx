@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 
 // Admin Shabbat Widget Component
 function AdminShabbatWidget({ adminTimes }: { adminTimes?: { entryTime: string; exitTime: string } }) {
@@ -132,6 +133,7 @@ const getHebrewDateAndParasha = (shabbatData?: any) => {
 export function UserChabadWidget() {
   const [iframeKey, setIframeKey] = useState(0);
   const [forceUpdate, setForceUpdate] = useState(0);
+  const { user } = useAuth();
 
   // Get user's saved Shabbat location
   const { data: locationData, isLoading } = useQuery<{ shabbatCity?: string; shabbatCityId?: string }>({
@@ -207,16 +209,43 @@ export function UserChabadWidget() {
 
   // Listen for messages from iframe with Shabbat data
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       if (event.data.type === 'shabbatData') {
         console.log('Shabbat data received:', event.data.data);
         setShabbatData(event.data.data);
+        
+        // Send times to server if we have complete data
+        const data = event.data.data;
+        if (data.candleLighting && data.havdalah && user?.shabbatCityId) {
+          try {
+            const response = await fetch('/api/chabad-times', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+              },
+              body: JSON.stringify({
+                cityId: user.shabbatCityId,
+                candleLighting: data.candleLighting,
+                havdalah: data.havdalah
+              })
+            });
+            
+            if (response.ok) {
+              console.log('✅ זמני חב"ד נשלחו לשרת בהצלחה');
+            } else {
+              console.warn('⚠️ שגיאה בשליחת זמנים לשרת:', response.status);
+            }
+          } catch (error) {
+            console.error('❌ שגיאה בחיבור לשרת:', error);
+          }
+        }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [user?.shabbatCityId]);
 
   // Force iframe refresh when location changes
   useEffect(() => {
@@ -331,17 +360,41 @@ export function UserChabadWidget() {
                 const elements = document.getElementsByTagName('*');
                 let shabbatData = {};
 
+                // Extract Shabbat times from all elements
+                let candleLightingTime = null;
+                let havdalahTime = null;
+                
                 for (let i = 0; i < elements.length; i++) {
                     const element = elements[i];
                     if (element.childNodes.length === 1 && element.childNodes[0].nodeType === 3) {
                         const text = element.childNodes[0].nodeValue;
+                        
+                        // Extract times - look for time patterns
+                        const timeMatch = text && text.match(/(\\d{1,2}:\\d{2})/);
+                        if (timeMatch) {
+                            console.log('Found time in text:', text.trim(), '- Extracted:', timeMatch[1]);
+                            
+                            // Determine if this is candle lighting or havdalah based on context
+                            if (text.includes('הדלקת נרות') || text.includes('כניסת שבת') || 
+                                (!havdalahTime && !candleLightingTime)) {
+                                candleLightingTime = timeMatch[1];
+                                shabbatData.candleLighting = timeMatch[1];
+                                console.log('Set candle lighting time:', timeMatch[1]);
+                            } else if (text.includes('יציאת שבת') || text.includes('הבדלה') || 
+                                      (candleLightingTime && !havdalahTime)) {
+                                havdalahTime = timeMatch[1];
+                                shabbatData.havdalah = timeMatch[1];
+                                console.log('Set havdalah time:', timeMatch[1]);
+                            }
+                        }
+                        
+                        // Replace text for display
                         if (text && text.includes('הדלקת נרות')) {
                             element.childNodes[0].nodeValue = text.replace('הדלקת נרות', 'כניסת שבת');
                         }
 
                         // Extract parasha name with more flexible patterns
                         if (text && (text.includes('פרשת') || text.includes('פרשה'))) {
-                            // Try multiple patterns for parasha name extraction
                             let parashaMatch = text.match(/פרשת\\s*([א-ת\\s-]+)/);
                             if (!parashaMatch) {
                                 parashaMatch = text.match(/פרשה\\s*([א-ת\\s-]+)/);
@@ -354,14 +407,14 @@ export function UserChabadWidget() {
                                 console.log('Found parasha:', shabbatData.parasha);
                             }
                         }
-
-                        // Also check for parasha in other Hebrew text patterns
-                        if (text && text.match(/[א-ת]{2,}/)) {
-                            // Log all Hebrew text for debugging
-                            console.log('Hebrew text found:', text.trim());
-                        }
                     }
                 }
+                
+                // Log exact times found
+                console.log('🕯️ Chabad times extracted:', {
+                    candleLighting: candleLightingTime,
+                    havdalah: havdalahTime
+                });
 
                 // Log all collected data for debugging
                 console.log('Complete shabbatData collected:', shabbatData);

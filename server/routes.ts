@@ -714,6 +714,40 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update Chabad times from widget
+  app.post('/api/chabad-times', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { cityId, candleLighting, havdalah } = req.body;
+      const userId = req.user?.id;
+      
+      if (!cityId || !candleLighting || !havdalah || !userId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      console.log(`📅 Authentic Chabad times received for user ${userId}, city ${cityId}: ${candleLighting} / ${havdalah}`);
+      
+      // Store times in a simple cache for the automatic scheduler to use
+      if (!global.chabadTimesCache) {
+        global.chabadTimesCache = new Map();
+      }
+      
+      global.chabadTimesCache.set(`${userId}-${cityId}`, {
+        candleLighting,
+        havdalah,
+        timestamp: Date.now()
+      });
+      
+      // Refresh the scheduler for this user with the new times
+      await automaticScheduler.refreshUser(userId);
+      console.log(`🔄 Scheduler refreshed for user ${userId} with new Chabad times`);
+      
+      res.json({ success: true, message: 'זמני חב"ד התעדכנו בהצלחה' });
+    } catch (error) {
+      console.error('Error storing Chabad times:', error);
+      res.status(500).json({ error: 'Failed to store times' });
+    }
+  });
+
   // Get auth status
   app.get("/api/auth-status", requireAuth, async (req: AuthenticatedRequest, res) => {
     console.log('Getting Facebook auth for user in auth-status endpoint:', req.user?.id);
