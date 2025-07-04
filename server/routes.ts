@@ -46,10 +46,12 @@ async function refreshYouTubeToken(auth: any, userId: string) {
 
   if (!refreshResponse.ok) {
     const errorData = await refreshResponse.json();
-    throw new Error(`Token refresh failed: ${errorData.error_description}`);
+    console.error('YouTube token refresh error:', errorData);
+    throw new Error(`Token refresh failed: ${errorData.error_description || errorData.error}`);
   }
 
   const tokens = await refreshResponse.json();
+  console.log('✅ YouTube token refreshed successfully');
 
   // Update stored token
   const updatedAuth = {
@@ -58,8 +60,35 @@ async function refreshYouTubeToken(auth: any, userId: string) {
     expiresAt: Date.now() + (tokens.expires_in * 1000)
   };
 
-  storage.saveAuthToken(updatedAuth, userId);
+  await storage.saveAuthToken(updatedAuth, userId);
   return updatedAuth;
+}
+
+// Get valid YouTube token with automatic refresh 
+async function getValidYouTubeToken(userId: string): Promise<string | null> {
+  try {
+    const ytToken = await storage.getAuthToken('youtube', userId);
+    if (!ytToken?.accessToken) {
+      console.log(`⚠️ No YouTube token found for user ${userId}`);
+      return null;
+    }
+
+    // Check if token is expired and needs refresh
+    const now = Date.now();
+    const expiresAt = ytToken.expiresAt || 0;
+    
+    if (expiresAt <= now && ytToken.refreshToken) {
+      console.log(`🔄 YouTube token expired for user ${userId}, attempting refresh...`);
+      
+      const refreshedAuth = await refreshYouTubeToken(ytToken, userId);
+      return refreshedAuth.accessToken;
+    }
+    
+    return ytToken.accessToken;
+  } catch (error) {
+    console.error(`❌ Error getting valid YouTube token for user ${userId}:`, error);
+    return null;
+  }
 }
 
 // Test YouTube connection helper
@@ -1334,37 +1363,16 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
     try {
       console.log('Fetching YouTube videos for user:', req.user.id);
-      let auth = await storage.getAuthToken('youtube', req.user.id);
-      console.log('YouTube auth found:', {
-        found: !!auth,
-        platform: auth?.platform,
-        hasAccessToken: !!auth?.accessToken,
-        hasRefreshToken: !!auth?.refreshToken
-      });
-
-      if (!auth) {
-        return res.status(401).json({ error: "Not authenticated with YouTube" });
-      }
-
-      // Test connection and refresh token if needed
-      let connectionValid = await testYouTubeConnection(auth.accessToken);
-
-      if (!connectionValid) {
-        try {
-          auth = await refreshYouTubeToken(auth, req.user.id);
-          connectionValid = await testYouTubeConnection(auth.accessToken);
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
-        }
-      }
-
-      if (!connectionValid) {
-        return res.status(401).json({ error: "YouTube authentication invalid. Please reconnect." });
+      
+      // Use the new function that handles token refresh automatically
+      const validToken = await getValidYouTubeToken(req.user.id);
+      
+      if (!validToken) {
+        return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
       }
 
       // Use YouTube Data API to get user's videos
-      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${auth.accessToken}`);
+      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${validToken}`);
 
       if (!channelResponse.ok) {
         const errorData = await channelResponse.json();
@@ -1380,7 +1388,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Get videos from uploads playlist
-      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${auth.accessToken}`);
+      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${validToken}`);
 
       if (!videosResponse.ok) {
         const errorData = await videosResponse.json();
@@ -1392,7 +1400,7 @@ export function registerRoutes(app: Express): Server {
 
       // Get detailed video information including privacy status
       const videoIds = videosData.items?.map((item: any) => item.snippet.resourceId.videoId).join(',') || '';
-      const detailedResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${videoIds}&access_token=${auth.accessToken}`);
+      const detailedResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${videoIds}&access_token=${validToken}`);
 
       let detailedVideos = [];
       if (detailedResponse.ok) {
@@ -1439,28 +1447,17 @@ export function registerRoutes(app: Express): Server {
   // YouTube hide/show individual video
   app.post("/api/youtube/videos/:videoId/hide", requireAuth, async (req: any, res) => {
     try {
-      let auth = await storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
-
-      if (!auth) {
-        return res.status(401).json({ error: "Not authenticated with YouTube" });
-      }
-
-      // Test connection and refresh token if needed
-      let connectionValid = await testYouTubeConnection(auth.accessToken);
-
-      if (!connectionValid) {
-        try {
-          auth = await refreshYouTubeToken(auth, req.user.id);
-          connectionValid = await testYouTubeConnection(auth.accessToken);
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
-        }
+      
+      // Use the new function that handles token refresh automatically
+      const validToken = await getValidYouTubeToken(req.user.id);
+      
+      if (!validToken) {
+        return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
       }
 
       // First get current video status to save original state
-      const currentVideoResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${auth.accessToken}`);
+      const currentVideoResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${validToken}`);
 
       if (currentVideoResponse.ok) {
         const currentVideoData = await currentVideoResponse.json();
@@ -1473,7 +1470,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Update video privacy status to private using YouTube Data API
-      const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
+      const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${validToken}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
