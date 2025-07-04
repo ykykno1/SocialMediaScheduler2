@@ -45,16 +45,12 @@ export class AutomaticScheduler {
     console.log('🚀 Starting Automatic Shabbat Content Scheduler...');
     this.isRunning = true;
 
-    // Clear any expired jobs from previous runs
-    this.clearExpiredJobs();
-
     // Schedule jobs for all premium users
     await this.scheduleAllUsers();
 
     // Set up a daily check to reschedule for the next week
     cron.schedule('0 0 * * 0', async () => { // Every Sunday at midnight
       console.log('📅 Weekly reschedule - updating all user schedules');
-      this.clearExpiredJobs(); // Clear old jobs
       await this.scheduleAllUsers();
     });
 
@@ -1004,53 +1000,6 @@ export class AutomaticScheduler {
   }
 
   /**
-   * Clear all expired/old jobs across all users
-   */
-  public clearExpiredJobs(): void {
-    const now = new Date();
-    let clearedCount = 0;
-    
-    // Use Array.from to avoid iterator issues
-    for (const [userId, jobs] of Array.from(this.scheduledJobs.entries())) {
-      const expiredJobs = jobs.filter((job: ScheduledJob) => job.scheduledTime < now);
-      if (expiredJobs.length > 0) {
-        console.log(`🧹 Found ${expiredJobs.length} expired jobs for user ${userId}`);
-        this.clearUserJobs(userId);
-        clearedCount++;
-      }
-    }
-    
-    if (clearedCount > 0) {
-      console.log(`✅ Cleared expired jobs for ${clearedCount} users`);
-    }
-  }
-
-  /**
-   * Force clear all jobs and reschedule (debug method)
-   */
-  public forceRefreshAll(): void {
-    console.log('🔄 Force clearing ALL scheduled jobs...');
-    for (const [userId, jobs] of Array.from(this.scheduledJobs.entries())) {
-      jobs.forEach((job: ScheduledJob) => job.task.destroy());
-    }
-    this.scheduledJobs.clear();
-    console.log('✅ All jobs cleared, rescheduling...');
-    this.scheduleAllUsers();
-  }
-
-  /**
-   * Clear specific user's old jobs (immediate execution)
-   */
-  public clearUserOldJobs(userId: string): void {
-    const jobs = this.scheduledJobs.get(userId);
-    if (jobs) {
-      console.log(`🧹 Clearing ${jobs.length} old jobs for user ${userId}`);
-      jobs.forEach((job: ScheduledJob) => job.task.destroy());
-      this.scheduledJobs.delete(userId);
-    }
-  }
-
-  /**
    * Refresh scheduler for a specific user (called when user changes settings)
    */
   async refreshUser(userId: string): Promise<void> {
@@ -1062,14 +1011,6 @@ export class AutomaticScheduler {
       }
 
       console.log(`🔄 Refreshing scheduler for user ${user.email}`);
-      
-      // Clear ALL jobs for this user (old and current)
-      this.clearUserJobs(userId);
-      
-      // Clear any expired jobs across system
-      this.clearExpiredJobs();
-      
-      // Schedule fresh jobs for this user based on current Chabad times
       await this.scheduleUserJobs(user);
       console.log(`✅ Refresh complete for user ${user.email}`);
     } catch (error) {

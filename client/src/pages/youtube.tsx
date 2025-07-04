@@ -120,13 +120,8 @@ export default function YouTubePage() {
         const videosData = await response.json();
         setVideos(videosData);
       } else {
-        const errorData = await response.json();
-        if (response.status === 401 && errorData.error?.includes('expired')) {
-          setError('הטוקן של יוטיוב פג תוקף. יש להתחבר מחדש.');
-          setIsConnected(false);
-        } else {
-          setError(errorData.error || 'Failed to load videos');
-        }
+        const error = await response.json();
+        setError(error.error || 'Failed to load videos');
       }
     } catch (error) {
       setError('Failed to load videos');
@@ -261,19 +256,6 @@ export default function YouTubePage() {
                     >
                       פתח הוראות תיקון
                       <ExternalLink className="h-3 w-3 ml-1" />
-                    </Button>
-                  </div>
-                )}
-                {error.includes('פג תוקף') && (
-                  <div className="mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={connectYouTube}
-                      className="text-red-700 border-red-300 bg-red-50"
-                      disabled={loading}
-                    >
-                      {loading ? 'מתחבר...' : 'התחבר מחדש ל-YouTube'}
                     </Button>
                   </div>
                 )}

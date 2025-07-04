@@ -3,14 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Youtube, Facebook, Instagram, ArrowLeft, Settings as SettingsIcon, History as HistoryIcon } from "lucide-react";
 import { Link } from "wouter";
 import { UserChabadWidget } from "@/components/widgets/UserChabadWidget";
-import { CountdownTimer } from "./CountdownTimer";
-import { usePlatformStatus } from "../hooks/usePlatformStatus";
 
 const Dashboard = () => {
-  const { data: platformStatus } = usePlatformStatus();
-
-
-
   return (
     <div className="space-y-8">
 
@@ -20,13 +14,6 @@ const Dashboard = () => {
         <UserChabadWidget />
       </div>
 
-      {/* Countdown Timer */}
-      <div className="flex justify-center mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-700">
-          <CountdownTimer />
-        </div>
-      </div>
-
       {/* iOS-style Platform Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* YouTube Card */}
@@ -34,12 +21,7 @@ const Dashboard = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <div className="relative">
-                  <Youtube className="mr-3 h-7 w-7 text-youtube" />
-                  {platformStatus?.youtube?.isConnected && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                  )}
-                </div>
+                <Youtube className="mr-3 h-7 w-7 text-youtube" />
                 <span className="text-lg">יוטיוב</span>
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -62,12 +44,7 @@ const Dashboard = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <div className="relative">
-                  <Facebook className="mr-3 h-7 w-7 text-facebook" />
-                  {platformStatus?.facebook?.isConnected && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                  )}
-                </div>
+                <Facebook className="mr-3 h-7 w-7 text-facebook" />
                 <span className="text-lg">פייסבוק</span>
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -90,10 +67,7 @@ const Dashboard = () => {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center justify-between ios-title">
               <div className="flex items-center">
-                <div className="relative">
-                  <Instagram className="mr-3 h-7 w-7 text-instagram" />
-
-                </div>
+                <Instagram className="mr-3 h-7 w-7 text-instagram" />
                 <span className="text-lg">אינסטגרם</span>
               </div>
               <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />

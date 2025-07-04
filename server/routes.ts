@@ -46,12 +46,10 @@ async function refreshYouTubeToken(auth: any, userId: string) {
 
   if (!refreshResponse.ok) {
     const errorData = await refreshResponse.json();
-    console.error('YouTube token refresh error:', errorData);
-    throw new Error(`Token refresh failed: ${errorData.error_description || errorData.error}`);
+    throw new Error(`Token refresh failed: ${errorData.error_description}`);
   }
 
   const tokens = await refreshResponse.json();
-  console.log('✅ YouTube token refreshed successfully');
 
   // Update stored token
   const updatedAuth = {
@@ -60,35 +58,8 @@ async function refreshYouTubeToken(auth: any, userId: string) {
     expiresAt: Date.now() + (tokens.expires_in * 1000)
   };
 
-  await storage.saveAuthToken(updatedAuth, userId);
+  storage.saveAuthToken(updatedAuth, userId);
   return updatedAuth;
-}
-
-// Get valid YouTube token with automatic refresh 
-async function getValidYouTubeToken(userId: string): Promise<string | null> {
-  try {
-    const ytToken = await storage.getAuthToken('youtube', userId);
-    if (!ytToken?.accessToken) {
-      console.log(`⚠️ No YouTube token found for user ${userId}`);
-      return null;
-    }
-
-    // Check if token is expired and needs refresh
-    const now = Date.now();
-    const expiresAt = ytToken.expiresAt || 0;
-    
-    if (expiresAt <= now && ytToken.refreshToken) {
-      console.log(`🔄 YouTube token expired for user ${userId}, attempting refresh...`);
-      
-      const refreshedAuth = await refreshYouTubeToken(ytToken, userId);
-      return refreshedAuth.accessToken;
-    }
-    
-    return ytToken.accessToken;
-  } catch (error) {
-    console.error(`❌ Error getting valid YouTube token for user ${userId}:`, error);
-    return null;
-  }
 }
 
 // Test YouTube connection helper
@@ -1363,16 +1334,37 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/youtube/videos", requireAuth, async (req: any, res) => {
     try {
       console.log('Fetching YouTube videos for user:', req.user.id);
-      
-      // Use the new function that handles token refresh automatically
-      const validToken = await getValidYouTubeToken(req.user.id);
-      
-      if (!validToken) {
-        return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+      let auth = await storage.getAuthToken('youtube', req.user.id);
+      console.log('YouTube auth found:', {
+        found: !!auth,
+        platform: auth?.platform,
+        hasAccessToken: !!auth?.accessToken,
+        hasRefreshToken: !!auth?.refreshToken
+      });
+
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      // Test connection and refresh token if needed
+      let connectionValid = await testYouTubeConnection(auth.accessToken);
+
+      if (!connectionValid) {
+        try {
+          auth = await refreshYouTubeToken(auth, req.user.id);
+          connectionValid = await testYouTubeConnection(auth.accessToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+        }
+      }
+
+      if (!connectionValid) {
+        return res.status(401).json({ error: "YouTube authentication invalid. Please reconnect." });
       }
 
       // Use YouTube Data API to get user's videos
-      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${validToken}`);
+      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token=${auth.accessToken}`);
 
       if (!channelResponse.ok) {
         const errorData = await channelResponse.json();
@@ -1388,7 +1380,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Get videos from uploads playlist
-      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${validToken}`);
+      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&access_token=${auth.accessToken}`);
 
       if (!videosResponse.ok) {
         const errorData = await videosResponse.json();
@@ -1400,7 +1392,7 @@ export function registerRoutes(app: Express): Server {
 
       // Get detailed video information including privacy status
       const videoIds = videosData.items?.map((item: any) => item.snippet.resourceId.videoId).join(',') || '';
-      const detailedResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${videoIds}&access_token=${validToken}`);
+      const detailedResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${videoIds}&access_token=${auth.accessToken}`);
 
       let detailedVideos = [];
       if (detailedResponse.ok) {
@@ -1447,17 +1439,28 @@ export function registerRoutes(app: Express): Server {
   // YouTube hide/show individual video
   app.post("/api/youtube/videos/:videoId/hide", requireAuth, async (req: any, res) => {
     try {
+      let auth = await storage.getAuthToken('youtube', req.user.id);
       const { videoId } = req.params;
-      
-      // Use the new function that handles token refresh automatically
-      const validToken = await getValidYouTubeToken(req.user.id);
-      
-      if (!validToken) {
-        return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+
+      if (!auth) {
+        return res.status(401).json({ error: "Not authenticated with YouTube" });
+      }
+
+      // Test connection and refresh token if needed
+      let connectionValid = await testYouTubeConnection(auth.accessToken);
+
+      if (!connectionValid) {
+        try {
+          auth = await refreshYouTubeToken(auth, req.user.id);
+          connectionValid = await testYouTubeConnection(auth.accessToken);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          return res.status(401).json({ error: "YouTube authentication expired. Please reconnect." });
+        }
       }
 
       // First get current video status to save original state
-      const currentVideoResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${validToken}`);
+      const currentVideoResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&id=${videoId}&access_token=${auth.accessToken}`);
 
       if (currentVideoResponse.ok) {
         const currentVideoData = await currentVideoResponse.json();
@@ -1470,7 +1473,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Update video privacy status to private using YouTube Data API
-      const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${validToken}`, {
+      const updateResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=status&access_token=${auth.accessToken}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -3087,17 +3090,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/scheduler/force-clear", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      console.log('Force clear scheduler requested by user:', req.user.id);
-      automaticScheduler.forceRefreshAll();
-      res.json({ success: true, message: 'כל המשימות הישנות נוקו והתזמון התחדש' });
-    } catch (error) {
-      console.error('Error in force clear scheduler:', error);
-      res.status(500).json({ error: 'Failed to force clear scheduler' });
-    }
-  });
-
   // Admin endpoint to set custom Shabbat times for testing
   app.post("/api/admin/set-shabbat-times", async (req, res) => {
     console.log('🔧 [ADMIN ENDPOINT] POST /api/admin/set-shabbat-times called');
@@ -3223,11 +3215,7 @@ export function registerRoutes(app: Express): Server {
       // Refresh automatic scheduler after timing preferences change
       try {
         console.log('Triggering automatic scheduler refresh after timing preferences update');
-        
-        // Force clear ALL jobs and restart fresh
-        automaticScheduler.forceRefreshAll();
-        
-        console.log('✅ Scheduler completely refreshed after timing preferences update');
+        await automaticScheduler.refreshUser(req.user.id);
       } catch (schedulerError) {
         console.error('Error refreshing scheduler after timing preferences update:', schedulerError);
         // Don't fail the whole request if scheduler has issues
@@ -3279,118 +3267,6 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Update user profile
-  // Platform status endpoint for token validity indicators
-  app.get("/api/platform-status", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.id;
-      
-      // Check YouTube status
-      const youtubeToken = await storage.getAuthToken('youtube', userId);
-      const youtubeStatus = {
-        platform: 'youtube',
-        hasValidToken: !!youtubeToken?.accessToken,
-        isConnected: !!youtubeToken?.accessToken && (!youtubeToken.expiresAt || youtubeToken.expiresAt > Date.now()),
-        expiresAt: youtubeToken?.expiresAt
-      };
-
-      // Check Facebook status  
-      const facebookToken = await storage.getAuthToken('facebook', userId);
-      const facebookStatus = {
-        platform: 'facebook',
-        hasValidToken: !!facebookToken?.accessToken,
-        isConnected: !!facebookToken?.accessToken && (!facebookToken.expiresAt || facebookToken.expiresAt > Date.now()),
-        expiresAt: facebookToken?.expiresAt
-      };
-
-      res.json({
-        youtube: youtubeStatus,
-        facebook: facebookStatus
-      });
-    } catch (error) {
-      console.error('Error getting platform status:', error);
-      res.status(500).json({ error: 'Failed to get platform status' });
-    }
-  });
-
-  // Next operation countdown endpoint - REAL TIMES for Friday Evening NOW
-  app.get("/api/scheduler/next-operation", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      // For immediate testing - use current time + 9 minutes for hide
-      const now = new Date();
-      const hideTime = new Date(now.getTime() + (9 * 60 * 1000)); // Hide in 9 minutes
-      const restoreTime = new Date(now.getTime() + (2 * 60 * 60 * 1000)); // Restore in 2 hours
-      
-      const userId = req.user.id;
-      console.log(`🔍 REAL TIMING for user ${userId}:`);
-      console.log(`   📅 Current: ${now.toLocaleTimeString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
-      console.log(`   🚫 Hide at: ${hideTime.toLocaleTimeString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
-      console.log(`   ✅ Restore at: ${restoreTime.toLocaleTimeString('he-IL', {timeZone: 'Asia/Jerusalem'})}`);
-      
-      // Determine next operation
-      let nextOperationTime, nextOperationType, displayText;
-      
-      if (now < hideTime) {
-        nextOperationTime = hideTime;
-        nextOperationType = 'hide';
-        displayText = 'הסתרת תוכן';
-        console.log(`   ➡️ Next: HIDE in ${Math.round((hideTime.getTime() - now.getTime())/60000)} minutes`);
-      } else if (now < restoreTime) {
-        nextOperationTime = restoreTime;
-        nextOperationType = 'restore';
-        displayText = 'שחזור תוכן';
-        console.log(`   ➡️ Next: RESTORE in ${Math.round((restoreTime.getTime() - now.getTime())/60000)} minutes`);
-      } else {
-        // Demo fallback if both passed
-        nextOperationTime = new Date(now.getTime() + (24 * 60 * 60 * 1000));
-        nextOperationType = 'hide';
-        displayText = 'הסתרת תוכן';
-      }
-      
-      const timeUntilMs = nextOperationTime.getTime() - now.getTime();
-      const hours = Math.floor(timeUntilMs / (1000 * 60 * 60));
-      const minutes = Math.floor((timeUntilMs % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeUntilMs % (1000 * 60)) / 1000);
-      
-      return res.json({
-        hasNextOperation: true,
-        type: nextOperationType,
-        scheduledTime: nextOperationTime.toISOString(),
-        timeUntil: {
-          hours,
-          minutes, 
-          seconds,
-          totalMilliseconds: timeUntilMs
-        },
-        displayText,
-        isDemoTimer: false
-      });
-
-    } catch (error) {
-      console.error('Error in next-operation endpoint:', error);
-      res.status(500).json({ error: 'Failed to get next operation' });
-    }
-  });
-
-      console.log(`   ⏰ Next operation: ${nextOperation.type} in ${hours}h ${minutes}m ${seconds}s`);
-
-      res.json({
-        hasNextOperation: true,
-        type: nextOperation.type,
-        scheduledTime: minTime.toISOString(),
-        timeUntil: {
-          hours,
-          minutes, 
-          seconds,
-          totalMilliseconds: timeUntil
-        },
-        displayText: nextOperation.type === 'hide' ? 'הסתרה' : 'שחזור'
-      });
-    } catch (error) {
-      console.error('Error getting next operation:', error);
-      res.status(500).json({ error: 'Failed to get next operation' });
-    }
-  });
-
   app.put("/api/user/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.id;
