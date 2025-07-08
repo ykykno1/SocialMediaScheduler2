@@ -466,7 +466,7 @@ export default function FacebookAdvancedSection() {
                 {postsLoading ? (
                   <Skeleton className="h-4 w-8" />
                 ) : (
-                  `${posts.length || demoPosts.length} פוסטים`
+                  `${posts.length > 0 ? posts.length : demoPosts.length} פוסטים`
                 )}
               </Badge>
             </div>
@@ -482,7 +482,34 @@ export default function FacebookAdvancedSection() {
               </div>
             ) : (
               <div className="space-y-3">
-                {(posts.length > 0 ? posts : demoPosts).map((post: any) => (
+                {/* תמיד הצג נתונים אמיתיים אם זמינים, אחרת דמו */}
+                {posts.length > 0 ? posts.map((post: any) => (
+                  <Card key={post.id} className="p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm mb-2 break-words">{post.message}</p>
+                        {post.full_picture && (
+                          <img 
+                            src={post.full_picture} 
+                            alt="תמונת פוסט" 
+                            className="max-w-full h-32 object-cover rounded mb-2"
+                          />
+                        )}
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs text-gray-500 flex-wrap">
+                          <span>{new Date(post.created_time).toLocaleDateString('he-IL')}</span>
+                          <span>👍 {post.reactions?.summary?.total_count || 0}</span>
+                          <span>💬 {post.comments?.summary?.total_count || 0}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {getPrivacyIcon(post.privacy?.value)}
+                        <Badge variant="outline" className="text-xs whitespace-nowrap">
+                          {getPrivacyText(post.privacy?.value)}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                )) : demoPosts.map((post: any) => (
                   <Card key={post.id} className="p-3">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                       <div className="flex-1 min-w-0">

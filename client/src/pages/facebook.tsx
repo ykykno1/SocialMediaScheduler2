@@ -1,8 +1,10 @@
+import FacebookSection from "@/components/FacebookSection";
 import FacebookAdvancedSection from "@/components/FacebookAdvancedSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Facebook, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function FacebookPage() {
   return (
@@ -24,8 +26,21 @@ export default function FacebookPage() {
         </div>
       </div>
 
-      {/* Facebook Management */}
-      <FacebookAdvancedSection />
+      {/* Facebook Management with tabs */}
+      <Tabs defaultValue="current" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="current">הגדרות נוכחיות</TabsTrigger>
+          <TabsTrigger value="advanced">ניהול מתקדם</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="current" className="space-y-4">
+          <FacebookSection />
+        </TabsContent>
+        
+        <TabsContent value="advanced" className="space-y-4">
+          <FacebookAdvancedSection />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
