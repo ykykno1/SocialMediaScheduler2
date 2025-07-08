@@ -29,11 +29,8 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
     }
 
     const now = new Date();
-    const today = new Date(now);
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Parse Shabbat times for today
+    
+    // Parse Shabbat times
     const [candleHour, candleMinute] = shabbatTimes.candleLighting.split(':').map(Number);
     const [havdalahHour, havdalahMinute] = shabbatTimes.havdalah.split(':').map(Number);
 
@@ -43,7 +40,7 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
         case '15min': return 15;
         case '30min': return 30;
         case '1hour': return 60;
-        default: return 30;
+        default: return 15;
       }
     };
 
@@ -59,42 +56,74 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
     const hideOffset = getHideOffset(hideTimingPreference);
     const restoreOffset = getRestoreOffset(restoreTimingPreference || 'immediate');
 
-    // Create today's times
-    const todayCandleLighting = new Date(today);
-    todayCandleLighting.setHours(candleHour, candleMinute, 0, 0);
+    // Find next Friday (day 5 = Friday)
+    const nextFriday = new Date(now);
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
     
-    const todayHavdalah = new Date(today);
-    todayHavdalah.setHours(havdalahHour, havdalahMinute, 0, 0);
+    let daysUntilFriday;
+    if (currentDay < 5) {
+      // Before Friday this week
+      daysUntilFriday = 5 - currentDay;
+    } else if (currentDay === 5) {
+      // It's Friday - check if before hide time
+      const todayHideTime = new Date(now);
+      todayHideTime.setHours(candleHour, candleMinute, 0, 0);
+      const todayActualHideTime = new Date(todayHideTime.getTime() - hideOffset * 60 * 1000);
+      
+      if (now < todayActualHideTime) {
+        daysUntilFriday = 0; // Use today
+      } else {
+        daysUntilFriday = 7; // Next Friday
+      }
+    } else {
+      // Saturday or Sunday
+      daysUntilFriday = 7 - currentDay + 5;
+    }
     
-    const todayHideTime = new Date(todayCandleLighting.getTime() - hideOffset * 60 * 1000);
-    const todayRestoreTime = new Date(todayHavdalah.getTime() + restoreOffset * 60 * 1000);
-
-    // Create tomorrow's times (for next week)
-    const tomorrowCandleLighting = new Date(tomorrow);
-    tomorrowCandleLighting.setHours(candleHour, candleMinute, 0, 0);
-    tomorrowCandleLighting.setDate(tomorrowCandleLighting.getDate() + 6); // Next Friday
+    nextFriday.setDate(now.getDate() + daysUntilFriday);
+    nextFriday.setHours(candleHour, candleMinute, 0, 0);
     
-    const nextWeekHideTime = new Date(tomorrowCandleLighting.getTime() - hideOffset * 60 * 1000);
+    // Find corresponding Saturday (day after Friday)
+    const correspondingSaturday = new Date(nextFriday);
+    correspondingSaturday.setDate(nextFriday.getDate() + 1);
+    correspondingSaturday.setHours(havdalahHour, havdalahMinute, 0, 0);
+    
+    // Calculate actual operation times
+    const nextHideTime = new Date(nextFriday.getTime() - hideOffset * 60 * 1000);
+    const nextRestoreTime = new Date(correspondingSaturday.getTime() + restoreOffset * 60 * 1000);
 
     // Determine next action
     let targetTime: Date;
     let action: 'hide' | 'restore';
 
-    if (now < todayHideTime) {
-      // Before today's hide time
-      targetTime = todayHideTime;
+    if (now < nextHideTime) {
+      // Before next hide time
+      targetTime = nextHideTime;
       action = 'hide';
-    } else if (now < todayRestoreTime) {
+    } else if (now < nextRestoreTime) {
       // Between hide and restore time
-      targetTime = todayRestoreTime;
+      targetTime = nextRestoreTime;
       action = 'restore';
     } else {
-      // After today's restore time - next hide is next week
-      targetTime = nextWeekHideTime;
+      // After restore time - calculate next Friday
+      const nextNextFriday = new Date(nextFriday);
+      nextNextFriday.setDate(nextFriday.getDate() + 7);
+      targetTime = new Date(nextNextFriday.getTime() - hideOffset * 60 * 1000);
       action = 'hide';
     }
 
     const diffMs = targetTime.getTime() - now.getTime();
+    
+    // Debug log
+    console.log('=== TIMER DEBUG ===');
+    console.log('Now:', now.toLocaleString('he-IL'));
+    console.log('Target time:', targetTime.toLocaleString('he-IL'));
+    console.log('Next action:', action);
+    console.log('Days until Friday:', daysUntilFriday);
+    console.log('Next hide time:', nextHideTime.toLocaleString('he-IL'));
+    console.log('Next restore time:', nextRestoreTime.toLocaleString('he-IL'));
+    console.log('Diff MS:', diffMs);
+    console.log('===================');
     
     if (diffMs <= 0) {
       return { remaining: null, action: null };
