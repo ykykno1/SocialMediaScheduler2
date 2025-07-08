@@ -126,6 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 8, 2025. COMPLETED: Built comprehensive Facebook content management system with demo mode:
+  - Created advanced Facebook demo service with personal posts, business pages, and sponsored campaigns
+  - Added database schema for Facebook preferences and content state tracking
+  - Built FacebookAdvancedSection component with 3-category management (personal, pages, campaigns)
+  - System can hide/restore content from personal profile, business pages (selectable), and sponsored campaigns
+  - Remember what was active before Shabbat to restore correctly
+  - Ready for real API when proper permissions available - demo mode fully functional
+  - Integrated with existing Facebook page with new advanced interface
 - July 8, 2025. COMPLETED: Fixed NextHideTimer component to properly display countdown based on user timing preferences:
   - Fixed critical bug where timer calculated wrong hide time for "immediate" preference (was showing 15min early by default)
   - Added proper handling of "immediate" timing preference in getHideOffset function

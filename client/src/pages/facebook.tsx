@@ -1,4 +1,4 @@
-import FacebookSection from "@/components/FacebookSection";
+import FacebookAdvancedSection from "@/components/FacebookAdvancedSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Facebook, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,12 @@ export default function FacebookPage() {
             <Facebook className="h-6 w-6 text-[#1877F2]" />
             ניהול פייסבוק
           </h1>
-          <p className="text-gray-600">נהל את הפוסטים שלך בפייסבוק לשבת</p>
+          <p className="text-gray-600">נהל פוסטים אישיים, עמודים עסקיים וקמפיינים ממומנים לשבת</p>
         </div>
       </div>
 
       {/* Facebook Management */}
-      <FacebookSection />
+      <FacebookAdvancedSection />
     </div>
   );
 }

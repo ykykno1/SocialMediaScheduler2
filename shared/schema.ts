@@ -383,6 +383,43 @@ export const shabbatLocations = pgTable("shabbat_locations", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+// Facebook content preferences table
+export const facebookPreferences = pgTable("facebook_preferences", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
+  
+  // What to hide/manage
+  managePersonalPosts: boolean("manage_personal_posts").notNull().default(true),
+  manageBusinessPages: boolean("manage_business_pages").notNull().default(true),
+  manageCampaigns: boolean("manage_campaigns").notNull().default(true),
+  
+  // Per-page settings (JSON array of page IDs that user wants to manage)
+  enabledPageIds: text("enabled_page_ids").default('[]'), // JSON array: ["page1", "page2"]
+  
+  // Original states tracking (JSON objects)
+  personalPostsBeforeHide: text("personal_posts_before_hide").default('{}'), // JSON: {postId: "public"}
+  pagePostsBeforeHide: text("page_posts_before_hide").default('{}'), // JSON: {pageId: {postId: "public"}}
+  campaignsBeforeHide: text("campaigns_before_hide").default('{}'), // JSON: {campaignId: "active"}
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Facebook content states - tracks what was hidden/restored
+export const facebookContentStates = pgTable("facebook_content_states", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
+  contentId: varchar("content_id").notNull(), // post ID, page ID, or campaign ID
+  contentType: varchar("content_type").$type<'personal_post' | 'page_post' | 'campaign'>().notNull(),
+  pageId: varchar("page_id"), // only for page_post type
+  originalState: varchar("original_state").notNull(), // "public", "friends", "active", etc.
+  currentState: varchar("current_state").notNull(),
+  hiddenAt: timestamp("hidden_at"),
+  restoredAt: timestamp("restored_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export type User = typeof users.$inferSelect & {
   hideTimingPreference?: 'immediate' | '15min' | '30min' | '1hour';
   restoreTimingPreference?: 'immediate' | '30min' | '1hour';
@@ -392,3 +429,7 @@ export type AuthTokenDb = typeof authTokens.$inferSelect;
 export type InsertAuthToken = typeof authTokens.$inferInsert;
 export type VideoLockStatus = typeof videoLockStatuses.$inferSelect;
 export type InsertVideoLockStatus = typeof videoLockStatuses.$inferInsert;
+export type FacebookPreferences = typeof facebookPreferences.$inferSelect;
+export type InsertFacebookPreferences = typeof facebookPreferences.$inferInsert;
+export type FacebookContentState = typeof facebookContentStates.$inferSelect;
+export type InsertFacebookContentState = typeof facebookContentStates.$inferInsert;

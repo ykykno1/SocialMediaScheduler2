@@ -42,7 +42,71 @@ export interface DemoPage {
   posts: DemoPost[];
 }
 
+export interface DemoCampaign {
+  id: string;
+  name: string;
+  status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+  objective: string;
+  daily_budget: string;
+  reach: number;
+  impressions: number;
+  created_time: string;
+  updated_time: string;
+  campaign_type: 'sponsored_post' | 'video_ad' | 'carousel_ad';
+}
+
 export class FacebookDemoService {
+  private demoCampaigns: DemoCampaign[] = [
+    {
+      id: "demo_campaign_1",
+      name: "קמפיין קיץ 2025 - מוצרי טכנולוגיה",
+      status: 'ACTIVE',
+      objective: "CONVERSIONS",
+      daily_budget: "150.00",
+      reach: 8450,
+      impressions: 15200,
+      created_time: "2025-07-01T08:00:00+0000",
+      updated_time: "2025-07-07T14:30:00+0000",
+      campaign_type: 'sponsored_post'
+    },
+    {
+      id: "demo_campaign_2", 
+      name: "פרסום עמוד עסקי - שירותי ייעוץ",
+      status: 'ACTIVE',
+      objective: "PAGE_LIKES",
+      daily_budget: "75.00",
+      reach: 3200,
+      impressions: 7800,
+      created_time: "2025-06-25T10:15:00+0000",
+      updated_time: "2025-07-06T16:45:00+0000",
+      campaign_type: 'video_ad'
+    },
+    {
+      id: "demo_campaign_3",
+      name: "מבצע מיוחד - סוף השבוע",
+      status: 'PAUSED',
+      objective: "TRAFFIC",
+      daily_budget: "200.00", 
+      reach: 12100,
+      impressions: 28500,
+      created_time: "2025-06-20T12:00:00+0000",
+      updated_time: "2025-07-05T09:20:00+0000",
+      campaign_type: 'carousel_ad'
+    },
+    {
+      id: "demo_campaign_4",
+      name: "חדשות המוצר החדש שלנו",
+      status: 'ACTIVE',
+      objective: "BRAND_AWARENESS",
+      daily_budget: "100.00",
+      reach: 5600,
+      impressions: 11400,
+      created_time: "2025-07-03T15:30:00+0000",
+      updated_time: "2025-07-07T11:15:00+0000", 
+      campaign_type: 'sponsored_post'
+    }
+  ];
+
   private demoUserPosts: DemoPost[] = [
     {
       id: "demo_user_post_1",
@@ -238,17 +302,166 @@ export class FacebookDemoService {
     return { restoredCount, results };
   }
 
-  // מחזיר סטטיסטיקות דמו
+  // מחקה את הקמפיינים של המשתמש
+  async getUserCampaigns(): Promise<DemoCampaign[]> {
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return [...this.demoCampaigns];
+  }
+
+  // מדמה השהיית קמפיינים
+  async pauseCampaigns(campaignIds: string[]): Promise<{ pausedCount: number; results: Array<{ id: string; success: boolean; error?: string }> }> {
+    await new Promise(resolve => setTimeout(resolve, 900));
+    
+    const results = campaignIds.map(id => {
+      const campaign = this.demoCampaigns.find(c => c.id === id);
+      if (campaign && campaign.status === 'ACTIVE') {
+        campaign.status = 'PAUSED';
+        campaign.updated_time = new Date().toISOString();
+        return { id, success: true };
+      }
+      return { id, success: false, error: 'Campaign not found or already paused' };
+    });
+
+    const pausedCount = results.filter(r => r.success).length;
+    return { pausedCount, results };
+  }
+
+  // מדמה הפעלת קמפיינים
+  async activateCampaigns(campaignIds: string[]): Promise<{ activatedCount: number; results: Array<{ id: string; success: boolean; error?: string }> }> {
+    await new Promise(resolve => setTimeout(resolve, 900));
+    
+    const results = campaignIds.map(id => {
+      const campaign = this.demoCampaigns.find(c => c.id === id);
+      if (campaign && campaign.status === 'PAUSED') {
+        campaign.status = 'ACTIVE';
+        campaign.updated_time = new Date().toISOString();
+        return { id, success: true };
+      }
+      return { id, success: false, error: 'Campaign not found or already active' };
+    });
+
+    const activatedCount = results.filter(r => r.success).length;
+    return { activatedCount, results };
+  }
+
+  // פונקציה מאוחדת להסתרת כל התוכן לפי העדפות המשתמש
+  async hideAllContent(preferences: {
+    managePersonalPosts: boolean;
+    manageBusinessPages: boolean;
+    manageCampaigns: boolean;
+    enabledPageIds: string[];
+  }): Promise<{
+    personalPosts: { hiddenCount: number; results: Array<{ id: string; success: boolean; error?: string }> };
+    pagesPosts: { hiddenCount: number; results: Array<{ id: string; success: boolean; error?: string }> };
+    campaigns: { pausedCount: number; results: Array<{ id: string; success: boolean; error?: string }> };
+  }> {
+    const results = {
+      personalPosts: { hiddenCount: 0, results: [] },
+      pagesPosts: { hiddenCount: 0, results: [] },
+      campaigns: { pausedCount: 0, results: [] }
+    };
+
+    // הסתר פוסטים אישיים
+    if (preferences.managePersonalPosts) {
+      const publicPosts = this.demoUserPosts.filter(p => p.privacy.value === 'PUBLIC');
+      if (publicPosts.length > 0) {
+        results.personalPosts = await this.hidePosts(publicPosts.map(p => p.id));
+      }
+    }
+
+    // הסתר פוסטים של עמודים עסקיים
+    if (preferences.manageBusinessPages && preferences.enabledPageIds.length > 0) {
+      for (const pageId of preferences.enabledPageIds) {
+        const page = this.demoPages.find(p => p.id === pageId);
+        if (page) {
+          const publicPagePosts = page.posts.filter(p => p.privacy.value === 'PUBLIC');
+          if (publicPagePosts.length > 0) {
+            const pageResult = await this.hidePagePosts(pageId, publicPagePosts.map(p => p.id));
+            results.pagesPosts.hiddenCount += pageResult.hiddenCount;
+            results.pagesPosts.results.push(...pageResult.results);
+          }
+        }
+      }
+    }
+
+    // השהה קמפיינים
+    if (preferences.manageCampaigns) {
+      const activeCampaigns = this.demoCampaigns.filter(c => c.status === 'ACTIVE');
+      if (activeCampaigns.length > 0) {
+        results.campaigns = await this.pauseCampaigns(activeCampaigns.map(c => c.id));
+      }
+    }
+
+    return results;
+  }
+
+  // פונקציה מאוחדת לשחזור כל התוכן לפי העדפות המשתמש
+  async restoreAllContent(preferences: {
+    managePersonalPosts: boolean;
+    manageBusinessPages: boolean;
+    manageCampaigns: boolean;
+    enabledPageIds: string[];
+  }): Promise<{
+    personalPosts: { restoredCount: number; results: Array<{ id: string; success: boolean; error?: string }> };
+    pagesPosts: { restoredCount: number; results: Array<{ id: string; success: boolean; error?: string }> };
+    campaigns: { activatedCount: number; results: Array<{ id: string; success: boolean; error?: string }> };
+  }> {
+    const results = {
+      personalPosts: { restoredCount: 0, results: [] },
+      pagesPosts: { restoredCount: 0, results: [] },
+      campaigns: { activatedCount: 0, results: [] }
+    };
+
+    // שחזר פוסטים אישיים
+    if (preferences.managePersonalPosts) {
+      const hiddenPosts = this.demoUserPosts.filter(p => p.privacy.value === 'ONLY_ME');
+      if (hiddenPosts.length > 0) {
+        results.personalPosts = await this.restorePosts(hiddenPosts.map(p => p.id));
+      }
+    }
+
+    // שחזר פוסטים של עמודים עסקיים
+    if (preferences.manageBusinessPages && preferences.enabledPageIds.length > 0) {
+      for (const pageId of preferences.enabledPageIds) {
+        const page = this.demoPages.find(p => p.id === pageId);
+        if (page) {
+          const hiddenPagePosts = page.posts.filter(p => p.privacy.value === 'ONLY_ME');
+          if (hiddenPagePosts.length > 0) {
+            const pageResult = await this.restorePagePosts(pageId, hiddenPagePosts.map(p => p.id));
+            results.pagesPosts.restoredCount += pageResult.restoredCount;
+            results.pagesPosts.results.push(...pageResult.results);
+          }
+        }
+      }
+    }
+
+    // הפעל קמפיינים
+    if (preferences.manageCampaigns) {
+      const pausedCampaigns = this.demoCampaigns.filter(c => c.status === 'PAUSED');
+      if (pausedCampaigns.length > 0) {
+        results.campaigns = await this.activateCampaigns(pausedCampaigns.map(c => c.id));
+      }
+    }
+
+    return results;
+  }
+
+  // מחזיר סטטיסטיקות דמו מורחבות
   getStats() {
     const publicPosts = this.demoUserPosts.filter(p => p.privacy.value === 'PUBLIC').length;
     const hiddenPosts = this.demoUserPosts.filter(p => p.privacy.value === 'ONLY_ME').length;
+    const activeCampaigns = this.demoCampaigns.filter(c => c.status === 'ACTIVE').length;
+    const pausedCampaigns = this.demoCampaigns.filter(c => c.status === 'PAUSED').length;
     
     return {
       totalPosts: this.demoUserPosts.length,
       publicPosts,
       hiddenPosts,
       totalPages: this.demoPages.length,
-      totalPagePosts: this.demoPages.reduce((sum, page) => sum + page.posts.length, 0)
+      totalPagePosts: this.demoPages.reduce((sum, page) => sum + page.posts.length, 0),
+      totalCampaigns: this.demoCampaigns.length,
+      activeCampaigns,
+      pausedCampaigns
     };
   }
 }
