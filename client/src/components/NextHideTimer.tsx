@@ -37,10 +37,11 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
     // Calculate hide time based on preference
     const getHideOffset = (preference: string): number => {
       switch (preference) {
+        case 'immediate': return 0;
         case '15min': return 15;
         case '30min': return 30;
         case '1hour': return 60;
-        default: return 15;
+        default: return 0;
       }
     };
 
@@ -55,6 +56,8 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
 
     const hideOffset = getHideOffset(hideTimingPreference);
     const restoreOffset = getRestoreOffset(restoreTimingPreference || 'immediate');
+    
+
 
     // Find next Friday (day 5 = Friday)
     const nextFriday = new Date(now);
@@ -114,16 +117,7 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
 
     const diffMs = targetTime.getTime() - now.getTime();
     
-    // Debug log
-    console.log('=== TIMER DEBUG ===');
-    console.log('Now:', now.toLocaleString('he-IL'));
-    console.log('Target time:', targetTime.toLocaleString('he-IL'));
-    console.log('Next action:', action);
-    console.log('Days until Friday:', daysUntilFriday);
-    console.log('Next hide time:', nextHideTime.toLocaleString('he-IL'));
-    console.log('Next restore time:', nextRestoreTime.toLocaleString('he-IL'));
-    console.log('Diff MS:', diffMs);
-    console.log('===================');
+
     
     if (diffMs <= 0) {
       return { remaining: null, action: null };

@@ -126,6 +126,19 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 8, 2025. COMPLETED: Fixed NextHideTimer component to properly display countdown based on user timing preferences:
+  - Fixed critical bug where timer calculated wrong hide time for "immediate" preference (was showing 15min early by default)
+  - Added proper handling of "immediate" timing preference in getHideOffset function
+  - Timer now correctly displays countdown to exact Shabbat entry time when user selects "immediate"
+  - Verified working: Jerusalem settings with immediate timing shows correct countdown to 19:07 on Friday
+  - System fully functional: timer updates automatically when user changes city or timing preferences
+  - Production ready: displays accurate countdown for all timing preference combinations
+- July 8, 2025. COMPLETED: Enhanced auth-status endpoint to include user timing preferences for timer functionality:
+  - Modified /api/auth-status to return complete user data including hideTimingPreference and restoreTimingPreference
+  - Fixed Dashboard component to properly pass user timing preferences to NextHideTimer component
+  - Timer component now receives authentic user settings instead of undefined values
+  - Integrated timer display shows real countdown based on user's actual city selection and timing preferences
+  - System works end-to-end: user settings → server → timer display → accurate countdown
 - July 4, 2025. CRITICAL FIX: Added automatic token refresh for inactive users:
   - Identified critical issue: scheduler failed when users weren't actively using the app
   - Problem: YouTube tokens expire hourly but scheduler had no refresh mechanism
