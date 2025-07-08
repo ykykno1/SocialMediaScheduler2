@@ -185,8 +185,8 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
           </div>
         </div>
         <div className="mt-2 text-sm text-blue-600">
-          {nextAction === 'hide' && `הסתרה ${hideTimingPreference === '15min' ? '15 דקות' : hideTimingPreference === '30min' ? '30 דקות' : 'שעה'} לפני כניסת שבת`}
-          {nextAction === 'restore' && `שחזור ${restoreTimingPreference === 'immediate' ? 'מיד' : restoreTimingPreference === '30min' ? '30 דקות' : 'שעה'} אחרי יציאת שבת`}
+          {nextAction === 'hide' && `הסתרה ${hideTimingPreference === 'immediate' ? 'מיד עם' : hideTimingPreference === '15min' ? '15 דקות לפני' : hideTimingPreference === '30min' ? '30 דקות לפני' : 'שעה לפני'} כניסת שבת`}
+          {nextAction === 'restore' && `שחזור ${restoreTimingPreference === 'immediate' ? 'מיד עם' : restoreTimingPreference === '30min' ? '30 דקות אחרי' : 'שעה אחרי'} יציאת שבת`}
         </div>
       </CardContent>
     </Card>
