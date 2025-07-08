@@ -170,14 +170,19 @@ export default function FacebookAdvancedSection() {
       // דמוי פעולת הסתרה עם תוצאות מציאותיות
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // מדמה תוצאות ההסתרה
+      // מדמה תוצאות ההסתרה - ספירת תוכן פעיל
+      const personalCount = preferences.managePersonalPosts ? demoPosts.filter(p => p.privacy.value === 'PUBLIC').length : 0;
+      const pagesCount = preferences.manageBusinessPages ? preferences.enabledPageIds.length * 2 : 0;
+      const campaignsCount = preferences.manageCampaigns ? demoCampaigns.filter(c => c.status === 'ACTIVE').length : 0;
+      
       const result = {
         type: 'hide' as const,
-        personal: preferences.managePersonalPosts ? demoPosts.filter(p => p.privacy.value === 'PUBLIC').length : 0,
-        pages: preferences.manageBusinessPages ? preferences.enabledPageIds.length * 2 : 0, // דמוי פוסטים בעמודים
-        campaigns: preferences.manageCampaigns ? demoCampaigns.filter(c => c.status === 'ACTIVE').length : 0
+        personal: personalCount,
+        pages: pagesCount,
+        campaigns: campaignsCount
       };
       
+      // שמירת מה שהוסתר לצורך שחזור נכון
       setLastActionResult(result);
       
       // הודעת הצלחה
@@ -204,25 +209,36 @@ export default function FacebookAdvancedSection() {
 
   const handleRestoreAll = async () => {
     setIsRestoring(true);
-    setLastActionResult(null);
+    
+    // שמירת מה שהוסתר לפני איפוס
+    const previousHideResult = lastActionResult?.type === 'hide' ? lastActionResult : null;
+    
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // מדמה תוצאות השחזור
+      // מדמה תוצאות השחזור - משחזר בדיוק מה שהוסתר בפעולה הקודמת
       const result = {
         type: 'restore' as const,
-        personal: preferences.managePersonalPosts ? demoPosts.filter(p => p.privacy.value === 'ONLY_ME').length : 0,
-        pages: preferences.manageBusinessPages ? preferences.enabledPageIds.length * 1 : 0, // דמוי פוסטים מוסתרים
-        campaigns: preferences.manageCampaigns ? demoCampaigns.filter(c => c.status === 'PAUSED').length : 0
+        personal: previousHideResult ? previousHideResult.personal : 0,
+        pages: previousHideResult ? previousHideResult.pages : 0,
+        campaigns: previousHideResult ? previousHideResult.campaigns : 0
       };
       
       setLastActionResult(result);
       
       // הודעת הצלחה
-      toast({
-        title: "תוכן שוחזר בהצלחה", 
-        description: `שוחזרו: ${result.personal} פוסטים אישיים, ${result.pages} פוסטים מעמודים, ${result.campaigns} קמפיינים`,
-      });
+      const totalRestored = result.personal + result.pages + result.campaigns;
+      if (totalRestored > 0) {
+        toast({
+          title: "תוכן שוחזר בהצלחה", 
+          description: `שוחזרו: ${result.personal} פוסטים אישיים, ${result.pages} פוסטים מעמודים, ${result.campaigns} קמפיינים`,
+        });
+      } else {
+        toast({
+          title: "אין תוכן לשחזור",
+          description: "לא נמצא תוכן מוסתר לשחזור. הסתר תוכן קודם כדי לשחזר אותו.",
+        });
+      }
       
       // רענון הנתונים
       refetchPosts();
