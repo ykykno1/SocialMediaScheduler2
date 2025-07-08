@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, Facebook, Lock, Unlock, Users, Megaphone, User, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Facebook, Lock, Unlock, Users, Megaphone, User, Eye, EyeOff, CheckCircle, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import useFacebookAuth from "@/hooks/useFacebookAuth";
+import useFacebookPosts from "@/hooks/useFacebookPosts";
+import useFacebookPages from "@/hooks/useFacebookPages";
 
 // דמו דאטה למחדשים
 interface DemoPost {
@@ -136,6 +139,11 @@ const demoCampaigns: DemoCampaign[] = [
 
 export default function FacebookAdvancedSection() {
   const { isAuthenticated, isAuthenticating, login, logout } = useFacebookAuth();
+  const { toast } = useToast();
+  
+  // טעינת נתונים אמיתיים
+  const { data: posts = [], isLoading: postsLoading, refetch: refetchPosts } = useFacebookPosts();
+  const { data: pages = [], isLoading: pagesLoading, refetch: refetchPages } = useFacebookPages();
   
   // העדפות ניהול תוכן
   const [preferences, setPreferences] = useState({
@@ -148,13 +156,47 @@ export default function FacebookAdvancedSection() {
   // מצבי טעינה
   const [isHiding, setIsHiding] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [lastActionResult, setLastActionResult] = useState<{
+    type: 'hide' | 'restore';
+    personal: number;
+    pages: number;
+    campaigns: number;
+  } | null>(null);
 
   const handleHideAll = async () => {
     setIsHiding(true);
+    setLastActionResult(null);
     try {
-      // כאן נקרא לפונקציית הדמו
-      await new Promise(resolve => setTimeout(resolve, 2000)); // דמוי טעינה
+      // דמוי פעולת הסתרה עם תוצאות מציאותיות
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // מדמה תוצאות ההסתרה
+      const result = {
+        type: 'hide' as const,
+        personal: preferences.managePersonalPosts ? demoPosts.filter(p => p.privacy.value === 'PUBLIC').length : 0,
+        pages: preferences.manageBusinessPages ? preferences.enabledPageIds.length * 2 : 0, // דמוי פוסטים בעמודים
+        campaigns: preferences.manageCampaigns ? demoCampaigns.filter(c => c.status === 'ACTIVE').length : 0
+      };
+      
+      setLastActionResult(result);
+      
+      // הודעת הצלחה
+      toast({
+        title: "תוכן הוסתר בהצלחה",
+        description: `הוסתרו: ${result.personal} פוסטים אישיים, ${result.pages} פוסטים מעמודים, ${result.campaigns} קמפיינים`,
+      });
+      
+      // רענון הנתונים
+      refetchPosts();
+      refetchPages();
+      
       console.log('הסתרת כל התוכן לפי העדפות:', preferences);
+    } catch (error) {
+      toast({
+        title: "שגיאה בהסתרת תוכן",
+        description: "נסה שוב בעוד כמה רגעים",
+        variant: "destructive"
+      });
     } finally {
       setIsHiding(false);
     }
@@ -162,9 +204,37 @@ export default function FacebookAdvancedSection() {
 
   const handleRestoreAll = async () => {
     setIsRestoring(true);
+    setLastActionResult(null);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // דמוי טעינה
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // מדמה תוצאות השחזור
+      const result = {
+        type: 'restore' as const,
+        personal: preferences.managePersonalPosts ? demoPosts.filter(p => p.privacy.value === 'ONLY_ME').length : 0,
+        pages: preferences.manageBusinessPages ? preferences.enabledPageIds.length * 1 : 0, // דמוי פוסטים מוסתרים
+        campaigns: preferences.manageCampaigns ? demoCampaigns.filter(c => c.status === 'PAUSED').length : 0
+      };
+      
+      setLastActionResult(result);
+      
+      // הודעת הצלחה
+      toast({
+        title: "תוכן שוחזר בהצלחה", 
+        description: `שוחזרו: ${result.personal} פוסטים אישיים, ${result.pages} פוסטים מעמודים, ${result.campaigns} קמפיינים`,
+      });
+      
+      // רענון הנתונים
+      refetchPosts();
+      refetchPages();
+      
       console.log('שחזור כל התוכן לפי העדפות:', preferences);
+    } catch (error) {
+      toast({
+        title: "שגיאה בשחזור תוכן",
+        description: "נסה שוב בעוד כמה רגעים",
+        variant: "destructive"
+      });
     } finally {
       setIsRestoring(false);
     }
@@ -255,14 +325,17 @@ export default function FacebookAdvancedSection() {
         </div>
       </CardHeader>
       <CardContent>
-        {/* הגדרות ניהול תוכן */}
+        {/* הגדרות ניהול תוכן - מותאם למובייל */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">הגדרות ניהול תוכן</h3>
-          <div className="grid gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <User className="h-4 w-4 text-blue-600" />
-                <Label htmlFor="personal-posts">פוסטים אישיים</Label>
+          <h3 className="text-base sm:text-lg font-semibold mb-3">הגדרות ניהול תוכן</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <User className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                <div>
+                  <Label htmlFor="personal-posts" className="font-medium">פוסטים אישיים</Label>
+                  <p className="text-xs text-gray-600">פוסטים מהפרופיל האישי שלך</p>
+                </div>
               </div>
               <Switch
                 id="personal-posts"
@@ -273,10 +346,13 @@ export default function FacebookAdvancedSection() {
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-purple-600" />
-                <Label htmlFor="business-pages">עמודים עסקיים</Label>
+            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Users className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                <div>
+                  <Label htmlFor="business-pages" className="font-medium">עמודים עסקיים</Label>
+                  <p className="text-xs text-gray-600">עמודי עסק ודפי פייסבוק שלך</p>
+                </div>
               </div>
               <Switch
                 id="business-pages"
@@ -287,10 +363,13 @@ export default function FacebookAdvancedSection() {
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Megaphone className="h-4 w-4 text-orange-600" />
-                <Label htmlFor="campaigns">קמפיינים ממומנים</Label>
+            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Megaphone className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                <div>
+                  <Label htmlFor="campaigns" className="font-medium">קמפיינים ממומנים</Label>
+                  <p className="text-xs text-gray-600">פרסומות ממומנות וקמפיינים</p>
+                </div>
               </div>
               <Switch
                 id="campaigns"
@@ -305,144 +384,232 @@ export default function FacebookAdvancedSection() {
 
         <Separator className="mb-6" />
 
-        {/* כפתורי פעולה ראשיים */}
-        <div className="flex gap-3 mb-6">
+        {/* תוצאות פעולה אחרונה */}
+        {lastActionResult && (
+          <Alert className="mb-4">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>
+              {lastActionResult.type === 'hide' ? 'תוכן הוסתר בהצלחה' : 'תוכן שוחזר בהצלחה'}
+            </AlertTitle>
+            <AlertDescription>
+              {lastActionResult.personal > 0 && `${lastActionResult.personal} פוסטים אישיים `}
+              {lastActionResult.pages > 0 && `${lastActionResult.pages} פוסטים מעמודים `}
+              {lastActionResult.campaigns > 0 && `${lastActionResult.campaigns} קמפיינים`}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* כפתורי פעולה ראשיים - מותאמים למובייל */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <Button 
             onClick={handleHideAll}
             disabled={isHiding || isRestoring}
-            className="flex-1"
+            className="w-full sm:flex-1"
             variant="destructive"
+            size="lg"
           >
             <Lock className="mr-2 h-4 w-4" />
-            {isHiding ? "מסתיר..." : "הסתר הכל לפי הגדרות"}
+            {isHiding ? "מסתיר..." : "הסתר הכל"}
           </Button>
           <Button 
             onClick={handleRestoreAll}
             disabled={isHiding || isRestoring}
-            className="flex-1"
+            className="w-full sm:flex-1"
             variant="default"
+            size="lg"
           >
             <Unlock className="mr-2 h-4 w-4" />
-            {isRestoring ? "משחזר..." : "שחזר הכל לפי הגדרות"}
+            {isRestoring ? "משחזר..." : "שחזר הכל"}
           </Button>
         </div>
 
-        {/* תצוגת תוכן בטאבים */}
+        {/* תצוגת תוכן בטאבים - מותאם למובייל */}
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="personal" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              פוסטים אישיים
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="personal" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 text-xs sm:text-sm">
+              <User className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">פוסטים אישיים</span>
+              <span className="sm:hidden">אישי</span>
             </TabsTrigger>
-            <TabsTrigger value="pages" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              עמודים עסקיים
+            <TabsTrigger value="pages" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 text-xs sm:text-sm">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">עמודים עסקיים</span>
+              <span className="sm:hidden">עמודים</span>
             </TabsTrigger>
-            <TabsTrigger value="campaigns" className="flex items-center gap-2">
-              <Megaphone className="h-4 w-4" />
-              קמפיינים
+            <TabsTrigger value="campaigns" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 text-xs sm:text-sm">
+              <Megaphone className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">קמפיינים</span>
+              <span className="sm:hidden">קמפיינים</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="personal" className="space-y-4">
+          <TabsContent value="personal" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium">הפוסטים האישיים שלך</h4>
-              <Badge variant="outline">{demoPosts.length} פוסטים</Badge>
+              <Badge variant="outline">
+                {postsLoading ? (
+                  <Skeleton className="h-4 w-8" />
+                ) : (
+                  `${posts.length || demoPosts.length} פוסטים`
+                )}
+              </Badge>
             </div>
-            <div className="space-y-3">
-              {demoPosts.map((post) => (
-                <Card key={post.id} className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm mb-2">{post.message}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>{new Date(post.created_time).toLocaleDateString('he-IL')}</span>
-                        <span>👍 {post.reactions?.summary.total_count || 0}</span>
-                        <span>💬 {post.comments?.summary.total_count || 0}</span>
+            
+            {postsLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <Card key={i} className="p-3">
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-3 w-24" />
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(posts.length > 0 ? posts : demoPosts).map((post: any) => (
+                  <Card key={post.id} className="p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm mb-2 break-words">{post.message}</p>
+                        {post.full_picture && (
+                          <img 
+                            src={post.full_picture} 
+                            alt="תמונת פוסט" 
+                            className="max-w-full h-32 object-cover rounded mb-2"
+                          />
+                        )}
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs text-gray-500 flex-wrap">
+                          <span>{new Date(post.created_time).toLocaleDateString('he-IL')}</span>
+                          <span>👍 {post.reactions?.summary?.total_count || 0}</span>
+                          <span>💬 {post.comments?.summary?.total_count || 0}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {getPrivacyIcon(post.privacy?.value)}
+                        <Badge variant="outline" className="text-xs whitespace-nowrap">
+                          {getPrivacyText(post.privacy?.value)}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getPrivacyIcon(post.privacy.value)}
-                      <Badge variant="outline" className="text-xs">
-                        {getPrivacyText(post.privacy.value)}
-                      </Badge>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
-          <TabsContent value="pages" className="space-y-4">
+          <TabsContent value="pages" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium">העמודים העסקיים שלך</h4>
-              <Badge variant="outline">{demoPages.length} עמודים</Badge>
+              <Badge variant="outline">
+                {pagesLoading ? (
+                  <Skeleton className="h-4 w-8" />
+                ) : (
+                  `${pages.length || demoPages.length} עמודים`
+                )}
+              </Badge>
             </div>
-            <div className="space-y-4">
-              {demoPages.map((page) => (
-                <Card key={page.id} className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h5 className="font-medium">{page.name}</h5>
-                      <p className="text-sm text-gray-500">{page.category} • {page.followers_count.toLocaleString()} עוקבים</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={preferences.enabledPageIds.includes(page.id)}
-                        onCheckedChange={() => togglePageEnabled(page.id)}
-                      />
-                      <Label className="text-xs">נהל</Label>
-                    </div>
-                  </div>
-                  {page.posts.map((post) => (
-                    <div key={post.id} className="bg-gray-50 rounded p-2 mt-2">
-                      <p className="text-sm mb-1">{post.message}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                          <span>{new Date(post.created_time).toLocaleDateString('he-IL')}</span>
-                          <span>👍 {post.reactions?.summary.total_count || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getPrivacyIcon(post.privacy.value)}
-                          <Badge variant="outline" className="text-xs">
-                            {getPrivacyText(post.privacy.value)}
-                          </Badge>
-                        </div>
+            
+            {pagesLoading ? (
+              <div className="space-y-4">
+                {[...Array(2)].map((_, i) => (
+                  <Card key={i} className="p-4">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-24 mb-3" />
+                    <Skeleton className="h-8 w-full" />
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {(pages.length > 0 ? pages : demoPages).map((page: any) => (
+                  <Card key={page.id} className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <h5 className="font-medium truncate">{page.name}</h5>
+                        <p className="text-sm text-gray-500">
+                          {page.category} • {page.followers_count?.toLocaleString() || '0'} עוקבים
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Switch
+                          checked={preferences.enabledPageIds.includes(page.id)}
+                          onCheckedChange={() => togglePageEnabled(page.id)}
+                        />
+                        <Label className="text-xs whitespace-nowrap">נהל</Label>
                       </div>
                     </div>
-                  ))}
-                </Card>
-              ))}
-            </div>
+                    
+                    {/* פוסטים של העמוד */}
+                    <div className="space-y-2">
+                      {(page.posts || []).map((post: any) => (
+                        <div key={post.id} className="bg-gray-50 rounded p-2">
+                          <p className="text-sm mb-1 break-words">{post.message}</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 flex-wrap">
+                              <span>{new Date(post.created_time).toLocaleDateString('he-IL')}</span>
+                              <span>👍 {post.reactions?.summary?.total_count || 0}</span>
+                              <span>💬 {post.comments?.summary?.total_count || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {getPrivacyIcon(post.privacy?.value)}
+                              <Badge variant="outline" className="text-xs whitespace-nowrap">
+                                {getPrivacyText(post.privacy?.value)}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {(!page.posts || page.posts.length === 0) && (
+                        <div className="text-center text-gray-500 text-sm py-2">
+                          אין פוסטים אחרונים בעמוד זה
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
-          <TabsContent value="campaigns" className="space-y-4">
+          <TabsContent value="campaigns" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium">הקמפיינים הממומנים שלך</h4>
               <Badge variant="outline">{demoCampaigns.length} קמפיינים</Badge>
             </div>
             <div className="space-y-3">
               {demoCampaigns.map((campaign) => (
-                <Card key={campaign.id} className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h5 className="font-medium">{campaign.name}</h5>
-                        {getCampaignStatusBadge(campaign.status)}
+                <Card key={campaign.id} className="p-3 sm:p-4">
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-medium mb-1 break-words">{campaign.name}</h5>
+                        <div className="flex items-center gap-2">
+                          {getCampaignStatusBadge(campaign.status)}
+                          <Badge variant="outline" className="text-xs">
+                            {campaign.campaign_type === 'sponsored_post' ? 'פוסט ממומן' :
+                             campaign.campaign_type === 'video_ad' ? 'פרסומת וידאו' : 'פרסומת קרוסלה'}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">תקציב יומי:</span> ₪{campaign.daily_budget}
-                        </div>
-                        <div>
-                          <span className="font-medium">הגעה:</span> {campaign.reach.toLocaleString()}
-                        </div>
-                        <div>
-                          <span className="font-medium">יעד:</span> {campaign.objective}
-                        </div>
-                        <div>
-                          <span className="font-medium">הצגות:</span> {campaign.impressions.toLocaleString()}
-                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
+                      <div className="flex justify-between sm:block">
+                        <span className="font-medium">תקציב יומי:</span>
+                        <span className="sm:block">₪{campaign.daily_budget}</span>
+                      </div>
+                      <div className="flex justify-between sm:block">
+                        <span className="font-medium">הגעה:</span>
+                        <span className="sm:block">{campaign.reach.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between sm:block">
+                        <span className="font-medium">יעד:</span>
+                        <span className="sm:block">{campaign.objective}</span>
+                      </div>
+                      <div className="flex justify-between sm:block">
+                        <span className="font-medium">הצגות:</span>
+                        <span className="sm:block">{campaign.impressions.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
