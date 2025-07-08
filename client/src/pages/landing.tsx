@@ -177,7 +177,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-6 bg-white">
+      <section id="features" className="py-20 px-6 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">למה לבחור ברובוט שבת?</h2>
@@ -268,7 +268,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-20 px-6 bg-gray-50">
+      <section id="pricing" className="py-20 px-6 bg-gray-50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">תוכניות מחיר</h2>
@@ -333,8 +333,8 @@ export default function LandingPage() {
                 התחל חינם עכשיו
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-blue-600">
-              יצירת קשר
+            <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-blue-600" asChild>
+              <a href="mailto:robotshabat@gmail.com">יצירת קשר</a>
             </Button>
           </div>
         </div>
@@ -354,8 +354,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">קישורים</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about" className="hover:text-white transition-colors">אודות</Link></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">מחירים</Link></li>
+                <li><a href="#features" className="hover:text-white transition-colors">תכונות</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">מחירים</a></li>
                 <li><Link href="/privacy-policy" className="hover:text-white transition-colors">מדיניות פרטיות</Link></li>
                 <li><Link href="/data-deletion" className="hover:text-white transition-colors">מחיקת נתונים</Link></li>
               </ul>
@@ -364,8 +364,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">תמיכה</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="mailto:support@shabbat-robot.com" className="hover:text-white transition-colors">תמיכה טכנית</a></li>
-                <li><a href="tel:+972-50-1234567" className="hover:text-white transition-colors">050-123-4567</a></li>
+                <li><a href="mailto:robotshabat@gmail.com" className="hover:text-white transition-colors">תמיכה טכנית</a></li>
+                <li><a href="mailto:robotshabat@gmail.com" className="hover:text-white transition-colors">יצירת קשר</a></li>
               </ul>
             </div>
             

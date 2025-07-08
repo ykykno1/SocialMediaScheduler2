@@ -1,7 +1,19 @@
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+import { Link } from 'wouter';
+
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-6">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/">
+              <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
+              חזור לדף הבית
+            </Link>
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold mb-8 text-center">מדיניות פרטיות - שומר שבת</h1>
         
         <div className="prose prose-lg max-w-none text-right" dir="rtl">
