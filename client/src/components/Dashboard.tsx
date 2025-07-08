@@ -31,6 +31,13 @@ const Dashboard = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Debug log to check what data we have
+  console.log('=== DASHBOARD DEBUG ===');
+  console.log('authStatus:', authStatus);
+  console.log('shabbatTimes:', shabbatTimes);
+  console.log('Timer should show:', !!(authStatus?.user && shabbatTimes));
+  console.log('====================');
+
   return (
     <div className="space-y-8">
       {/* Shabbat Timer Widget */}
@@ -43,8 +50,8 @@ const Dashboard = () => {
         <div className="flex justify-center mb-6">
           <NextHideTimer 
             shabbatTimes={shabbatTimes}
-            hideTimingPreference={(authStatus as any).user.hideTimingPreference}
-            restoreTimingPreference={(authStatus as any).user.restoreTimingPreference}
+            hideTimingPreference={(authStatus as any)?.user?.hideTimingPreference}
+            restoreTimingPreference={(authStatus as any)?.user?.restoreTimingPreference}
           />
         </div>
       )}

@@ -757,12 +757,18 @@ export function registerRoutes(app: Express): Server {
       console.log('Storage.getAuthToken completed');
       console.log('Auth result in auth-status endpoint:', !!auth);
       console.log('Auth object details:', auth ? { hasAccessToken: !!auth.accessToken, timestamp: auth.timestamp } : 'null');
+      
+      // Also get user data with timing preferences
+      const user = await storage.getUserById(req.user?.id);
+      const { password, passwordHash, ...userResponse } = user || {};
+      
       res.json({
         isAuthenticated: !!auth,
         // Don't send the token to the client for security
         platform: "facebook",
         authTime: auth ? new Date(auth.timestamp).toISOString() : null,
-        pageAccess: true
+        pageAccess: true,
+        user: userResponse // Include user data with timing preferences
       });
     } catch (error) {
       console.error('Error in auth-status endpoint:', error);
@@ -770,7 +776,8 @@ export function registerRoutes(app: Express): Server {
         isAuthenticated: false,
         platform: "facebook",
         authTime: null,
-        pageAccess: false
+        pageAccess: false,
+        user: null
       });
     }
   });
