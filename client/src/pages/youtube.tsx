@@ -338,8 +338,8 @@ export default function YouTubePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-4">
-                  <Button onClick={loadVideos} disabled={loading}>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <Button onClick={loadVideos} disabled={loading} className="w-full sm:w-auto">
                     <Play className="h-4 w-4 mr-2" />
                     Refresh Videos
                   </Button>
@@ -350,6 +350,7 @@ export default function YouTubePage() {
                         onClick={hideVideos} 
                         disabled={loading}
                         variant="destructive"
+                        className="w-full sm:w-auto"
                       >
                         <EyeOff className="h-4 w-4 mr-2" />
                         Hide Selected ({selectedVideos.length})
@@ -359,6 +360,7 @@ export default function YouTubePage() {
                         onClick={restoreVideos} 
                         disabled={loading}
                         variant="default"
+                        className="w-full sm:w-auto"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Restore Selected ({selectedVideos.length})
@@ -368,14 +370,14 @@ export default function YouTubePage() {
                 </div>
                 
                 {videos.length > 0 && (
-                  <div className="flex gap-2 mt-4">
-                    <Button size="sm" variant="outline" onClick={selectAllPublic}>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                    <Button size="sm" variant="outline" onClick={selectAllPublic} className="w-full sm:w-auto">
                       Select All Public ({videos.filter(v => v.privacyStatus === 'public').length})
                     </Button>
-                    <Button size="sm" variant="outline" onClick={selectAllPrivate}>
+                    <Button size="sm" variant="outline" onClick={selectAllPrivate} className="w-full sm:w-auto">
                       Select All Private ({videos.filter(v => v.privacyStatus === 'private').length})
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setSelectedVideos([])}>
+                    <Button size="sm" variant="outline" onClick={() => setSelectedVideos([])} className="w-full sm:w-auto">
                       Clear Selection
                     </Button>
                   </div>

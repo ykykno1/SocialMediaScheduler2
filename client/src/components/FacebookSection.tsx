@@ -303,7 +303,7 @@ export default function FacebookSection() {
               )}
               
               {/* Action Buttons */}
-              <div className="flex space-x-2 mt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 mt-4">
                 <Button 
                   onClick={() => {
                     if (window.confirm("האם אתה בטוח שברצונך להסתיר את הפוסטים?")) {
@@ -312,6 +312,7 @@ export default function FacebookSection() {
                   }} 
                   disabled={isHiding}
                   size="sm"
+                  className="w-full sm:w-auto"
                 >
                   <Lock className="mr-2 h-4 w-4" />
                   {isHiding ? "מסתיר..." : "הסתר פוסטים"}
@@ -324,11 +325,12 @@ export default function FacebookSection() {
                   }} 
                   disabled={isRestoring}
                   size="sm"
+                  className="w-full sm:w-auto"
                 >
                   <Unlock className="mr-2 h-4 w-4" />
                   {isRestoring ? "משחזר..." : "שחזר פוסטים"}
                 </Button>
-                <Button variant="outline" onClick={logout} size="sm">
+                <Button variant="outline" onClick={logout} size="sm" className="w-full sm:w-auto">
                   התנתק
                 </Button>
               </div>
