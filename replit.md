@@ -126,6 +126,21 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 8, 2025. COMPLETED: Created comprehensive marketing landing page for Shabbat Robot application:
+  - Built professional landing page with hero section, features, testimonials, pricing, and CTA sections
+  - Added complete marketing copy explaining the app's purpose for Jewish users during Shabbat/holidays
+  - Integrated platform icons (YouTube, Facebook, Instagram) and feature highlights
+  - Created pricing tiers (Free for YouTube only, Premium for all platforms)
+  - Updated routing: non-authenticated users see landing page, authenticated users see dashboard
+  - Landing page includes call-to-action buttons, testimonials, and comprehensive footer with links
+  - Marketing page professionally explains automatic content management during religious observances
+- July 8, 2025. COMPLETED: Enhanced Instagram demo page and updated hamburger menu navigation:
+  - Created comprehensive Instagram demo page with posts and stories management
+  - Added tabbed interface for posts and stories with mobile-responsive design
+  - Integrated Instagram demo with selection, hide/restore functionality, and visual feedback
+  - Updated ModernMenu (hamburger menu) to include YouTube, Facebook, and Instagram navigation links
+  - Fixed YouTube page buttons to use Hebrew text and proper mobile layout (w-full sm:w-auto)
+  - All social media platforms now accessible through hamburger menu with platform-specific icons
 - July 8, 2025. COMPLETED: Fixed mobile layout issues in original Facebook and YouTube pages:
   - Fixed mobile layout in FacebookSection: buttons now use flex-col on mobile, full-width responsive design
   - Fixed mobile layout in YouTube page: both main action buttons and selection buttons now stack vertically on mobile

@@ -15,6 +15,7 @@ import AdminPage from "@/pages/admin";
 import AdminShabbatPage from "@/pages/admin-shabbat";
 import AuthPage from "@/pages/auth";
 import HomePage from "@/pages/home";
+import LandingPage from "@/pages/landing";
 import Dashboard from "@/components/Dashboard";
 import Settings from "@/components/Settings";
 import SettingsPage from "@/pages/settings";
@@ -246,29 +247,13 @@ function Router() {
 
   if (!isAuthenticated) {
     return (
-      <div className="container px-4 mx-auto max-w-6xl min-h-screen flex flex-col">
-        <header className="py-4">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold text-primary">רובוט שבת</h1>
-            <UserProfile />
-          </div>
-        </header>
-        
-        <main className="flex-1 py-4">
-          <Switch>
-            <Route path="/auth" component={AuthPage} />
-            <Route path="/privacy-policy" component={PrivacyPolicyPage} />
-            <Route path="/data-deletion" component={DataDeletionPage} />
-            <Route>
-              <AuthPage />
-            </Route>
-          </Switch>
-        </main>
-        
-        <footer className="py-4 text-sm text-muted-foreground text-center border-t">
-          © {new Date().getFullYear()} רובוט שבת - כל הזכויות שמורות
-        </footer>
-      </div>
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+        <Route path="/data-deletion" component={DataDeletionPage} />
+        <Route path="/" component={LandingPage} />
+        <Route component={LandingPage} />
+      </Switch>
     );
   }
 
