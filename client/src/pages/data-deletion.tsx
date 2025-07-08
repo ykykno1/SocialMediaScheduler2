@@ -44,7 +44,7 @@ export default function DataDeletionPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">דרך 2: בקשה דרך אימייל</h2>
             <p className="mb-4">
-              שלחו אימייל לכתובת: <strong>ykyk.yair@gmail.com</strong>
+              שלחו אימייל לכתובת: <strong>robotshabat@gmail.com</strong>
             </p>
             <p className="mb-4">
               בנושא: "בקשה למחיקת נתונים - שומר שבת"
@@ -97,7 +97,7 @@ export default function DataDeletionPage() {
             <p className="mb-4">
               אם יש לכם שאלות או בעיות עם תהליך המחיקה, אנא פנו אלינו:
               <br />
-              <strong>Email:</strong> ykyk.yair@gmail.com
+              <strong>Email:</strong> robotshabat@gmail.com
             </p>
           </section>
 
