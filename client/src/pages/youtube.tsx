@@ -372,13 +372,13 @@ export default function YouTubePage() {
                 {videos.length > 0 && (
                   <div className="flex flex-col sm:flex-row gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={selectAllPublic} className="w-full sm:w-auto">
-                      Select All Public ({videos.filter(v => v.privacyStatus === 'public').length})
+                      בחר כל הגלויים ({videos.filter(v => v.privacyStatus === 'public').length})
                     </Button>
                     <Button size="sm" variant="outline" onClick={selectAllPrivate} className="w-full sm:w-auto">
-                      Select All Private ({videos.filter(v => v.privacyStatus === 'private').length})
+                      בחר כל המוסתרים ({videos.filter(v => v.privacyStatus === 'private').length})
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setSelectedVideos([])} className="w-full sm:w-auto">
-                      Clear Selection
+                      נקה בחירה
                     </Button>
                   </div>
                 )}

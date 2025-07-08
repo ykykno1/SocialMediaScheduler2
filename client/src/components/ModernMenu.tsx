@@ -11,7 +11,10 @@ import {
   User,
   Shield,
   HelpCircle,
-  Home
+  Home,
+  Youtube,
+  Facebook,
+  Instagram
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,6 +47,24 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
       icon: User,
       label: 'פרופיל משתמש',
       action: () => window.location.href = '/profile',
+      disabled: false
+    },
+    {
+      icon: Youtube,
+      label: 'ניהול יוטיוב',
+      action: () => window.location.href = '/youtube',
+      disabled: false
+    },
+    {
+      icon: Facebook,
+      label: 'ניהול פייסבוק',
+      action: () => window.location.href = '/facebook',
+      disabled: false
+    },
+    {
+      icon: Instagram,
+      label: 'ניהול אינסטגרם',
+      action: () => window.location.href = '/instagram',
       disabled: false
     },
     {
