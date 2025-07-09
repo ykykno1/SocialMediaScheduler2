@@ -27,33 +27,33 @@ export default function LandingPage() {
   const features = [
     {
       icon: Clock,
-      title: 'אוטומציה מלאה',
-      description: 'הסתרה והצגה אוטומטית של תוכן בזמני שבת וחג ללא התערבות ידנית'
+      title: 'הסתרה אוטומטית של תכנים בזמני שבת וחג',
+      description: 'התוכן מוסתר בזמני שבת וחג וחוזר בצאת השבת - אוטומטית'
     },
     {
       icon: Shield,
-      title: 'שמירה על פרטיות',
-      description: 'הגנה מלאה על נתונים אישיים ותוכן רגיש במהלך זמני קדושה'
+      title: 'שמירה על קדושת השבת גם ברשת',
+      description: 'הגנה על הערכים היהודיים והקדושה במרחב הדיגיטלי'
     },
     {
       icon: Smartphone,
-      title: 'תמיכה מרובת פלטפורמות',
-      description: 'ניהול יוטיוב, פייסבוק, אינסטגרם ועוד מממשק אחד'
+      title: 'ניהול כל הפלטפורמות',
+      description: 'פייסבוק, יוטיוב, אינסטגרם - כולל עמודים עסקיים וקמפיינים ממומנים'
     },
     {
       icon: Zap,
-      title: 'הגדרה חד פעמית',
+      title: 'העסק שלך שומר שבת גם ברשתות החברתיות',
       description: 'הגדר פעם אחת ותהנה מפתרון אוטומטי לכל שבת וחג'
     },
     {
       icon: Globe,
-      title: 'זמנים מדויקים',
+      title: 'מותאם לזמני שבת מדויקים לפי עיר - שעון חב"ד',
       description: 'שימוש בנתוני חב"ד המדויקים ביותר עבור כל מקום בעולם'
     },
     {
       icon: Users,
-      title: 'קהילה תומכת',
-      description: 'הצטרף לקהילה של יהודים שומרי מסורת המשתמשים בטכנולוגיה בחכמה'
+      title: 'בחירה ושמירה',
+      description: 'לא רק מנוחה - שמירה על הברית והקדושה בעולם המודרני'
     }
   ];
 
@@ -61,19 +61,19 @@ export default function LandingPage() {
     {
       name: 'רחל כהן',
       role: 'יוצרת תוכן',
-      content: 'סוף סוף יכולה להתרכז בשבת בלי לדאוג שמישהו יראה תוכן שלא מתאים',
+      content: 'עכשיו אני יכולה להתרכז בקדושת השבת בלי לדאוג מהתכנים ברשתות החברתיות',
       rating: 5
     },
     {
       name: 'יוסי לוי',
       role: 'בעל עסק',
-      content: 'הפתרון המושלם לניהול העסק שלי ברשתות החברתיות תוך שמירה על ערכים',
+      content: 'העסק שלי שומר שבת גם ברשתות החברתיות - כולל הקמפיינים הממומנים',
       rating: 5
     },
     {
       name: 'מרים גולדברג',
-      role: 'אמא ויוצרת',
-      content: 'פשוט ומדויק. הילדים שלי יכולים לגלוש בבטחה כי הכל מוסתר בזמן',
+      role: 'מנהלת עמוד עסקי',
+      content: 'פשוט ומדויק. התכנים מוסתרים בזמני שבת וחוזרים אוטומטית בצאת השבת',
       rating: 5
     }
   ];
@@ -100,11 +100,11 @@ export default function LandingPage() {
       description: 'הפתרון המלא',
       features: [
         'כל פלטפורמות המדיה החברתית',
-        'ניהול עמודים עסקיים',
-        'פרסומות ממומנות',
-        'הגדרות מתקדמות',
-        'תמיכה מועדפת',
-        'גיבוי אוטומטי'
+        'ניהול עמודים עסקיים (בחירה עבור כל עמוד)',
+        'סגירת קמפיינים ממומנים בשבת',
+        'התוכן חוזר בצאת השבת - אוטומטית',
+        'מותאם לזמני שבת מדויקים לפי עיר',
+        'תמיכה מועדפת'
       ],
       popular: true,
       ctaText: 'השדרג עכשיו'
@@ -132,30 +132,30 @@ export default function LandingPage() {
       <section className="py-20 px-6">
         <div className="container mx-auto text-center">
           <Badge className="mb-6 bg-blue-100 text-blue-800 px-4 py-2">
-            הטכנולוגיה המתקדמת ביותר לשמירת שבת
+            מעכשיו אפשר לשמור שבת גם בדיגיטל
           </Badge>
           
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            שמור על הקדושה<br />
-            גם בעולם הדיגיטלי
+            שומרים שבת<br />
+            גם ברשתות החברתיות
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            רובוט שבת מנהל עבורך את התוכן ברשתות החברתיות בזמני שבת וחג,
-            כך שתוכל להתרכז במה שחשוב באמת - בזמן איכות עם המשפחה והקהילה
+            שמירה על קדושת השבת בפייסבוק, יוטיוב ואינסטגרם.
+            הסתרה אוטומטית של תכנים בזמני שבת וחג - התוכן חוזר בצאת השבת אוטומטית.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Button size="lg" className="text-lg px-8 py-4" asChild>
               <Link href="/auth">
                 <Heart className="h-5 w-5 mr-2" />
-                התחל בחינם היום
+                התחל עכשיו
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-4">
-              <Calendar className="h-5 w-5 mr-2" />
-              צפה בדמו
-            </Button>
+            <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
+              <Calendar className="h-4 w-4 mr-2 inline" />
+              מותאם לזמני שבת מדויקים לפי עיר - שעון חב"ד
+            </div>
           </div>
 
           {/* Platform Icons */}
@@ -182,7 +182,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">למה לבחור ברובוט שבת?</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              פתרון מתקדם ובטוח לניהול אוטומטי של תוכן דיגיטלי בהתאם למסורת היהודית
+              שמירה על קדושת השבת בפייסבוק, יוטיוב ואינסטגרם - העסק שלך שומר שבת גם ברשתות החברתיות
             </p>
           </div>
           
@@ -207,7 +207,7 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">איך זה עובד?</h2>
-            <p className="text-xl text-gray-600">תהליך פשוט בשלושה שלבים</p>
+            <p className="text-xl text-gray-600">הגדרה פשוטה חד פעמית</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -215,24 +215,24 @@ export default function LandingPage() {
               <div className="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                 1
               </div>
-              <h3 className="text-xl font-semibold mb-2">התחבר לפלטפורמות</h3>
-              <p className="text-gray-600">חבר את חשבונות הרשתות החברתיות שלך בצורה בטוחה</p>
+              <h3 className="text-xl font-semibold mb-2">התחבר לרשתות החברתיות</h3>
+              <p className="text-gray-600">חיבור בטוח לפייסבוק, יוטיוב ואינסטגרם</p>
             </div>
             
             <div className="text-center">
               <div className="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                 2
               </div>
-              <h3 className="text-xl font-semibold mb-2">הגדר העדפות</h3>
-              <p className="text-gray-600">בחר את הזמנים והתוכן שרצונך להסתיר או להציג</p>
+              <h3 className="text-xl font-semibold mb-2">בחר מה להסתיר בשבת</h3>
+              <p className="text-gray-600">עמודים עסקיים וקמפיינים ממומנים - הכל ניתן לבחירה</p>
             </div>
             
             <div className="text-center">
               <div className="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                 3
               </div>
-              <h3 className="text-xl font-semibold mb-2">תהנה משלווה</h3>
-              <p className="text-gray-600">המערכת תפעל אוטומטית - אתה יכול להתרכז בשבת</p>
+              <h3 className="text-xl font-semibold mb-2">שמירה על קדושת השבת</h3>
+              <p className="text-gray-600">הכל קורה אוטומטית - התוכן חוזר בצאת השבת</p>
             </div>
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">מה אומרים המשתמשים</h2>
-            <p className="text-xl text-gray-600">אלפי משפחות כבר נהנות משלווה בשבת</p>
+            <p className="text-xl text-gray-600">משפחות ועסקים שומרי שבת משתמשים בפתרון</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -322,15 +322,15 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="container mx-auto text-center text-white">
-          <h2 className="text-4xl font-bold mb-4">מוכן להתחיל?</h2>
+          <h2 className="text-4xl font-bold mb-4">רובוט שבת</h2>
           <p className="text-xl mb-8 opacity-90">
-            הצטרף לאלפי משפחות שכבר נהנות משלווה בשבת
+            מעכשיו אפשר לשמור שבת גם בדיגיטל
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-4" asChild>
               <Link href="/auth">
-                התחל חינם עכשיו
+                התחל עכשיו
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-blue-600" asChild>
@@ -347,7 +347,7 @@ export default function LandingPage() {
             <div>
               <h3 className="text-xl font-bold mb-4">רובוט שבת</h3>
               <p className="text-gray-400">
-                הפתרון המתקדם לשמירת קדושת השבת בעולם הדיגיטלי
+                שמירה על קדושת השבת בפייסבוק, יוטיוב ואינסטגרם
               </p>
             </div>
             
