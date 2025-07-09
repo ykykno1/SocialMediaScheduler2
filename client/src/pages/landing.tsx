@@ -20,6 +20,7 @@ import {
   Settings,
   Globe
 } from 'lucide-react';
+import { SiTiktok } from 'react-icons/si';
 
 export default function LandingPage() {
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium'>('premium');
@@ -38,7 +39,7 @@ export default function LandingPage() {
     {
       icon: Smartphone,
       title: 'ניהול כל הפלטפורמות',
-      description: 'פייסבוק, יוטיוב, אינסטגרם - כולל עמודים עסקיים וקמפיינים ממומנים'
+      description: 'פייסבוק, יוטיוב, אינסטגרם וטיקטוק - כולל עמודים עסקיים וקמפיינים ממומנים'
     },
     {
       icon: Zap,
@@ -131,18 +132,18 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="py-20 px-6">
         <div className="container mx-auto text-center">
-          <Badge className="mb-6 bg-blue-100 text-blue-800 px-4 py-2">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            רובוט שבת
+          </h1>
+          
+          <Badge className="mb-8 bg-blue-100 text-blue-800 px-6 py-3 text-lg">
             מעכשיו אפשר לשמור שבת גם בדיגיטל
           </Badge>
           
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            שומרים שבת<br />
-            גם ברשתות החברתיות
-          </h1>
-          
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            שמירה על קדושת השבת בפייסבוק, יוטיוב ואינסטגרם.
-            הסתרה אוטומטית של תכנים בזמני שבת וחג - התוכן חוזר בצאת השבת אוטומטית.
+          <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
+            רובוט חכם שדואג להסתיר את התוכן שלך ברשתות החברתיות - יוטיוב, פייסבוק, אינסטגרם וטיקטוק - 
+            בזמני שבת וחג, ומשחזר אותם בצאת השבת או החג. 
+            פתרון אוטומטי מלא לשמירה על קדושת השבת בעולם הדיגיטלי.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -159,7 +160,7 @@ export default function LandingPage() {
           </div>
 
           {/* Platform Icons */}
-          <div className="flex justify-center items-center gap-8 opacity-60">
+          <div className="flex justify-center items-center gap-6 opacity-60 flex-wrap">
             <div className="flex items-center gap-2">
               <Youtube className="h-8 w-8 text-red-600" />
               <span className="text-sm">YouTube</span>
@@ -172,6 +173,10 @@ export default function LandingPage() {
               <Instagram className="h-8 w-8 text-pink-600" />
               <span className="text-sm">Instagram</span>
             </div>
+            <div className="flex items-center gap-2">
+              <SiTiktok className="h-8 w-8 text-black" />
+              <span className="text-sm">TikTok</span>
+            </div>
           </div>
         </div>
       </section>
@@ -182,7 +187,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">למה לבחור ברובוט שבת?</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              שמירה על קדושת השבת בפייסבוק, יוטיוב ואינסטגרם - העסק שלך שומר שבת גם ברשתות החברתיות
+              שמירה על קדושת השבת ברשתות החברתיות - העסק שלך שומר שבת גם בדיגיטל
             </p>
           </div>
           
@@ -347,7 +352,7 @@ export default function LandingPage() {
             <div>
               <h3 className="text-xl font-bold mb-4">רובוט שבת</h3>
               <p className="text-gray-400">
-                שמירה על קדושת השבת בפייסבוק, יוטיוב ואינסטגרם
+                שמירה על קדושת השבת ברשתות החברתיות - יוטיוב, פייסבוק, אינסטגרם וטיקטוק
               </p>
             </div>
             
@@ -371,10 +376,11 @@ export default function LandingPage() {
             
             <div>
               <h4 className="font-semibold mb-4">פלטפורמות נתמכות</h4>
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-wrap">
                 <Youtube className="h-6 w-6 text-red-500" />
                 <Facebook className="h-6 w-6 text-blue-500" />
                 <Instagram className="h-6 w-6 text-pink-500" />
+                <SiTiktok className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>

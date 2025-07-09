@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 9, 2025. COMPLETED: Refined landing page hero section based on user feedback:
+  - Changed main headline to "רובוט שבת" with subtitle "מעכשיו אפשר לשמור שבת גם בדיגיטל"
+  - Updated hero description to explain the concept clearly: smart robot that hides content on social media during Shabbat/holidays and restores it afterward
+  - Added TikTok to all platform lists (YouTube, Facebook, Instagram, TikTok) for future integration
+  - Improved marketing messaging structure following user's specific requirements for clarity and directness
+  - Enhanced visual hierarchy and messaging flow for better user comprehension
 - July 8, 2025. COMPLETED: Created comprehensive marketing landing page for Shabbat Robot application:
   - Built professional landing page with hero section, features, testimonials, pricing, and CTA sections
   - Added complete marketing copy explaining the app's purpose for Jewish users during Shabbat/holidays
