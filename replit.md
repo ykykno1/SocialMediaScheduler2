@@ -140,6 +140,10 @@ The application follows Jewish religious principles by automatically hiding soci
   - Enhanced logic: only videos that were private BEFORE user connected to system get auto-locked
   - System now checks if video has originalStatus record before auto-locking to prevent false positives
   - Verified working: manual hide/restore operations no longer trigger unwanted auto-locks
+  - FIXED TIMER DISPLAY: NextHideTimer now correctly shows restore countdown during Shabbat instead of hide countdown
+  - Timer properly transitions between current Shabbat cycle and next week's schedule after restore completes
+  - Enhanced Shabbat cycle logic: system stays in current cycle until restore time passes, then moves to next week
+  - All timing calculations now work correctly: hide/restore operations scheduled at proper times with accurate display
 - July 9, 2025. COMPLETED: Refined landing page hero section based on user feedback:
   - Changed main headline to "רובוט שבת" with subtitle "מעכשיו אפשר לשמור שבת גם בדיגיטל"
   - Updated hero description to explain the concept clearly: smart robot that hides content on social media during Shabbat/holidays and restores it afterward
