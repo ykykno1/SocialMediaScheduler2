@@ -229,15 +229,32 @@ export class AutomaticScheduler {
         if (cachedTimes && (Date.now() - cachedTimes.timestamp) < 24 * 60 * 60 * 1000) { // 24 hours cache
           console.log(`🕯️ Using authentic Chabad times for ${cityName}: ${cachedTimes.candleLighting} / ${cachedTimes.havdalah}`);
           
-          // Convert times to Date objects for today's Shabbat
+          // Convert times to Date objects for current Shabbat cycle
           const now = new Date();
           const friday = new Date(now);
-          const daysUntilFriday = (5 - now.getDay() + 7) % 7;
-          if (daysUntilFriday === 0 && now.getHours() >= 20) {
-            friday.setDate(now.getDate() + 7);
-          } else {
-            friday.setDate(now.getDate() + daysUntilFriday);
+          const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+          
+          // Logic: Only move to next Shabbat AFTER current Shabbat restore time has passed
+          let daysUntilFriday = (5 - currentDay + 7) % 7;
+          
+          if (currentDay === 6) { // Saturday
+            // If it's Saturday, check if restore time has passed
+            const [exitHour, exitMin] = cachedTimes.havdalah.split(':').map(Number);
+            const restoreHour = exitHour + 1; // 1 hour after havdalah
+            
+            if (now.getHours() > restoreHour || (now.getHours() === restoreHour && now.getMinutes() >= 0)) {
+              // Restore time has passed, move to next Shabbat
+              daysUntilFriday = 6; // Next Friday
+            } else {
+              // Still in current Shabbat cycle, use yesterday (Friday)
+              daysUntilFriday = -1;
+            }
+          } else if (currentDay === 0 && now.getHours() < 2) { // Early Sunday morning
+            // Might still be in previous Shabbat's restore window
+            daysUntilFriday = -2; // Use previous Friday
           }
+          
+          friday.setDate(now.getDate() + daysUntilFriday);
           
           const saturday = new Date(friday);
           saturday.setDate(friday.getDate() + 1);
@@ -277,10 +294,27 @@ export class AutomaticScheduler {
 
       const cityInfo = cityMapping[cityId] || cityMapping['default'];
       
-      // Get current date and next Friday
+      // Get current date and appropriate Friday (current cycle vs next)
       const now = new Date();
       const friday = new Date(now);
-      const daysUntilFriday = (5 - now.getDay() + 7) % 7;
+      const currentDay = now.getDay();
+      
+      // Logic: Only move to next Shabbat AFTER current Shabbat cycle is complete
+      let daysUntilFriday = (5 - currentDay + 7) % 7;
+      
+      if (currentDay === 6) { // Saturday
+        // If it's Saturday, check if it's past typical restore time (22:00)
+        if (now.getHours() >= 22) {
+          // Late Saturday night - move to next Shabbat
+          daysUntilFriday = 6;
+        } else {
+          // Still in current Shabbat cycle
+          daysUntilFriday = -1;
+        }
+      } else if (currentDay === 0 && now.getHours() < 2) { // Early Sunday
+        daysUntilFriday = -2; // Previous Friday
+      }
+      
       if (daysUntilFriday === 0 && now.getHours() >= 20) {
         friday.setDate(now.getDate() + 7); // Next Friday if it's already late Friday
       } else {
