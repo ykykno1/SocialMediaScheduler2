@@ -59,40 +59,58 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
     
 
 
-    // Find next Friday (day 5 = Friday)
-    const nextFriday = new Date(now);
+    // Find appropriate Friday based on current Shabbat cycle
     const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
     
-    let daysUntilFriday;
-    if (currentDay < 5) {
-      // Before Friday this week
-      daysUntilFriday = 5 - currentDay;
-    } else if (currentDay === 5) {
-      // It's Friday - check if before hide time
-      const todayHideTime = new Date(now);
-      todayHideTime.setHours(candleHour, candleMinute, 0, 0);
-      const todayActualHideTime = new Date(todayHideTime.getTime() - hideOffset * 60 * 1000);
+    let targetFriday = new Date(now);
+    
+    if (currentDay === 6) {
+      // It's Saturday - check if restore time has passed
+      const todaySaturday = new Date(now);
+      todaySaturday.setHours(havdalahHour, havdalahMinute, 0, 0);
+      const todayRestoreTime = new Date(todaySaturday.getTime() + restoreOffset * 60 * 1000);
       
-      if (now < todayActualHideTime) {
-        daysUntilFriday = 0; // Use today
+      if (now < todayRestoreTime) {
+        // Still in current Shabbat cycle - use yesterday (Friday)
+        targetFriday.setDate(now.getDate() - 1);
+      } else {
+        // Restore time passed - use next Friday
+        targetFriday.setDate(now.getDate() + 6);
+      }
+    } else if (currentDay === 0 && now.getHours() < 2) {
+      // Early Sunday morning - might still be in previous Shabbat window
+      targetFriday.setDate(now.getDate() - 2);
+    } else {
+      // Regular week calculation
+      let daysUntilFriday;
+      if (currentDay < 5) {
+        daysUntilFriday = 5 - currentDay;
+      } else if (currentDay === 5) {
+        // It's Friday - check if before hide time
+        const todayHideTime = new Date(now);
+        todayHideTime.setHours(candleHour, candleMinute, 0, 0);
+        const todayActualHideTime = new Date(todayHideTime.getTime() - hideOffset * 60 * 1000);
+        
+        if (now < todayActualHideTime) {
+          daysUntilFriday = 0; // Use today
+        } else {
+          daysUntilFriday = 7; // Next Friday
+        }
       } else {
         daysUntilFriday = 7; // Next Friday
       }
-    } else {
-      // Saturday or Sunday
-      daysUntilFriday = 7 - currentDay + 5;
+      targetFriday.setDate(now.getDate() + daysUntilFriday);
     }
     
-    nextFriday.setDate(now.getDate() + daysUntilFriday);
-    nextFriday.setHours(candleHour, candleMinute, 0, 0);
+    targetFriday.setHours(candleHour, candleMinute, 0, 0);
     
     // Find corresponding Saturday (day after Friday)
-    const correspondingSaturday = new Date(nextFriday);
-    correspondingSaturday.setDate(nextFriday.getDate() + 1);
+    const correspondingSaturday = new Date(targetFriday);
+    correspondingSaturday.setDate(targetFriday.getDate() + 1);
     correspondingSaturday.setHours(havdalahHour, havdalahMinute, 0, 0);
     
     // Calculate actual operation times
-    const nextHideTime = new Date(nextFriday.getTime() - hideOffset * 60 * 1000);
+    const nextHideTime = new Date(targetFriday.getTime() - hideOffset * 60 * 1000);
     const nextRestoreTime = new Date(correspondingSaturday.getTime() + restoreOffset * 60 * 1000);
 
     // Determine next action
@@ -109,8 +127,8 @@ export function NextHideTimer({ shabbatTimes, hideTimingPreference, restoreTimin
       action = 'restore';
     } else {
       // After restore time - calculate next Friday
-      const nextNextFriday = new Date(nextFriday);
-      nextNextFriday.setDate(nextFriday.getDate() + 7);
+      const nextNextFriday = new Date(targetFriday);
+      nextNextFriday.setDate(targetFriday.getDate() + 7);
       targetTime = new Date(nextNextFriday.getTime() - hideOffset * 60 * 1000);
       action = 'hide';
     }
