@@ -1648,8 +1648,12 @@ export function registerRoutes(app: Express): Server {
             const currentVideoData = await currentVideoResponse.json();
             const currentPrivacyStatus = currentVideoData.items?.[0]?.status?.privacyStatus;
 
-            // If video is already private, mark it as locked automatically
-            if (currentPrivacyStatus === 'private') {
+            // Check if this video was hidden by our system (has original status record)
+            const hasOriginalStatus = await storage.getVideoOriginalStatus(videoId, req.user.id);
+            
+            // If video is already private AND we don't have original status record,
+            // it means it was private before user used our system - so lock it
+            if (currentPrivacyStatus === 'private' && !hasOriginalStatus) {
               await storage.setVideoLockStatus(req.user.id, videoId, true, "pre_hidden");
               lockedCount++;
               continue;
