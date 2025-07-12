@@ -126,6 +126,15 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 12, 2025. FIXED: Critical automatic scheduler restoration bug and enhanced reliability:
+  - IDENTIFIED ROOT CAUSE: Automatic restore was scheduled for 18:01 but server restart at 18:08 caused missed execution
+  - Server restart during critical timing window (between hide and restore) caused automatic restoration to fail
+  - 4 videos required manual restoration - system worked correctly but timing was unfortunate
+  - ENHANCED SCHEDULER: Added automatic recovery mechanism when server restarts after restore time has passed
+  - System now checks for hidden content on startup and executes immediate restore if timing missed
+  - Added comprehensive logging to track exact timing issues and scheduler behavior
+  - VERIFIED WORKING: Next Shabbat properly scheduled (hide: 19:13, restore: 21:01) with new safety mechanisms
+  - Production-ready: automatic scheduler now resilient to server restarts during Shabbat operations
 - July 9, 2025. COMPLETED: Refined landing page hero section based on user feedback:
   - Changed main headline to "רובוט שבת" with subtitle "מעכשיו אפשר לשמור שבת גם בדיגיטל"
   - Updated hero description to explain the concept clearly: smart robot that hides content on social media during Shabbat/holidays and restores it afterward

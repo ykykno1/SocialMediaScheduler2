@@ -179,9 +179,11 @@ export class AutomaticScheduler {
         console.log(`⚠️ Hide time has passed for user ${user.email}, checking if restore is needed`);
         
         // If hide time passed but restore time hasn't, schedule only restore
+        console.log(`🔍 Checking restore time: ${restoreTime.toLocaleString('he-IL')} vs current: ${new Date().toLocaleString('he-IL')}`);
         if (restoreTime > new Date()) {
+          console.log(`⏰ Restore time is in the future, creating cron job...`);
           const restoreJob = this.createCronJob(restoreTime, async () => {
-            console.log(`✨ EXECUTING RESTORE for user ${user.email} (${user.id})`);
+            console.log(`✨ EXECUTING AUTOMATIC RESTORE for user ${user.email} (${user.id})`);
             await this.executeRestoreOperation(user.id);
           });
 
@@ -189,7 +191,22 @@ export class AutomaticScheduler {
             this.scheduledJobs.set(user.id, [
               { task: restoreJob, type: 'restore', userId: user.id, scheduledTime: restoreTime }
             ]);
-            console.log(`✅ Scheduled restore operation for ${user.email}`);
+            console.log(`✅ Scheduled restore operation for ${user.email} at ${restoreTime.toLocaleString('he-IL')}`);
+          } else {
+            console.log(`❌ Failed to create restore job for ${user.email} - cron job creation failed`);
+          }
+        } else {
+          console.log(`⚠️ Restore time ${restoreTime.toLocaleString('he-IL')} has already passed, checking if immediate restore is needed`);
+          
+          // Check if user has hidden content that needs restoring
+          const hiddenVideos = await storage.getAllVideoOriginalStatuses(user.id);
+          const hiddenCount = Object.keys(hiddenVideos).length;
+          
+          if (hiddenCount > 0) {
+            console.log(`🔧 Found ${hiddenCount} hidden videos for ${user.email} - executing immediate restore`);
+            await this.executeRestoreOperation(user.id);
+          } else {
+            console.log(`✅ No hidden content found for ${user.email} - restore not needed`);
           }
         }
       }
