@@ -30,14 +30,11 @@ export default function YouTubeOAuthPage() {
 
   const checkConnectionStatus = async () => {
     try {
-      const response = await apiRequest("GET", "/api/youtube/auth-status");
-      if (response.ok) {
-        const data = await response.json();
-        setIsConnected(data.isAuthenticated);
-        setChannelTitle(data.channelTitle || '');
-        if (data.isAuthenticated) {
-          loadVideos();
-        }
+      const data = await apiRequest("GET", "/api/youtube/auth-status");
+      setIsConnected(data.isAuthenticated);
+      setChannelTitle(data.channelTitle || '');
+      if (data.isAuthenticated) {
+        loadVideos();
       }
     } catch (error) {
       console.error('Failed to check YouTube status:', error);
@@ -46,18 +43,32 @@ export default function YouTubeOAuthPage() {
 
 
   const connectToYouTube = async () => {
+    console.log('🎬 YouTube login clicked - starting authentication process');
     setLoading(true);
     try {
-      const response = await apiRequest("GET", "/api/youtube/auth-url");
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Open OAuth popup
-        const popup = window.open(
-          data.authUrl,
-          'youtube-auth',
-          'width=500,height=600,scrollbars=yes,resizable=yes'
-        );
+      const data = await apiRequest("GET", "/api/youtube/auth-url");
+      console.log('✅ Got auth URL from server:', data.authUrl);
+      console.log('🚀 Attempting to open Google auth popup...');
+      
+      // Open OAuth popup
+      const popup = window.open(
+        data.authUrl,
+        'youtube-auth',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      if (!popup) {
+        console.error('❌ Popup was blocked by browser!');
+        setLoading(false);
+        toast({
+          title: "שגיאה",
+          description: "הדפדפן חסם את חלון ההתחברות. אנא אפשר popups ונסה שוב.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('✅ Popup opened successfully, waiting for response...');
 
         // Listen for popup messages
         const handleMessage = async (event: MessageEvent) => {
@@ -89,10 +100,6 @@ export default function YouTubeOAuthPage() {
             setLoading(false);
           }
         }, 1000);
-        
-      } else {
-        throw new Error('Failed to get auth URL');
-      }
     } catch (error: any) {
       toast({
         title: "שגיאה בהתחברות",
@@ -105,10 +112,9 @@ export default function YouTubeOAuthPage() {
 
   const processAuthCode = async (code: string) => {
     try {
-      const response = await apiRequest("POST", "/api/youtube/token", { code });
-      const result = await response.json();
+      const result = await apiRequest("POST", "/api/youtube/auth-callback", { code });
 
-      if (response.ok && result.success) {
+      if (result.success) {
         queryClient.invalidateQueries({ queryKey: ["/api/youtube/auth-status"] });
         toast({
           title: "התחברות הצליחה",
