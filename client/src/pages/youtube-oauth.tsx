@@ -221,8 +221,7 @@ export default function YouTubeOAuthPage() {
             description: "הסרטון שוחזר למצב המקורי ויכלל במבצעי הסתרה/הצגה",
           });
         } else {
-          const error = await response.json();
-          throw new Error(error.error || 'שגיאה בביטול נעילת הסרטון');
+          throw new Error(result.error || 'שגיאה בביטול נעילת הסרטון');
         }
       } else {
         // For locking, no password needed
@@ -314,12 +313,9 @@ export default function YouTubeOAuthPage() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('/api/youtube/disconnect', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const result = await apiRequest("POST", "/api/youtube/disconnect");
       
-      if (response.ok) {
+      if (result.success) {
         setIsConnected(false);
         setVideos([]);
         toast({
@@ -327,10 +323,9 @@ export default function YouTubeOAuthPage() {
           description: "התנתקת בהצלחה מחשבון YouTube",
         });
       } else {
-        const error = await response.json();
         toast({
           title: "שגיאה בהתנתקות",
-          description: error.error || 'שגיאה בהתנתקות',
+          description: result.error || 'שגיאה בהתנתקות',
           variant: "destructive",
         });
       }
