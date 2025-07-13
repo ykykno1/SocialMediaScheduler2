@@ -86,6 +86,14 @@ export function registerStripeRoutes(app: Express) {
         });
       }
 
+      // Check if user already used their free trial
+      if (stripeDemo.hasUsedTrial(userId)) {
+        return res.json({ 
+          success: false, 
+          error: "You have already used your free Shabbat trial. Please choose a payment plan." 
+        });
+      }
+
       // Create trial subscription with plan type
       const subscription = await stripeDemo.createTrialSubscription(userId, email, planType);
       

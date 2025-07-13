@@ -42,10 +42,8 @@ export class StripeDemo {
    * Demo: Create trial subscription with card setup
    */
   async createTrialSubscription(userId: string, email: string, planType: 'monthly' | 'annual' = 'monthly'): Promise<DemoSubscription> {
-    // Check if user already used trial
-    if (this.hasUsedTrial(userId)) {
-      throw new Error('You have already used your free Shabbat trial. Please choose a payment plan.');
-    }
+    // This function should only be called after checking hasUsedTrial in the route
+    // If we reach here, user is eligible for trial
 
     const subscription: DemoSubscription = {
       id: `demo_sub_${Date.now()}`,
