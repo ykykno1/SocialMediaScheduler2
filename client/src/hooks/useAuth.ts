@@ -16,7 +16,7 @@ export function useAuth() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/user");
-        return res; // apiRequest already returns JSON
+        return res.json();
       } catch (error) {
         // If token is invalid, clear it and return null
         if (error instanceof Error && (error.message.includes("401") || error.message.includes("INVALID_TOKEN"))) {
@@ -34,7 +34,7 @@ export function useAuth() {
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterRequest): Promise<AuthResponse> => {
       const res = await apiRequest("POST", "/api/register", credentials);
-      return res; // apiRequest already returns JSON
+      return res.json();
     },
     onSuccess: (response: AuthResponse) => {
       // Store JWT token
@@ -61,7 +61,7 @@ export function useAuth() {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginRequest): Promise<AuthResponse> => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      return res; // apiRequest already returns JSON
+      return res.json();
     },
     onSuccess: (response: AuthResponse) => {
       // Store JWT token
