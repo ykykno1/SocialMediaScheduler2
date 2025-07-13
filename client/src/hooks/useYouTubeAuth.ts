@@ -44,8 +44,8 @@ export default function useYouTubeAuth() {
       return await response.json();
     },
     onSuccess: (data) => {
-      console.log('Got auth URL:', data.authUrl);
-      console.log('Opening Google auth in popup...');
+      console.log('✅ Got auth URL from server:', data.authUrl);
+      console.log('🚀 Attempting to open Google auth popup...');
 
       const popup = window.open(
         data.authUrl,
@@ -54,7 +54,7 @@ export default function useYouTubeAuth() {
       );
 
       if (!popup) {
-        console.error('Popup blocked by browser');
+        console.error('❌ Popup was blocked by browser!');
         setIsAuthenticating(false);
         toast({
           title: "שגיאה",
@@ -63,6 +63,8 @@ export default function useYouTubeAuth() {
         });
         return;
       }
+
+      console.log('✅ Popup opened successfully, waiting for response...');
 
       const messageListener = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
@@ -179,7 +181,7 @@ export default function useYouTubeAuth() {
   };
 
   const login = () => {
-    console.log('YouTube login clicked');
+    console.log('🎬 YouTube login clicked - starting authentication process');
     setIsAuthenticating(true);
     authUrlMutation.mutate();
   };
