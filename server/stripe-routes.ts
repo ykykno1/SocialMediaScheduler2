@@ -11,12 +11,52 @@ interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
-// Middleware to check authentication (reusing existing pattern)
-const requireAuth = (req: AuthenticatedRequest, res: Response, next: any) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Authentication required" });
+// Import the actual auth middleware from routes
+import jwt from 'jsonwebtoken';
+import { enhancedStorage as storage } from './enhanced-storage.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
+
+const verifyToken = (token: string) => {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: string };
+  } catch (error) {
+    return null;
   }
-  next();
+};
+
+// Authentication middleware that actually works
+const requireAuth = async (req: AuthenticatedRequest, res: Response, next: any) => {
+  try {
+    console.log(`Stripe Auth middleware for ${req.method} ${req.path}`);
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No auth header or wrong format');
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const decoded = verifyToken(token);
+
+    if (!decoded) {
+      console.log('Token verification failed');
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    console.log('Getting user for Stripe API, ID:', decoded.userId);
+    const user = await storage.getUserById(decoded.userId);
+    if (!user) {
+      console.log('User not found in database');
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    console.log('User authenticated successfully for Stripe:', user.id);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Stripe auth middleware error:', error);
+    return res.status(500).json({ error: "Authentication error" });
+  }
 };
 
 export function registerStripeRoutes(app: Express) {
