@@ -57,11 +57,18 @@ export default function Subscription() {
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
         queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
-        toast({
-          title: "שגיאה",
-          description: data.error,
-          variant: "destructive",
-        });
+        // Don't show error for "already has subscription" - this is expected
+        if (data.error?.includes("already has a subscription")) {
+          // Just refresh the status, user already has a subscription
+          queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+          queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
+        } else {
+          toast({
+            title: "שגיאה",
+            description: data.error,
+            variant: "destructive",
+          });
+        }
       }
     },
     onError: (error: any) => {
@@ -85,11 +92,18 @@ export default function Subscription() {
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
         queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
-        toast({
-          title: "שגיאה",
-          description: data.error,
-          variant: "destructive",
-        });
+        // Don't show error for "already has subscription" - this is expected
+        if (data.error?.includes("already has a subscription")) {
+          // Just refresh the status, user already has a subscription
+          queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+          queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
+        } else {
+          toast({
+            title: "שגיאה",
+            description: data.error,
+            variant: "destructive",
+          });
+        }
       }
     },
     onError: (error: any) => {
@@ -217,15 +231,15 @@ export default function Subscription() {
                 </div>
               </div>
               {/* Monthly Plan CTA */}
-              {subscriptionData?.canStartTrial ? (
+              {subscriptionData?.canStartTrial && !subscriptionData?.hasSubscription ? (
                 <div className="pt-4">
                   <Button 
                     onClick={() => startTrialMutation.mutate()}
-                    disabled={startTrialMutation.isPending}
+                    disabled={startTrialMutation.isPending || startAnnualTrialMutation.isPending}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                     size="lg"
                   >
-                    {startTrialMutation.isPending ? (
+                    {(startTrialMutation.isPending || startAnnualTrialMutation.isPending) ? (
                       <Loader2 className="h-4 w-4 animate-spin ml-2" />
                     ) : (
                       'התחל ניסיון חינם - חודשי'
@@ -319,15 +333,15 @@ export default function Subscription() {
                 </div>
               </div>
               {/* Annual Plan CTA */}
-              {subscriptionData?.canStartTrial ? (
+              {subscriptionData?.canStartTrial && !subscriptionData?.hasSubscription ? (
                 <div className="pt-4">
                   <Button 
                     onClick={() => startAnnualTrialMutation.mutate()}
-                    disabled={startAnnualTrialMutation.isPending}
+                    disabled={startAnnualTrialMutation.isPending || startTrialMutation.isPending}
                     className="w-full bg-green-600 hover:bg-green-700"
                     size="lg"
                   >
-                    {startAnnualTrialMutation.isPending ? (
+                    {(startAnnualTrialMutation.isPending || startTrialMutation.isPending) ? (
                       <Loader2 className="h-4 w-4 animate-spin ml-2" />
                     ) : (
                       'התחל ניסיון חינם - שנתי'
