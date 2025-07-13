@@ -44,9 +44,9 @@ export default function Subscription() {
     retry: 1
   });
 
-  // Start trial mutation
+  // Start trial mutation (monthly)
   const startTrialMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/subscription/start-trial'),
+    mutationFn: () => apiRequest('POST', '/api/subscription/start-trial', { planType: 'monthly' }),
     onSuccess: (data) => {
       if (data.success) {
         toast({
@@ -65,6 +65,33 @@ export default function Subscription() {
     onError: (error: any) => {
       toast({
         title: "שגיאה בהתחלת ניסיון",
+        description: error.message || "נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Start annual trial mutation
+  const startAnnualTrialMutation = useMutation({
+    mutationFn: () => apiRequest('POST', '/api/subscription/start-trial', { planType: 'annual' }),
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "שבת ראשונה חינם!",
+          description: "התחלת במנוי שנתי עם חודש במתנה",
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+      } else {
+        toast({
+          title: "שגיאה",
+          description: data.error,
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "שגיאה בהתחלת ניסיון שנתי",
         description: error.message || "נסה שוב מאוחר יותר",
         variant: "destructive",
       });
@@ -147,44 +174,136 @@ export default function Subscription() {
           </p>
         </div>
 
-        {/* Pricing Card */}
-        <Card className="border-blue-200 bg-blue-50/50">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">תוכנית פרמיום</CardTitle>
-            <CardDescription>
-              <span className="text-3xl font-bold text-blue-600">$9.90</span>
-              <span className="text-muted-foreground">/חודש</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>YouTube</span>
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-2 gap-6">
+          
+          {/* Monthly Plan */}
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl">מנוי חודשי</CardTitle>
+              <CardDescription>
+                <span className="text-2xl font-bold text-blue-600">$9.90</span>
+                <span className="text-muted-foreground">/חודש</span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>YouTube</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Facebook</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Instagram</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>TikTok</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>אוטומציה 24/7</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>שבת ראשונה חינם</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Facebook</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Instagram</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>TikTok</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>אוטומציה 24/7</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>שבת ראשונה חינם</span>
-              </div>
+              {/* Monthly Plan CTA */}
+              {subscriptionData?.canStartTrial && (
+                <div className="pt-4">
+                  <Button 
+                    onClick={() => startTrialMutation.mutate()}
+                    disabled={startTrialMutation.isPending}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                  >
+                    {startTrialMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    ) : (
+                      'התחל ניסיון חינם - חודשי'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Annual Plan */}
+          <Card className="border-green-200 bg-green-50/50 relative">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <Badge className="bg-green-600 text-white px-3 py-1">
+                חודש במתנה!
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
+            <CardHeader className="text-center pt-6">
+              <CardTitle className="text-xl">מנוי שנתי</CardTitle>
+              <CardDescription className="space-y-1">
+                <div>
+                  <span className="text-2xl font-bold text-green-600">$108</span>
+                  <span className="text-muted-foreground">/שנה</span>
+                </div>
+                <div className="text-sm text-green-600">
+                  חוסך $10.80 בשנה (חודש במתנה!)
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>YouTube</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Facebook</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Instagram</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>TikTok</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>אוטומציה 24/7</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>שבת ראשונה חינם</span>
+                </div>
+              </div>
+              <div className="pt-2 text-center">
+                <div className="text-sm font-medium text-green-700">
+                  רק $9/חודש במקום $9.90
+                </div>
+              </div>
+              {/* Annual Plan CTA */}
+              {subscriptionData?.canStartTrial && (
+                <div className="pt-4">
+                  <Button 
+                    onClick={() => startAnnualTrialMutation.mutate()}
+                    disabled={startAnnualTrialMutation.isPending}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    size="lg"
+                  >
+                    {startAnnualTrialMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    ) : (
+                      'התחל ניסיון חינם - שנתי'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Current Status */}
         {subscriptionData?.hasSubscription ? (

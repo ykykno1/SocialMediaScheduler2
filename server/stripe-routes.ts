@@ -74,6 +74,7 @@ export function registerStripeRoutes(app: Express) {
     try {
       const userId = req.user.id;
       const email = req.user.email;
+      const { planType = 'monthly' } = req.body;
 
       // Check if user already has a trial
       const existing = stripeDemo.getSubscription(userId);
@@ -85,14 +86,16 @@ export function registerStripeRoutes(app: Express) {
         });
       }
 
-      // Create trial subscription
-      const subscription = await stripeDemo.createTrialSubscription(userId, email);
+      // Create trial subscription with plan type
+      const subscription = await stripeDemo.createTrialSubscription(userId, email, planType);
       
-      console.log(`Started trial for user ${userId}`);
+      console.log(`Started ${planType} trial for user ${userId}`);
       res.json({ 
         success: true, 
         subscription,
-        message: "Trial started! You have access to all features until your first Shabbat ends."
+        message: planType === 'annual' 
+          ? "Trial started with annual plan! You get a free month and save $10.80 yearly."
+          : "Trial started! You have access to all features until your first Shabbat ends."
       });
 
     } catch (error: any) {

@@ -16,10 +16,11 @@ export interface DemoSubscription {
   id: string;
   userId: string;
   status: 'trial' | 'pending_payment' | 'active' | 'cancelled';
+  planType: 'monthly' | 'annual';
   trialStartDate: Date;
   paymentDueDate?: Date;
   cardSetup: boolean;
-  amount: number; // $9.90 in cents
+  amount: number; // $9.90/month or $108/year in cents
 }
 
 export class StripeDemo {
@@ -32,20 +33,21 @@ export class StripeDemo {
   /**
    * Demo: Create trial subscription with card setup
    */
-  async createTrialSubscription(userId: string, email: string): Promise<DemoSubscription> {
+  async createTrialSubscription(userId: string, email: string, planType: 'monthly' | 'annual' = 'monthly'): Promise<DemoSubscription> {
     const subscription: DemoSubscription = {
       id: `demo_sub_${Date.now()}`,
       userId,
       status: 'trial',
+      planType,
       trialStartDate: new Date(),
       paymentDueDate: this.calculatePaymentDueDate(),
       cardSetup: false,
-      amount: 990 // $9.90 in cents
+      amount: planType === 'annual' ? 10800 : 990 // $108/year or $9.90/month in cents
     };
 
     this.demoSubscriptions.set(userId, subscription);
     
-    console.log(`Demo: Created trial subscription for user ${userId}`);
+    console.log(`Demo: Created ${planType} trial subscription for user ${userId}`);
     return subscription;
   }
 
