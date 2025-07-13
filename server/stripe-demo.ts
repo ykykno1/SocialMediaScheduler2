@@ -26,6 +26,7 @@ export interface DemoSubscription {
 export class StripeDemo {
   private demoSubscriptions: Map<string, DemoSubscription> = new Map();
   private usedTrials: Set<string> = new Set(); // Track users who used free trial
+  private actuallyUsedShabbat: Set<string> = new Set(); // Track users who actually used Shabbat features
   
   constructor(private config?: StripeConfig) {
     console.log('Stripe Demo initialized', STRIPE_DEMO_MODE ? '(DEMO MODE)' : '(LIVE MODE)');
@@ -36,6 +37,30 @@ export class StripeDemo {
    */
   hasUsedTrial(userId: string): boolean {
     return this.usedTrials.has(userId);
+  }
+
+  /**
+   * Check if user actually used Shabbat features during trial
+   */
+  hasActuallyUsedShabbat(userId: string): boolean {
+    return this.actuallyUsedShabbat.has(userId);
+  }
+
+  /**
+   * Mark user as having actually used Shabbat features
+   */
+  markShabbatUsed(userId: string): void {
+    this.actuallyUsedShabbat.add(userId);
+    console.log(`Demo: User ${userId} marked as actually used Shabbat features`);
+  }
+
+  /**
+   * Reset trial status for legacy users (admin function)
+   */
+  resetTrialForLegacyUser(userId: string): void {
+    this.usedTrials.delete(userId);
+    this.actuallyUsedShabbat.delete(userId);
+    console.log(`Demo: Reset trial status for legacy user ${userId}`);
   }
 
   /**
@@ -117,7 +142,7 @@ export class StripeDemo {
 
   /**
    * Demo: Cancel subscription before payment
-   * IMPORTANT: User keeps their "used trial" status even after cancellation
+   * Logic: Only keep "used trial" if user actually used Shabbat features
    */
   async cancelSubscription(userId: string): Promise<boolean> {
     const subscription = this.demoSubscriptions.get(userId);
@@ -125,13 +150,20 @@ export class StripeDemo {
       return false;
     }
 
-    // Remove the subscription but KEEP the user in usedTrials
-    // This prevents infinite trial abuse
+    // Remove the subscription
     this.demoSubscriptions.delete(userId);
-    // this.usedTrials remains unchanged - user cannot get another free trial
+    
+    // Smart logic: Only permanently mark as "used trial" if user actually used Shabbat features
+    if (!this.hasActuallyUsedShabbat(userId)) {
+      // User didn't actually use Shabbat features, so they can try again
+      this.usedTrials.delete(userId);
+      console.log(`Demo: User ${userId} can try again - didn't use Shabbat features`);
+    } else {
+      // User actually used Shabbat features, so trial is consumed
+      console.log(`Demo: User ${userId} cannot get another trial - already used Shabbat features`);
+    }
     
     console.log(`Demo: Cancelled and removed subscription for user ${userId}`);
-    console.log(`Demo: User ${userId} still marked as used trial (cannot get another free trial)`);
     return true;
   }
 

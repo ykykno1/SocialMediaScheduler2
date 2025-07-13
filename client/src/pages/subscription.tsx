@@ -57,9 +57,10 @@ export default function Subscription() {
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
         queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
-        // Don't show error for "already has subscription" - this is expected
-        if (data.error?.includes("already has a subscription")) {
-          // Just refresh the status, user already has a subscription
+        // Don't show error for common expected cases
+        if (data.error?.includes("already has a subscription") || 
+            data.error?.includes("already has a trial")) {
+          // Just refresh the status silently
           queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
           queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
         } else {
@@ -92,9 +93,10 @@ export default function Subscription() {
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
         queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
-        // Don't show error for "already has subscription" - this is expected
-        if (data.error?.includes("already has a subscription")) {
-          // Just refresh the status, user already has a subscription
+        // Don't show error for common expected cases
+        if (data.error?.includes("already has a subscription") || 
+            data.error?.includes("already has a trial")) {
+          // Just refresh the status silently
           queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
           queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
         } else {
