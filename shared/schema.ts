@@ -433,3 +433,165 @@ export type FacebookPreferences = typeof facebookPreferences.$inferSelect;
 export type InsertFacebookPreferences = typeof facebookPreferences.$inferInsert;
 export type FacebookContentState = typeof facebookContentStates.$inferSelect;
 export type InsertFacebookContentState = typeof facebookContentStates.$inferInsert;
+
+// ============================================
+// STRIPE SUBSCRIPTION SYSTEM - NEW TABLES
+// ============================================
+
+// Subscription plans schema
+export const subscriptionPlanSchema = z.object({
+  id: z.string(),
+  name: z.string(), // "trial", "premium"
+  stripePriceId: z.string().optional(), // Stripe price ID
+  price: z.number(), // $9.90
+  currency: z.string().default('USD'),
+  interval: z.enum(['month', 'year']).default('month'),
+  trialDays: z.number().default(0), // Days of free trial
+  isActive: z.boolean().default(true),
+  features: z.array(z.string()).default([]), // List of features
+});
+
+export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
+
+// User subscription status schema
+export const userSubscriptionSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  planId: z.string(),
+  stripeCustomerId: z.string().optional(),
+  stripeSubscriptionId: z.string().optional(),
+  stripeSetupIntentId: z.string().optional(), // For card setup without immediate charge
+  status: z.enum([
+    'trial',           // Free trial (first Shabbat)
+    'pending_payment', // Trial ended, waiting for Tuesday payment
+    'active',          // Paying subscriber
+    'cancelled',       // Cancelled before payment
+    'expired',         // Payment failed or subscription ended
+    'paused'           // Temporarily suspended
+  ]).default('trial'),
+  trialStartDate: z.date(),
+  trialEndDate: z.date().optional(), // When trial ends
+  paymentDueDate: z.date().optional(), // Tuesday after first Shabbat
+  nextBillingDate: z.date().optional(),
+  cancelledAt: z.date().optional(),
+  cancellationReason: z.string().optional(),
+  lastPaymentDate: z.date().optional(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+
+export type UserSubscription = z.infer<typeof userSubscriptionSchema>;
+
+// Payment history schema
+export const stripePaymentSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  subscriptionId: z.string(),
+  stripePaymentIntentId: z.string(),
+  amount: z.number(), // Amount in cents
+  currency: z.string().default('USD'),
+  status: z.enum(['pending', 'succeeded', 'failed', 'cancelled']),
+  paymentMethod: z.string().optional(), // last4 of card
+  failureReason: z.string().optional(),
+  paidAt: z.date().optional(),
+  createdAt: z.date().default(() => new Date()),
+});
+
+export type StripePayment = z.infer<typeof stripePaymentSchema>;
+
+// Email notifications schema
+export const emailNotificationSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  subscriptionId: z.string(),
+  type: z.enum([
+    'trial_started',     // Welcome to trial
+    'trial_ending',      // Sunday: Trial ending reminder
+    'payment_reminder',  // Monday: Payment due tomorrow
+    'payment_failed',    // Payment attempt failed
+    'payment_succeeded', // Payment successful
+    'subscription_cancelled', // User cancelled
+    'subscription_expired'    // Subscription ended
+  ]),
+  emailAddress: z.string().email(),
+  subject: z.string(),
+  sentAt: z.date().optional(),
+  opened: z.boolean().default(false),
+  clicked: z.boolean().default(false),
+  status: z.enum(['pending', 'sent', 'failed']).default('pending'),
+  createdAt: z.date().default(() => new Date()),
+});
+
+export type EmailNotification = z.infer<typeof emailNotificationSchema>;
+
+// Database tables for Stripe integration
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name").notNull(),
+  stripePriceId: varchar("stripe_price_id"),
+  price: integer("price").notNull(), // Price in cents
+  currency: varchar("currency").notNull().default('USD'),
+  interval: varchar("interval").$type<'month' | 'year'>().notNull().default('month'),
+  trialDays: integer("trial_days").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  features: text("features").default('[]'), // JSON array
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
+  planId: varchar("plan_id").notNull().references(() => subscriptionPlans.id),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  stripeSetupIntentId: varchar("stripe_setup_intent_id"),
+  status: varchar("status").$type<'trial' | 'pending_payment' | 'active' | 'cancelled' | 'expired' | 'paused'>().notNull().default('trial'),
+  trialStartDate: timestamp("trial_start_date").notNull(),
+  trialEndDate: timestamp("trial_end_date"),
+  paymentDueDate: timestamp("payment_due_date"),
+  nextBillingDate: timestamp("next_billing_date"),
+  cancelledAt: timestamp("cancelled_at"),
+  cancellationReason: text("cancellation_reason"),
+  lastPaymentDate: timestamp("last_payment_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const stripePayments = pgTable("stripe_payments", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
+  subscriptionId: varchar("subscription_id").notNull().references(() => userSubscriptions.id),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id").notNull(),
+  amount: integer("amount").notNull(), // Amount in cents
+  currency: varchar("currency").notNull().default('USD'),
+  status: varchar("status").$type<'pending' | 'succeeded' | 'failed' | 'cancelled'>().notNull(),
+  paymentMethod: varchar("payment_method"), // last4 of card
+  failureReason: text("failure_reason"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const emailNotifications = pgTable("email_notifications", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => secureUsers.id),
+  subscriptionId: varchar("subscription_id").notNull().references(() => userSubscriptions.id),
+  type: varchar("type").$type<'trial_started' | 'trial_ending' | 'payment_reminder' | 'payment_failed' | 'payment_succeeded' | 'subscription_cancelled' | 'subscription_expired'>().notNull(),
+  emailAddress: varchar("email_address").notNull(),
+  subject: varchar("subject").notNull(),
+  sentAt: timestamp("sent_at"),
+  opened: boolean("opened").notNull().default(false),
+  clicked: boolean("clicked").notNull().default(false),
+  status: varchar("status").$type<'pending' | 'sent' | 'failed'>().notNull().default('pending'),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Type exports for new tables
+export type SubscriptionPlanDb = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+export type UserSubscriptionDb = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = typeof userSubscriptions.$inferInsert;
+export type StripePaymentDb = typeof stripePayments.$inferSelect;
+export type InsertStripePayment = typeof stripePayments.$inferInsert;
+export type EmailNotificationDb = typeof emailNotifications.$inferSelect;
+export type InsertEmailNotification = typeof emailNotifications.$inferInsert;
