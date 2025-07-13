@@ -226,9 +226,9 @@ export default function YouTubeOAuthPage() {
         }
       } else {
         // For locking, no password needed
-        const response = await apiRequest("POST", `/api/youtube/video/${videoId}/lock`);
+        const result = await apiRequest("POST", `/api/youtube/video/${videoId}/lock`);
         
-        if (response.ok) {
+        if (result.success) {
           setVideos(prev => prev.map(video => 
             video.id === videoId 
               ? { ...video, isLocked: true, lockReason: 'manual' }
@@ -260,17 +260,17 @@ export default function YouTubeOAuthPage() {
   const hideAllVideos = async () => {
     setLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/youtube/hide-all");
+      const data = await apiRequest("POST", "/api/youtube/hide-all");
+      console.log('🙈 Hide all response:', data);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (data.success) {
         toast({
           title: "הוסתרו כל הסרטונים",
-          description: `הוסתרו ${data.hiddenCount} סרטונים בהצלחה`,
+          description: data.message || `הוסתרו ${data.hiddenCount} סרטונים בהצלחה`,
         });
         loadVideos(true);
       } else {
-        throw new Error('שגיאה בהסתרת הסרטונים');
+        throw new Error(data.error || 'שגיאה בהסתרת הסרטונים');
       }
     } catch (error: any) {
       toast({
@@ -286,17 +286,17 @@ export default function YouTubeOAuthPage() {
   const showAllVideos = async () => {
     setLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/youtube/show-all");
+      const data = await apiRequest("POST", "/api/youtube/show-all");
+      console.log('👁️ Show all response:', data);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (data.success) {
         toast({
           title: "הוצגו כל הסרטונים",
-          description: `הוצגו ${data.shownCount} סרטונים בהצלחה`,
+          description: data.message || `הוצגו ${data.shownCount} סרטונים בהצלחה`,
         });
         loadVideos(true);
       } else {
-        throw new Error('שגיאה בהצגת הסרטונים');
+        throw new Error(data.error || 'שגיאה בהצגת הסרטונים');
       }
     } catch (error: any) {
       toast({
