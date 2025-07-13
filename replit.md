@@ -126,13 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- July 13, 2025. COMPLETED: Production deployment with Replit Autoscale and OAuth configuration:
+- July 13, 2025. COMPLETED: Production deployment and OAuth configuration progressing:
   - Successfully deployed application to Replit Autoscale ($7/month)
   - Production URL: social-media-scheduler-ykykyair.replit.app (HTTPS enabled)
-  - Updated Meta Developer Console with all redirect URIs and allowed domains
-  - Configured Facebook OAuth for both temporary and permanent domain (robotshabat.com)
+  - Updated Meta Developer Console with all redirect URIs and allowed domains (Facebook ready)
+  - Updated Google Cloud Console with production redirect URIs (YouTube OAuth working)
+  - Google verification process initiated - app in testing mode, needs approval for public access
   - DNS configuration in progress for custom domain robotshabat.com (24-48 hour propagation)
-  - Google Cloud Console OAuth configuration ready for YouTube API integration
   - System ready for production use with automatic 24/7 scheduler functionality
 - July 12, 2025. FIXED: Critical automatic video locking bug and enhanced scheduler reliability:
   - IDENTIFIED ROOT CAUSE: Automatic restore was scheduled for 18:01 but server restart at 18:08 caused missed execution
