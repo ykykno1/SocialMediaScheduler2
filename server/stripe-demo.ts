@@ -60,7 +60,11 @@ export class StripeDemo {
   resetTrialForLegacyUser(userId: string): void {
     this.usedTrials.delete(userId);
     this.actuallyUsedShabbat.delete(userId);
-    console.log(`Demo: Reset trial status for legacy user ${userId}`);
+    // Also remove any existing subscription if exists
+    if (this.demoSubscriptions.has(userId)) {
+      this.demoSubscriptions.delete(userId);
+    }
+    console.log(`Demo: Reset trial status and subscription for legacy user ${userId}`);
   }
 
   /**

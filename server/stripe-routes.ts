@@ -61,6 +61,11 @@ const requireAuth = async (req: AuthenticatedRequest, res: Response, next: any) 
 
 export function registerStripeRoutes(app: Express) {
   console.log("Registering Stripe Demo routes...");
+  
+  // Reset trial for legacy users who already have premium
+  const LEGACY_USER_ID = "phtLx68scJszZOMrBEPHL";
+  stripeDemo.resetTrialForLegacyUser(LEGACY_USER_ID);
+  console.log(`Reset trial status for legacy user ${LEGACY_USER_ID}`);
 
   // ==========================================
   // TRIAL SUBSCRIPTION MANAGEMENT
