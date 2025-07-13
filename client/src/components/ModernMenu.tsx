@@ -86,6 +86,12 @@ const ModernMenu: React.FC<ModernMenuProps> = ({ onShowSettings, onShowHistory }
       disabled: false
     },
     {
+      icon: CreditCard,
+      label: 'ניהול מנוי',
+      action: () => window.location.href = '/subscription',
+      disabled: false
+    },
+    {
       icon: Info,
       label: 'אודות האפליקציה',
       action: () => window.location.href = '/about',
