@@ -142,31 +142,26 @@ export default function YouTubeOAuthPage() {
     setLoading(true);
     try {
       const url = skipAutoLock ? "/api/youtube/videos?skipAutoLock=true" : "/api/youtube/videos";
-      const response = await apiRequest("GET", url);
-      if (response.ok) {
-        const data = await response.json();
-        const videosWithLockStatus = await Promise.all(
-          (data.videos || []).map(async (video: YouTubeVideo) => {
-            try {
-              const lockResponse = await apiRequest("GET", `/api/youtube/video/${video.id}/lock-status`);
-              if (lockResponse.ok) {
-                const lockData = await lockResponse.json();
-                return {
-                  ...video,
-                  isLocked: lockData.isLocked || false,
-                  lockReason: lockData.reason
-                };
-              }
-            } catch (error) {
-              console.error(`Failed to fetch lock status for video ${video.id}:`, error);
-            }
+      const data = await apiRequest("GET", url);
+      console.log('📹 Received videos data:', data);
+      
+      const videosWithLockStatus = await Promise.all(
+        (data.videos || []).map(async (video: YouTubeVideo) => {
+          try {
+            const lockData = await apiRequest("GET", `/api/youtube/video/${video.id}/lock-status`);
+            return {
+              ...video,
+              isLocked: lockData.isLocked || false,
+              lockReason: lockData.reason
+            };
+          } catch (error) {
+            console.error(`Failed to fetch lock status for video ${video.id}:`, error);
             return { ...video, isLocked: false };
-          })
-        );
-        setVideos(videosWithLockStatus);
-      } else {
-        throw new Error('שגיאה בטעינת הסרטונים');
-      }
+          }
+        })
+      );
+      setVideos(videosWithLockStatus);
+      console.log('✅ Videos loaded successfully:', videosWithLockStatus.length);
     } catch (error: any) {
       toast({
         title: "שגיאה בטעינת סרטונים",
@@ -181,9 +176,9 @@ export default function YouTubeOAuthPage() {
   const toggleVideoVisibility = async (videoId: string, currentlyHidden: boolean) => {
     try {
       const action = currentlyHidden ? 'show' : 'hide';
-      const response = await apiRequest("POST", `/api/youtube/videos/${videoId}/${action}`);
+      const result = await apiRequest("POST", `/api/youtube/videos/${videoId}/${action}`);
 
-      if (response.ok) {
+      if (result.success) {
         setVideos(prev => prev.map(video => 
           video.id === videoId 
             ? { ...video, isHidden: !currentlyHidden }
@@ -195,7 +190,7 @@ export default function YouTubeOAuthPage() {
           description: currentlyHidden ? "הסרטון חזר להיות גלוי" : "הסרטון הוסתר מהציבור",
         });
       } else {
-        throw new Error('שגיאה בעדכון הסרטון');
+        throw new Error(result.error || 'שגיאה בעדכון הסרטון');
       }
     } catch (error: any) {
       toast({
@@ -215,9 +210,9 @@ export default function YouTubeOAuthPage() {
           return; // User cancelled
         }
         
-        const response = await apiRequest("POST", `/api/youtube/video/${videoId}/unlock`, { password });
+        const result = await apiRequest("POST", `/api/youtube/video/${videoId}/unlock`, { password });
         
-        if (response.ok) {
+        if (result.success) {
           // Refresh the video list to get updated status
           await loadVideos(true);
           

@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 13, 2025. COMPLETED: Fixed YouTube authentication completely - authentication and video loading now working:
+  - Root cause: Incorrect endpoint name in server routes (/api/youtube/token vs /api/youtube/auth-callback)
+  - Fixed apiRequest usage in youtube-oauth.tsx (removed .ok checks since apiRequest returns JSON directly)
+  - YouTube authentication now works end-to-end: popup opens, server receives auth code, saves token, loads videos
+  - Video list displays correctly with lock status and privacy status
+  - User successfully connected with channel "Ykykyair Ykykkeren" and 4 videos loaded
+  - System ready for production use with working YouTube OAuth integration
 - July 13, 2025. COMPLETED: Added annual subscription plan with free month bonus:
   - Enhanced subscription page with side-by-side pricing cards (monthly vs annual)
   - Monthly plan: $9.90/month (unchanged)
