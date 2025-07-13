@@ -21,6 +21,7 @@ import {
   loginSchema
 } from "@shared/schema";
 // import { registerFacebookPagesRoutes } from "./facebook-pages"; // Temporarily disabled
+import { registerStripeRoutes } from './stripe-routes.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
@@ -3479,6 +3480,9 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ error: "Failed to send verification SMS" });
     }
   });
+
+  // Register Stripe Demo routes (separate from existing functionality)
+  registerStripeRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
