@@ -49,21 +49,18 @@ export default function Subscription() {
   const startTrialMutation = useMutation({
     mutationFn: () => apiRequest('POST', '/api/subscription/start-trial', { planType: 'monthly' }),
     onSuccess: (data) => {
+      // עדכון הנתונים תמיד (לא מותנה בהצלחה)
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+      
       if (data.success) {
         toast({
           title: "שבת ראשונה חינם!",
           description: data.message,
         });
-        queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
-        queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
-        // Don't show error for common expected cases
-        if (data.error?.includes("already has a subscription") || 
-            data.error?.includes("already has a trial")) {
-          // Just refresh the status silently
-          queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
-          queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
-        } else {
+        // רק אם זה לא שגיאה רגילה - הצג שגיאה
+        if (!data.error?.includes("already has a subscription") && 
+            !data.error?.includes("already has a trial")) {
           toast({
             title: "שגיאה",
             description: data.error,
@@ -73,9 +70,10 @@ export default function Subscription() {
       }
     },
     onError: (error: any) => {
+      // רק שגיאות רשת אמיתיות מגיעות לכאן
       toast({
         title: "שגיאה בהתחלת ניסיון",
-        description: error.message || "נסה שוב מאוחר יותר",
+        description: "בעיה בתקשורת - נסה שוב",
         variant: "destructive",
       });
     }
@@ -85,21 +83,18 @@ export default function Subscription() {
   const startAnnualTrialMutation = useMutation({
     mutationFn: () => apiRequest('POST', '/api/subscription/start-trial', { planType: 'annual' }),
     onSuccess: (data) => {
+      // עדכון הנתונים תמיד
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+      
       if (data.success) {
         toast({
           title: "שבת ראשונה חינם!",
           description: "התחלת במנוי שנתי עם חודש במתנה",
         });
-        queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
-        queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
-        // Don't show error for common expected cases
-        if (data.error?.includes("already has a subscription") || 
-            data.error?.includes("already has a trial")) {
-          // Just refresh the status silently
-          queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
-          queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
-        } else {
+        // רק אם זה לא שגיאה רגילה - הצג שגיאה
+        if (!data.error?.includes("already has a subscription") && 
+            !data.error?.includes("already has a trial")) {
           toast({
             title: "שגיאה",
             description: data.error,
@@ -109,9 +104,10 @@ export default function Subscription() {
       }
     },
     onError: (error: any) => {
+      // רק שגיאות רשת אמיתיות מגיעות לכאן
       toast({
         title: "שגיאה בהתחלת ניסיון שנתי",
-        description: error.message || "נסה שוב מאוחר יותר",
+        description: "בעיה בתקשורת - נסה שוב",
         variant: "destructive",
       });
     }
@@ -121,13 +117,13 @@ export default function Subscription() {
   const setupPaymentMutation = useMutation({
     mutationFn: () => apiRequest('POST', '/api/subscription/setup-payment'),
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+      
       if (data.success) {
-        // In real Stripe, would redirect to Stripe Elements
         toast({
           title: "הגדרת תשלום",
           description: "דמו: כרטיס אשראי הוגדר בהצלחה",
         });
-        queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
       } else {
         toast({
           title: "שגיאה",
@@ -143,12 +139,19 @@ export default function Subscription() {
     mutationFn: (reason: string) => 
       apiRequest('POST', '/api/subscription/cancel', { reason }),
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+      
       if (data.success) {
         toast({
           title: "מנוי בוטל",
           description: data.message,
         });
-        queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+      } else {
+        toast({
+          title: "שגיאה",
+          description: data.error,
+          variant: "destructive",
+        });
       }
     }
   });
@@ -240,11 +243,11 @@ export default function Subscription() {
                 <div className="pt-4">
                   <Button 
                     onClick={() => startTrialMutation.mutate()}
-                    disabled={startTrialMutation.isPending || startAnnualTrialMutation.isPending}
+                    disabled={startTrialMutation.isPending}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                     size="lg"
                   >
-                    {(startTrialMutation.isPending || startAnnualTrialMutation.isPending) ? (
+                    {startTrialMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin ml-2" />
                     ) : (
                       'התחל ניסיון חינם - חודשי'
@@ -342,11 +345,11 @@ export default function Subscription() {
                 <div className="pt-4">
                   <Button 
                     onClick={() => startAnnualTrialMutation.mutate()}
-                    disabled={startAnnualTrialMutation.isPending || startTrialMutation.isPending}
+                    disabled={startAnnualTrialMutation.isPending}
                     className="w-full bg-green-600 hover:bg-green-700"
                     size="lg"
                   >
-                    {(startAnnualTrialMutation.isPending || startTrialMutation.isPending) ? (
+                    {startAnnualTrialMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin ml-2" />
                     ) : (
                       'התחל ניסיון חינם - שנתי'

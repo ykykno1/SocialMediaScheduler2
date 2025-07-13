@@ -61,11 +61,6 @@ const requireAuth = async (req: AuthenticatedRequest, res: Response, next: any) 
 
 export function registerStripeRoutes(app: Express) {
   console.log("Registering Stripe Demo routes...");
-  
-  // Reset trial for this specific legacy user (one-time fix)
-  const LEGACY_USER_ID = "phtLx68scJszZOMrBEPHL";
-  stripeDemo.resetTrialForLegacyUser(LEGACY_USER_ID);
-  console.log(`Reset trial status for legacy user ${LEGACY_USER_ID}`);
 
   // ==========================================
   // TRIAL SUBSCRIPTION MANAGEMENT
@@ -81,14 +76,12 @@ export function registerStripeRoutes(app: Express) {
       const email = req.user.email;
       const { planType = 'monthly' } = req.body;
 
-      // Check if user already has a trial
+      // Check if user already has a trial - clean up first
       const existing = stripeDemo.getSubscription(userId);
       if (existing) {
-        return res.json({ 
-          success: false, 
-          error: "User already has a subscription",
-          subscription: existing 
-        });
+        // Cancel any existing subscription first to avoid conflicts
+        await stripeDemo.cancelSubscription(userId);
+        console.log(`Cleaned up existing subscription for user ${userId}`);
       }
 
       // Check if user already used their free trial

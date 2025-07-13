@@ -67,8 +67,11 @@ export class StripeDemo {
    * Demo: Create trial subscription with card setup
    */
   async createTrialSubscription(userId: string, email: string, planType: 'monthly' | 'annual' = 'monthly'): Promise<DemoSubscription> {
-    // This function should only be called after checking hasUsedTrial in the route
-    // If we reach here, user is eligible for trial
+    // Clean up any existing subscription first
+    if (this.demoSubscriptions.has(userId)) {
+      this.demoSubscriptions.delete(userId);
+      console.log(`Demo: Cleaned up existing subscription for user ${userId}`);
+    }
 
     const subscription: DemoSubscription = {
       id: `demo_sub_${Date.now()}`,
