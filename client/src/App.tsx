@@ -26,6 +26,7 @@ import DataDeletionPage from "@/pages/data-deletion";
 import TimingSettingsPage from "@/pages/timing-settings";
 import TestScheduler from "@/pages/test-scheduler";
 import AboutPage from "@/pages/about";
+import SubscriptionPage from "@/pages/subscription";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram, Clock, TestTube } from "lucide-react";
@@ -126,6 +127,11 @@ function Navbar() {
     {
       label: "מחירים",
       href: "/pricing",
+      icon: <CreditCard className="h-4 w-4 mr-2" />,
+    },
+    {
+      label: "מנוי",
+      href: "/subscription",
       icon: <CreditCard className="h-4 w-4 mr-2" />,
     },
     {
@@ -263,6 +269,7 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/profile" component={ProfilePage} />
         <Route path="/pricing" component={PricingPage} />
+        <Route path="/subscription" component={SubscriptionPage} />
         <Route path="/youtube" component={YouTubePage} />
         <Route path="/facebook" component={FacebookPage} />
         <Route path="/instagram" component={InstagramPage} />
