@@ -152,6 +152,9 @@ export default function Subscription() {
   });
 
   const subscriptionData = status as SubscriptionStatus;
+  
+  // Debug info
+  console.log('Subscription status:', subscriptionData);
 
   if (isLoading) {
     return (

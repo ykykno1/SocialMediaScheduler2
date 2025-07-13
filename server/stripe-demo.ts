@@ -117,6 +117,7 @@ export class StripeDemo {
 
   /**
    * Demo: Cancel subscription before payment
+   * IMPORTANT: User keeps their "used trial" status even after cancellation
    */
   async cancelSubscription(userId: string): Promise<boolean> {
     const subscription = this.demoSubscriptions.get(userId);
@@ -124,10 +125,13 @@ export class StripeDemo {
       return false;
     }
 
-    // Remove the subscription entirely instead of marking as cancelled
+    // Remove the subscription but KEEP the user in usedTrials
+    // This prevents infinite trial abuse
     this.demoSubscriptions.delete(userId);
+    // this.usedTrials remains unchanged - user cannot get another free trial
     
     console.log(`Demo: Cancelled and removed subscription for user ${userId}`);
+    console.log(`Demo: User ${userId} still marked as used trial (cannot get another free trial)`);
     return true;
   }
 
