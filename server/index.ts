@@ -34,6 +34,16 @@ app.use(session({
   rolling: true
 }));
 
+// Handle custom domain redirects
+app.use((req, res, next) => {
+  // Force HTTP for custom domains to avoid SSL issues
+  if (req.hostname.includes('robotshabat.com') && req.secure) {
+    const redirectUrl = `http://${req.hostname}${req.originalUrl}`;
+    return res.redirect(301, redirectUrl);
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
