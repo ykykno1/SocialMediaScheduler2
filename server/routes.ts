@@ -259,7 +259,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // YouTube OAuth token exchange - Updated to use per-user authentication
-  app.post("/api/youtube/token", requireAuth, async (req: any, res) => {
+  app.post("/api/youtube/auth-callback", requireAuth, async (req: any, res) => {
     try {
       const { code } = req.body;
 
