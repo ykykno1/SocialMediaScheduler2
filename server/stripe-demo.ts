@@ -25,15 +25,28 @@ export interface DemoSubscription {
 
 export class StripeDemo {
   private demoSubscriptions: Map<string, DemoSubscription> = new Map();
+  private usedTrials: Set<string> = new Set(); // Track users who used free trial
   
   constructor(private config?: StripeConfig) {
     console.log('Stripe Demo initialized', STRIPE_DEMO_MODE ? '(DEMO MODE)' : '(LIVE MODE)');
   }
 
   /**
+   * Check if user already used their free trial
+   */
+  hasUsedTrial(userId: string): boolean {
+    return this.usedTrials.has(userId);
+  }
+
+  /**
    * Demo: Create trial subscription with card setup
    */
   async createTrialSubscription(userId: string, email: string, planType: 'monthly' | 'annual' = 'monthly'): Promise<DemoSubscription> {
+    // Check if user already used trial
+    if (this.hasUsedTrial(userId)) {
+      throw new Error('You have already used your free Shabbat trial. Please choose a payment plan.');
+    }
+
     const subscription: DemoSubscription = {
       id: `demo_sub_${Date.now()}`,
       userId,
@@ -46,6 +59,7 @@ export class StripeDemo {
     };
 
     this.demoSubscriptions.set(userId, subscription);
+    this.usedTrials.add(userId); // Mark user as having used trial
     
     console.log(`Demo: Created ${planType} trial subscription for user ${userId}`);
     return subscription;

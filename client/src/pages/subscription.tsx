@@ -55,6 +55,7 @@ export default function Subscription() {
           description: data.message,
         });
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+        queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
         toast({
           title: "שגיאה",
@@ -82,6 +83,7 @@ export default function Subscription() {
           description: "התחלת במנוי שנתי עם חודש במתנה",
         });
         queryClient.invalidateQueries({ queryKey: ['/api/subscription/status'] });
+        queryClient.refetchQueries({ queryKey: ['/api/subscription/status'] });
       } else {
         toast({
           title: "שגיאה",
@@ -236,7 +238,7 @@ export default function Subscription() {
                     המנוי הנוכחי שלך
                   </Badge>
                 </div>
-              ) : (
+              ) : subscriptionData?.hasSubscription ? (
                 <div className="pt-4">
                   <Button 
                     variant="outline"
@@ -245,6 +247,20 @@ export default function Subscription() {
                     disabled
                   >
                     שנה למנוי חודשי
+                  </Button>
+                </div>
+              ) : (
+                <div className="pt-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    כבר ניצלת את השבת הראשונה החינם
+                  </p>
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    disabled
+                  >
+                    חיוב מיידי - $9.90/חודש
                   </Button>
                 </div>
               )}
@@ -324,7 +340,7 @@ export default function Subscription() {
                     המנוי הנוכחי שלך
                   </Badge>
                 </div>
-              ) : (
+              ) : subscriptionData?.hasSubscription ? (
                 <div className="pt-4">
                   <Button 
                     variant="outline"
@@ -333,6 +349,20 @@ export default function Subscription() {
                     disabled
                   >
                     שנה למנוי שנתי
+                  </Button>
+                </div>
+              ) : (
+                <div className="pt-4 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    כבר ניצלת את השבת הראשונה החינם
+                  </p>
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    disabled
+                  >
+                    חיוב מיידי - $108/שנה
                   </Button>
                 </div>
               )}

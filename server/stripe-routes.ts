@@ -147,10 +147,14 @@ export function registerStripeRoutes(app: Express) {
       const subscription = stripeDemo.getSubscription(userId);
       
       if (!subscription || subscription.status === 'cancelled') {
+        // Check if user already used trial
+        const hasUsedTrial = stripeDemo.hasUsedTrial(userId);
         return res.json({ 
           hasSubscription: false,
-          canStartTrial: true,
-          message: "No subscription found. You can start your free trial."
+          canStartTrial: !hasUsedTrial,
+          message: hasUsedTrial 
+            ? "You have already used your free Shabbat trial. Please choose a payment plan."
+            : "No subscription found. You can start your free trial."
         });
       }
 
