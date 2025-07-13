@@ -112,10 +112,10 @@ export class StripeDemo {
       return false;
     }
 
-    subscription.status = 'cancelled';
-    this.demoSubscriptions.set(userId, subscription);
+    // Remove the subscription entirely instead of marking as cancelled
+    this.demoSubscriptions.delete(userId);
     
-    console.log(`Demo: Cancelled subscription for user ${userId}`);
+    console.log(`Demo: Cancelled and removed subscription for user ${userId}`);
     return true;
   }
 

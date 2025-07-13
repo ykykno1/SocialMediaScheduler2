@@ -146,7 +146,7 @@ export function registerStripeRoutes(app: Express) {
       const userId = req.user.id;
       const subscription = stripeDemo.getSubscription(userId);
       
-      if (!subscription) {
+      if (!subscription || subscription.status === 'cancelled') {
         return res.json({ 
           hasSubscription: false,
           canStartTrial: true,
