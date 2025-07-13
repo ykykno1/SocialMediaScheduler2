@@ -215,7 +215,7 @@ export default function Subscription() {
                 </div>
               </div>
               {/* Monthly Plan CTA */}
-              {subscriptionData?.canStartTrial && (
+              {subscriptionData?.canStartTrial ? (
                 <div className="pt-4">
                   <Button 
                     onClick={() => startTrialMutation.mutate()}
@@ -228,6 +228,23 @@ export default function Subscription() {
                     ) : (
                       'התחל ניסיון חינם - חודשי'
                     )}
+                  </Button>
+                </div>
+              ) : subscriptionData?.subscription?.planType === 'monthly' ? (
+                <div className="pt-4">
+                  <Badge variant="default" className="w-full justify-center py-2">
+                    המנוי הנוכחי שלך
+                  </Badge>
+                </div>
+              ) : (
+                <div className="pt-4">
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    disabled
+                  >
+                    שנה למנוי חודשי
                   </Button>
                 </div>
               )}
@@ -286,7 +303,7 @@ export default function Subscription() {
                 </div>
               </div>
               {/* Annual Plan CTA */}
-              {subscriptionData?.canStartTrial && (
+              {subscriptionData?.canStartTrial ? (
                 <div className="pt-4">
                   <Button 
                     onClick={() => startAnnualTrialMutation.mutate()}
@@ -299,6 +316,23 @@ export default function Subscription() {
                     ) : (
                       'התחל ניסיון חינם - שנתי'
                     )}
+                  </Button>
+                </div>
+              ) : subscriptionData?.subscription?.planType === 'annual' ? (
+                <div className="pt-4">
+                  <Badge variant="default" className="w-full justify-center py-2 bg-green-600">
+                    המנוי הנוכחי שלך
+                  </Badge>
+                </div>
+              ) : (
+                <div className="pt-4">
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    disabled
+                  >
+                    שנה למנוי שנתי
                   </Button>
                 </div>
               )}
