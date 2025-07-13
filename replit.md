@@ -126,6 +126,14 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 13, 2025. COMPLETED: Added annual subscription plan with free month bonus:
+  - Enhanced subscription page with side-by-side pricing cards (monthly vs annual)
+  - Monthly plan: $9.90/month (unchanged)
+  - Annual plan: $108/year with free month bonus (saves $10.80 yearly, only $9/month)
+  - Added separate trial start buttons for monthly and annual plans
+  - Updated backend API to support planType parameter in subscription creation
+  - Enhanced UI to display subscription plan type (monthly/annual) in user dashboard
+  - System now ready for both monthly and annual billing cycles through Stripe
 - July 13, 2025. COMPLETED: Production deployment and OAuth configuration progressing:
   - Successfully deployed application to Replit Autoscale ($7/month)
   - Production URL: social-media-scheduler-ykykyair.replit.app (HTTPS enabled)

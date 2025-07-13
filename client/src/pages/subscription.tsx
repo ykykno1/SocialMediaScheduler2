@@ -19,6 +19,7 @@ interface SubscriptionStatus {
     id: string;
     userId: string;
     status: 'trial' | 'pending_payment' | 'active' | 'cancelled';
+    planType: 'monthly' | 'annual';
     trialStartDate: string;
     paymentDueDate?: string;
     cardSetup: boolean;
@@ -326,6 +327,27 @@ export default function Subscription() {
             </CardHeader>
             <CardContent className="space-y-4">
               
+              {/* Subscription Plan Info */}
+              {subscriptionData.subscription && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-blue-700">
+                        {subscriptionData.subscription.planType === 'annual' ? 'מנוי שנתי' : 'מנוי חודשי'}
+                      </div>
+                      <div className="text-sm text-blue-600">
+                        {subscriptionData.subscription.planType === 'annual' 
+                          ? '$108/שנה (חודש במתנה!)' 
+                          : '$9.90/חודש'}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-blue-700 border-blue-300">
+                      {subscriptionData.subscription.planType === 'annual' ? 'שנתי' : 'חודשי'}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
               {/* Trial Status */}
               {subscriptionData.trialStatus?.isInTrial && (
                 <div className="p-4 bg-green-50 rounded-lg border border-green-200">
