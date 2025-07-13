@@ -34,12 +34,12 @@ app.use(session({
   rolling: true
 }));
 
-// Handle custom domain redirects
+// Handle custom domain SSL issues
 app.use((req, res, next) => {
-  // Force HTTP for custom domains to avoid SSL issues
-  if (req.hostname.includes('robotshabat.com') && req.secure) {
-    const redirectUrl = `http://${req.hostname}${req.originalUrl}`;
-    return res.redirect(301, redirectUrl);
+  // Set security headers for custom domains
+  if (req.hostname.includes('robotshabat.com')) {
+    res.setHeader('Strict-Transport-Security', 'max-age=0');
+    res.setHeader('Content-Security-Policy', 'upgrade-insecure-requests');
   }
   next();
 });
