@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Home, Settings as SettingsIcon, History as HistoryIcon, LogIn, LogOut, CreditCard, Youtube, Facebook, Instagram, Clock, TestTube } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import TermsOfServicePage from "@/pages/terms-of-service";
 
 // Hook for authentication
 function useAuth() {
@@ -256,6 +257,7 @@ function Router() {
       <Switch>
         <Route path="/auth" component={AuthPage} />
         <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+        <Route path="/terms-of-service" component={TermsOfServicePage} />
         <Route path="/data-deletion" component={DataDeletionPage} />
         <Route path="/" component={LandingPage} />
         <Route component={LandingPage} />
@@ -278,6 +280,7 @@ function Router() {
         <Route path="/test-scheduler" component={TestScheduler} />
         <Route path="/about" component={AboutPage} />
         <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+        <Route path="/terms-of-service" component={TermsOfServicePage} />
         <Route path="/data-deletion" component={DataDeletionPage} />
         <Route path="/system-admin-secure-access" component={AdminPage} />
         <Route path="/admin-shabbat-times" component={AdminShabbatPage} />

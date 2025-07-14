@@ -362,6 +362,7 @@ export default function LandingPage() {
                 <li><a href="#features" className="hover:text-white transition-colors">תכונות</a></li>
                 <li><a href="#pricing" className="hover:text-white transition-colors">מחירים</a></li>
                 <li><Link href="/privacy-policy" className="hover:text-white transition-colors">מדיניות פרטיות</Link></li>
+                <li><Link href="/terms-of-service" className="hover:text-white transition-colors">תנאי שימוש</Link></li>
                 <li><Link href="/data-deletion" className="hover:text-white transition-colors">מחיקת נתונים</Link></li>
               </ul>
             </div>

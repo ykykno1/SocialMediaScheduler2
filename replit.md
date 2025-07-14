@@ -126,6 +126,16 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 14, 2025. COMPLETED: Comprehensive Google OAuth verification preparation:
+  - Created complete privacy policy at /privacy-policy with GDPR compliance and Hebrew text
+  - Created comprehensive terms of service at /terms-of-service covering religious use case
+  - Added navigation routes for both legal pages in app and landing page footer
+  - Prepared detailed Google verification guide (docs/google-verification-guide.md)
+  - Created app description document for Google submission (docs/app-description.md)
+  - Prepared scope justification explaining religious YouTube API usage (docs/scope-justification.md)
+  - Created verification checklist with timeline and requirements (docs/verification-checklist.md)
+  - Application ready for Google OAuth verification submission - only needs domain verification and demo video
+  - Legal framework complete for production deployment and public user access
 - July 13, 2025. COMPLETED: Fixed YouTube authentication completely - authentication and video loading now working:
   - Root cause: Incorrect endpoint name in server routes (/api/youtube/token vs /api/youtube/auth-callback)
   - Fixed apiRequest usage in youtube-oauth.tsx (removed .ok checks since apiRequest returns JSON directly)
