@@ -350,7 +350,10 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">רובוט שבת</h3>
+              <div className="flex items-center gap-3 mb-4">
+                <img src="/logo.png" alt="רובוט שבת" className="w-12 h-12 rounded-lg" />
+                <h3 className="text-xl font-bold">רובוט שבת</h3>
+              </div>
               <p className="text-gray-400">
                 שמירה על קדושת השבת ברשתות החברתיות - יוטיוב, פייסבוק, אינסטגרם וטיקטוק
               </p>
