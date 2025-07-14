@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 14, 2025. UPDATED: Professional email infrastructure configuration:
+  - Configured all professional domain emails (info@, support@, privacy@, no-reply@, admin@robotshabat.com)
+  - Updated all legal pages and documentation with professional contact information
+  - Email service configured with Zoho SMTP settings but authentication pending resolution
+  - System remains fully operational without email service - core features unaffected
+  - OAuth verification can proceed without email service dependency
+  - Email troubleshooting guide created with Zoho-specific solutions
 - July 14, 2025. COMPLETED: Comprehensive Google OAuth verification preparation:
   - Created complete privacy policy at /privacy-policy with GDPR compliance and Hebrew text
   - Created comprehensive terms of service at /terms-of-service covering religious use case

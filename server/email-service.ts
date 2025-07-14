@@ -173,7 +173,29 @@ export function generateVerificationCode(): string {
  * Create email service instance
  */
 export function createEmailService(): EmailService | null {
-  // Try Gmail SMTP first
+  // Use configured email environment variables
+  const emailHost = process.env.EMAIL_HOST;
+  const emailPort = process.env.EMAIL_PORT;
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  const emailFrom = process.env.EMAIL_FROM;
+  
+  if (emailHost && emailPort && emailUser && emailPass && emailFrom) {
+    const port = parseInt(emailPort);
+    const secure = port === 465; // Use secure connection for port 465
+    
+    return new EmailService({
+      host: emailHost,
+      port: port,
+      secure: secure,
+      auth: {
+        user: emailUser,
+        pass: emailPass
+      }
+    }, emailFrom);
+  }
+
+  // Fallback to Gmail SMTP
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
   
@@ -189,7 +211,7 @@ export function createEmailService(): EmailService | null {
     }, gmailUser);
   }
 
-  // Try Mailjet as fallback
+  // Fallback to Mailjet
   const mailjetUser = process.env.MAILJET_USER;
   const mailjetPass = process.env.MAILJET_PASSWORD;
   
@@ -205,7 +227,7 @@ export function createEmailService(): EmailService | null {
     }, process.env.MAILJET_FROM_EMAIL || mailjetUser);
   }
 
-  console.warn('No email service configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD or MAILJET credentials');
+  console.warn('No email service configured. Please set EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, and EMAIL_FROM');
   return null;
 }
 
