@@ -227,7 +227,7 @@ export function createEmailService(): EmailService | null {
     }, process.env.MAILJET_FROM_EMAIL || mailjetUser);
   }
 
-  console.warn('No email service configured. Please set EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, and EMAIL_FROM');
+  console.warn('No email service configured. Email features will be disabled.');
   return null;
 }
 
