@@ -370,8 +370,9 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">תמיכה</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="mailto:robotshabat@gmail.com" className="hover:text-white transition-colors">תמיכה טכנית</a></li>
-                <li><a href="mailto:robotshabat@gmail.com" className="hover:text-white transition-colors">יצירת קשר</a></li>
+                <li><a href="mailto:support@robotshabat.com" className="hover:text-white transition-colors">תמיכה טכנית</a></li>
+                <li><a href="mailto:info@robotshabat.com" className="hover:text-white transition-colors">יצירת קשר</a></li>
+                <li><a href="mailto:privacy@robotshabat.com" className="hover:text-white transition-colors">פרטיות</a></li>
               </ul>
             </div>
             

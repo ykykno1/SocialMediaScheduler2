@@ -43,7 +43,7 @@
 ### OAuth Consent Screen Configuration:
 1. **App Information:**
    - App name: רובוט שבת (Shabbat Robot)
-   - User support email: robotshabat@gmail.com
+   - User support email: info@robotshabat.com
    - App logo: [קישור ללוגו באתר]
 
 2. **App Domain:**
@@ -92,7 +92,7 @@ The app serves the Jewish religious community by automating content management d
 ### Supporting Documents:
 1. **Business Information**: 
    - Developer: [Your Name/Company]
-   - Contact: robotshabat@gmail.com
+   - Contact: info@robotshabat.com
    - Location: Israel
    - Target audience: Jewish religious community
 
@@ -174,7 +174,9 @@ Our app requires YouTube API access to help users temporarily hide their video c
 [Specific question about verification process]
 
 Best regards,
-[Your name]
+Shabbat Robot Team
+Contact: info@robotshabat.com
+Support: support@robotshabat.com
 ```
 
 ### Key Success Factors:

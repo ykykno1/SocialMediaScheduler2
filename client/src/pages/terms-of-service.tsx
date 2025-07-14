@@ -175,7 +175,8 @@ export default function TermsOfService() {
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">13. צור קשר</h2>
               <p className="mb-4">לשאלות או בעיות בנוגע לתנאי השימוש:</p>
               <ul className="list-none space-y-2">
-                <li><strong>דואר אלקטרוני:</strong> legal@robotshabat.com</li>
+                <li><strong>תמיכה:</strong> support@robotshabat.com</li>
+                <li><strong>כללי:</strong> info@robotshabat.com</li>
                 <li><strong>אתר:</strong> <a href="https://robotshabat.com" className="text-blue-600 hover:underline">robotshabat.com</a></li>
               </ul>
             </section>

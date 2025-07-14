@@ -11,7 +11,7 @@
 ```
 App name: רובוט שבת (Shabbat Robot)
 App logo: [Upload logo file - see logo specs below]
-User support email: robotshabat@gmail.com
+User support email: info@robotshabat.com
 ```
 
 ### 2. App Domain
@@ -29,7 +29,7 @@ social-media-scheduler-ykykyair.replit.app
 
 ### 4. Developer Contact Information
 ```
-Email address: robotshabat@gmail.com
+Email address: info@robotshabat.com
 ```
 
 ---
