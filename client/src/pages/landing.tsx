@@ -117,7 +117,10 @@ export default function LandingPage() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-blue-600">רובוט שבת</div>
+          <div className="flex items-center gap-2 text-2xl font-bold text-blue-600">
+            <img src="/logo.png" alt="רובוט שבת" className="w-8 h-8 rounded-lg" />
+            רובוט שבת
+          </div>
           <div className="flex items-center gap-4">
             <Button variant="outline" asChild>
               <Link href="/auth">התחבר</Link>
@@ -132,9 +135,12 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="py-20 px-6">
         <div className="container mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            רובוט שבת
-          </h1>
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <img src="/logo.png" alt="רובוט שבת" className="w-16 h-16 rounded-xl" />
+            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              רובוט שבת
+            </h1>
+          </div>
           
           <Badge className="mb-8 bg-blue-100 text-blue-800 px-6 py-3 text-lg">
             מעכשיו אפשר לשמור שבת גם בדיגיטל
@@ -327,7 +333,10 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="container mx-auto text-center text-white">
-          <h2 className="text-4xl font-bold mb-4">רובוט שבת</h2>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <img src="/logo.png" alt="רובוט שבת" className="w-12 h-12 rounded-lg" />
+            <h2 className="text-4xl font-bold">רובוט שבת</h2>
+          </div>
           <p className="text-xl mb-8 opacity-90">
             מעכשיו אפשר לשמור שבת גם בדיגיטל
           </p>

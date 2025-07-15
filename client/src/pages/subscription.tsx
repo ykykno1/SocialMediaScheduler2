@@ -179,7 +179,7 @@ export default function SubscriptionPage() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <span>🤖</span>
+            <img src="/logo.png" alt="רובוט שבת" className="w-6 h-6 rounded" />
             רובוט שבת - ניהול אוטומטי
           </div>
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6">

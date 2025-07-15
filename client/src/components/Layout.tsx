@@ -19,7 +19,8 @@ const Layout: React.FC<LayoutProps> = ({
       {/* iOS-style Header with blur effect */}
       <header className="bg-background/80 backdrop-blur-xl border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-semibold ios-title text-primary hover:opacity-80 transition-opacity cursor-pointer">
+          <Link href="/" className="flex items-center gap-2 text-2xl font-semibold ios-title text-primary hover:opacity-80 transition-opacity cursor-pointer">
+            <img src="/logo.png" alt="רובוט שבת" className="w-8 h-8 rounded-lg" />
             רובוט שבת
           </Link>
           <div className="flex items-center space-x-4">

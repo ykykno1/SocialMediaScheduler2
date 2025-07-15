@@ -321,7 +321,10 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Shield className="h-8 w-8" />
-            ממשק אדמין - רובוט שבת
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="רובוט שבת" className="w-8 h-8 rounded-lg" />
+              ממשק אדמין - רובוט שבת
+            </div>
           </h1>
           <p className="text-gray-600">ניהול משתמשים ומערכת</p>
         </div>
