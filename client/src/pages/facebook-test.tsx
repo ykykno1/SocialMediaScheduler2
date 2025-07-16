@@ -21,11 +21,8 @@ export default function FacebookTest() {
     try {
       console.log("🚀 Starting NEW Facebook connection test...");
       
-      // For production testing, use the production URL directly
-      const isLocalhost = window.location.hostname === 'localhost';
-      const testUrl = isLocalhost 
-        ? `https://social-media-scheduler-ykykyair.replit.app/api/facebook/auth-test?version=new`
-        : `/api/facebook/auth-test?version=new`;
+      // Always use relative URL so server can decide correct redirect URI
+      const testUrl = `/api/facebook/auth-test?version=new`;
       
       console.log("🔗 Current hostname:", window.location.hostname);
       console.log("🔗 Is localhost:", isLocalhost);
