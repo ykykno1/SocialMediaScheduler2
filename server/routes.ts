@@ -585,6 +585,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
     console.log('🔔 AUTH-CALLBACK STARTED: Received Facebook auth callback');
     console.log('📥 Request body:', { hasCode: !!req.body.code, hasRedirectUri: !!req.body.redirectUri });
+    console.log('⏰ TIMESTAMP:', new Date().toISOString());
     
     try {
       const { code, redirectUri } = req.body;
