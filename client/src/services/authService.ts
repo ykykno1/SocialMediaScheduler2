@@ -297,9 +297,18 @@ export class AuthService {
             return;
           }
           
+          // Track if we've already processed a message to prevent duplicates
+          let messageProcessed = false;
+          
           // Set up message event listener for callback
           const handleCallback = (event: MessageEvent) => {
             console.log('Received message event:', event);
+            
+            // Prevent duplicate processing
+            if (messageProcessed) {
+              console.log('Message already processed, ignoring duplicate');
+              return;
+            }
             
             // Validate origin for security
             if (event.origin !== window.location.origin) {
@@ -316,9 +325,13 @@ export class AuthService {
             });
             
             if (error) {
+              messageProcessed = true;
               reject(new Error(`Authentication failed: ${error}`));
               return;
             }
+            
+            // Mark message as processed
+            messageProcessed = true;
             
             // Check if we have a Facebook SDK auth response
             if (fbAuthResponse && platform === 'facebook') {
@@ -342,6 +355,8 @@ export class AuthService {
               resolve(tokenData);
             }
             else if (code && platform) {
+              console.log('Facebook auth code received, exchanging for token');
+              
               // Determine which URI was used for this authentication attempt
               // If we're retrying, we should use the fallback URI for token exchange
               const exchangeUri = isRetrying ? fallbackUri : redirectUri;

@@ -148,13 +148,9 @@
                 };
                 
                 if (window.opener) {
-                    // Send message multiple times with intervals
-                    for (let i = 0; i < 3; i++) {
-                        setTimeout(() => {
-                            window.opener.postMessage(messageData, window.location.origin);
-                            console.log(`Message sent to parent window (attempt ${i + 1})`);
-                        }, i * 500);
-                    }
+                    // Send message once - duplicates cause "authorization code used" error
+                    window.opener.postMessage(messageData, window.location.origin);
+                    console.log('Message sent to parent window');
                 } else {
                     console.error('No parent window found');
                 }
