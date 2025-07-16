@@ -276,6 +276,7 @@ function Router() {
         <Route path="/youtube" component={YouTubePage} />
         <Route path="/facebook" component={FacebookPage} />
         <Route path="/facebook-test" component={FacebookTest} />
+        <Route path="/facebook-manual" component={lazy(() => import("./pages/facebook-manual"))} />
         <Route path="/instagram" component={InstagramPage} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/timing-settings" component={TimingSettingsPage} />

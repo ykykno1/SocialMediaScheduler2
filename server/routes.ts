@@ -3562,10 +3562,11 @@ export function registerRoutes(app: Express): Server {
     console.log('📍 Domain from headers:', domain);
     console.log('📍 Using production URI to ensure Facebook registration compatibility');
     
+    // Use minimal scopes for testing - these don't require app review
     const fbAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
       `client_id=1598261231562840` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&scope=email,public_profile,user_posts,user_photos` +
+      `&scope=email,public_profile` +
       `&response_type=code` +
       `&state=${state}`;
     
@@ -3576,6 +3577,47 @@ export function registerRoutes(app: Express): Server {
   });
   
   console.log('✅ Facebook auth-test endpoint registered!');
+
+  // Manual Facebook token endpoint
+  app.post('/api/facebook/manual-token', requireAuth, async (req: AuthenticatedRequest, res) => {
+    const { accessToken } = req.body;
+    
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Access token is required' });
+    }
+
+    try {
+      // Validate token with Facebook
+      const validateResponse = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,email`);
+      
+      if (!validateResponse.ok) {
+        return res.status(400).json({ error: 'Invalid Facebook token' });
+      }
+
+      const userInfo = await validateResponse.json();
+      console.log('📊 Facebook user info:', userInfo);
+
+      // Save token
+      const authToken = {
+        platform: 'facebook' as const,
+        accessToken: accessToken,
+        timestamp: Date.now(),
+        isManualToken: true
+      };
+
+      await storage.saveAuthToken(authToken, req.user.id);
+      
+      res.json({ 
+        success: true, 
+        message: 'Facebook token saved successfully',
+        userInfo: userInfo
+      });
+
+    } catch (error: any) {
+      console.error('❌ Manual Facebook token error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Debug endpoint to check Facebook OAuth flow
   app.get('/api/facebook/debug', (req, res) => {
