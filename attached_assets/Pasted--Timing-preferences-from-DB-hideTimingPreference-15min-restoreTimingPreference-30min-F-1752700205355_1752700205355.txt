@@ -1,0 +1,40 @@
+
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+Full user from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  password: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountType: 'premium',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z
+}
+User timing preferences: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+User response being sent: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  accountType: 'premium',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z
+}
+9:07:58 PM [express] GET /api/user 304 in 158ms :: {"id":"phtLx68scJszZOMrBEPHL","email":"yk@gmail.c…
+9:09:08 PM [vite] hmr update /src/pages/facebook-test.tsx, /src/index.css?v=HOrDdi9Zw3mhxNtgRuUJW (x2)
+🔧 Facebook auth-test endpoint was reached!
+🚀 Starting TEST NEW Facebook auth flow with state: TEST_NEW_1752700163179_0.7074671551355427
+📍 Using redirect URI: https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html
+📍 Domain from headers: 6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev
+📍 Using production URI to ensure Facebook registration compatibility
+📍 Redirecting to Facebook auth URL (TEST new): https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=https%3A%2F%2F6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev%2Fauth-callback.html&scope=email,public_profile,user_posts,user_photos&response_type=code&state=TEST_NEW_1752700163179_0.7074671551355427
+🔧 About to call res.redirect()
+🔧 res.redirect() called
+9:09:23 PM [express] GET /api/facebook/auth-test 302 in 1ms
+

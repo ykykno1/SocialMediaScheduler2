@@ -30,6 +30,8 @@
     
     <script>
         console.log("🔗 Facebook auth callback page loaded");
+        console.log("🌐 Current URL:", window.location.href);
+        console.log("🌐 Current origin:", window.location.origin);
         
         // Extract URL parameters
         const urlParams = new URLSearchParams(window.location.search);
