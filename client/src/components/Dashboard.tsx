@@ -41,7 +41,7 @@ const Dashboard = () => {
       </div>
 
       {/* Next Hide Timer */}
-      {authStatus?.user && shabbatTimes && (
+      {authStatus && shabbatTimes && (
         <div className="flex justify-center mb-6">
           <NextHideTimer 
             shabbatTimes={shabbatTimes}

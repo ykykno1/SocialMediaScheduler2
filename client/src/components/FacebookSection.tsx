@@ -118,7 +118,7 @@ export default function FacebookSection() {
                             if (refreshResponse.ok) {
                               const refreshData = await refreshResponse.json();
                               token = refreshData.token;
-                              localStorage.setItem('auth_token', token);
+                              localStorage.setItem('auth_token', token || '');
                             } else {
                               alert('לא ניתן לחדש את הטוקן - אנא התחבר מחדש');
                               return;
