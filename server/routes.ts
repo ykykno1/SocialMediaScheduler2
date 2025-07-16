@@ -3550,12 +3550,15 @@ export function registerRoutes(app: Express): Server {
     
     console.log(`🚀 Starting TEST ${version.toUpperCase()} Facebook auth flow with state:`, state);
     
-    // Use the same redirect URI logic as facebook-config to ensure compatibility
+    // Use production URI for all requests to ensure it's registered in Meta Console
     const domain = req.headers.host;
-    const redirectUri = `https://${domain}/auth-callback.html`;
+    
+    // Always use the known working production URI (instead of dynamic domain)
+    const redirectUri = `https://social-media-scheduler-ykykyair.replit.app/auth-callback.html`;
     
     console.log('📍 Using redirect URI:', redirectUri);
     console.log('📍 Domain from headers:', domain);
+    console.log('📍 Using production URI to ensure Facebook registration compatibility');
     
     const fbAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
       `client_id=1598261231562840` +
