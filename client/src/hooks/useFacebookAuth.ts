@@ -106,6 +106,8 @@ export default function useFacebookAuth() {
 
   // Function to initiate Facebook login
   const login = useCallback(async () => {
+    console.log('🚀🚀🚀 LOGIN FUNCTION CALLED!');
+    console.log('🔍 Button was clicked, starting Facebook authentication...');
     try {
       // Track attempt number
       const attemptCount = parseInt(localStorage.getItem('facebook_attempts') || '0') + 1;
