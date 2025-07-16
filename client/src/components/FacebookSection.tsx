@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Facebook, Lock, Unlock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import useFacebookAuth from "@/hooks/useFacebookAuth";
+import FacebookSdkService from "@/services/facebookSdk";
 import useFacebookPosts from "@/hooks/useFacebookPosts";
 import useFacebookPages from "@/hooks/useFacebookPages";
 
@@ -39,12 +40,32 @@ export default function FacebookSection() {
             </Alert>
             <div className="space-y-3">
               <Button 
-                onClick={login} 
+                onClick={async () => {
+                  try {
+                    // Initialize Facebook SDK first
+                    await FacebookSdkService.initialize('1598261231562840');
+                    // Then attempt login
+                    await FacebookSdkService.login();
+                    window.location.reload(); // Refresh to show connected state
+                  } catch (error) {
+                    console.error('Facebook SDK login failed:', error);
+                  }
+                }} 
                 disabled={isAuthenticating}
                 className="bg-[#1877F2] hover:bg-[#166FE5] w-full"
               >
                 <Facebook className="mr-2 h-4 w-4" />
-                {isAuthenticating ? "מתחבר... (יכול לקחת עד דקה בפעם הראשונה)" : "התחבר עם פייסבוק"}
+                התחבר עם Facebook SDK (פתרון ישן שעבד)
+              </Button>
+              
+              <Button 
+                onClick={login} 
+                disabled={isAuthenticating}
+                variant="outline"
+                className="w-full"
+              >
+                <Facebook className="mr-2 h-4 w-4" />
+                {isAuthenticating ? "מתחבר... (יכול לקחת עד דקה בפעם הראשונה)" : "התחבר עם OAuth (חדש)"}
               </Button>
               
               <Button 

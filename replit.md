@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 16, 2025. FIXED: Facebook OAuth issues by reverting to original working FacebookSDK approach:
+  - Root cause identified: Multiple conflicting Facebook authentication methods (OAuth, Manual, FacebookSDK)
+  - Restored original FacebookSdkService that uses direct Facebook SDK (window.FB) from HTML script
+  - Added working "Facebook SDK" button alongside OAuth options for backwards compatibility
+  - Fixed App ID consistency between HTML (1598261231562840) and client code
+  - System now offers multiple authentication paths: FacebookSDK (original working), OAuth (new), Manual token
+  - Original working solution prioritized while maintaining new features as fallbacks
 - July 16, 2025. DEBUGGING: Enhanced Facebook OAuth troubleshooting tools and analysis:
   - Added comprehensive Facebook authentication debug page (/facebook-auth-debug.html)
   - Enhanced server logging for auth-test endpoint with detailed request/response tracking
