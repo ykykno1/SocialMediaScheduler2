@@ -3594,7 +3594,17 @@ export function registerRoutes(app: Express): Server {
       oauth: {
         authUrl: `https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=${encodeURIComponent(currentRedirectUri)}&scope=email,public_profile,user_posts,user_photos&response_type=code&state=DEBUG_${Date.now()}`
       },
-      callbackStatus: "Testing auth-callback.html accessibility..."
+      appStatus: {
+        note: "Check if Facebook App is in Development Mode vs Live Mode",
+        devModeNote: "In Development Mode, only app developers can access",
+        liveModeNote: "Live Mode requires App Review for user_posts scope"
+      },
+      scopeRequirements: {
+        email: "Basic - should work",
+        public_profile: "Basic - should work", 
+        user_posts: "Advanced - may require App Review",
+        user_photos: "Advanced - may require App Review"
+      }
     };
     
     res.json(debugInfo);
