@@ -114,6 +114,13 @@ export default function FacebookTest() {
               <li>מקשיב להודעות מהחלון</li>
               <li>בודק איפה בדיוק נכשלת ההתחברות</li>
             </ul>
+            
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-yellow-800 text-sm">
+                <strong>הערה:</strong> בסביבת פיתוח (localhost) Facebook עלול לחסום את ההתחברות כי הכתובת לא רשומה ב-Meta Developer Console. 
+                הבדיקה תעבוד טוב יותר בסביבת הפרודקשן.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

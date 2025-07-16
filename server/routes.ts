@@ -3547,9 +3547,14 @@ export function registerRoutes(app: Express): Server {
     const state = `${Date.now()}_${Math.random()}`;
     console.log('🚀 Starting NEW Facebook auth flow with state:', state);
     
+    // Always use production URL for Facebook OAuth (required by Meta Developer Console)
+    const redirectUri = 'https://social-media-scheduler-ykykyair.replit.app/api/facebook/callback-new';
+    
+    console.log('📍 Using redirect URI:', redirectUri);
+    
     const fbAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
       `client_id=1598261231562840` +
-      `&redirect_uri=${encodeURIComponent('https://social-media-scheduler-ykykyair.replit.app/api/facebook/callback-new')}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&scope=email,public_profile,user_posts,user_photos` +
       `&response_type=code` +
       `&state=${state}`;
@@ -3593,6 +3598,11 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log('🔄 Exchanging code for access token...');
       
+      // Use production URL for token exchange (must match auth request)
+      const redirectUri = 'https://social-media-scheduler-ykykyair.replit.app/api/facebook/callback-new';
+      
+      console.log('🔄 Using redirect URI for token exchange:', redirectUri);
+      
       // Exchange code for access token
       const tokenResponse = await fetch('https://graph.facebook.com/v22.0/oauth/access_token', {
         method: 'POST',
@@ -3600,7 +3610,7 @@ export function registerRoutes(app: Express): Server {
         body: new URLSearchParams({
           client_id: '1598261231562840',
           client_secret: process.env.FACEBOOK_APP_SECRET || '',
-          redirect_uri: 'https://social-media-scheduler-ykykyair.replit.app/api/facebook/callback-new',
+          redirect_uri: redirectUri,
           code: code as string
         })
       });
