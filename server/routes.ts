@@ -3580,20 +3580,38 @@ export function registerRoutes(app: Express): Server {
 
   // Debug endpoint to check Facebook OAuth flow
   app.get('/api/facebook/debug', (req, res) => {
+    const domain = req.headers.host;
+    const currentRedirectUri = `https://${domain}/auth-callback.html`;
+    
     const debugInfo = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       hasAppSecret: !!process.env.FACEBOOK_APP_SECRET,
       appId: "1598261231562840",
-      productionCallbackUrl: "https://social-media-scheduler-ykykyair.replit.app/auth-callback.html",
-      currentDomain: req.headers.host,
+      currentDomain: domain,
+      currentRedirectUri: currentRedirectUri,
+      expectedRedirectUri: "https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html",
       userAgent: req.headers['user-agent'],
       oauth: {
-        authUrl: `https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=${encodeURIComponent("https://social-media-scheduler-ykykyair.replit.app/auth-callback.html")}&scope=email,public_profile,user_posts,user_photos&response_type=code&state=DEBUG_${Date.now()}`
-      }
+        authUrl: `https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=${encodeURIComponent(currentRedirectUri)}&scope=email,public_profile,user_posts,user_photos&response_type=code&state=DEBUG_${Date.now()}`
+      },
+      callbackStatus: "Testing auth-callback.html accessibility..."
     };
     
     res.json(debugInfo);
+  });
+
+  // Test auth-callback.html endpoint
+  app.get('/api/test/auth-callback', (req, res) => {
+    const domain = req.headers.host;
+    const callbackUrl = `https://${domain}/auth-callback.html`;
+    
+    res.json({
+      message: "Testing auth-callback.html",
+      callbackUrl,
+      testUrl: callbackUrl + "?test=true&code=TEST_CODE&state=TEST_STATE",
+      instructions: "Open the testUrl in a new tab to see if auth-callback.html loads correctly"
+    });
   });
 
   // Register Stripe Demo routes (separate from existing functionality)

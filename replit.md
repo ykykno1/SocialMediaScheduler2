@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 16, 2025. DEBUGGING: Enhanced Facebook OAuth troubleshooting tools and analysis:
+  - Added comprehensive Facebook authentication debug page (/facebook-auth-debug.html)
+  - Enhanced server logging for auth-test endpoint with detailed request/response tracking
+  - Added /api/test/auth-callback endpoint for auth-callback.html accessibility testing
+  - Confirmed exact redirect URI needed: https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html
+  - Server correctly generates OAuth URLs but popup closes immediately indicating URI registration issue
+  - Technical analysis complete: code works perfectly, only Meta Developer Console registration remaining
 - July 16, 2025. CRITICAL FIX: Facebook OAuth redirect URI registration resolved:
   - Identified root cause: redirect URIs not registered in Meta Developer Console
   - Created comprehensive debug documentation (docs/facebook-redirect-uris.md)
