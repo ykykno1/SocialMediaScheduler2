@@ -54,8 +54,21 @@ export default function useFacebookAuth() {
   // Exchange code for token mutation
   const exchangeCodeMutation = useMutation({
     mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
-      const response = await apiRequest('POST', '/api/auth-callback', { code, redirectUri });
-      return response.json();
+      console.log('🚀 exchangeCodeMutation.mutationFn called');
+      console.log('📤 About to send POST to /api/auth-callback');
+      console.log('📤 Code:', code.substring(0, 20) + '...');
+      console.log('📤 RedirectUri:', redirectUri);
+      
+      try {
+        const response = await apiRequest('POST', '/api/auth-callback', { code, redirectUri });
+        console.log('📥 Response received from server:', response);
+        const data = await response.json();
+        console.log('📥 Response data:', data);
+        return data;
+      } catch (error) {
+        console.error('❌ Error in mutationFn:', error);
+        throw error;
+      }
     },
     onSuccess: async () => {
       console.log('🎉 Exchange code mutation succeeded!');
@@ -218,10 +231,16 @@ export default function useFacebookAuth() {
         setPopupWindow(null);
         
         // Exchange code for token on the server
+        console.log('🔄 About to call exchangeCodeMutation.mutate');
+        console.log('🔄 Code to send:', event.data.code.substring(0, 20) + '...');
+        console.log('🔄 Redirect URI:', window.location.origin + '/auth-callback.html');
+        
         exchangeCodeMutation.mutate({
           code: event.data.code,
           redirectUri: window.location.origin + '/auth-callback.html'
         });
+        
+        console.log('🔄 exchangeCodeMutation.mutate called');
       }
       
       // Handle auth errors (user cancelled, etc.)
