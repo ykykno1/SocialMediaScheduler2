@@ -97,8 +97,8 @@ const Dashboard = () => {
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full text-sm border-dashed border-orange-300 text-orange-600">
-              <Link href="/facebook-multiple">
-                בדיקת חיבור מרובה (זמני)
+              <Link href="/facebook-test">
+                בדיקת חיבור חדש לפייסבוק
               </Link>
             </Button>
           </CardContent>

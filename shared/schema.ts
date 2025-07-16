@@ -326,7 +326,7 @@ export const encryptedAuthTokens = pgTable("encrypted_auth_tokens", {
   id: varchar("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => secureUsers.id),
   platform: varchar("platform").$type<SupportedPlatform>().notNull(),
-  connectionName: varchar("connection_name").default('primary').notNull(), // Allow multiple connections per platform
+
   encryptedAccessToken: text("encrypted_access_token"), // Encrypted token data
   encryptedRefreshToken: text("encrypted_refresh_token"), // Encrypted refresh token
   tokenHash: varchar("token_hash"), // For lookup without decryption

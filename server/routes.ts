@@ -3542,6 +3542,115 @@ export function registerRoutes(app: Express): Server {
   // Register Stripe Demo routes (separate from existing functionality)
   registerStripeRoutes(app);
 
+  // Facebook OAuth - NEW TEST VERSION (simple rewrite)
+  app.get('/api/facebook/auth-new', (req, res) => {
+    const state = `${Date.now()}_${Math.random()}`;
+    console.log('🚀 Starting NEW Facebook auth flow with state:', state);
+    
+    const fbAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
+      `client_id=1598261231562840` +
+      `&redirect_uri=${encodeURIComponent('https://social-media-scheduler-ykykyair.replit.app/api/facebook/callback-new')}` +
+      `&scope=email,public_profile,user_posts,user_photos` +
+      `&response_type=code` +
+      `&state=${state}`;
+    
+    console.log('📍 Redirecting to Facebook auth URL:', fbAuthUrl);
+    res.redirect(fbAuthUrl);
+  });
+
+  // Facebook OAuth callback - NEW TEST VERSION
+  app.get('/api/facebook/callback-new', async (req, res) => {
+    const { code, state, error } = req.query;
+    
+    console.log('📨 NEW Facebook callback received:', { code: !!code, state, error });
+    
+    if (error) {
+      console.error('❌ Facebook auth error:', error);
+      return res.send(`
+        <script>
+          window.opener?.postMessage({
+            type: 'FACEBOOK_AUTH_ERROR',
+            error: '${error}'
+          }, '*');
+          window.close();
+        </script>
+      `);
+    }
+
+    if (!code) {
+      console.error('❌ No authorization code received');
+      return res.send(`
+        <script>
+          window.opener?.postMessage({
+            type: 'FACEBOOK_AUTH_ERROR',
+            error: 'לא התקבל קוד אישור מפייסבוק'
+          }, '*');
+          window.close();
+        </script>
+      `);
+    }
+
+    try {
+      console.log('🔄 Exchanging code for access token...');
+      
+      // Exchange code for access token
+      const tokenResponse = await fetch('https://graph.facebook.com/v22.0/oauth/access_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: '1598261231562840',
+          client_secret: process.env.FACEBOOK_APP_SECRET || '',
+          redirect_uri: 'https://social-media-scheduler-ykykyair.replit.app/api/facebook/callback-new',
+          code: code as string
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('Token exchange failed:', errorText);
+        throw new Error(`Token exchange failed: ${tokenResponse.statusText}`);
+      }
+
+      const tokenData = await tokenResponse.json();
+      console.log('✅ Token exchange successful');
+
+      // Test the token by getting user info
+      const userResponse = await fetch(`https://graph.facebook.com/me?access_token=${tokenData.access_token}&fields=id,name,email`);
+      
+      if (!userResponse.ok) {
+        const errorText = await userResponse.text();
+        console.error('User info failed:', errorText);
+        throw new Error(`User info failed: ${userResponse.statusText}`);
+      }
+      
+      const userData = await userResponse.json();
+      console.log('👤 User data received:', userData);
+
+      res.send(`
+        <script>
+          window.opener?.postMessage({
+            type: 'FACEBOOK_AUTH_SUCCESS',
+            token: '${tokenData.access_token}',
+            user: ${JSON.stringify(userData)}
+          }, '*');
+          window.close();
+        </script>
+      `);
+
+    } catch (error) {
+      console.error('💥 Error in NEW Facebook callback:', error);
+      res.send(`
+        <script>
+          window.opener?.postMessage({
+            type: 'FACEBOOK_AUTH_ERROR',
+            error: '${error instanceof Error ? error.message : 'שגיאה לא ידועה'}'
+          }, '*');
+          window.close();
+        </script>
+      `);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

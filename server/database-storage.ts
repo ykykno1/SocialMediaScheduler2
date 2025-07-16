@@ -53,13 +53,7 @@ export class DatabaseStorage {
         eq(encryptedAuthTokens.userId, userId)
       ];
       
-      if (connectionName) {
-        whereConditions.push(eq(encryptedAuthTokens.connectionName, connectionName));
-      }
-      // Note: If no connectionName specified, use 'primary' as default for backward compatibility
-      if (!connectionName) {
-        whereConditions.push(eq(encryptedAuthTokens.connectionName, 'primary'));
-      }
+
       
       const [encryptedToken] = await db.select().from(encryptedAuthTokens)
         .where(and(...whereConditions));
@@ -149,15 +143,10 @@ export class DatabaseStorage {
       const validatedToken = authSchema.parse(token);
       console.log(`🔧 Token validation passed`);
       
-      // Delete existing token from encrypted table for this specific connection
-      const deleteConnectionName = connectionName || 'primary';
-      console.log(`🔧 Deleting existing token for ${token.platform}/${userId}/${deleteConnectionName}...`);
+      // Delete existing token from encrypted table
+      console.log(`🔧 Deleting existing token for ${token.platform}/${userId}...`);
       const deleteResult = await db.delete(encryptedAuthTokens)
-        .where(and(
-          eq(encryptedAuthTokens.platform, token.platform), 
-          eq(encryptedAuthTokens.userId, userId),
-          eq(encryptedAuthTokens.connectionName, deleteConnectionName)
-        ));
+        .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
       console.log(`🔧 Delete result: ${deleteResult.rowCount || 0} rows deleted`);
 
       // For now, use legacy tokens only (skip encryption to fix the immediate issue)
