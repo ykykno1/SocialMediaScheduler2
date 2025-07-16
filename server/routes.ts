@@ -3575,6 +3575,24 @@ export function registerRoutes(app: Express): Server {
   
   console.log('✅ Facebook auth-test endpoint registered!');
 
+  // Debug endpoint to check Facebook OAuth flow
+  app.get('/api/facebook/debug', (req, res) => {
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      hasAppSecret: !!process.env.FACEBOOK_APP_SECRET,
+      appId: "1598261231562840",
+      productionCallbackUrl: "https://social-media-scheduler-ykykyair.replit.app/auth-callback.html",
+      currentDomain: req.headers.host,
+      userAgent: req.headers['user-agent'],
+      oauth: {
+        authUrl: `https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=${encodeURIComponent("https://social-media-scheduler-ykykyair.replit.app/auth-callback.html")}&scope=email,public_profile,user_posts,user_photos&response_type=code&state=DEBUG_${Date.now()}`
+      }
+    };
+    
+    res.json(debugInfo);
+  });
+
   // Register Stripe Demo routes (separate from existing functionality)
   registerStripeRoutes(app);
 
