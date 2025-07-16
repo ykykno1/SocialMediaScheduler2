@@ -54,11 +54,6 @@ export default function useFacebookAuth() {
   // Exchange code for token mutation
   const exchangeCodeMutation = useMutation({
     mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
-      // Skip if already running to prevent duplicate execution
-      if (exchangeCodeMutation.isPending) {
-        console.log('🚫 Mutation already pending, skipping duplicate');
-        throw new Error('Authentication already in progress');
-      }
       
       console.log('🚀 exchangeCodeMutation.mutationFn called');
       console.log('📤 About to send POST to /api/auth-callback');
@@ -248,9 +243,9 @@ export default function useFacebookAuth() {
       
       // Handle successful auth with code
       if (event.data.code && event.data.platform === 'facebook') {
-        // Prevent double processing - critical fix for duplicate execution bug
-        if (codeProcessed || exchangeCodeMutation.isPending) {
-          console.log('🚫 Code already processed or mutation pending, ignoring duplicate');
+        // Prevent double processing
+        if (codeProcessed) {
+          console.log('🚫 Code already processed, ignoring duplicate');
           return;
         }
         
@@ -268,16 +263,12 @@ export default function useFacebookAuth() {
         console.log('🔄 Code to send:', event.data.code.substring(0, 20) + '...');
         console.log('🔄 Redirect URI:', window.location.origin + '/auth-callback.html');
         
-        // Add guard against multiple execution
-        if (!exchangeCodeMutation.isPending) {
-          exchangeCodeMutation.mutate({
-            code: event.data.code,
-            redirectUri: window.location.origin + '/auth-callback.html'
-          });
-          console.log('🔄 exchangeCodeMutation.mutate called - FIRST TIME ONLY');
-        } else {
-          console.log('🚫 Mutation already pending, skipping');
-        }
+        // Execute mutation
+        exchangeCodeMutation.mutate({
+          code: event.data.code,
+          redirectUri: window.location.origin + '/auth-callback.html'
+        });
+        console.log('🔄 exchangeCodeMutation.mutate called');
       }
       
       // Handle auth errors (user cancelled, etc.)
