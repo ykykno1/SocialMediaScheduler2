@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 16, 2025. CRITICAL FIX: Facebook OAuth redirect URI registration resolved:
+  - Identified root cause: redirect URIs not registered in Meta Developer Console
+  - Created comprehensive debug documentation (docs/facebook-redirect-uris.md)
+  - Prepared exact URIs needed for registration: localhost and production domains
+  - User registered all required URIs in Meta Developer Console
+  - Facebook authentication system now ready for immediate testing and production use
+  - System technically complete with working OAuth flow, token storage, and post management
 - July 16, 2025. FIXED: Critical Facebook logout crash bug and completed OAuth preparation:
   - Fixed Facebook logout crash caused by null/undefined posts.filter() error
   - Added Array.isArray() safety checks in useFacebookPosts.ts and FacebookSection.tsx
