@@ -664,15 +664,34 @@ export function registerRoutes(app: Express): Server {
       console.log(`💾 Saving Facebook auth for user: ${req.user?.id}`);
       console.log(`👤 Facebook user ID: ${userData.id}`);
       console.log('🔑 Token data:', { hasAccessToken: !!tokenData.access_token, expiresIn: tokenData.expires_in });
+      console.log('🔑 Token first 20 chars:', tokenData.access_token.substring(0, 20) + '...');
       
-      const auth = await storage.saveFacebookAuth({
+      const tokenToSave = {
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now(),
         userId: userData.id,
         pageAccess,
         isManualToken: false
-      }, req.user?.id);
+      };
+      
+      console.log('📦 About to save token object:', { ...tokenToSave, accessToken: tokenToSave.accessToken.substring(0, 20) + '...' });
+      
+      const auth = await storage.saveFacebookAuth(tokenToSave, req.user?.id);
+      
+      console.log('✅ Facebook auth save completed. Result:', { ...auth, accessToken: auth.accessToken.substring(0, 20) + '...' });
+      
+      // Immediately verify the save worked
+      console.log('🔍 Immediately verifying save...');
+      const verifyAuth = await storage.getAuthToken('facebook', req.user?.id);
+      console.log('🔍 Verification result:', verifyAuth ? 'TOKEN FOUND' : 'TOKEN NOT FOUND');
+      if (verifyAuth) {
+        console.log('🔍 Verified token details:', { 
+          hasAccessToken: !!verifyAuth.accessToken, 
+          tokenStart: verifyAuth.accessToken.substring(0, 20) + '...',
+          timestamp: verifyAuth.timestamp 
+        });
+      }
       console.log(`✅ Auth saved successfully:`, !!auth);
 
       // Verify token is accessible by trying to read it back

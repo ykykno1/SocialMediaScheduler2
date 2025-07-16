@@ -111,23 +111,34 @@ export class DatabaseStorage {
 
   async saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken> {
     try {
+      console.log(`🔧 DatabaseStorage.saveAuthToken called for ${token.platform}/${userId}`);
+      console.log(`🔧 Token details: hasAccessToken=${!!token.accessToken}, expiresAt=${token.expiresAt}`);
+      
       const validatedToken = authSchema.parse(token);
+      console.log(`🔧 Token validation passed`);
+      
       const { tokenEncryption } = await import('./encryption.js');
+      console.log(`🔧 Encryption module loaded`);
       
       // Delete existing token from encrypted table
-      await db.delete(encryptedAuthTokens)
+      console.log(`🔧 Deleting existing token for ${token.platform}/${userId}...`);
+      const deleteResult = await db.delete(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
+      console.log(`🔧 Delete result: ${deleteResult.rowCount || 0} rows deleted`);
 
       // Encrypt the tokens
+      console.log(`🔧 Encrypting access token...`);
       const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
-      let encryptedRefreshToken = null;
+      console.log(`🔧 Access token encrypted successfully`);
       
+      let encryptedRefreshToken = null;
       if (token.refreshToken) {
+        console.log(`🔧 Encrypting refresh token...`);
         encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
+        console.log(`🔧 Refresh token encrypted successfully`);
       }
 
-      // Insert new token into encrypted table with real encryption
-      await db.insert(encryptedAuthTokens).values({
+      const tokenRecord = {
         id: nanoid(),
         userId,
         platform: token.platform,
@@ -143,11 +154,33 @@ export class DatabaseStorage {
         legacyAccessToken: token.accessToken, // Keep for fallback during migration
         legacyRefreshToken: token.refreshToken || null,
         migrationStatus: 'migrated'
+      };
+      
+      console.log(`🔧 About to insert token record:`, { 
+        ...tokenRecord, 
+        encryptedAccessToken: tokenRecord.encryptedAccessToken.substring(0, 20) + '...',
+        legacyAccessToken: tokenRecord.legacyAccessToken.substring(0, 20) + '...'
       });
 
+      // Insert new token into encrypted table with real encryption
+      const insertResult = await db.insert(encryptedAuthTokens).values(tokenRecord);
+      console.log(`🔧 Insert completed successfully`);
+      
+      // Verify the insert worked
+      const verifyQuery = await db.select().from(encryptedAuthTokens)
+        .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
+      console.log(`🔧 Verification query: found ${verifyQuery.length} records`);
+
+      console.log(`✅ Auth token saved successfully for ${token.platform}/${userId}`);
       return validatedToken;
     } catch (error) {
-      console.error('Error saving auth token:', error);
+      console.error('❌ Error saving auth token:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        platform: token.platform,
+        userId: userId
+      });
       throw error;
     }
   }
