@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Auth Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .debug-section h3 { margin-top: 0; color: #333; }
+        button { background: #1877f2; color: white; border: none; padding: 10px 15px; margin: 5px; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #166fe5; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; font-family: monospace; white-space: pre-wrap; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        code { background: #f8f9fa; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+        .url-display { word-break: break-all; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Facebook OAuth Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>מידע בסיסי</h3>
+        <div id="basic-info"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>בדיקת Redirect URI</h3>
+        <button onclick="testRedirectURI()">בדוק Redirect URI</button>
+        <div id="redirect-test" class="log"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>בדיקת Facebook OAuth Flow</h3>
+        <button onclick="testFacebookAuth()">התחל OAuth Flow</button>
+        <button onclick="clearLogs()">נקה Logs</button>
+        <div id="oauth-logs" class="log"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>בדיקת auth-callback.html</h3>
+        <button onclick="testAuthCallback()">בדוק Auth Callback</button>
+        <div id="callback-test" class="log"></div>
+    </div>
+
+    <script>
+        const currentDomain = window.location.origin;
+        const redirectUri = currentDomain + '/auth-callback.html';
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('oauth-logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function clearLogs() {
+            document.getElementById('oauth-logs').innerHTML = '';
+        }
+        
+        // Display basic info
+        document.getElementById('basic-info').innerHTML = `
+            <strong>Current Domain:</strong> <code>${currentDomain}</code><br>
+            <strong>Redirect URI:</strong> <code class="url-display">${redirectUri}</code><br>
+            <strong>Facebook App ID:</strong> <code>1598261231562840</code><br>
+            <strong>User Agent:</strong> <code style="font-size: 10px;">${navigator.userAgent}</code>
+        `;
+        
+        function testRedirectURI() {
+            const testDiv = document.getElementById('redirect-test');
+            testDiv.innerHTML = 'בודק אם auth-callback.html נגיש...';
+            
+            fetch('/auth-callback.html')
+                .then(response => {
+                    if (response.ok) {
+                        testDiv.innerHTML = `<div class="success">✅ auth-callback.html נגיש (Status: ${response.status})</div>`;
+                    } else {
+                        testDiv.innerHTML = `<div class="error">❌ auth-callback.html לא נגיש (Status: ${response.status})</div>`;
+                    }
+                })
+                .catch(err => {
+                    testDiv.innerHTML = `<div class="error">❌ שגיאה בבדיקת auth-callback.html: ${err.message}</div>`;
+                });
+        }
+        
+        function testAuthCallback() {
+            const testDiv = document.getElementById('callback-test');
+            const testUrl = redirectUri + '?test=true&code=TEST_CODE&state=TEST_STATE';
+            
+            testDiv.innerHTML = `בודק auth-callback.html עם פרמטרים...<br><code class="url-display">${testUrl}</code>`;
+            
+            const testWindow = window.open(testUrl, 'auth-callback-test', 'width=600,height=400');
+            
+            setTimeout(() => {
+                if (testWindow) {
+                    testWindow.close();
+                    testDiv.innerHTML += '<br>✅ auth-callback.html נפתח בהצלחה';
+                }
+            }, 3000);
+        }
+        
+        function testFacebookAuth() {
+            log('🚀 Starting Facebook OAuth test...');
+            
+            const state = `DEBUG_TEST_${Date.now()}`;
+            const fbAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
+                `client_id=1598261231562840&` +
+                `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                `scope=email,public_profile&` +
+                `response_type=code&` +
+                `state=${state}`;
+            
+            log(`📍 Redirect URI: ${redirectUri}`);
+            log(`🔗 Facebook Auth URL: ${fbAuthUrl}`);
+            log('📱 Opening popup...');
+            
+            const popup = window.open(fbAuthUrl, 'facebook-auth-debug', 'width=600,height=700,scrollbars=yes');
+            
+            if (!popup) {
+                log('❌ Popup נחסם על ידי הדפדפן!', 'error');
+                return;
+            }
+            
+            log('✅ Popup נפתח בהצלחה');
+            
+            let checkCount = 0;
+            const checkInterval = setInterval(() => {
+                checkCount++;
+                
+                try {
+                    if (popup.closed) {
+                        clearInterval(checkInterval);
+                        log(`🔒 Popup נסגר אחרי ${checkCount} שניות`, 'error');
+                        return;
+                    }
+                    
+                    // Try to check popup URL (will fail due to CORS but that's expected)
+                    try {
+                        const popupUrl = popup.location.href;
+                        log(`📍 Popup URL: ${popupUrl}`);
+                        
+                        if (popupUrl.includes('error=')) {
+                            clearInterval(checkInterval);
+                            popup.close();
+                            log('❌ Facebook returned error in URL', 'error');
+                        } else if (popupUrl.includes('code=')) {
+                            clearInterval(checkInterval);
+                            log('✅ Facebook returned auth code!', 'success');
+                            // Don't close popup yet - let auth-callback handle it
+                        }
+                    } catch (corsError) {
+                        // Expected CORS error when on Facebook domain
+                        if (checkCount === 1) {
+                            log('🌐 Popup redirected to Facebook (CORS expected)');
+                        }
+                    }
+                    
+                } catch (e) {
+                    log(`Debug error: ${e.message}`);
+                }
+                
+                if (checkCount > 60) { // 60 seconds timeout
+                    clearInterval(checkInterval);
+                    popup.close();
+                    log('⏱️ Timeout - closing popup', 'error');
+                }
+            }, 1000);
+        }
+        
+        // Listen for messages from auth-callback
+        window.addEventListener('message', (event) => {
+            console.log('📨 Message received from popup:', event.data);
+            
+            if (event.data.type === 'FACEBOOK_AUTH_SUCCESS') {
+                log('🎉 Facebook auth SUCCESS!', 'success');
+                log(`✅ Data: ${JSON.stringify(event.data)}`, 'success');
+            } else if (event.data.type === 'FACEBOOK_AUTH_ERROR') {
+                log('💥 Facebook auth ERROR!', 'error');
+                log(`❌ Error: ${JSON.stringify(event.data)}`, 'error');
+            }
+        });
+        
+        // Auto-test redirect URI on load
+        setTimeout(testRedirectURI, 500);
+    </script>
+</body>
+</html>
