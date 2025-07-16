@@ -89,6 +89,8 @@ export default function useFacebookAuth() {
       console.log('🔄 All queries invalidated after successful auth');
     },
     onError: (error: Error) => {
+      console.log('❌ Exchange code mutation failed');
+      
       toast({
         title: 'שגיאת התחברות',
         description: error.message || 'אירעה שגיאה בהתחברות לפייסבוק',
@@ -222,15 +224,16 @@ export default function useFacebookAuth() {
       }
       
       // Handle successful auth with code
-      if (event.data.code && event.data.platform === 'facebook') {
+      if (event.data.code && event.data.platform === 'facebook' && !exchangeCodeMutation.isPending) {
         console.log('Facebook auth code received, exchanging for token');
+        
         // Close popup first
         if (popupWindow && !popupWindow.closed) {
           popupWindow.close();
         }
         setPopupWindow(null);
         
-        // Exchange code for token on the server
+        // Exchange code for token on the server (only if not already pending)
         console.log('🔄 About to call exchangeCodeMutation.mutate');
         console.log('🔄 Code to send:', event.data.code.substring(0, 20) + '...');
         console.log('🔄 Redirect URI:', window.location.origin + '/auth-callback.html');
@@ -241,6 +244,8 @@ export default function useFacebookAuth() {
         });
         
         console.log('🔄 exchangeCodeMutation.mutate called');
+      } else if (event.data.code && exchangeCodeMutation.isPending) {
+        console.log('🚫 Mutation already pending, ignoring duplicate code');
       }
       
       // Handle auth errors (user cancelled, etc.)

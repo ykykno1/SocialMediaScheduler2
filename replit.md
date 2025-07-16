@@ -126,6 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 16, 2025. RESOLVED: Facebook authentication double execution issue:
+  - Root cause identified: mutation runs twice with same authorization code
+  - First execution succeeds: token saves, posts load correctly
+  - Second execution fails with "This authorization code has been used" error from Facebook
+  - Fixed by adding `!exchangeCodeMutation.isPending` check to prevent duplicate mutations
+  - System now works correctly on first attempt without confusion from second failure
 - July 16, 2025. COMPLETED: Facebook authentication analysis and debugging resolution:
   - Root cause identified: Facebook returns "access_denied" due to app configuration/approval status
   - Found that authentication works when proper permissions are granted by user
