@@ -16,6 +16,8 @@ export default function useFacebookPosts() {
   } = useQuery<FacebookPost[]>({
     queryKey: ['/api/facebook/posts'],
     retry: 1, // Only retry once since this might fail if not authenticated
+    enabled: true, // Always try to fetch initially
+    staleTime: 0, // Always refetch when component mounts
   });
 
   // Mutation for hiding posts (setting privacy to "Only Me")
@@ -67,11 +69,13 @@ export default function useFacebookPosts() {
   });
 
   // Get hidden and visible posts - including both SELF and ONLY_ME values for hidden posts
-  const hiddenPosts = posts.filter(post => post.privacy?.value === 'SELF' || post.privacy?.value === 'ONLY_ME') || [];
-  const visiblePosts = posts.filter(post => post.privacy?.value !== 'SELF' && post.privacy?.value !== 'ONLY_ME') || [];
+  // Ensure posts is always an array before filtering
+  const safePosts = Array.isArray(posts) ? posts : [];
+  const hiddenPosts = safePosts.filter(post => post.privacy?.value === 'SELF' || post.privacy?.value === 'ONLY_ME');
+  const visiblePosts = safePosts.filter(post => post.privacy?.value !== 'SELF' && post.privacy?.value !== 'ONLY_ME');
 
   return {
-    posts,
+    posts: safePosts,
     hiddenPosts,
     visiblePosts,
     isLoading,

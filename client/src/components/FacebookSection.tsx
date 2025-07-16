@@ -182,12 +182,13 @@ export default function FacebookSection() {
                   <Skeleton className="h-4 w-3/4" />
                   <div className="text-xs text-gray-500">טוען פוסטים...</div>
                 </div>
-              ) : posts && posts.length > 0 ? (
+              ) : posts && Array.isArray(posts) && posts.length > 0 ? (
                 <div className="space-y-4 max-h-60 overflow-y-auto mt-3">
                   {(() => {
                     // Separate personal posts and page posts
-                    const personalPosts = posts.filter(post => !post.pageId);
-                    const pagePosts = posts.filter(post => post.pageId);
+                    const safePosts = Array.isArray(posts) ? posts : [];
+                    const personalPosts = safePosts.filter(post => !post.pageId);
+                    const pagePosts = safePosts.filter(post => post.pageId);
                     
                     // Group page posts by page
                     const pageGroups = pagePosts.reduce((groups, post) => {
@@ -200,9 +201,9 @@ export default function FacebookSection() {
                       }
                       groups[pageKey].posts.push(post);
                       return groups;
-                    }, {} as Record<string, { pageName: string; posts: typeof posts }>);
+                    }, {} as Record<string, { pageName: string; posts: typeof safePosts }>);
 
-                    const renderPost = (post: typeof posts[0]) => (
+                    const renderPost = (post: typeof safePosts[0]) => (
                       <div key={post.id} className="p-2 bg-gray-50 rounded text-xs">
                         <div className="flex space-x-2">
                           {/* Media thumbnail */}
