@@ -104,6 +104,13 @@ export default function useFacebookAuth() {
       console.log('Facebook auth URL:', authUrl);
       console.log('Please open this URL in a new tab to test manually:', authUrl);
       
+      // Show user-friendly message about popup blocking
+      toast({
+        title: 'חלון פופאפ נפתח',
+        description: 'אם החלון לא נפתח, הדפדפן כנראה חוסם חלונות קופצים. אפשר להעתיק את הקישור מהקונסול.',
+        variant: 'default',
+      });
+      
       // Open popup window
       const width = 600;
       const height = 700;
