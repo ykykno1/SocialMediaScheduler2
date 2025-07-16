@@ -3,24 +3,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function FacebookTest() {
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [isConnectingNew, setIsConnectingNew] = useState(false);
+  const [isConnectingOriginal, setIsConnectingOriginal] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [newError, setNewError] = useState("");
+  const [originalMessage, setOriginalMessage] = useState("");
+  const [originalError, setOriginalError] = useState("");
 
-  const testFacebookConnection = async () => {
-    setIsConnecting(true);
-    setMessage("");
-    setError("");
+  const testNewFacebookConnection = async () => {
+    setIsConnectingNew(true);
+    setNewMessage("");
+    setNewError("");
 
     try {
-      console.log("🚀 Starting Facebook connection test...");
+      console.log("🚀 Starting NEW Facebook connection test...");
       
-      // Create popup window
       const popup = window.open(
         `/api/facebook/auth-new`,
-        'facebook-auth',
+        'facebook-auth-new',
         'width=500,height=600,scrollbars=yes,resizable=yes'
       );
 
@@ -28,44 +31,99 @@ export default function FacebookTest() {
         throw new Error("חלון הקופץ נחסם על ידי הדפדפן");
       }
 
-      // Listen for popup messages
       const handleMessage = (event: MessageEvent) => {
-        console.log("📨 Message received:", event.data);
+        console.log("📨 NEW Message received:", event.data);
         
         if (event.data.type === 'FACEBOOK_AUTH_SUCCESS') {
-          console.log("✅ Facebook auth successful");
-          setMessage("התחברות בוצעה בהצלחה!");
+          console.log("✅ NEW Facebook auth successful");
+          setNewMessage("התחברות חדשה בוצעה בהצלחה!");
           popup.close();
           window.removeEventListener('message', handleMessage);
-          setIsConnecting(false);
+          setIsConnectingNew(false);
         } else if (event.data.type === 'FACEBOOK_AUTH_ERROR') {
-          console.error("❌ Facebook auth error:", event.data.error);
-          setError(`שגיאה: ${event.data.error}`);
+          console.error("❌ NEW Facebook auth error:", event.data.error);
+          setNewError(`שגיאה בגרסה חדשה: ${event.data.error}`);
           popup.close();
           window.removeEventListener('message', handleMessage);
-          setIsConnecting(false);
+          setIsConnectingNew(false);
         }
       };
 
       window.addEventListener('message', handleMessage);
 
-      // Check if popup was closed manually
       const checkClosed = setInterval(() => {
         if (popup.closed) {
-          console.log("🔒 Popup was closed manually");
+          console.log("🔒 NEW Popup was closed manually");
           clearInterval(checkClosed);
           window.removeEventListener('message', handleMessage);
-          if (isConnecting) {
-            setError("החלון נסגר ללא השלמת ההתחברות");
-            setIsConnecting(false);
+          if (isConnectingNew) {
+            setNewError("החלון נסגר ללא השלמת ההתחברות");
+            setIsConnectingNew(false);
           }
         }
       }, 1000);
 
     } catch (err) {
-      console.error("💥 Connection error:", err);
-      setError(err instanceof Error ? err.message : "שגיאה לא ידועה");
-      setIsConnecting(false);
+      console.error("💥 NEW Connection error:", err);
+      setNewError(err instanceof Error ? err.message : "שגיאה לא ידועה");
+      setIsConnectingNew(false);
+    }
+  };
+
+  const testOriginalFacebookConnection = async () => {
+    setIsConnectingOriginal(true);
+    setOriginalMessage("");
+    setOriginalError("");
+
+    try {
+      console.log("🚀 Starting ORIGINAL Facebook connection test...");
+      
+      const popup = window.open(
+        `/api/facebook/auth`,
+        'facebook-auth-original', 
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      if (!popup) {
+        throw new Error("חלון הקופץ נחסם על ידי הדפדפן");
+      }
+
+      const handleMessage = (event: MessageEvent) => {
+        console.log("📨 ORIGINAL Message received:", event.data);
+        
+        if (event.data.type === 'FACEBOOK_AUTH_SUCCESS') {
+          console.log("✅ ORIGINAL Facebook auth successful");
+          setOriginalMessage("התחברות מקורית בוצעה בהצלחה!");
+          popup.close();
+          window.removeEventListener('message', handleMessage);
+          setIsConnectingOriginal(false);
+        } else if (event.data.type === 'FACEBOOK_AUTH_ERROR') {
+          console.error("❌ ORIGINAL Facebook auth error:", event.data.error);
+          setOriginalError(`שגיאה בגרסה מקורית: ${event.data.error}`);
+          popup.close();
+          window.removeEventListener('message', handleMessage);
+          setIsConnectingOriginal(false);
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          console.log("🔒 ORIGINAL Popup was closed manually");
+          clearInterval(checkClosed);
+          window.removeEventListener('message', handleMessage);
+          if (isConnectingOriginal) {
+            setOriginalError("החלון נסגר ללא השלמת ההתחברות");
+            setIsConnectingOriginal(false);
+          }
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error("💥 ORIGINAL Connection error:", err);
+      setOriginalError(err instanceof Error ? err.message : "שגיאה לא ידועה");
+      setIsConnectingOriginal(false);
     }
   };
 
@@ -73,52 +131,105 @@ export default function FacebookTest() {
     <div className="container mx-auto p-6 max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>בדיקת חיבור פייסבוק חדש</CardTitle>
+          <CardTitle>בדיקת שתי דרכי התחברות לפייסבוק</CardTitle>
           <CardDescription>
-            עמוד זמני לבדיקת חיבור פייסבוק שנכתב מחדש מאפס
+            בדיקה של הגרסה המקורית והגרסה החדשה כדי לראות איזה עובד
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Button 
-            onClick={testFacebookConnection}
-            disabled={isConnecting}
-            className="w-full"
-          >
-            {isConnecting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                מתחבר לפייסבוק...
-              </>
-            ) : (
-              "התחבר לפייסבוק (בדיקה)"
+        <CardContent className="space-y-6">
+          
+          {/* גרסה חדשה */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-blue-600">גרסה חדשה (נכתבה מאפס)</h3>
+            <Button 
+              onClick={testNewFacebookConnection}
+              disabled={isConnectingNew}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              {isConnectingNew ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  מתחבר בגרסה חדשה...
+                </>
+              ) : (
+                "התחבר לפייסבוק - גרסה חדשה"
+              )}
+            </Button>
+
+            {newMessage && (
+              <Alert>
+                <AlertDescription>{newMessage}</AlertDescription>
+              </Alert>
             )}
-          </Button>
 
-          {message && (
-            <Alert>
-              <AlertDescription>{message}</AlertDescription>
-            </Alert>
-          )}
+            {newError && (
+              <Alert variant="destructive">
+                <AlertDescription>{newError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          <Separator />
+
+          {/* גרסה מקורית */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-green-600">גרסה מקורית (קוד קיים)</h3>
+            <Button 
+              onClick={testOriginalFacebookConnection}
+              disabled={isConnectingOriginal}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              {isConnectingOriginal ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  מתחבר בגרסה מקורית...
+                </>
+              ) : (
+                "התחבר לפייסבוק - גרסה מקורית"
+              )}
+            </Button>
+
+            {originalMessage && (
+              <Alert>
+                <AlertDescription>{originalMessage}</AlertDescription>
+              </Alert>
+            )}
+
+            {originalError && (
+              <Alert variant="destructive">
+                <AlertDescription>{originalError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
 
           <div className="text-sm text-gray-600 space-y-2">
-            <p><strong>מה הדף הזה עושה:</strong></p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>קורא לendpoint חדש `/api/facebook/auth-new`</li>
-              <li>פותח חלון קופץ חדש</li>
-              <li>מקשיב להודעות מהחלון</li>
-              <li>בודק איפה בדיוק נכשלת ההתחברות</li>
-            </ul>
+            <p><strong>השוואה בין שתי הגרסאות:</strong></p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="p-3 bg-blue-50 rounded-md">
+                <h4 className="font-semibold text-blue-800">גרסה חדשה:</h4>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Endpoint: `/api/facebook/auth-new`</li>
+                  <li>קוד נכתב מאפס</li>
+                  <li>לוגים מפורטים יותר</li>
+                  <li>טיפול שגיאות משופר</li>
+                </ul>
+              </div>
+              
+              <div className="p-3 bg-green-50 rounded-md">
+                <h4 className="font-semibold text-green-800">גרסה מקורית:</h4>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Endpoint: `/api/facebook/auth`</li>
+                  <li>הקוד הקיים במערכת</li>
+                  <li>לוגיקה מורכבת יותר</li>
+                  <li>שמירה למסד נתונים</li>
+                </ul>
+              </div>
+            </div>
             
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-yellow-800 text-sm">
-                <strong>הערה:</strong> בסביבת פיתוח (localhost) Facebook עלול לחסום את ההתחברות כי הכתובת לא רשומה ב-Meta Developer Console. 
-                הבדיקה תעבוד טוב יותר בסביבת הפרודקשן.
+                <strong>מטרה:</strong> לראות איזה מהן עובד ולהבין איפה הבעיה המקורית.
+                שתי הגרסאות משתמשות באותו Facebook App ID וredirect URI.
               </p>
             </div>
           </div>
