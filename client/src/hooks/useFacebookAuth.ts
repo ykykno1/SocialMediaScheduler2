@@ -123,26 +123,45 @@ export default function useFacebookAuth() {
       console.log('Facebook popup opened');
       setPopupWindow(popup);
       
-      // Add polling to check if popup is closed manually
-      // Give more time for first-time authentication with full Facebook screen
+      // Add polling to check if popup is closed
       let pollCount = 0;
       const maxPolls = 180; // 3 minutes total
       const pollTimer = setInterval(() => {
         pollCount++;
         
-        // Only check for closure after giving enough time for Facebook auth
-        if (pollCount > 60 && popup.closed) { // Wait 60 seconds before checking closure
-          console.log('Facebook popup was closed manually after timeout');
+        // Check if popup was closed (either manually or by Facebook redirect failure)
+        if (popup.closed) {
+          console.log(`Facebook popup was closed after ${pollCount} seconds`);
           setPopupWindow(null);
           clearInterval(pollTimer);
-          // Reset authentication state
-          exchangeCodeMutation.reset();
+          
+          // Only show timeout message if it was closed very quickly (likely an error)
+          if (pollCount < 5) {
+            toast({
+              title: 'בעיה בהתחברות',
+              description: 'החלון נסגר מהר מדי. נסה שוב או בדוק חלונות קופצים.',
+              variant: 'destructive',
+            });
+          } else if (pollCount < 30) {
+            toast({
+              title: 'ההתחברות בוטלה',
+              description: 'אם לא השלמת את ההתחברות, נסה שוב.',
+              variant: 'default',
+            });
+          }
+          return;
         }
         
         // Cleanup after max time
         if (pollCount >= maxPolls) {
           console.log('Facebook auth timeout - cleaning up');
+          setPopupWindow(null);
           clearInterval(pollTimer);
+          toast({
+            title: 'תקלה בהתחברות',
+            description: 'ההתחברות לפייסבוק לקחה יותר מדי זמן. נסה שוב.',
+            variant: 'destructive',
+          });
         }
       }, 1000);
       
