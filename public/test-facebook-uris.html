@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Facebook URIs</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .uri-test { 
+            margin: 10px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .test-button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover { background: #166fe5; }
+        .result { 
+            margin-top: 10px; 
+            padding: 10px; 
+            border-radius: 3px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h2>בדיקת Facebook Redirect URIs</h2>
+    <p>בודק איזה redirect URIs כבר רשומים ב-Meta Developer Console</p>
+    
+    <div class="uri-test">
+        <h4>1. Production URI (Historical)</h4>
+        <code>https://social-media-scheduler-ykykyair.replit.app/auth-callback.html</code>
+        <button class="test-button" onclick="testURI('production')">בדוק URI זה</button>
+        <div id="result-production" class="result"></div>
+    </div>
+    
+    <div class="uri-test">
+        <h4>2. Production API Endpoint (July 13)</h4>
+        <code>https://social-media-scheduler-ykykyair.replit.app/api/facebook/auth-callback</code>
+        <button class="test-button" onclick="testURI('api')">בדוק URI זה</button>
+        <div id="result-api" class="result"></div>
+    </div>
+    
+    <div class="uri-test">
+        <h4>3. Localhost HTTPS</h4>
+        <code>https://localhost:5000/auth-callback.html</code>
+        <button class="test-button" onclick="testURI('localhost-https')">בדוק URI זה</button>
+        <div id="result-localhost-https" class="result"></div>
+    </div>
+    
+    <div class="uri-test">
+        <h4>4. Localhost HTTP</h4>
+        <code>http://localhost:5000/auth-callback.html</code>
+        <button class="test-button" onclick="testURI('localhost-http')">בדוק URI זה</button>
+        <div id="result-localhost-http" class="result"></div>
+    </div>
+
+    <script>
+        const uris = {
+            'production': 'https://social-media-scheduler-ykykyair.replit.app/auth-callback.html',
+            'api': 'https://social-media-scheduler-ykykyair.replit.app/api/facebook/auth-callback',
+            'localhost-https': 'https://localhost:5000/auth-callback.html',
+            'localhost-http': 'http://localhost:5000/auth-callback.html'
+        };
+        
+        function testURI(type) {
+            const redirectUri = uris[type];
+            const resultDiv = document.getElementById(`result-${type}`);
+            
+            resultDiv.innerHTML = 'בודק...';
+            resultDiv.className = 'result';
+            
+            // Create Facebook OAuth URL with this redirect URI
+            const fbURL = "https://www.facebook.com/v22.0/dialog/oauth?" +
+                "client_id=1598261231562840&" +
+                "redirect_uri=" + encodeURIComponent(redirectUri) + "&" +
+                "scope=email,public_profile&" +
+                "response_type=code&" +
+                "state=TEST_URI_" + type + "_" + Date.now();
+            
+            console.log(`Testing URI ${type}:`, fbURL);
+            
+            // Open in a small popup to test
+            const popup = window.open(fbURL, `test-${type}`, 'width=500,height=600');
+            
+            // Monitor popup
+            let checkCount = 0;
+            const checkInterval = setInterval(() => {
+                checkCount++;
+                
+                try {
+                    if (popup.closed) {
+                        clearInterval(checkInterval);
+                        resultDiv.innerHTML = 'Popup נסגר - לא ניתן לקבוע תוצאה';
+                        resultDiv.className = 'result error';
+                        return;
+                    }
+                    
+                    // Try to check popup URL (will fail due to CORS but that's ok)
+                    const currentUrl = popup.location.href;
+                    
+                    if (currentUrl.includes('error=')) {
+                        clearInterval(checkInterval);
+                        popup.close();
+                        resultDiv.innerHTML = 'שגיאה: URI לא רשום ב-Meta Console';
+                        resultDiv.className = 'result error';
+                    } else if (currentUrl.includes('code=')) {
+                        clearInterval(checkInterval);
+                        popup.close();
+                        resultDiv.innerHTML = 'הצלחה! URI רשום ב-Meta Console';
+                        resultDiv.className = 'result success';
+                    }
+                    
+                } catch (e) {
+                    // CORS error is expected - means we're on Facebook domain
+                    if (checkCount > 10) { // After 5 seconds
+                        clearInterval(checkInterval);
+                        popup.close();
+                        resultDiv.innerHTML = 'זמן קצוב - בדוק ידנית אם נפתח דף Facebook';
+                        resultDiv.className = 'result';
+                    }
+                }
+            }, 500);
+            
+            // Auto close after 30 seconds
+            setTimeout(() => {
+                if (!popup.closed) {
+                    popup.close();
+                    clearInterval(checkInterval);
+                    resultDiv.innerHTML = 'זמן קצוב - לא ניתן לקבוע תוצאה';
+                    resultDiv.className = 'result error';
+                }
+            }, 30000);
+        }
+    </script>
+</body>
+</html>

@@ -3553,8 +3553,8 @@ export function registerRoutes(app: Express): Server {
     // Use production URI for all requests to ensure it's registered in Meta Console
     const domain = req.headers.host;
     
-    // Always use the known working production URI (instead of dynamic domain)
-    const redirectUri = `https://social-media-scheduler-ykykyair.replit.app/auth-callback.html`;
+    // Try the API endpoint that might already be registered (from July 13 working config)
+    const redirectUri = `https://social-media-scheduler-ykykyair.replit.app/api/facebook/auth-callback`;
     
     console.log('📍 Using redirect URI:', redirectUri);
     console.log('📍 Domain from headers:', domain);
