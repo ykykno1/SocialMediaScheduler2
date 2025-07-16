@@ -378,7 +378,6 @@ export class AuthService {
           let currentWindow = authWin;
           
           const checkClosed = setInterval(() => {
-            console.log('Checking if auth window is closed...', { closed: currentWindow.closed });
             if (currentWindow.closed) {
               console.log('Auth window was closed, checking if we got a message...');
               // If the window was closed without message, it might be due to domain restriction
