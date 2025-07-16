@@ -226,8 +226,6 @@ export default function useFacebookAuth() {
 
   // Handle message from popup
   useEffect(() => {
-    let codeProcessed = false; // Track if we already processed a code
-    
     const handleMessage = (event: MessageEvent) => {
       console.log('🔔 MESSAGE RECEIVED FROM POPUP!');
       console.log('📬 Event data:', event.data);
@@ -245,13 +243,14 @@ export default function useFacebookAuth() {
       
       // Handle successful auth with code
       if (event.data.code && event.data.platform === 'facebook') {
-        // Prevent double processing
-        if (codeProcessed) {
-          console.log('🚫 Code already processed, ignoring duplicate');
+        const code = event.data.code;
+        
+        // Simple check - if mutation is already running, ignore
+        if (exchangeCodeMutation.isPending) {
+          console.log('🚫 Exchange already in progress, ignoring duplicate');
           return;
         }
         
-        codeProcessed = true; // Mark as processed immediately
         console.log('Facebook auth code received, exchanging for token');
         
         // Close popup first
@@ -262,12 +261,12 @@ export default function useFacebookAuth() {
         
         // Exchange code for token on the server - ONLY ONCE
         console.log('🔄 About to call exchangeCodeMutation.mutate');
-        console.log('🔄 Code to send:', event.data.code.substring(0, 20) + '...');
+        console.log('🔄 Code to send:', code.substring(0, 20) + '...');
         console.log('🔄 Redirect URI:', window.location.origin + '/auth-callback.html');
         
         // Execute mutation
         exchangeCodeMutation.mutate({
-          code: event.data.code,
+          code: code,
           redirectUri: window.location.origin + '/auth-callback.html'
         });
         console.log('🔄 exchangeCodeMutation.mutate called');
