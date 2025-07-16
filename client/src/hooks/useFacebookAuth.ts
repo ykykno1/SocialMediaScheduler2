@@ -54,6 +54,12 @@ export default function useFacebookAuth() {
   // Exchange code for token mutation
   const exchangeCodeMutation = useMutation({
     mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
+      // Skip if already running to prevent duplicate execution
+      if (exchangeCodeMutation.isPending) {
+        console.log('🚫 Mutation already pending, skipping duplicate');
+        throw new Error('Authentication already in progress');
+      }
+      
       console.log('🚀 exchangeCodeMutation.mutationFn called');
       console.log('📤 About to send POST to /api/auth-callback');
       console.log('📤 Code:', code.substring(0, 20) + '...');
@@ -70,23 +76,27 @@ export default function useFacebookAuth() {
         throw error;
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       console.log('🎉 Exchange code mutation succeeded!');
+      console.log('🎉 Server response:', data);
+      
+      // Clear React Query cache completely
+      queryClient.clear();
       
       // Force immediate refetch of auth status
-      await refetchAuthStatus();
+      console.log('🔄 Force refetching auth status...');
+      const freshStatus = await queryClient.fetchQuery({
+        queryKey: ['/api/auth-status'],
+        staleTime: 0
+      });
+      console.log('🔄 Fresh auth status:', freshStatus);
       
       toast({
         title: 'התחברות בוצעה בהצלחה',
         description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
       });
       
-      // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
-      
-      console.log('🔄 All queries invalidated after successful auth');
+      console.log('🔄 Cache cleared and refetched after successful auth');
     },
     onError: (error: Error) => {
       console.log('❌ Exchange code mutation failed');
@@ -227,7 +237,7 @@ export default function useFacebookAuth() {
       
       // Handle successful auth with code
       if (event.data.code && event.data.platform === 'facebook') {
-        // Prevent double processing
+        // Prevent double processing - critical fix for duplicate execution bug
         if (codeProcessed || exchangeCodeMutation.isPending) {
           console.log('🚫 Code already processed or mutation pending, ignoring duplicate');
           return;
@@ -242,17 +252,21 @@ export default function useFacebookAuth() {
         }
         setPopupWindow(null);
         
-        // Exchange code for token on the server
+        // Exchange code for token on the server - ONLY ONCE
         console.log('🔄 About to call exchangeCodeMutation.mutate');
         console.log('🔄 Code to send:', event.data.code.substring(0, 20) + '...');
         console.log('🔄 Redirect URI:', window.location.origin + '/auth-callback.html');
         
-        exchangeCodeMutation.mutate({
-          code: event.data.code,
-          redirectUri: window.location.origin + '/auth-callback.html'
-        });
-        
-        console.log('🔄 exchangeCodeMutation.mutate called');
+        // Add guard against multiple execution
+        if (!exchangeCodeMutation.isPending) {
+          exchangeCodeMutation.mutate({
+            code: event.data.code,
+            redirectUri: window.location.origin + '/auth-callback.html'
+          });
+          console.log('🔄 exchangeCodeMutation.mutate called - FIRST TIME ONLY');
+        } else {
+          console.log('🚫 Mutation already pending, skipping');
+        }
       }
       
       // Handle auth errors (user cancelled, etc.)
