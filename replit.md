@@ -126,12 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- July 16, 2025. INVESTIGATING: Facebook authentication not working - analyzing root cause:
-  - Issue: No auth-callback requests reaching server - popup messages not being received
-  - Logs show only YouTube token in database, no Facebook tokens being saved
-  - Added comprehensive logging to track popup window and message handling
-  - Next: Determine if popup opens, if messages are sent, and where communication breaks down
-  - Theory: Either popup blocked, messages not sent from auth-callback.html, or message listener not working
+- July 16, 2025. INVESTIGATING: Facebook authentication popup closes immediately:
+  - LOGIN FUNCTION WORKS: Button click detected and login function executes properly
+  - POPUP OPENS: Window opens successfully with correct URL and dimensions
+  - ISSUE IDENTIFIED: Popup closes after 1 second, preventing user interaction
+  - Root cause likely: popup blocked by browser or immediate redirect/error from Facebook
+  - Next: Check auth-callback.html for immediate closing behavior or Facebook error handling
 - July 16, 2025. COMPLETED: Facebook authentication analysis and debugging resolution:
   - Root cause identified: Facebook returns "access_denied" due to app configuration/approval status
   - Found that authentication works when proper permissions are granted by user
