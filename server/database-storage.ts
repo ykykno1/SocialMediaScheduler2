@@ -43,13 +43,25 @@ export class DatabaseStorage {
   }
 
   // Generic auth token operations
-  async getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null> {
+  async getAuthToken(platform: SupportedPlatform, userId: string, connectionName?: string): Promise<AuthToken | null> {
     try {
       console.log(`🔍 Getting auth token for platform: ${platform}, userId: ${userId}`);
       
       // First try encrypted tokens table
+      const whereConditions = [
+        eq(encryptedAuthTokens.platform, platform), 
+        eq(encryptedAuthTokens.userId, userId)
+      ];
+      
+      if (connectionName) {
+        whereConditions.push(eq(encryptedAuthTokens.connectionName, connectionName));
+      } else {
+        // If no connectionName specified, use default
+        whereConditions.push(eq(encryptedAuthTokens.connectionName, 'primary'));
+      }
+      
       const [encryptedToken] = await db.select().from(encryptedAuthTokens)
-        .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
+        .where(and(...whereConditions));
       
       console.log(`📝 Query result for ${platform}/${userId}:`, !!encryptedToken);
       if (encryptedToken) {
@@ -128,9 +140,9 @@ export class DatabaseStorage {
     }
   }
 
-  async saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken> {
+  async saveAuthToken(token: AuthToken, userId: string, connectionName?: string): Promise<AuthToken> {
     try {
-      console.log(`🔧 DatabaseStorage.saveAuthToken called for ${token.platform}/${userId}`);
+      console.log(`🔧 DatabaseStorage.saveAuthToken called for ${token.platform}/${userId}${connectionName ? '/' + connectionName : ''}`);
       console.log(`🔧 Token details: hasAccessToken=${!!token.accessToken}, expiresAt=${token.expiresAt}`);
       
       const validatedToken = authSchema.parse(token);

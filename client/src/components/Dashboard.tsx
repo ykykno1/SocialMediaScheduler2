@@ -90,10 +90,15 @@ const Dashboard = () => {
               נהל פוסטים בפייסבוק - פרימיום בלבד
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
             <Button asChild className="w-full ios-button" variant="outline">
               <Link href="/facebook">
                 כנס לניהול פייסבוק
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full text-sm border-dashed border-orange-300 text-orange-600">
+              <Link href="/facebook-multiple">
+                בדיקת חיבור מרובה (זמני)
               </Link>
             </Button>
           </CardContent>

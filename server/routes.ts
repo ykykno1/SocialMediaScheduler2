@@ -504,6 +504,33 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Specific Facebook disconnect endpoint
+  // GET: Multiple Facebook connections
+  app.get("/api/facebook/connections", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // For now, return mock data. In future, this would query the database for all connections
+      const connections = [
+        // {
+        //   connectionName: "primary",
+        //   isAuthenticated: true,
+        //   facebookName: "דוגמה למשתמש",
+        //   facebookId: "123456789",
+        //   pageAccess: false,
+        //   lastConnected: new Date()
+        // }
+      ];
+
+      res.json(connections);
+    } catch (error) {
+      console.error('Error fetching Facebook connections:', error);
+      res.status(500).json({ error: "Failed to fetch connections" });
+    }
+  });
+
   app.post("/api/facebook/disconnect", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;

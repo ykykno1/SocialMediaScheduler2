@@ -10,6 +10,7 @@ import LoginPage from "@/pages/login";
 import PricingPage from "@/pages/pricing";
 import YouTubePage from "@/pages/youtube-oauth";
 import FacebookPage from "@/pages/facebook";
+import FacebookMultiplePage from "@/pages/facebook-multiple";
 import InstagramPage from "@/pages/instagram";
 import AdminPage from "@/pages/admin";
 import AdminShabbatPage from "@/pages/admin-shabbat";
@@ -274,6 +275,7 @@ function Router() {
         <Route path="/subscription" component={SubscriptionPage} />
         <Route path="/youtube" component={YouTubePage} />
         <Route path="/facebook" component={FacebookPage} />
+        <Route path="/facebook-multiple" component={FacebookMultiplePage} />
         <Route path="/instagram" component={InstagramPage} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/timing-settings" component={TimingSettingsPage} />
