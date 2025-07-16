@@ -124,6 +124,7 @@ export class DatabaseStorage {
       console.log(`🔧 Delete result: ${deleteResult.rowCount || 0} rows deleted`);
 
       // For now, use legacy tokens only (skip encryption to fix the immediate issue)
+      console.log(`🔧 Creating token record with legacy tokens...`);
       const tokenRecord = {
         id: nanoid(),
         userId,
@@ -148,13 +149,32 @@ export class DatabaseStorage {
       });
 
       // Insert new token into encrypted table using legacy fields
-      const insertResult = await db.insert(encryptedAuthTokens).values(tokenRecord);
-      console.log(`🔧 Insert completed successfully`);
+      console.log(`🔧 About to run INSERT query...`);
+      try {
+        const insertResult = await db.insert(encryptedAuthTokens).values(tokenRecord);
+        console.log(`🔧 Insert completed successfully:`, insertResult);
+      } catch (insertError) {
+        console.error(`❌ INSERT FAILED:`, insertError);
+        console.error(`❌ Insert error details:`, {
+          message: insertError.message,
+          code: insertError.code,
+          stack: insertError.stack
+        });
+        throw insertError;
+      }
       
       // Verify the insert worked
+      console.log(`🔧 Running verification query...`);
       const verifyQuery = await db.select().from(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
       console.log(`🔧 Verification query: found ${verifyQuery.length} records`);
+      if (verifyQuery.length > 0) {
+        console.log(`🔧 First record:`, { 
+          id: verifyQuery[0].id, 
+          platform: verifyQuery[0].platform, 
+          hasLegacyToken: !!verifyQuery[0].legacyAccessToken 
+        });
+      }
 
       console.log(`✅ Auth token saved successfully for ${token.platform}/${userId}`);
       return validatedToken;
