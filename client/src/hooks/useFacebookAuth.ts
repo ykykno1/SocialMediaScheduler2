@@ -224,26 +224,31 @@ export default function useFacebookAuth() {
     }
   }, [toast]);
 
-  // Handle message from popup
+  // Handle message from popup or new tab
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      console.log('🔔 MESSAGE RECEIVED FROM POPUP!');
-      console.log('📬 Event data:', event.data);
-      console.log('🌐 Event origin:', event.origin);
-      console.log('🏠 Window origin:', window.location.origin);
-      console.log('🔍 Has code?', !!event.data?.code);
-      console.log('🔍 Has error?', !!event.data?.error);
-      console.log('🔍 Platform?', event.data?.platform);
-      
-      // Verify origin
-      if (event.origin !== window.location.origin) {
-        console.log('Origin mismatch, ignoring message');
-        return;
-      }
+    // Listen for BroadcastChannel messages (for new tab auth)
+    const channel = new BroadcastChannel('facebook-auth');
+    const handleBroadcastMessage = (data: any) => {
+      console.log('🔔 BROADCAST MESSAGE RECEIVED!');
+      console.log('📬 Broadcast data:', data);
+      handleAuthMessage(data);
+    };
+    
+    channel.addEventListener('message', (event) => {
+      handleBroadcastMessage(event.data);
+    });
+
+    // Common function to handle auth messages from both popup and broadcast
+    const handleAuthMessage = (data: any) => {
+      console.log('🔔 Processing auth message!');
+      console.log('📬 Data:', data);
+      console.log('🔍 Has code?', !!data?.code);
+      console.log('🔍 Has error?', !!data?.error);
+      console.log('🔍 Platform?', data?.platform);
       
       // Handle successful auth with code
-      if (event.data.code && event.data.platform === 'facebook') {
-        const code = event.data.code;
+      if (data.code && data.platform === 'facebook') {
+        const code = data.code;
         
         // Simple check - if mutation is already running, ignore
         if (exchangeCodeMutation.isPending) {
@@ -253,7 +258,7 @@ export default function useFacebookAuth() {
         
         console.log('Facebook auth code received, exchanging for token');
         
-        // Close popup first
+        // Close popup first if it exists
         if (popupWindow && !popupWindow.closed) {
           popupWindow.close();
         }
@@ -272,65 +277,44 @@ export default function useFacebookAuth() {
         console.log('🔄 exchangeCodeMutation.mutate called');
       }
       
-      // Handle auth errors (user cancelled, etc.)
-      if (event.data.error && event.data.platform === 'facebook') {
-        console.log('Facebook auth error received:', event.data.error);
-        // Close popup
+      // Handle auth error
+      else if (data.error) {
+        console.log('❌ Facebook auth error:', data.error);
+        
+        // Close popup if it exists
         if (popupWindow && !popupWindow.closed) {
           popupWindow.close();
         }
         setPopupWindow(null);
         
-        if (event.data.error === 'access_denied') {
-          toast({
-            title: 'התחברות בוטלה',
-            description: 'ההתחברות לפייסבוק בוטלה. אם רוצה להתחבר, יש לאשר את ההרשאות במסך הפייסבוק.',
-            variant: 'default',
-          });
-        } else {
-          toast({
-            title: 'שגיאת התחברות',
-            description: `שגיאה בהתחברות לפייסבוק: ${event.data.error}`,
-            variant: 'destructive',
-          });
-        }
-      }
-      
-      // Handle successful auth with access token (implicit flow)
-      if (event.data.access_token && event.data.platform === 'facebook') {
-        // TODO: Handle implicit flow if needed
         toast({
-          title: 'התחברות בוצעה בהצלחה',
-          description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
-        });
-        
-        // Invalidate queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
-      }
-      
-      // Handle auth error
-      if (event.data.error) {
-        toast({
-          title: 'שגיאת התחברות',
-          description: event.data.error,
+          title: 'שגיאה בהתחברות לפייסבוק',
+          description: data.error_description || 'אירעה שגיאה בתהליך ההתחברות',
           variant: 'destructive',
         });
       }
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      console.log('🔔 MESSAGE RECEIVED FROM POPUP!');
+      console.log('📬 Event data:', event.data);
+      console.log('🌐 Event origin:', event.origin);
+      console.log('🏠 Window origin:', window.location.origin);
       
-      // Close popup
-      if (popupWindow && !popupWindow.closed) {
-        popupWindow.close();
+      // Verify origin for popup messages
+      if (event.origin !== window.location.origin) {
+        console.log('Origin mismatch, ignoring message');
+        return;
       }
       
-      setPopupWindow(null);
+      handleAuthMessage(event.data);
     };
-    
+
     window.addEventListener('message', handleMessage);
     
     return () => {
       window.removeEventListener('message', handleMessage);
+      channel.close();
     };
   }, [popupWindow, toast, queryClient]);
 
