@@ -106,7 +106,10 @@
         
         // Process the authentication response
         function processAuthResponse() {
+            console.log('processAuthResponse called');
             const params = getUrlParams();
+            console.log('Parsed params:', params);
+            
             const statusElement = document.getElementById('status');
             const messageElement = document.getElementById('status-message');
             const spinnerElement = document.getElementById('spinner');
@@ -190,8 +193,22 @@
             setTimeout(() => window.close(), 5000);
         }
         
+        // Add logging to understand what's happening
+        console.log('Auth callback page loaded');
+        console.log('Current URL:', window.location.href);
+        console.log('URL params:', window.location.search);
+        console.log('URL hash:', window.location.hash);
+        
         // Run when page loads
         window.addEventListener('DOMContentLoaded', processAuthResponse);
+        
+        // Also run immediately in case DOMContentLoaded already fired
+        if (document.readyState === 'loading') {
+            console.log('Document still loading, waiting for DOMContentLoaded');
+        } else {
+            console.log('Document already loaded, processing immediately');
+            processAuthResponse();
+        }
     </script>
 </body>
 </html>
