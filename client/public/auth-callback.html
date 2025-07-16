@@ -137,16 +137,29 @@
             
             // Check for errors
             if (params.error) {
+                console.log('=== FACEBOOK ERROR DETECTED ===');
+                console.log('Error type:', params.error);
+                console.log('Error description:', params.error_description);
+                console.log('Full error params:', params);
+                console.log('Facebook session info:', {
+                    cookies: document.cookie,
+                    localStorage: localStorage.getItem('facebook_session'),
+                    sessionStorage: sessionStorage.getItem('facebook_session')
+                });
+                
                 statusElement.textContent = params.error_description || params.error;
                 statusElement.className = 'status error';
                 messageElement.textContent = 'האימות נכשל, החלון ייסגר בקרוב.';
                 spinnerElement.style.display = 'none';
                 
-                // Send error to parent window
+                // Send error to parent window with detailed info
                 if (window.opener) {
                     window.opener.postMessage({
                         error: params.error,
-                        platform: params.state || 'facebook'
+                        error_description: params.error_description,
+                        platform: params.state || 'facebook',
+                        timestamp: new Date().toISOString(),
+                        attemptNumber: sessionStorage.getItem('facebook_attempt') || '1'
                     }, window.location.origin);
                 }
                 

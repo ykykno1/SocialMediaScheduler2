@@ -87,7 +87,13 @@ export default function useFacebookAuth() {
   // Function to initiate Facebook login
   const login = useCallback(async () => {
     try {
-      console.log('Starting Facebook login');
+      // Track attempt number
+      const attemptCount = parseInt(localStorage.getItem('facebook_attempts') || '0') + 1;
+      localStorage.setItem('facebook_attempts', attemptCount.toString());
+      
+      console.log(`Starting Facebook login - Attempt #${attemptCount}`);
+      console.log('Previous attempts:', localStorage.getItem('facebook_attempts'));
+      console.log('Last success:', localStorage.getItem('facebook_last_success'));
       
       // Get Facebook app configuration from server
       const configRes = await fetch('/api/facebook-config');
