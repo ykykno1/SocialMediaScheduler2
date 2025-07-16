@@ -3539,11 +3539,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Register Stripe Demo routes (separate from existing functionality)
-  registerStripeRoutes(app);
-
   // Test Facebook OAuth endpoint - alternative implementation
+  console.log('🟡 Registering Facebook auth-test endpoint...');
+  
   app.get('/api/facebook/auth-test', (req, res) => {
+    console.log('🔧 Facebook auth-test endpoint was reached!');
+    
     const version = req.query.version || 'new';
     const state = `TEST_${version.toUpperCase()}_${Date.now()}_${Math.random()}`;
     
@@ -3562,8 +3563,15 @@ export function registerRoutes(app: Express): Server {
       `&state=${state}`;
     
     console.log(`📍 Redirecting to Facebook auth URL (TEST ${version}):`, fbAuthUrl);
+    console.log('🔧 About to call res.redirect()');
     res.redirect(fbAuthUrl);
+    console.log('🔧 res.redirect() called');
   });
+  
+  console.log('✅ Facebook auth-test endpoint registered!');
+
+  // Register Stripe Demo routes (separate from existing functionality)
+  registerStripeRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
