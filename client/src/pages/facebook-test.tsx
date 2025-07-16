@@ -34,7 +34,15 @@ export default function FacebookTest() {
       );
 
       if (!popup) {
-        throw new Error("חלון הקופץ נחסם על ידי הדפדפן");
+        // Try opening in new tab instead
+        const newTab = window.open(testUrl, '_blank');
+        if (newTab) {
+          setNewMessage("נפתח בלשונית חדשה. אנא השלם את התהליך שם וחזור לכאן.");
+          setIsConnectingNew(false);
+          return;
+        } else {
+          throw new Error("חלון הקופץ נחסם על ידי הדפדפן. אנא אפשר חלונות קופצים לאתר זה");
+        }
       }
 
       const handleMessage = (event: MessageEvent) => {
@@ -91,7 +99,15 @@ export default function FacebookTest() {
       );
 
       if (!popup) {
-        throw new Error("חלון הקופץ נחסם על ידי הדפדפן");
+        // Try opening in new tab instead
+        const newTab = window.open(`/api/facebook/auth`, '_blank');
+        if (newTab) {
+          setOriginalMessage("נפתח בלשונית חדשה. אנא השלם את התהליך שם וחזור לכאן.");
+          setIsConnectingOriginal(false);
+          return;
+        } else {
+          throw new Error("חלון הקופץ נחסם על ידי הדפדפן. אנא אפשר חלונות קופצים לאתר זה");
+        }
       }
 
       const handleMessage = (event: MessageEvent) => {
@@ -147,20 +163,30 @@ export default function FacebookTest() {
           {/* גרסה חדשה */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-blue-600">גרסה חדשה (נכתבה מאפס)</h3>
-            <Button 
-              onClick={testNewFacebookConnection}
-              disabled={isConnectingNew}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              {isConnectingNew ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  מתחבר בגרסה חדשה...
-                </>
-              ) : (
-                "התחבר לפייסבוק - גרסה חדשה"
-              )}
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={testNewFacebookConnection}
+                disabled={isConnectingNew}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {isConnectingNew ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    מתחבר בגרסה חדשה...
+                  </>
+                ) : (
+                  "התחבר בחלון קופץ - גרסה חדשה"
+                )}
+              </Button>
+
+              <Button 
+                onClick={() => window.open(`/api/facebook/auth-test?version=new`, '_blank')}
+                variant="outline"
+                className="w-full"
+              >
+                פתח בלשונית חדשה - גרסה חדשה
+              </Button>
+            </div>
 
             {newMessage && (
               <Alert>
@@ -180,20 +206,30 @@ export default function FacebookTest() {
           {/* גרסה מקורית */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-green-600">גרסה מקורית (קוד קיים)</h3>
-            <Button 
-              onClick={testOriginalFacebookConnection}
-              disabled={isConnectingOriginal}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              {isConnectingOriginal ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  מתחבר בגרסה מקורית...
-                </>
-              ) : (
-                "התחבר לפייסבוק - גרסה מקורית"
-              )}
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={testOriginalFacebookConnection}
+                disabled={isConnectingOriginal}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {isConnectingOriginal ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    מתחבר בגרסה מקורית...
+                  </>
+                ) : (
+                  "התחבר בחלון קופץ - גרסה מקורית"
+                )}
+              </Button>
+
+              <Button 
+                onClick={() => window.open(`/api/facebook/auth`, '_blank')}
+                variant="outline"
+                className="w-full"
+              >
+                פתח בלשונית חדשה - גרסה מקורית
+              </Button>
+            </div>
 
             {originalMessage && (
               <Alert>
