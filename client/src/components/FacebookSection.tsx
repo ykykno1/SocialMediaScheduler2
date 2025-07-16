@@ -34,14 +34,29 @@ export default function FacebookSection() {
                 התחבר לפייסבוק כדי לנהל פוסטים ועמודים
               </AlertDescription>
             </Alert>
-            <Button 
-              onClick={login} 
-              disabled={isAuthenticating}
-              className="bg-[#1877F2] hover:bg-[#166FE5]"
-            >
-              <Facebook className="mr-2 h-4 w-4" />
-              {isAuthenticating ? "מתחבר... (יכול לקחת עד דקה בפעם הראשונה)" : "התחבר עם פייסבוק"}
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={login} 
+                disabled={isAuthenticating}
+                className="bg-[#1877F2] hover:bg-[#166FE5] w-full"
+              >
+                <Facebook className="mr-2 h-4 w-4" />
+                {isAuthenticating ? "מתחבר... (יכול לקחת עד דקה בפעם הראשונה)" : "התחבר עם פייסבוק"}
+              </Button>
+              
+              <Button 
+                onClick={() => {
+                  const authUrl = 'https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=https%3A%2F%2F6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev%2Fauth-callback.html&state=facebook&scope=public_profile,email,user_posts';
+                  window.open(authUrl, '_blank');
+                }}
+                variant="outline"
+                className="w-full"
+                disabled={isAuthenticating}
+              >
+                <Facebook className="mr-2 h-4 w-4" />
+                פתח התחברות בטאב חדש (אם חוסם פופאפ)
+              </Button>
+            </div>
           </div>
         ) : (
           <div>
