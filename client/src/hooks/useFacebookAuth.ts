@@ -102,6 +102,7 @@ export default function useFacebookAuth() {
         `scope=public_profile,email,user_posts`;
       
       console.log('Facebook auth URL:', authUrl);
+      console.log('Please open this URL in a new tab to test manually:', authUrl);
       
       // Open popup window
       const width = 600;
