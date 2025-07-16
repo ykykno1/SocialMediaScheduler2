@@ -583,10 +583,14 @@ export function registerRoutes(app: Express): Server {
 
   // Exchange Facebook code for token
   app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
+    console.log('🔔 AUTH-CALLBACK STARTED: Received Facebook auth callback');
+    console.log('📥 Request body:', { hasCode: !!req.body.code, hasRedirectUri: !!req.body.redirectUri });
+    
     try {
       const { code, redirectUri } = req.body;
 
       if (!code || !redirectUri) {
+        console.log('❌ Missing code or redirectUri');
         return res.status(400).json({ error: "Missing code or redirectUri" });
       }
 
@@ -651,8 +655,10 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Save the auth token (user-specific)
-      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
-      console.log(`Facebook user ID: ${userData.id}`);
+      console.log(`💾 Saving Facebook auth for user: ${req.user?.id}`);
+      console.log(`👤 Facebook user ID: ${userData.id}`);
+      console.log('🔑 Token data:', { hasAccessToken: !!tokenData.access_token, expiresIn: tokenData.expires_in });
+      
       const auth = await storage.saveFacebookAuth({
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
@@ -661,7 +667,7 @@ export function registerRoutes(app: Express): Server {
         pageAccess,
         isManualToken: false
       }, req.user?.id);
-      console.log(`Auth saved successfully:`, !!auth);
+      console.log(`✅ Auth saved successfully:`, !!auth);
 
       // Verify token is accessible by trying to read it back
       let attempts = 0;
