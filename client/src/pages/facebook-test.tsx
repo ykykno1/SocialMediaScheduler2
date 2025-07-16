@@ -22,7 +22,7 @@ export default function FacebookTest() {
       console.log("🚀 Starting NEW Facebook connection test...");
       
       const popup = window.open(
-        `/api/facebook/auth-new`,
+        `/api/facebook/auth-test?version=new`,
         'facebook-auth-new',
         'width=500,height=600,scrollbars=yes,resizable=yes'
       );
