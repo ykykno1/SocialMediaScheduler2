@@ -25,7 +25,6 @@ export default function FacebookTest() {
       const testUrl = `/api/facebook/auth-test?version=new`;
       
       console.log("🔗 Current hostname:", window.location.hostname);
-      console.log("🔗 Is localhost:", isLocalhost);
       console.log("🔗 Opening auth test URL:", testUrl);
       
       const popup = window.open(
