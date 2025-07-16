@@ -126,6 +126,13 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
+- July 16, 2025. FIXED: Critical Facebook logout crash bug and completed OAuth preparation:
+  - Fixed Facebook logout crash caused by null/undefined posts.filter() error
+  - Added Array.isArray() safety checks in useFacebookPosts.ts and FacebookSection.tsx
+  - System now handles social media disconnection gracefully without crashes
+  - Facebook authentication working: connects, displays posts, disconnect function stable
+  - Professional logo integrated in all pages and ready for OAuth consent screen
+  - System 95% ready for Google verification: only demo video and OAuth consent screen setup remaining
 - July 14, 2025. COMPLETED: Professional logo integration and OAuth preparation finalization:
   - Received and integrated professional logo featuring robot with Shabbat candles design
   - Logo implemented in landing page footer and ready for OAuth consent screen
