@@ -94,7 +94,7 @@ export default function useFacebookAuth() {
       
       // בקשת הרשאות תקפות בלבד
       // שימוש רק בהרשאות שנתמכות בגרסה 22.0 של Facebook API
-      // הסרנו את כל הרשאות העמודים שאינן תקפות
+      // משתמש באותם סקופים כמו השרת
       const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
         `client_id=${appId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
@@ -123,20 +123,25 @@ export default function useFacebookAuth() {
       setPopupWindow(popup);
       
       // Add polling to check if popup is closed manually
+      // Give more time for first-time authentication with full Facebook screen
+      let pollCount = 0;
+      const maxPolls = 180; // 3 minutes total
       const pollTimer = setInterval(() => {
-        if (popup.closed) {
-          console.log('Facebook popup was closed manually');
+        pollCount++;
+        
+        // Only check for closure after giving enough time for Facebook auth
+        if (pollCount > 20 && popup.closed) { // Wait 20 seconds before checking closure
+          console.log('Facebook popup was closed manually after timeout');
           setPopupWindow(null);
           clearInterval(pollTimer);
         }
-      }, 1000);
-      
-      // Store timer reference for cleanup
-      setTimeout(() => {
-        if (pollTimer) {
+        
+        // Cleanup after max time
+        if (pollCount >= maxPolls) {
+          console.log('Facebook auth timeout - cleaning up');
           clearInterval(pollTimer);
         }
-      }, 60000); // Clean up after 1 minute
+      }, 1000);
       
     } catch (error) {
       console.error('Facebook login error:', error);

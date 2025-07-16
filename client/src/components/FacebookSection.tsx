@@ -40,7 +40,7 @@ export default function FacebookSection() {
               className="bg-[#1877F2] hover:bg-[#166FE5]"
             >
               <Facebook className="mr-2 h-4 w-4" />
-              {isAuthenticating ? "מתחבר..." : "התחבר עם פייסבוק"}
+              {isAuthenticating ? "מתחבר... (יכול לקחת עד דקה בפעם הראשונה)" : "התחבר עם פייסבוק"}
             </Button>
           </div>
         ) : (
