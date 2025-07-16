@@ -52,6 +52,25 @@ export class DatabaseStorage {
         .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
       
       console.log(`📝 Query result for ${platform}/${userId}:`, !!encryptedToken);
+      if (encryptedToken) {
+        console.log(`📝 Found token details:`, {
+          id: encryptedToken.id,
+          hasLegacyToken: !!encryptedToken.legacyAccessToken,
+          hasEncryptedToken: !!encryptedToken.encryptedAccessToken,
+          createdAt: encryptedToken.createdAt
+        });
+      } else {
+        console.log(`📝 No token found - checking if any records exist in table...`);
+        const allTokens = await db.select().from(encryptedAuthTokens).limit(5);
+        console.log(`📝 Total tokens in table: ${allTokens.length}`);
+        if (allTokens.length > 0) {
+          console.log(`📝 Sample tokens:`, allTokens.map(t => ({ 
+            platform: t.platform, 
+            userId: t.userId, 
+            createdAt: t.createdAt 
+          })));
+        }
+      }
       
       if (encryptedToken) {
         let accessToken: string;
