@@ -429,7 +429,7 @@ export class AuthService {
               window.removeEventListener('message', handleCallback);
               reject(new Error('Authentication timeout - please try again'));
             }
-          }, 60000); // 60 seconds timeout
+          }, 120000); // 2 minutes timeout for first-time auth
           
           const checkClosed = setInterval(() => {
             if (currentWindow.closed && !messageReceived) {

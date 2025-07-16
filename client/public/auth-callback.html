@@ -156,10 +156,11 @@
                     console.log('Message sent to parent window');
                     
                     // Wait longer to ensure message is processed by parent
+                    // Give extra time for first-time auth with full Facebook screen
                     setTimeout(() => {
                         console.log('Closing window after message delivery delay');
                         window.close();
-                    }, 3000);
+                    }, 5000);
                 } else {
                     console.error('No parent window found');
                     setTimeout(() => window.close(), 1000);
