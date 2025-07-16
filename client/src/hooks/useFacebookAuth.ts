@@ -116,9 +116,10 @@ export default function useFacebookAuth() {
       const attemptCount = parseInt(localStorage.getItem('facebook_attempts') || '0') + 1;
       localStorage.setItem('facebook_attempts', attemptCount.toString());
       
-      console.log(`Starting Facebook login - Attempt #${attemptCount}`);
-      console.log('Previous attempts:', localStorage.getItem('facebook_attempts'));
-      console.log('Last success:', localStorage.getItem('facebook_last_success'));
+      console.log(`🚀 Starting Facebook login - Attempt #${attemptCount}`);
+      console.log('📋 Previous attempts:', localStorage.getItem('facebook_attempts'));
+      console.log('📋 Last success:', localStorage.getItem('facebook_last_success'));
+      console.log('🔍 Current mutation pending state:', exchangeCodeMutation.isPending);
       
       // Get Facebook app configuration from server
       const configRes = await fetch('/api/facebook-config');
@@ -155,6 +156,9 @@ export default function useFacebookAuth() {
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
       
+      console.log('🪟 About to open popup window with URL:', authUrl);
+      console.log('🪟 Popup dimensions:', { width, height, left, top });
+      
       const popup = window.open(
         authUrl,
         'facebook-login',
@@ -162,10 +166,13 @@ export default function useFacebookAuth() {
       );
       
       if (!popup) {
+        console.error('❌ Popup blocked by browser');
         throw new Error('נחסם חלון קופץ. אנא אפשר חלונות קופצים ונסה שוב');
       }
       
-      console.log('Facebook popup opened');
+      console.log('✅ Facebook popup opened successfully');
+      console.log('🪟 Popup object:', popup);
+      console.log('🪟 Popup closed?', popup.closed);
       setPopupWindow(popup);
       
       // Add polling to check if popup is closed
@@ -225,9 +232,13 @@ export default function useFacebookAuth() {
     let codeProcessed = false; // Track if we already processed a code
     
     const handleMessage = (event: MessageEvent) => {
-      console.log('Received message from popup:', event.data);
-      console.log('Event origin:', event.origin);
-      console.log('Window origin:', window.location.origin);
+      console.log('🔔 MESSAGE RECEIVED FROM POPUP!');
+      console.log('📬 Event data:', event.data);
+      console.log('🌐 Event origin:', event.origin);
+      console.log('🏠 Window origin:', window.location.origin);
+      console.log('🔍 Has code?', !!event.data?.code);
+      console.log('🔍 Has error?', !!event.data?.error);
+      console.log('🔍 Platform?', event.data?.platform);
       
       // Verify origin
       if (event.origin !== window.location.origin) {

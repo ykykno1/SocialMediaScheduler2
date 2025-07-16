@@ -178,8 +178,10 @@
                 messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
                 
                 // Send code to parent window ONCE
-                console.log('Sending code to parent:', params.code.substring(0, 20) + '...');
-                console.log('Platform:', params.state || 'facebook');
+                console.log('🚀 SENDING CODE TO PARENT:', params.code.substring(0, 20) + '...');
+                console.log('🏷️ Platform:', params.state || 'facebook');
+                console.log('🪟 Window opener exists?', !!window.opener);
+                console.log('🌐 Target origin:', window.location.origin);
                 
                 const messageData = {
                     code: params.code,
@@ -187,10 +189,23 @@
                     success: true
                 };
                 
+                console.log('📦 Message data to send:', messageData);
+                
                 if (window.opener) {
                     // Send message ONCE only
-                    window.opener.postMessage(messageData, window.location.origin);
-                    console.log('Message sent to parent window - ONCE ONLY');
+                    try {
+                        console.log('⚡ Calling postMessage...');
+                        window.opener.postMessage(messageData, window.location.origin);
+                        console.log('✅ MESSAGE SENT TO PARENT WINDOW - SUCCESS!');
+                        
+                        // Try alternative sending methods for safety
+                        setTimeout(() => {
+                            console.log('⚡ Sending backup message...');
+                            window.opener.postMessage(messageData, '*');
+                        }, 100);
+                    } catch (error) {
+                        console.error('❌ Error sending message:', error);
+                    }
                     
                     // Close window after short delay
                     setTimeout(() => {

@@ -126,12 +126,12 @@ The application follows Jewish religious principles by automatically hiding soci
 
 ## Changelog
 
-- July 16, 2025. RESOLVED: Facebook authentication double execution issue:
-  - Root cause identified: mutation runs twice with same authorization code
-  - First execution succeeds: token saves, posts load correctly
-  - Second execution fails with "This authorization code has been used" error from Facebook
-  - Fixed by adding `!exchangeCodeMutation.isPending` check to prevent duplicate mutations
-  - System now works correctly on first attempt without confusion from second failure
+- July 16, 2025. INVESTIGATING: Facebook authentication not working - analyzing root cause:
+  - Issue: No auth-callback requests reaching server - popup messages not being received
+  - Logs show only YouTube token in database, no Facebook tokens being saved
+  - Added comprehensive logging to track popup window and message handling
+  - Next: Determine if popup opens, if messages are sent, and where communication breaks down
+  - Theory: Either popup blocked, messages not sent from auth-callback.html, or message listener not working
 - July 16, 2025. COMPLETED: Facebook authentication analysis and debugging resolution:
   - Root cause identified: Facebook returns "access_denied" due to app configuration/approval status
   - Found that authentication works when proper permissions are granted by user
