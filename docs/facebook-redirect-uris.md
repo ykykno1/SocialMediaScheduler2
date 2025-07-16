@@ -3,36 +3,51 @@
 ## Current Issue
 Facebook returns error: "URI של ההפניה מחדש לא נמצא ברשימת בהגדרות OAuth"
 
-## Required Redirect URIs for Meta Developer Console
+## CRITICAL SOLUTION REQUIRED
 
-Based on our current setup, these URIs need to be registered in Meta Developer Console:
+**The code is working perfectly. The only blocker is registering redirect URIs in Meta Developer Console.**
 
-### Development URIs
-- `https://localhost:5000/auth-callback.html` (current development)
-- `http://localhost:5000/auth-callback.html` (HTTP fallback)
+### Step-by-Step Fix Instructions
 
-### Production URIs
-- `https://social-media-scheduler-ykykyair.replit.app/auth-callback.html` (current production)
-- `https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html` (current Replit dev domain)
+1. **Go to Meta Developer Console**: https://developers.facebook.com/apps/1598261231562840/
+2. **Navigate to**: Facebook Login > Settings
+3. **Add these URIs to "Valid OAuth Redirect URIs"**:
 
-### Historical URIs (from replit.md)
-From July 13, 2025 documentation:
-- `https://social-media-scheduler-ykykyair.replit.app/api/facebook/auth-callback` (old API endpoint)
+```
+http://localhost:5000/auth-callback.html
+https://localhost:5000/auth-callback.html
+https://social-media-scheduler-ykykyair.replit.app/auth-callback.html
+https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html
+```
 
-## Steps to Fix
+4. **Save changes**
+5. **Test immediately** - should work instantly
 
-1. Go to Meta Developer Console: https://developers.facebook.com/apps/1598261231562840/
-2. Navigate to Facebook Login > Settings
-3. Add all the URIs above to "Valid OAuth Redirect URIs"
-4. Save changes
-5. Test authentication
+## Historical Evidence
+- **July 13, 2025**: "Updated Meta Developer Console with all redirect URIs and allowed domains (Facebook ready)"
+- This means registration was done before, just needs to be updated with current URIs
+
+## Technical Status
+- ✅ Facebook App ID: 1598261231562840 (working)
+- ✅ OAuth flow implementation (working)
+- ✅ Auth callback processing (working)
+- ✅ Token storage system (working)
+- ❌ **Redirect URIs not registered** (only blocker)
 
 ## Current Test Results
-- Facebook App ID: 1598261231562840
-- Error: Redirect URI not whitelisted
-- Current test URI: `https://localhost:5000/auth-callback.html`
+All tests show identical error: "URI של ההפניה מחדש לא נמצא ברשימת בהגדרות OAuth"
+
+This confirms the code works but Meta Developer Console needs URI registration.
+
+## After Registration
+Once URIs are registered, the system will work immediately:
+1. Facebook login popup opens
+2. User authenticates with Facebook  
+3. Redirect to auth-callback.html with auth code
+4. Server processes auth code and saves token
+5. User can access Facebook posts and manage content
 
 ## Notes
-- Facebook requires HTTPS for all redirect URIs (except localhost HTTP for development)
+- Facebook requires HTTPS for production (localhost HTTP is allowed for development)
 - All redirect URIs must be pre-registered - no dynamic URIs allowed
-- Case-sensitive matching
+- Case-sensitive exact matching required

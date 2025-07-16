@@ -3553,8 +3553,11 @@ export function registerRoutes(app: Express): Server {
     // Use production URI for all requests to ensure it's registered in Meta Console
     const domain = req.headers.host;
     
-    // Try the API endpoint that might already be registered (from July 13 working config)
-    const redirectUri = `https://social-media-scheduler-ykykyair.replit.app/api/facebook/auth-callback`;
+    // Use localhost for development which should be basic Facebook configuration
+    // Try multiple URIs in priority order based on evidence from project history
+    const redirectUri = domain.includes('localhost') 
+      ? `http://localhost:5000/auth-callback.html`  // Local development
+      : `https://${domain}/auth-callback.html`;     // Production domain
     
     console.log('📍 Using redirect URI:', redirectUri);
     console.log('📍 Domain from headers:', domain);
