@@ -112,9 +112,19 @@
         console.log('Referrer:', document.referrer);
         console.log('Timestamp:', new Date().toISOString());
 
+        // Prevent double sending
+        let messageSent = false;
+
         // Process the authentication response
         function processAuthResponse() {
             console.log('=== PROCESSING AUTH RESPONSE ===');
+            
+            // Prevent multiple executions
+            if (messageSent) {
+                console.log('Message already sent, skipping...');
+                return;
+            }
+            
             const params = getUrlParams();
             console.log('All parsed params:', params);
             console.log('Has code?', !!params.code);
@@ -147,12 +157,15 @@
             
             // Check for code (authorization code)
             if (params.code) {
+                // Mark message as sent to prevent duplicates
+                messageSent = true;
+                
                 statusElement.textContent = 'האימות התקבל בהצלחה!';
                 statusElement.className = 'status success';
                 messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
                 
-                // Send code to parent window multiple times to ensure delivery
-                console.log('Sending code to parent:', params.code);
+                // Send code to parent window ONCE
+                console.log('Sending code to parent:', params.code.substring(0, 20) + '...');
                 console.log('Platform:', params.state || 'facebook');
                 
                 const messageData = {
@@ -162,16 +175,15 @@
                 };
                 
                 if (window.opener) {
-                    // Send message with confirmation
+                    // Send message ONCE only
                     window.opener.postMessage(messageData, window.location.origin);
-                    console.log('Message sent to parent window');
+                    console.log('Message sent to parent window - ONCE ONLY');
                     
-                    // Wait longer to ensure message is processed by parent
-                    // Give extra time for first-time auth with full Facebook screen
+                    // Close window after short delay
                     setTimeout(() => {
-                        console.log('Closing window after message delivery delay');
+                        console.log('Closing window after message delivery');
                         window.close();
-                    }, 5000);
+                    }, 2000);
                 } else {
                     console.error('No parent window found');
                     setTimeout(() => window.close(), 1000);
