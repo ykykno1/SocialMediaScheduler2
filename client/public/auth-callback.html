@@ -151,15 +151,19 @@
                 };
                 
                 if (window.opener) {
-                    // Send message once - duplicates cause "authorization code used" error
+                    // Send message with confirmation
                     window.opener.postMessage(messageData, window.location.origin);
                     console.log('Message sent to parent window');
+                    
+                    // Wait longer to ensure message is processed by parent
+                    setTimeout(() => {
+                        console.log('Closing window after message delivery delay');
+                        window.close();
+                    }, 3000);
                 } else {
                     console.error('No parent window found');
+                    setTimeout(() => window.close(), 1000);
                 }
-                
-                // Close the window after ensuring message delivery
-                setTimeout(() => window.close(), 1000);
                 return;
             }
             
