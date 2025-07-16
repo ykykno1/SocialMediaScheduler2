@@ -185,6 +185,8 @@ export class DatabaseStorage {
     if (!userId) throw new Error('User ID is required');
 
     try {
+      console.log('💾 DatabaseStorage.saveFacebookAuth called:', { userId, hasToken: !!token.accessToken });
+      
       const authToken: AuthToken = {
         platform: 'facebook',
         accessToken: token.accessToken,
@@ -196,10 +198,13 @@ export class DatabaseStorage {
         isManualToken: token.isManualToken
       };
 
+      console.log('🔄 Calling saveAuthToken with:', { platform: authToken.platform, userId });
       await this.saveAuthToken(authToken, userId);
+      console.log('✅ Facebook auth token saved successfully to database');
+      
       return token;
     } catch (error) {
-      console.error('Error saving Facebook auth:', error);
+      console.error('❌ Error saving Facebook auth:', error);
       throw error;
     }
   }
