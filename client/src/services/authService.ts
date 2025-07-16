@@ -297,18 +297,9 @@ export class AuthService {
             return;
           }
           
-          // Track if we've already processed a message to prevent duplicates
-          let messageProcessed = false;
-          
           // Set up message event listener for callback
           const handleCallback = (event: MessageEvent) => {
             console.log('Received message event:', event);
-            
-            // Prevent duplicate processing
-            if (messageProcessed) {
-              console.log('Message already processed, ignoring duplicate');
-              return;
-            }
             
             // Validate origin for security
             if (event.origin !== window.location.origin) {
@@ -325,13 +316,9 @@ export class AuthService {
             });
             
             if (error) {
-              messageProcessed = true;
               reject(new Error(`Authentication failed: ${error}`));
               return;
             }
-            
-            // Mark message as processed
-            messageProcessed = true;
             
             // Check if we have a Facebook SDK auth response
             if (fbAuthResponse && platform === 'facebook') {
@@ -355,8 +342,6 @@ export class AuthService {
               resolve(tokenData);
             }
             else if (code && platform) {
-              console.log('Facebook auth code received, exchanging for token');
-              
               // Determine which URI was used for this authentication attempt
               // If we're retrying, we should use the fallback URI for token exchange
               const exchangeUri = isRetrying ? fallbackUri : redirectUri;
@@ -377,63 +362,10 @@ export class AuthService {
           let isRetrying = false;
           let currentWindow = authWin;
           
-          // Give more time for the auth process to complete
-          let messageReceived = false;
-          
-          const handleCallback = (event: MessageEvent) => {
-            console.log('Received message from popup:', event.data);
-            console.log('Event origin:', event.origin);
-            console.log('Window origin:', window.location.origin);
-            
-            if (event.origin !== window.location.origin) {
-              console.warn('Message origin does not match window origin');
-              return;
-            }
-            
-            messageReceived = true;
-            clearInterval(checkClosed);
-            clearTimeout(authTimeout);
-            window.removeEventListener('message', handleCallback);
-            
-            if (event.data && event.data.success) {
-              console.log(`${platform} auth code received, exchanging for token`);
-              
-              apiRequest('POST', '/api/auth-callback', {
-                code: event.data.code,
-                platform: event.data.platform || platform
-              })
-              .then(() => {
-                console.log(`${platform} authentication successful`);
-                resolve({ success: true });
-              })
-              .catch(error => {
-                console.error(`${platform} token exchange failed:`, error);
-                reject(new Error(`Failed to exchange code for token: ${error.message}`));
-              });
-            } else if (event.data && event.data.error) {
-              console.error(`${platform} auth error:`, event.data.error);
-              reject(new Error(event.data.error));
-            }
-          };
-          
-          window.addEventListener('message', handleCallback);
-          
-          // Set a longer timeout for the entire auth process
-          const authTimeout = setTimeout(() => {
-            if (!messageReceived && !currentWindow.closed) {
-              console.log('Auth timeout - closing window');
-              currentWindow.close();
-            }
-            if (!messageReceived) {
-              clearInterval(checkClosed);
-              window.removeEventListener('message', handleCallback);
-              reject(new Error('Authentication timeout - please try again'));
-            }
-          }, 120000); // 2 minutes timeout for first-time auth
-          
           const checkClosed = setInterval(() => {
-            if (currentWindow.closed && !messageReceived) {
-              console.log('Auth window was closed without receiving message...');
+            if (currentWindow.closed) {
+              // If the window was closed without message, it might be due to domain restriction
+              // Try with fallback URI if not already retrying
               if (!isRetrying && fallbackUri && fallbackUri !== redirectUri) {
                 console.log("First attempt failed. Trying with fallback URI...");
                 isRetrying = true;
@@ -448,11 +380,20 @@ export class AuthService {
               
               // If we already tried fallback or couldn't open new window, fail
               clearInterval(checkClosed);
-              clearTimeout(authTimeout);
               window.removeEventListener('message', handleCallback);
-              reject(new Error('Authentication window was closed before completion. Please try again and wait for the success message.'));
+              reject(new Error('Authentication window was closed before completion'));
             }
-          }, 500); // Check more frequently
+          }, 1000);
+          
+          // Add a timeout of 5 minutes for the entire auth process
+          setTimeout(() => {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', handleCallback);
+            if (!currentWindow.closed) {
+              currentWindow.close();
+            }
+            reject(new Error('Authentication timed out'));
+          }, 300000); // 5 minutes
         });
       });
   }

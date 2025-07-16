@@ -504,33 +504,6 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Specific Facebook disconnect endpoint
-  // GET: Multiple Facebook connections
-  app.get("/api/facebook/connections", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-
-      // For now, return mock data. In future, this would query the database for all connections
-      const connections = [
-        // {
-        //   connectionName: "primary",
-        //   isAuthenticated: true,
-        //   facebookName: "דוגמה למשתמש",
-        //   facebookId: "123456789",
-        //   pageAccess: false,
-        //   lastConnected: new Date()
-        // }
-      ];
-
-      res.json(connections);
-    } catch (error) {
-      console.error('Error fetching Facebook connections:', error);
-      res.status(500).json({ error: "Failed to fetch connections" });
-    }
-  });
-
   app.post("/api/facebook/disconnect", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.id;
@@ -610,20 +583,10 @@ export function registerRoutes(app: Express): Server {
 
   // Exchange Facebook code for token
   app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
-    console.log('=== 🔔 AUTH-CALLBACK RECEIVED ===');
-    console.log('📥 Request body full:', req.body);
-    console.log('🔑 Has code?', !!req.body.code);
-    console.log('🔑 Code value:', req.body.code ? req.body.code.substring(0, 20) + '...' : 'NO CODE');
-    console.log('🔗 Has redirectUri?', !!req.body.redirectUri);
-    console.log('🔗 RedirectUri:', req.body.redirectUri);
-    console.log('👤 User ID:', req.user?.id);
-    console.log('⏰ TIMESTAMP:', new Date().toISOString());
-    
     try {
       const { code, redirectUri } = req.body;
 
       if (!code || !redirectUri) {
-        console.log('❌ Missing code or redirectUri');
         return res.status(400).json({ error: "Missing code or redirectUri" });
       }
 
@@ -688,38 +651,17 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Save the auth token (user-specific)
-      console.log(`💾 Saving Facebook auth for user: ${req.user?.id}`);
-      console.log(`👤 Facebook user ID: ${userData.id}`);
-      console.log('🔑 Token data:', { hasAccessToken: !!tokenData.access_token, expiresIn: tokenData.expires_in });
-      console.log('🔑 Token first 20 chars:', tokenData.access_token.substring(0, 20) + '...');
-      
-      const tokenToSave = {
+      console.log(`Saving Facebook auth for user: ${req.user?.id}`);
+      console.log(`Facebook user ID: ${userData.id}`);
+      const auth = await storage.saveFacebookAuth({
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
         timestamp: Date.now(),
         userId: userData.id,
         pageAccess,
         isManualToken: false
-      };
-      
-      console.log('📦 About to save token object:', { ...tokenToSave, accessToken: tokenToSave.accessToken.substring(0, 20) + '...' });
-      
-      const auth = await storage.saveFacebookAuth(tokenToSave, req.user?.id);
-      
-      console.log('✅ Facebook auth save completed. Result:', { ...auth, accessToken: auth.accessToken.substring(0, 20) + '...' });
-      
-      // Immediately verify the save worked
-      console.log('🔍 Immediately verifying save...');
-      const verifyAuth = await storage.getAuthToken('facebook', req.user?.id);
-      console.log('🔍 Verification result:', verifyAuth ? 'TOKEN FOUND' : 'TOKEN NOT FOUND');
-      if (verifyAuth) {
-        console.log('🔍 Verified token details:', { 
-          hasAccessToken: !!verifyAuth.accessToken, 
-          tokenStart: verifyAuth.accessToken.substring(0, 20) + '...',
-          timestamp: verifyAuth.timestamp 
-        });
-      }
-      console.log(`✅ Auth saved successfully:`, !!auth);
+      }, req.user?.id);
+      console.log(`Auth saved successfully:`, !!auth);
 
       // Verify token is accessible by trying to read it back
       let attempts = 0;
@@ -3537,132 +3479,6 @@ export function registerRoutes(app: Express): Server {
       console.error("Error sending verification SMS:", error);
       res.status(500).json({ error: "Failed to send verification SMS" });
     }
-  });
-
-  // Test Facebook OAuth endpoint - alternative implementation
-  console.log('🟡 Registering Facebook auth-test endpoint...');
-  
-  app.get('/api/facebook/auth-test', (req, res) => {
-    console.log('🔧 Facebook auth-test endpoint was reached!');
-    
-    const version = req.query.version || 'new';
-    const state = `TEST_${version.toUpperCase()}_${Date.now()}_${Math.random()}`;
-    
-    console.log(`🚀 Starting TEST ${version.toUpperCase()} Facebook auth flow with state:`, state);
-    
-    // Use production URI for all requests to ensure it's registered in Meta Console
-    const domain = req.headers.host;
-    
-    // Support both localhost development and production
-    const redirectUri = domain.includes('localhost') 
-      ? `http://localhost:5000/auth-callback.html`  // Local development (register in Meta Console)
-      : `https://${domain}/auth-callback.html`;     // Production domain (register in Meta Console)
-    
-    console.log('📍 Using redirect URI:', redirectUri);
-    console.log('📍 Domain from headers:', domain);
-    console.log('📍 Using production URI to ensure Facebook registration compatibility');
-    
-    // Use minimal scopes for testing - these don't require app review
-    const fbAuthUrl = `https://www.facebook.com/v22.0/dialog/oauth?` +
-      `client_id=1598261231562840` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&scope=email,public_profile` +
-      `&response_type=code` +
-      `&state=${state}`;
-    
-    console.log(`📍 Redirecting to Facebook auth URL (TEST ${version}):`, fbAuthUrl);
-    console.log('🔧 About to call res.redirect()');
-    res.redirect(fbAuthUrl);
-    console.log('🔧 res.redirect() called');
-  });
-  
-  console.log('✅ Facebook auth-test endpoint registered!');
-
-  // Manual Facebook token endpoint
-  app.post('/api/facebook/manual-token', requireAuth, async (req: AuthenticatedRequest, res) => {
-    const { accessToken } = req.body;
-    
-    if (!accessToken) {
-      return res.status(400).json({ error: 'Access token is required' });
-    }
-
-    try {
-      // Validate token with Facebook
-      const validateResponse = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,email`);
-      
-      if (!validateResponse.ok) {
-        return res.status(400).json({ error: 'Invalid Facebook token' });
-      }
-
-      const userInfo = await validateResponse.json();
-      console.log('📊 Facebook user info:', userInfo);
-
-      // Save token
-      const authToken = {
-        platform: 'facebook' as const,
-        accessToken: accessToken,
-        timestamp: Date.now(),
-        isManualToken: true
-      };
-
-      await storage.saveAuthToken(authToken, req.user.id);
-      
-      res.json({ 
-        success: true, 
-        message: 'Facebook token saved successfully',
-        userInfo: userInfo
-      });
-
-    } catch (error: any) {
-      console.error('❌ Manual Facebook token error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Debug endpoint to check Facebook OAuth flow
-  app.get('/api/facebook/debug', (req, res) => {
-    const domain = req.headers.host;
-    const currentRedirectUri = `https://${domain}/auth-callback.html`;
-    
-    const debugInfo = {
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
-      hasAppSecret: !!process.env.FACEBOOK_APP_SECRET,
-      appId: "1598261231562840",
-      currentDomain: domain,
-      currentRedirectUri: currentRedirectUri,
-      expectedRedirectUri: "https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html",
-      userAgent: req.headers['user-agent'],
-      oauth: {
-        authUrl: `https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=${encodeURIComponent(currentRedirectUri)}&scope=email,public_profile,user_posts,user_photos&response_type=code&state=DEBUG_${Date.now()}`
-      },
-      appStatus: {
-        note: "Check if Facebook App is in Development Mode vs Live Mode",
-        devModeNote: "In Development Mode, only app developers can access",
-        liveModeNote: "Live Mode requires App Review for user_posts scope"
-      },
-      scopeRequirements: {
-        email: "Basic - should work",
-        public_profile: "Basic - should work", 
-        user_posts: "Advanced - may require App Review",
-        user_photos: "Advanced - may require App Review"
-      }
-    };
-    
-    res.json(debugInfo);
-  });
-
-  // Test auth-callback.html endpoint
-  app.get('/api/test/auth-callback', (req, res) => {
-    const domain = req.headers.host;
-    const callbackUrl = `https://${domain}/auth-callback.html`;
-    
-    res.json({
-      message: "Testing auth-callback.html",
-      callbackUrl,
-      testUrl: callbackUrl + "?test=true&code=TEST_CODE&state=TEST_STATE",
-      instructions: "Open the testUrl in a new tab to see if auth-callback.html loads correctly"
-    });
   });
 
   // Register Stripe Demo routes (separate from existing functionality)

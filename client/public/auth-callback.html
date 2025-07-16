@@ -104,62 +104,25 @@
             return params;
         }
         
-        // Add detailed logging when page loads
-        console.log('=== FACEBOOK AUTH CALLBACK PAGE LOADED ===');
-        console.log('Current URL:', window.location.href);
-        console.log('Search params:', window.location.search);
-        console.log('Hash params:', window.location.hash);
-        console.log('Referrer:', document.referrer);
-        console.log('Timestamp:', new Date().toISOString());
-
-        // Prevent double sending
-        let messageSent = false;
-
         // Process the authentication response
         function processAuthResponse() {
-            console.log('=== PROCESSING AUTH RESPONSE ===');
-            
-            // Prevent multiple executions
-            if (messageSent) {
-                console.log('Message already sent, skipping...');
-                return;
-            }
-            
             const params = getUrlParams();
-            console.log('All parsed params:', params);
-            console.log('Has code?', !!params.code);
-            console.log('Has error?', !!params.error);
-            console.log('State value:', params.state);
-            
             const statusElement = document.getElementById('status');
             const messageElement = document.getElementById('status-message');
             const spinnerElement = document.getElementById('spinner');
             
             // Check for errors
             if (params.error) {
-                console.log('=== FACEBOOK ERROR DETECTED ===');
-                console.log('Error type:', params.error);
-                console.log('Error description:', params.error_description);
-                console.log('Full error params:', params);
-                console.log('Facebook session info:', {
-                    cookies: document.cookie,
-                    localStorage: localStorage.getItem('facebook_session'),
-                    sessionStorage: sessionStorage.getItem('facebook_session')
-                });
-                
                 statusElement.textContent = params.error_description || params.error;
                 statusElement.className = 'status error';
                 messageElement.textContent = 'האימות נכשל, החלון ייסגר בקרוב.';
                 spinnerElement.style.display = 'none';
                 
-                // Send error to parent window with detailed info
+                // Send error to parent window
                 if (window.opener) {
                     window.opener.postMessage({
                         error: params.error,
-                        error_description: params.error_description,
-                        platform: params.state || 'facebook',
-                        timestamp: new Date().toISOString(),
-                        attemptNumber: sessionStorage.getItem('facebook_attempt') || '1'
+                        platform: params.state || 'facebook'
                     }, window.location.origin);
                 }
                 
@@ -170,18 +133,13 @@
             
             // Check for code (authorization code)
             if (params.code) {
-                // Mark message as sent to prevent duplicates
-                messageSent = true;
-                
                 statusElement.textContent = 'האימות התקבל בהצלחה!';
                 statusElement.className = 'status success';
                 messageElement.textContent = 'מעביר את המידע לאפליקציה, החלון ייסגר בקרוב.';
                 
-                // Send code to parent window ONCE
-                console.log('🚀 SENDING CODE TO PARENT:', params.code.substring(0, 20) + '...');
-                console.log('🏷️ Platform:', params.state || 'facebook');
-                console.log('🪟 Window opener exists?', !!window.opener);
-                console.log('🌐 Target origin:', window.location.origin);
+                // Send code to parent window multiple times to ensure delivery
+                console.log('Sending code to parent:', params.code);
+                console.log('Platform:', params.state || 'facebook');
                 
                 const messageData = {
                     code: params.code,
@@ -189,33 +147,20 @@
                     success: true
                 };
                 
-                console.log('📦 Message data to send:', messageData);
-                
                 if (window.opener) {
-                    // Send message ONCE only
-                    try {
-                        console.log('⚡ Calling postMessage...');
-                        window.opener.postMessage(messageData, window.location.origin);
-                        console.log('✅ MESSAGE SENT TO PARENT WINDOW - SUCCESS!');
-                        
-                        // Try alternative sending methods for safety
+                    // Send message multiple times with intervals
+                    for (let i = 0; i < 3; i++) {
                         setTimeout(() => {
-                            console.log('⚡ Sending backup message...');
-                            window.opener.postMessage(messageData, '*');
-                        }, 100);
-                    } catch (error) {
-                        console.error('❌ Error sending message:', error);
+                            window.opener.postMessage(messageData, window.location.origin);
+                            console.log(`Message sent to parent window (attempt ${i + 1})`);
+                        }, i * 500);
                     }
-                    
-                    // Close window after short delay
-                    setTimeout(() => {
-                        console.log('Closing window after message delivery');
-                        window.close();
-                    }, 2000);
                 } else {
                     console.error('No parent window found');
-                    setTimeout(() => window.close(), 1000);
                 }
+                
+                // Close the window after ensuring message delivery
+                setTimeout(() => window.close(), 1000);
                 return;
             }
             
@@ -249,22 +194,8 @@
             setTimeout(() => window.close(), 5000);
         }
         
-        // Add logging to understand what's happening
-        console.log('Auth callback page loaded');
-        console.log('Current URL:', window.location.href);
-        console.log('URL params:', window.location.search);
-        console.log('URL hash:', window.location.hash);
-        
         // Run when page loads
         window.addEventListener('DOMContentLoaded', processAuthResponse);
-        
-        // Also run immediately in case DOMContentLoaded already fired
-        if (document.readyState === 'loading') {
-            console.log('Document still loading, waiting for DOMContentLoaded');
-        } else {
-            console.log('Document already loaded, processing immediately');
-            processAuthResponse();
-        }
     </script>
 </body>
 </html>

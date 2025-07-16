@@ -41,7 +41,7 @@ const Dashboard = () => {
       </div>
 
       {/* Next Hide Timer */}
-      {authStatus && shabbatTimes && (
+      {authStatus?.user && shabbatTimes && (
         <div className="flex justify-center mb-6">
           <NextHideTimer 
             shabbatTimes={shabbatTimes}
@@ -90,15 +90,10 @@ const Dashboard = () => {
               נהל פוסטים בפייסבוק - פרימיום בלבד
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
             <Button asChild className="w-full ios-button" variant="outline">
               <Link href="/facebook">
                 כנס לניהול פייסבוק
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full text-sm border-dashed border-orange-300 text-orange-600">
-              <Link href="/facebook-test">
-                בדיקת חיבור חדש לפייסבוק
               </Link>
             </Button>
           </CardContent>

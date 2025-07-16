@@ -5,7 +5,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Facebook, Lock, Unlock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import useFacebookAuth from "@/hooks/useFacebookAuth";
-import FacebookSdkService from "@/services/facebookSdk";
 import useFacebookPosts from "@/hooks/useFacebookPosts";
 import useFacebookPages from "@/hooks/useFacebookPages";
 
@@ -31,56 +30,18 @@ export default function FacebookSection() {
             <Alert className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>התחברות נדרשת</AlertTitle>
-              <AlertDescription className="space-y-2">
-                <div>התחבר לפייסבוק כדי לנהל פוסטים ועמודים</div>
-                <div className="text-xs text-gray-500">
-                  הערה: אם ההתחברות מתבטלת, נסה שוב או בדוק שאישרת את ההרשאות במסך הפייסבוק
-                </div>
+              <AlertDescription>
+                התחבר לפייסבוק כדי לנהל פוסטים ועמודים
               </AlertDescription>
             </Alert>
-            <div className="space-y-3">
-              <Button 
-                onClick={async () => {
-                  try {
-                    // Initialize Facebook SDK first
-                    await FacebookSdkService.initialize('1598261231562840');
-                    // Then attempt login
-                    await FacebookSdkService.login();
-                    window.location.reload(); // Refresh to show connected state
-                  } catch (error) {
-                    console.error('Facebook SDK login failed:', error);
-                  }
-                }} 
-                disabled={isAuthenticating}
-                className="bg-[#1877F2] hover:bg-[#166FE5] w-full"
-              >
-                <Facebook className="mr-2 h-4 w-4" />
-                התחבר עם Facebook SDK (פתרון ישן שעבד)
-              </Button>
-              
-              <Button 
-                onClick={login} 
-                disabled={isAuthenticating}
-                variant="outline"
-                className="w-full"
-              >
-                <Facebook className="mr-2 h-4 w-4" />
-                {isAuthenticating ? "מתחבר... (יכול לקחת עד דקה בפעם הראשונה)" : "התחבר עם OAuth (חדש)"}
-              </Button>
-              
-              <Button 
-                onClick={() => {
-                  const authUrl = 'https://www.facebook.com/v22.0/dialog/oauth?client_id=1598261231562840&redirect_uri=https%3A%2F%2F6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev%2Fauth-callback.html&state=facebook&scope=public_profile,email,user_posts';
-                  window.open(authUrl, '_blank');
-                }}
-                variant="outline"
-                className="w-full"
-                disabled={isAuthenticating}
-              >
-                <Facebook className="mr-2 h-4 w-4" />
-                פתח התחברות בטאב חדש (אם חוסם פופאפ)
-              </Button>
-            </div>
+            <Button 
+              onClick={login} 
+              disabled={isAuthenticating}
+              className="bg-[#1877F2] hover:bg-[#166FE5]"
+            >
+              <Facebook className="mr-2 h-4 w-4" />
+              {isAuthenticating ? "מתחבר..." : "התחבר עם פייסבוק"}
+            </Button>
           </div>
         ) : (
           <div>
@@ -118,7 +79,7 @@ export default function FacebookSection() {
                             if (refreshResponse.ok) {
                               const refreshData = await refreshResponse.json();
                               token = refreshData.token;
-                              localStorage.setItem('auth_token', token || '');
+                              localStorage.setItem('auth_token', token);
                             } else {
                               alert('לא ניתן לחדש את הטוקן - אנא התחבר מחדש');
                               return;

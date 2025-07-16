@@ -43,41 +43,11 @@ export class DatabaseStorage {
   }
 
   // Generic auth token operations
-  async getAuthToken(platform: SupportedPlatform, userId: string, connectionName?: string): Promise<AuthToken | null> {
+  async getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null> {
     try {
-      console.log(`🔍 Getting auth token for platform: ${platform}, userId: ${userId}`);
-      
       // First try encrypted tokens table
-      const whereConditions = [
-        eq(encryptedAuthTokens.platform, platform), 
-        eq(encryptedAuthTokens.userId, userId)
-      ];
-      
-
-      
       const [encryptedToken] = await db.select().from(encryptedAuthTokens)
-        .where(and(...whereConditions));
-      
-      console.log(`📝 Query result for ${platform}/${userId}:`, !!encryptedToken);
-      if (encryptedToken) {
-        console.log(`📝 Found token details:`, {
-          id: encryptedToken.id,
-          hasLegacyToken: !!encryptedToken.legacyAccessToken,
-          hasEncryptedToken: !!encryptedToken.encryptedAccessToken,
-          createdAt: encryptedToken.createdAt
-        });
-      } else {
-        console.log(`📝 No token found - checking if any records exist in table...`);
-        const allTokens = await db.select().from(encryptedAuthTokens).limit(5);
-        console.log(`📝 Total tokens in table: ${allTokens.length}`);
-        if (allTokens.length > 0) {
-          console.log(`📝 Sample tokens:`, allTokens.map(t => ({ 
-            platform: t.platform, 
-            userId: t.userId, 
-            createdAt: t.createdAt 
-          })));
-        }
-      }
+        .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
       
       if (encryptedToken) {
         let accessToken: string;
@@ -135,83 +105,45 @@ export class DatabaseStorage {
     }
   }
 
-  async saveAuthToken(token: AuthToken, userId: string, connectionName?: string): Promise<AuthToken> {
+  async saveAuthToken(token: AuthToken, userId: string): Promise<AuthToken> {
     try {
-      console.log(`🔧 DatabaseStorage.saveAuthToken called for ${token.platform}/${userId}${connectionName ? '/' + connectionName : ''}`);
-      console.log(`🔧 Token details: hasAccessToken=${!!token.accessToken}, expiresAt=${token.expiresAt}`);
-      
       const validatedToken = authSchema.parse(token);
-      console.log(`🔧 Token validation passed`);
+      const { tokenEncryption } = await import('./encryption.js');
       
       // Delete existing token from encrypted table
-      console.log(`🔧 Deleting existing token for ${token.platform}/${userId}...`);
-      const deleteResult = await db.delete(encryptedAuthTokens)
+      await db.delete(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
-      console.log(`🔧 Delete result: ${deleteResult.rowCount || 0} rows deleted`);
 
-      // For now, use legacy tokens only (skip encryption to fix the immediate issue)
-      console.log(`🔧 Creating token record with legacy tokens...`);
-      const tokenRecord = {
+      // Encrypt the tokens
+      const encryptedAccessToken = tokenEncryption.encryptForStorage(token.accessToken);
+      let encryptedRefreshToken = null;
+      
+      if (token.refreshToken) {
+        encryptedRefreshToken = tokenEncryption.encryptForStorage(token.refreshToken);
+      }
+
+      // Insert new token into encrypted table with real encryption
+      await db.insert(encryptedAuthTokens).values({
         id: nanoid(),
         userId,
         platform: token.platform,
-        encryptedAccessToken: null, // Skip encryption for now
-        encryptedRefreshToken: null,
-        tokenHash: null,
-        encryptionMetadata: null,
+        encryptedAccessToken: encryptedAccessToken.encryptedToken,
+        encryptedRefreshToken: encryptedRefreshToken?.encryptedToken || null,
+        tokenHash: encryptedAccessToken.tokenHash,
+        encryptionMetadata: encryptedAccessToken.metadata,
         expiresAt: token.expiresAt ? new Date(token.expiresAt) : null,
         scopes: null,
         encryptionKeyVersion: 1,
         createdAt: new Date(),
         lastUsed: new Date(),
-        legacyAccessToken: token.accessToken, // Use legacy tokens - this works
+        legacyAccessToken: token.accessToken, // Keep for fallback during migration
         legacyRefreshToken: token.refreshToken || null,
-        migrationStatus: 'legacy'
-      };
-      
-      console.log(`🔧 About to insert token record:`, { 
-        ...tokenRecord, 
-        legacyAccessToken: tokenRecord.legacyAccessToken.substring(0, 20) + '...'
+        migrationStatus: 'migrated'
       });
 
-      // Insert new token into encrypted table using legacy fields
-      console.log(`🔧 About to run INSERT query...`);
-      try {
-        const insertResult = await db.insert(encryptedAuthTokens).values(tokenRecord);
-        console.log(`🔧 Insert completed successfully:`, insertResult);
-      } catch (insertError) {
-        console.error(`❌ INSERT FAILED:`, insertError);
-        console.error(`❌ Insert error details:`, {
-          message: insertError.message,
-          code: insertError.code,
-          stack: insertError.stack
-        });
-        throw insertError;
-      }
-      
-      // Verify the insert worked
-      console.log(`🔧 Running verification query...`);
-      const verifyQuery = await db.select().from(encryptedAuthTokens)
-        .where(and(eq(encryptedAuthTokens.platform, token.platform), eq(encryptedAuthTokens.userId, userId)));
-      console.log(`🔧 Verification query: found ${verifyQuery.length} records`);
-      if (verifyQuery.length > 0) {
-        console.log(`🔧 First record:`, { 
-          id: verifyQuery[0].id, 
-          platform: verifyQuery[0].platform, 
-          hasLegacyToken: !!verifyQuery[0].legacyAccessToken 
-        });
-      }
-
-      console.log(`✅ Auth token saved successfully for ${token.platform}/${userId}`);
       return validatedToken;
     } catch (error) {
-      console.error('❌ Error saving auth token:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        stack: error.stack,
-        platform: token.platform,
-        userId: userId
-      });
+      console.error('Error saving auth token:', error);
       throw error;
     }
   }
@@ -253,8 +185,6 @@ export class DatabaseStorage {
     if (!userId) throw new Error('User ID is required');
 
     try {
-      console.log('💾 DatabaseStorage.saveFacebookAuth called:', { userId, hasToken: !!token.accessToken });
-      
       const authToken: AuthToken = {
         platform: 'facebook',
         accessToken: token.accessToken,
@@ -266,13 +196,10 @@ export class DatabaseStorage {
         isManualToken: token.isManualToken
       };
 
-      console.log('🔄 Calling saveAuthToken with:', { platform: authToken.platform, userId });
       await this.saveAuthToken(authToken, userId);
-      console.log('✅ Facebook auth token saved successfully to database');
-      
       return token;
     } catch (error) {
-      console.error('❌ Error saving Facebook auth:', error);
+      console.error('Error saving Facebook auth:', error);
       throw error;
     }
   }
