@@ -131,10 +131,12 @@ export default function useFacebookAuth() {
         pollCount++;
         
         // Only check for closure after giving enough time for Facebook auth
-        if (pollCount > 20 && popup.closed) { // Wait 20 seconds before checking closure
+        if (pollCount > 60 && popup.closed) { // Wait 60 seconds before checking closure
           console.log('Facebook popup was closed manually after timeout');
           setPopupWindow(null);
           clearInterval(pollTimer);
+          // Reset authentication state
+          exchangeCodeMutation.reset();
         }
         
         // Cleanup after max time
@@ -263,7 +265,7 @@ export default function useFacebookAuth() {
     error,
     login,
     logout: () => logoutMutation.mutate(),
-    isAuthenticating: !!popupWindow && !popupWindow.closed,
+    isAuthenticating: exchangeCodeMutation.isPending || (!!popupWindow && !popupWindow.closed),
     isLoggingOut: logoutMutation.isPending
   };
 }
