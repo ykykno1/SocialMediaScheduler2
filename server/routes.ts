@@ -3553,11 +3553,10 @@ export function registerRoutes(app: Express): Server {
     // Use production URI for all requests to ensure it's registered in Meta Console
     const domain = req.headers.host;
     
-    // Use localhost for development which should be basic Facebook configuration
-    // Try multiple URIs in priority order based on evidence from project history
+    // Support both localhost development and production
     const redirectUri = domain.includes('localhost') 
-      ? `http://localhost:5000/auth-callback.html`  // Local development
-      : `https://${domain}/auth-callback.html`;     // Production domain
+      ? `http://localhost:5000/auth-callback.html`  // Local development (register in Meta Console)
+      : `https://${domain}/auth-callback.html`;     // Production domain (register in Meta Console)
     
     console.log('📍 Using redirect URI:', redirectUri);
     console.log('📍 Domain from headers:', domain);
