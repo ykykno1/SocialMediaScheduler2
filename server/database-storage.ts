@@ -45,9 +45,13 @@ export class DatabaseStorage {
   // Generic auth token operations
   async getAuthToken(platform: SupportedPlatform, userId: string): Promise<AuthToken | null> {
     try {
+      console.log(`🔍 Getting auth token for platform: ${platform}, userId: ${userId}`);
+      
       // First try encrypted tokens table
       const [encryptedToken] = await db.select().from(encryptedAuthTokens)
         .where(and(eq(encryptedAuthTokens.platform, platform), eq(encryptedAuthTokens.userId, userId)));
+      
+      console.log(`📝 Query result for ${platform}/${userId}:`, !!encryptedToken);
       
       if (encryptedToken) {
         let accessToken: string;

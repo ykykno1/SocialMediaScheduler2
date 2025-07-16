@@ -23,8 +23,8 @@ export default function useFacebookAuth() {
     refetch: refetchAuthStatus
   } = useQuery<AuthStatus>({
     queryKey: ['/api/auth-status'],
-    refetchInterval: 60000, // Refetch every minute to check token expiration
-    staleTime: 30000, // Consider data stale after 30 seconds
+    refetchInterval: 5000, // Refetch every 5 seconds for responsive updates
+    staleTime: 0, // Always refetch when queries are invalidated
   });
 
   // Mutation for logging out
@@ -57,16 +57,23 @@ export default function useFacebookAuth() {
       const response = await apiRequest('POST', '/api/auth-callback', { code, redirectUri });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      console.log('🎉 Exchange code mutation succeeded!');
+      
+      // Force immediate refetch of auth status
+      await refetchAuthStatus();
+      
       toast({
         title: 'התחברות בוצעה בהצלחה',
         description: 'התחברת בהצלחה לחשבון הפייסבוק שלך'
       });
       
-      // Invalidate queries to refresh data
+      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
       queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
       queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
+      
+      console.log('🔄 All queries invalidated after successful auth');
     },
     onError: (error: Error) => {
       toast({
