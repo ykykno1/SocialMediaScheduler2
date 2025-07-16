@@ -583,8 +583,13 @@ export function registerRoutes(app: Express): Server {
 
   // Exchange Facebook code for token
   app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
-    console.log('🔔 AUTH-CALLBACK STARTED: Received Facebook auth callback');
-    console.log('📥 Request body:', { hasCode: !!req.body.code, hasRedirectUri: !!req.body.redirectUri });
+    console.log('=== 🔔 AUTH-CALLBACK RECEIVED ===');
+    console.log('📥 Request body full:', req.body);
+    console.log('🔑 Has code?', !!req.body.code);
+    console.log('🔑 Code value:', req.body.code ? req.body.code.substring(0, 20) + '...' : 'NO CODE');
+    console.log('🔗 Has redirectUri?', !!req.body.redirectUri);
+    console.log('🔗 RedirectUri:', req.body.redirectUri);
+    console.log('👤 User ID:', req.user?.id);
     console.log('⏰ TIMESTAMP:', new Date().toISOString());
     
     try {

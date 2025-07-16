@@ -104,11 +104,22 @@
             return params;
         }
         
+        // Add detailed logging when page loads
+        console.log('=== FACEBOOK AUTH CALLBACK PAGE LOADED ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Search params:', window.location.search);
+        console.log('Hash params:', window.location.hash);
+        console.log('Referrer:', document.referrer);
+        console.log('Timestamp:', new Date().toISOString());
+
         // Process the authentication response
         function processAuthResponse() {
-            console.log('processAuthResponse called');
+            console.log('=== PROCESSING AUTH RESPONSE ===');
             const params = getUrlParams();
-            console.log('Parsed params:', params);
+            console.log('All parsed params:', params);
+            console.log('Has code?', !!params.code);
+            console.log('Has error?', !!params.error);
+            console.log('State value:', params.state);
             
             const statusElement = document.getElementById('status');
             const messageElement = document.getElementById('status-message');
