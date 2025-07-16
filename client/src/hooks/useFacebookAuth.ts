@@ -230,7 +230,7 @@ export default function useFacebookAuth() {
         if (event.data.error === 'access_denied') {
           toast({
             title: 'התחברות בוטלה',
-            description: 'ההתחברות לפייסבוק בוטלה על ידי המשתמש',
+            description: 'ההתחברות לפייסבוק בוטלה. אם רוצה להתחבר, יש לאשר את ההרשאות במסך הפייסבוק.',
             variant: 'default',
           });
         } else {

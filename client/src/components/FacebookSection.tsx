@@ -30,8 +30,11 @@ export default function FacebookSection() {
             <Alert className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>התחברות נדרשת</AlertTitle>
-              <AlertDescription>
-                התחבר לפייסבוק כדי לנהל פוסטים ועמודים
+              <AlertDescription className="space-y-2">
+                <div>התחבר לפייסבוק כדי לנהל פוסטים ועמודים</div>
+                <div className="text-xs text-gray-500">
+                  הערה: אם ההתחברות מתבטלת, נסה שוב או בדוק שאישרת את ההרשאות במסך הפייסבוק
+                </div>
               </AlertDescription>
             </Alert>
             <div className="space-y-3">
