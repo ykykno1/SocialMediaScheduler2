@@ -19,9 +19,11 @@ export default function useFacebookAuth() {
     },
   });
   
-  console.log('Facebook config data:', data);
-  console.log('Facebook config loading:', isLoading);
-  console.log('Facebook config error:', error);
+  useEffect(() => {
+    console.log('Facebook config data:', data);
+    console.log('Facebook config loading:', isLoading);
+    console.log('Facebook config error:', error);
+  }, [data, isLoading, error]);
 
   // Get auth status
   const { data: authStatus } = useQuery({
