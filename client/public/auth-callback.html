@@ -122,12 +122,30 @@
             messageElement.textContent = `מעבד נתונים... URL: ${window.location.href}`;
             statusElement.textContent = `פרמטרים: ${JSON.stringify(params)}`;
             
-            // Don't close immediately - wait 10 seconds to see what happens
-            console.log('Waiting 10 seconds before processing...');
-            setTimeout(() => {
-                console.log('10 seconds passed, now processing...');
+            // Check if this is actually our callback page or an error page
+            if (window.location.href.includes('auth-callback.html')) {
+                console.log('We are on our callback page, processing parameters...');
                 processAuthParams();
-            }, 10000);
+            } else {
+                console.log('We are NOT on our callback page. Current URL:', window.location.href);
+                messageElement.textContent = 'מופנה מפייסבוק...';
+                statusElement.textContent = 'מחכה לתגובה מפייסבוק';
+                
+                // Wait a bit to see if we get redirected
+                setTimeout(() => {
+                    console.log('Still waiting... Current URL:', window.location.href);
+                    if (window.location.href.includes('auth-callback.html')) {
+                        console.log('Now we are on callback page, processing...');
+                        processAuthParams();
+                    } else {
+                        console.log('Still not on callback page, something went wrong');
+                        messageElement.textContent = 'לא הצליח להתחבר לפייסבוק';
+                        statusElement.textContent = 'שגיאה בתהליך האימות';
+                        statusElement.className = 'status error';
+                        spinnerElement.style.display = 'none';
+                    }
+                }, 5000);
+            }
             
         }
         
