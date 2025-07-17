@@ -22,6 +22,7 @@ import {
 } from "@shared/schema";
 // import { registerFacebookPagesRoutes } from "./facebook-pages"; // Temporarily disabled
 import { registerStripeRoutes } from './stripe-routes.js';
+import facebookAuthRoutes from './facebook-auth.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
@@ -3483,6 +3484,9 @@ export function registerRoutes(app: Express): Server {
 
   // Register Stripe Demo routes (separate from existing functionality)
   registerStripeRoutes(app);
+
+  // Register Facebook auth routes
+  app.use(facebookAuthRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

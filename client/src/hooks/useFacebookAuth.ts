@@ -53,8 +53,8 @@ export default function useFacebookAuth() {
 
   // Exchange code for token mutation
   const exchangeCodeMutation = useMutation({
-    mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
-      const response = await apiRequest('POST', '/api/auth-callback', { code, redirectUri });
+    mutationFn: async ({ code }: { code: string }) => {
+      const response = await apiRequest('POST', '/api/facebook/auth-callback', { code });
       return response.json();
     },
     onSuccess: () => {
@@ -172,8 +172,7 @@ export default function useFacebookAuth() {
         
         // Exchange code for token on the server
         exchangeCodeMutation.mutate({
-          code: event.data.code,
-          redirectUri: window.location.origin + '/auth-callback.html'
+          code: event.data.code
         });
       }
       
