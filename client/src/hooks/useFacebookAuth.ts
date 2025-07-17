@@ -3,9 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 export default function useFacebookAuth() {
-  const [popupWindow, setPopupWindow] = useState<Window | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [popupWindow, setPopupWindow] = useState<Window | null>(null);
+  const [pendingAuth, setPendingAuth] = useState<{ code: string; redirectUri: string } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['/api/facebook-config'],
@@ -105,6 +106,7 @@ export default function useFacebookAuth() {
     disconnectMutation.mutate();
   }, [disconnectMutation]);
 
+  // Set up message listener once, not dependent on changing values
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       console.log('Message received:', event.data);
@@ -114,17 +116,21 @@ export default function useFacebookAuth() {
       if (event.origin !== window.location.origin) return;
       if (event.data?.platform !== 'facebook') return;
 
-      // Close popup
-      if (popupWindow && !popupWindow.closed) {
-        popupWindow.close();
-      }
-      setPopupWindow(null);
-
       const code = event.data.code;
       if (!code) return;
 
-      console.log('Exchanging code for token:', code);
-      mutation.mutate({ code, redirectUri: data?.redirectUri || '' });
+      console.log('Code received from popup:', code);
+      
+      // Store the auth data to be processed
+      setPendingAuth({ code, redirectUri: window.location.origin + '/auth-callback.html' });
+
+      // Close popup if it exists
+      setPopupWindow((currentPopup) => {
+        if (currentPopup && !currentPopup.closed) {
+          currentPopup.close();
+        }
+        return null;
+      });
     }
 
     console.log('Setting up message listener');
@@ -133,7 +139,16 @@ export default function useFacebookAuth() {
       console.log('Cleaning up message listener');
       window.removeEventListener('message', handleMessage);
     };
-  }, [popupWindow, mutation, data]);
+  }, []); // Empty dependency array - set up only once
+
+  // Process pending auth when it's available
+  useEffect(() => {
+    if (pendingAuth && data?.redirectUri) {
+      console.log('Processing pending auth:', pendingAuth);
+      mutation.mutate(pendingAuth);
+      setPendingAuth(null);
+    }
+  }, [pendingAuth, data, mutation]);
 
   // Close popup on unmount
   useEffect(() => {
