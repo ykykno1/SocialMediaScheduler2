@@ -228,22 +228,6 @@ export default function useFacebookAuth() {
         queryClient.invalidateQueries({ queryKey: ['/api/facebook/posts'] });
         queryClient.invalidateQueries({ queryKey: ['/api/facebook/pages'] });
       }
-      
-      // Handle auth error
-      if (event.data.error) {
-        toast({
-          title: 'שגיאת התחברות',
-          description: event.data.error,
-          variant: 'destructive',
-        });
-      }
-      
-      // Close popup
-      if (popupWindow && !popupWindow.closed) {
-        popupWindow.close();
-      }
-      
-      setPopupWindow(null);
     };
     
     window.addEventListener('message', handleMessage);
