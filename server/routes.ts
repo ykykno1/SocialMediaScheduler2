@@ -561,8 +561,8 @@ export function registerRoutes(app: Express): Server {
 
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
-    // Use Facebook App ID from environment variables
-    const appId = process.env.FACEBOOK_APP_ID || "1030763279018030";
+    // Force use of correct Facebook App ID
+    const appId = "1598261231562840";
 
     // Log for debugging
     console.log(`Using Facebook App ID: ${appId}, from env: ${process.env.FACEBOOK_APP_ID}`);
@@ -591,8 +591,8 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Missing code or redirectUri" });
       }
 
-      // Use Facebook App ID from environment variables
-      const fbAppId = process.env.FACEBOOK_APP_ID || "1030763279018030";
+      // Force use of correct Facebook App ID
+      const fbAppId = "1598261231562840";
       const fbAppSecret = process.env.FACEBOOK_APP_SECRET;
 
       // Log for debugging
