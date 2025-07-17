@@ -8,10 +8,20 @@ export default function useFacebookAuth() {
   const [popupWindow, setPopupWindow] = useState<Window | null>(null);
   const [pendingAuth, setPendingAuth] = useState<{ code: string; redirectUri: string } | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['/api/facebook-config'],
-    queryFn: () => fetch('/api/facebook-config').then((res) => res.json()),
+    queryFn: async () => {
+      console.log('Fetching Facebook config...');
+      const res = await fetch('/api/facebook-config');
+      const json = await res.json();
+      console.log('Facebook config response:', json);
+      return json;
+    },
   });
+  
+  console.log('Facebook config data:', data);
+  console.log('Facebook config loading:', isLoading);
+  console.log('Facebook config error:', error);
 
   // Get auth status
   const { data: authStatus } = useQuery({

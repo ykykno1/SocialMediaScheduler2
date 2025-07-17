@@ -9,9 +9,14 @@ import useFacebookPosts from "@/hooks/useFacebookPosts";
 import useFacebookPages from "@/hooks/useFacebookPages";
 
 export default function FacebookSection() {
-  const { isAuthenticated, isAuthenticating, login, logout, pageAccess } = useFacebookAuth();
+  const authData = useFacebookAuth();
+  console.log('FacebookSection - auth data:', authData);
+  const { isAuthenticated, isAuthenticating, login, logout, pageAccess } = authData;
   const { posts, isLoading: isLoadingPosts, hidePosts, isHiding, restorePosts, isRestoring } = useFacebookPosts();
   const { pages, isLoading: isLoadingPages } = useFacebookPages();
+  
+  console.log('FacebookSection - isAuthenticated:', isAuthenticated);
+  console.log('FacebookSection - login function:', login);
 
   return (
     <Card className="w-full">
