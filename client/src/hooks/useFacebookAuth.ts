@@ -109,12 +109,11 @@ export default function useFacebookAuth() {
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
       
-      // Try to open the popup with a simple approach first
-      console.log('About to open popup with URL:', authUrl);
+      // Try to open the popup directly with Facebook URL
+      console.log('About to open popup directly with Facebook URL:', authUrl);
       
-      // First open a blank popup
       const popup = window.open(
-        '',
+        authUrl,
         'facebook-login',
         `width=${width},height=${height},left=${left},top=${top}`
       );
@@ -129,35 +128,6 @@ export default function useFacebookAuth() {
       
       // Focus on the popup to ensure it loads
       popup.focus();
-      
-      // Now navigate to the Facebook URL
-      console.log('Navigating popup to Facebook URL...');
-      
-      // Try different approaches to navigate
-      try {
-        // Method 1: Direct location assignment
-        popup.location.href = authUrl;
-        console.log('Method 1: Direct location assignment attempted');
-      } catch (e) {
-        console.log('Method 1 failed:', e);
-        
-        // Method 2: Location replace
-        try {
-          popup.location.replace(authUrl);
-          console.log('Method 2: Location replace attempted');
-        } catch (e2) {
-          console.log('Method 2 failed:', e2);
-          
-          // Method 3: Document write with meta refresh
-          try {
-            popup.document.write(`<html><head><meta http-equiv="refresh" content="0;url=${authUrl}"></head><body>Redirecting...</body></html>`);
-            popup.document.close();
-            console.log('Method 3: Meta refresh attempted');
-          } catch (e3) {
-            console.log('Method 3 failed:', e3);
-          }
-        }
-      }
       
       setPopupWindow(popup);
       
@@ -279,12 +249,14 @@ export default function useFacebookAuth() {
       }
     };
     
+    console.log('Setting up message listener for Facebook auth');
     window.addEventListener('message', handleMessage);
     
     return () => {
+      console.log('Cleaning up message listener for Facebook auth');
       window.removeEventListener('message', handleMessage);
     };
-  }, [popupWindow, toast, queryClient]);
+  }, [popupWindow, toast, queryClient, exchangeCodeMutation]);
 
   // Close popup on unmount
   useEffect(() => {
