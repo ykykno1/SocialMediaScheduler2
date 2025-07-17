@@ -583,7 +583,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Exchange Facebook code for token
-  app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/facebook/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
       const { code, redirectUri } = req.body;
 
@@ -748,6 +748,21 @@ export function registerRoutes(app: Express): Server {
       console.error('Error storing Chabad times:', error);
       res.status(500).json({ error: 'Failed to store times' });
     }
+  });
+
+  // Get Facebook configuration
+  app.get("/api/facebook-config", (req, res) => {
+    const domain = req.get('host') || 'localhost:5173';
+    const protocol = req.secure ? 'https' : 'http';
+    const appId = process.env.FACEBOOK_APP_ID || '1598261231562840';
+    const redirectUri = `${protocol}://${domain}/auth-callback.html`;
+    
+    console.log(`Facebook config requested - App ID: ${appId}, Redirect URI: ${redirectUri}`);
+    
+    res.json({
+      appId,
+      redirectUri
+    });
   });
 
   // Get auth status
