@@ -152,9 +152,36 @@ export default function useFacebookAuth() {
 
     console.log('Setting up message listener on window');
     window.addEventListener('message', handleMessage);
+    
+    // Also try parent window if we're in an iframe
+    if (window.parent && window.parent !== window) {
+      console.log('Also setting up listener on parent window');
+      window.parent.addEventListener('message', handleMessage);
+    }
+    
+    // And top window
+    if (window.top && window.top !== window) {
+      console.log('Also setting up listener on top window');
+      try {
+        window.top.addEventListener('message', handleMessage);
+      } catch (e) {
+        console.log('Could not access top window:', e);
+      }
+    }
+    
     return () => {
       console.log('Cleaning up message listener');
       window.removeEventListener('message', handleMessage);
+      if (window.parent && window.parent !== window) {
+        window.parent.removeEventListener('message', handleMessage);
+      }
+      if (window.top && window.top !== window) {
+        try {
+          window.top.removeEventListener('message', handleMessage);
+        } catch (e) {
+          // Ignore
+        }
+      }
     };
   }, []); // Empty dependency array - set up only once
 
@@ -166,6 +193,51 @@ export default function useFacebookAuth() {
       setPendingAuth(null);
     }
   }, [pendingAuth, data, mutation]);
+
+  // Check localStorage for auth data (backup method)
+  useEffect(() => {
+    if (!popupWindow) return;
+    
+    const checkInterval = setInterval(() => {
+      const authKey = localStorage.getItem('facebook_auth_latest');
+      if (authKey) {
+        const authData = localStorage.getItem(authKey);
+        if (authData) {
+          try {
+            const parsed = JSON.parse(authData);
+            console.log('Found auth data in localStorage:', parsed);
+            
+            if (parsed.code && parsed.platform === 'facebook') {
+              // Clear localStorage
+              localStorage.removeItem(authKey);
+              localStorage.removeItem('facebook_auth_latest');
+              
+              // Process the auth
+              setPendingAuth({ 
+                code: parsed.code, 
+                redirectUri: window.location.origin + '/auth-callback.html' 
+              });
+              
+              // Close popup if still open
+              if (popupWindow && !popupWindow.closed) {
+                popupWindow.close();
+              }
+              setPopupWindow(null);
+              
+              clearInterval(checkInterval);
+            }
+          } catch (e) {
+            console.error('Error parsing auth data:', e);
+          }
+        }
+      }
+    }, 500);
+    
+    // Clean up after 30 seconds
+    setTimeout(() => clearInterval(checkInterval), 30000);
+    
+    return () => clearInterval(checkInterval);
+  }, [popupWindow]);
 
   // Close popup on unmount
   useEffect(() => {

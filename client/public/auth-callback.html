@@ -194,10 +194,25 @@
                     success: true
                 };
                 
+                // Save to localStorage as backup
+                const authKey = 'facebook_auth_' + Date.now();
+                localStorage.setItem(authKey, JSON.stringify(messageData));
+                localStorage.setItem('facebook_auth_latest', authKey);
+                console.log('Saved auth data to localStorage:', authKey);
+                
                 if (window.opener) {
+                    console.log('Parent window found!');
+                    console.log('Current origin:', window.location.origin);
+                    try {
+                        console.log('Parent origin:', window.opener.location.origin);
+                    } catch (e) {
+                        console.log('Cannot access parent origin:', e);
+                    }
+                    
                     // Send message multiple times with intervals
                     for (let i = 0; i < 3; i++) {
                         setTimeout(() => {
+                            console.log(`Sending message attempt ${i + 1}:`, messageData);
                             window.opener.postMessage(messageData, window.location.origin);
                             console.log(`Message sent to parent window (attempt ${i + 1})`);
                         }, i * 500);
