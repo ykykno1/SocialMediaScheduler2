@@ -1,0 +1,117 @@
+
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+User authenticated successfully: phtLx68scJszZOMrBEPHL
+📅 Authentic Chabad times received for user phtLx68scJszZOMrBEPHL, city 531: 19:25 / 20:27
+Raw secureUser from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  passwordHash: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountTier: 'premium',
+  emailVerified: true,
+  isActive: true,
+  phoneNumber: null,
+  phoneVerified: false,
+  registrationMethod: 'email',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z,
+  lastLogin: 2025-06-27T12:09:46.135Z
+}
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+🔄 Refreshing scheduler for user yk@gmail.com
+🗑️ Cleared existing jobs for user phtLx68scJszZOMrBEPHL
+🕯️ Using authentic Chabad times for תל אביב: 19:25 / 20:27
+⏰ User yk@gmail.com scheduling:
+        🕯️ Shabbat entry: 18.7.2025, 19:25:00
+        ✨ Shabbat exit: 19.7.2025, 20:27:00
+        📱 Hide preference: 15min → Hide at: 18.7.2025, 19:10:00
+        🔓 Restore preference: 30min → Restore at: 19.7.2025, 20:57:00
+📅 Scheduling cron job for: 18.7.2025, 19:10:00 (19:10)
+⏱️ Creating cron job for 18.7.2025, 19:10:00 with pattern: 10 19 18 7 *
+📅 Scheduling cron job for: 19.7.2025, 20:57:00 (20:57)
+⏱️ Creating cron job for 19.7.2025, 20:57:00 with pattern: 57 20 19 7 *
+✅ Scheduled 2 operations for yk@gmail.com
+✅ Refresh complete for user yk@gmail.com
+🔄 Scheduler refreshed for user phtLx68scJszZOMrBEPHL with new Chabad times
+6:24:55 PM [express] POST /api/chabad-times 200 in 103ms :: {"success":true,"message":"זמני חב\"ד הת…
+Using Facebook App ID: 1598261231562840, from env: 1030763279018030
+Generated redirect URI: https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html
+6:25:34 PM [express] GET /api/facebook-config 304 in 1ms :: {"appId":"1598261231562840","redirectUri…
+Auth middleware for GET /api/facebook/posts
+Getting user for ID: phtLx68scJszZOMrBEPHL
+Auth middleware for GET /api/auth-status
+Getting user for ID: phtLx68scJszZOMrBEPHL
+6:25:34 PM [express] GET /api/facebook/pages 200 in 10ms
+Raw secureUser from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  passwordHash: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountTier: 'premium',
+  emailVerified: true,
+  isActive: true,
+  phoneNumber: null,
+  phoneVerified: false,
+  registrationMethod: 'email',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z,
+  lastLogin: 2025-06-27T12:09:46.135Z
+}
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+User authenticated successfully: phtLx68scJszZOMrBEPHL
+Raw secureUser from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  passwordHash: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountTier: 'premium',
+  emailVerified: true,
+  isActive: true,
+  phoneNumber: null,
+  phoneVerified: false,
+  registrationMethod: 'email',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z,
+  lastLogin: 2025-06-27T12:09:46.135Z
+}
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+User authenticated successfully: phtLx68scJszZOMrBEPHL
+Getting Facebook auth for user in auth-status endpoint: phtLx68scJszZOMrBEPHL
+About to call storage.getAuthToken...
+6:25:35 PM [express] GET /api/facebook/posts 401 in 211ms :: {"error":"Not authenticated with Facebo…
+Storage.getAuthToken completed
+Auth result in auth-status endpoint: false
+Auth object details: null
+Raw secureUser from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  passwordHash: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountTier: 'premium',
+  emailVerified: true,
+  isActive: true,
+  phoneNumber: null,
+  phoneVerified: false,
+  registrationMethod: 'email',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z,
+  lastLogin: 2025-06-27T12:09:46.135Z
+}
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+6:25:35 PM [express] GET /api/auth-status 304 in 252ms :: {"isAuthenticated":false,"platform":"faceb…
