@@ -65,7 +65,7 @@ export default function useFacebookAuth() {
       return;
     }
 
-    const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${data.appId}&redirect_uri=${encodeURIComponent(data.redirectUri)}&response_type=code&scope=pages_show_list,pages_read_engagement,pages_manage_posts&state=facebook`;
+    const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${data.appId}&redirect_uri=${encodeURIComponent(data.redirectUri)}&response_type=code&scope=public_profile,email&state=facebook`;
     
     console.log('Opening Facebook auth URL:', authUrl);
     
