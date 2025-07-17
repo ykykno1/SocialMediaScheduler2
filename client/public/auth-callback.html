@@ -111,6 +111,13 @@
             const messageElement = document.getElementById('status-message');
             const spinnerElement = document.getElementById('spinner');
             
+            // Log all parameters for debugging
+            console.log('Auth callback page loaded');
+            console.log('Current URL:', window.location.href);
+            console.log('Query string:', window.location.search);
+            console.log('Hash string:', window.location.hash);
+            console.log('Parsed params:', params);
+            
             // Check for errors
             if (params.error) {
                 statusElement.textContent = params.error_description || params.error;
@@ -196,6 +203,13 @@
         
         // Run when page loads
         window.addEventListener('DOMContentLoaded', processAuthResponse);
+        
+        // Also run immediately in case DOMContentLoaded already fired
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', processAuthResponse);
+        } else {
+            processAuthResponse();
+        }
     </script>
 </body>
 </html>

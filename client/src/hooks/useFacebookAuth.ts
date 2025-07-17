@@ -122,12 +122,20 @@ export default function useFacebookAuth() {
       console.log('Facebook popup opened');
       setPopupWindow(popup);
       
-      // Add polling to check if popup is closed manually
+      // Add polling to check if popup is closed manually and debug URL
       const pollTimer = setInterval(() => {
         if (popup.closed) {
           console.log('Facebook popup was closed manually');
           setPopupWindow(null);
           clearInterval(pollTimer);
+        } else {
+          // Try to access popup URL for debugging
+          try {
+            console.log('Popup still open, current URL:', popup.location.href);
+          } catch (e) {
+            // Cross-origin error is expected when redirected to Facebook
+            console.log('Cross-origin error (expected when on Facebook):', e.message);
+          }
         }
       }, 1000);
       
