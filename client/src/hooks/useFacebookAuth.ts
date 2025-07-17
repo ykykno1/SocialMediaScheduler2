@@ -15,14 +15,28 @@ export default function useFacebookAuth() {
   // Get auth status
   const { data: authStatus } = useQuery({
     queryKey: ['/api/auth-status'],
-    queryFn: () => fetch('/api/auth-status').then((res) => res.json()),
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return { isAuthenticated: false };
+      
+      const res = await fetch('/api/auth-status', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return res.json();
+    },
   });
 
   const mutation = useMutation({
     mutationFn: async ({ code, redirectUri }: { code: string; redirectUri: string }) => {
+      const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/facebook/auth-callback', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
         body: JSON.stringify({ 
           code,
           redirectUri
@@ -91,35 +105,35 @@ export default function useFacebookAuth() {
     disconnectMutation.mutate();
   }, [disconnectMutation]);
 
-  function handleMessage(event: MessageEvent) {
-    console.log('Message received:', event.data);
-    console.log('Event origin:', event.origin);
-    console.log('Window origin:', window.location.origin);
-    
-    if (event.origin !== window.location.origin) return;
-    if (event.data?.platform !== 'facebook') return;
-
-    // Close popup
-    if (popupWindow && !popupWindow.closed) {
-      popupWindow.close();
-    }
-    setPopupWindow(null);
-
-    const code = event.data.code;
-    if (!code) return;
-
-    console.log('Exchanging code for token:', code);
-    mutation.mutate({ code, redirectUri: data?.redirectUri || '' });
-  }
-
   useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      console.log('Message received:', event.data);
+      console.log('Event origin:', event.origin);
+      console.log('Window origin:', window.location.origin);
+      
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.platform !== 'facebook') return;
+
+      // Close popup
+      if (popupWindow && !popupWindow.closed) {
+        popupWindow.close();
+      }
+      setPopupWindow(null);
+
+      const code = event.data.code;
+      if (!code) return;
+
+      console.log('Exchanging code for token:', code);
+      mutation.mutate({ code, redirectUri: data?.redirectUri || '' });
+    }
+
     console.log('Setting up message listener');
     window.addEventListener('message', handleMessage);
     return () => {
       console.log('Cleaning up message listener');
       window.removeEventListener('message', handleMessage);
     };
-  }, [popupWindow, mutation]);
+  }, [popupWindow, mutation, data]);
 
   // Close popup on unmount
   useEffect(() => {
