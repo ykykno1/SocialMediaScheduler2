@@ -122,22 +122,29 @@ export default function useFacebookAuth() {
       console.log('Facebook popup opened');
       setPopupWindow(popup);
       
-      // Add polling to check if popup is closed manually and debug URL
+      // Add more detailed polling to check popup status
       const pollTimer = setInterval(() => {
         if (popup.closed) {
           console.log('Facebook popup was closed manually');
           setPopupWindow(null);
           clearInterval(pollTimer);
-        } else {
-          // Try to access popup URL for debugging
-          try {
-            console.log('Popup still open, current URL:', popup.location.href);
-          } catch (e) {
-            // Cross-origin error is expected when redirected to Facebook
-            console.log('Cross-origin error (expected when on Facebook):', e.message);
-          }
+          return;
         }
-      }, 1000);
+        
+        // Try to access popup URL for debugging
+        try {
+          const currentUrl = popup.location.href;
+          console.log('Popup still open, current URL:', currentUrl);
+          
+          // Check if popup is on our callback page
+          if (currentUrl.includes('auth-callback.html')) {
+            console.log('Popup reached our callback page!');
+          }
+        } catch (e) {
+          // Cross-origin error is expected when redirected to Facebook
+          console.log('Cross-origin error (expected when on Facebook):', e.message);
+        }
+      }, 500); // Check more frequently
       
       // Store timer reference for cleanup
       setTimeout(() => {
