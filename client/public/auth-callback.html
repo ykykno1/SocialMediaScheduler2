@@ -117,8 +117,6 @@
             console.log('Query string:', window.location.search);
             console.log('Hash string:', window.location.hash);
             console.log('Parsed params:', params);
-            console.log('Has window.opener:', !!window.opener);
-            console.log('localStorage facebook_return_url:', localStorage.getItem('facebook_return_url'));
             
             // Add detailed status update to page
             messageElement.textContent = `מעבד נתונים... URL: ${window.location.href}`;
@@ -204,50 +202,12 @@
                             console.log(`Message sent to parent window (attempt ${i + 1})`);
                         }, i * 500);
                     }
-                    
-                    // Close the window after ensuring message delivery
-                    setTimeout(() => window.close(), 1000);
                 } else {
-                    console.log('No parent window found - handling direct navigation');
-                    
-                    // Handle direct navigation (not popup)
-                    // Send code to server directly and redirect back
-                    fetch('/api/facebook/auth-callback', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code: params.code })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Server response:', data);
-                        if (data.success) {
-                            statusElement.textContent = 'התחברות בוצעה בהצלחה!';
-                            statusElement.className = 'status success';
-                            messageElement.textContent = 'מחזיר אותך לאפליקציה...';
-                            
-                            // Get return URL from localStorage
-                            const returnUrl = localStorage.getItem('facebook_return_url') || '/';
-                            localStorage.removeItem('facebook_return_url');
-                            
-                            // Redirect back to the application
-                            setTimeout(() => {
-                                window.location.href = returnUrl;
-                            }, 1000);
-                        } else {
-                            statusElement.textContent = 'שגיאה בהתחברות';
-                            statusElement.className = 'status error';
-                            messageElement.textContent = data.error || 'אירעה שגיאה בהתחברות';
-                            spinnerElement.style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        statusElement.textContent = 'שגיאה בשרת';
-                        statusElement.className = 'status error';
-                        messageElement.textContent = 'אירעה שגיאה בהתחברות לשרת';
-                        spinnerElement.style.display = 'none';
-                    });
+                    console.error('No parent window found');
                 }
+                
+                // Close the window after ensuring message delivery
+                setTimeout(() => window.close(), 1000);
                 return;
             }
             

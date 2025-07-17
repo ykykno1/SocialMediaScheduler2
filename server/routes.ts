@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from "express";
-import path from "path";
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -560,12 +559,6 @@ export function registerRoutes(app: Express): Server {
 
 
 
-  // Serve auth-callback.html page
-  app.get("/auth-callback.html", (req, res) => {
-    const callbackPath = path.join(__dirname, "../client/public/auth-callback.html");
-    res.sendFile(callbackPath);
-  });
-
   // Get Facebook app configuration
   app.get("/api/facebook-config", (req, res) => {
     // Force use of correct Facebook App ID
@@ -590,7 +583,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Exchange Facebook code for token
-  app.post("/api/facebook/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/auth-callback", authMiddleware, async (req: AuthenticatedRequest, res) => {
     try {
       const { code, redirectUri } = req.body;
 
