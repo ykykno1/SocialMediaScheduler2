@@ -85,6 +85,11 @@ export default function useFacebookAuth() {
   });
 
   const handleFacebookLogin = useCallback(() => {
+    console.log('handleFacebookLogin called');
+    console.log('Current data:', data);
+    console.log('Has appId?', !!data?.appId);
+    console.log('Has redirectUri?', !!data?.redirectUri);
+    
     if (!data?.appId || !data?.redirectUri) {
       toast({ title: 'פרטי פייסבוק חסרים' });
       return;
