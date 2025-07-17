@@ -9,6 +9,7 @@ import useFacebookPosts from "@/hooks/useFacebookPosts";
 import useFacebookPages from "@/hooks/useFacebookPages";
 
 export default function FacebookSection() {
+  console.log('FacebookSection component loaded!');
   const authData = useFacebookAuth();
   console.log('FacebookSection - auth data:', authData);
   const { isAuthenticated, isAuthenticating, login, logout, pageAccess } = authData;
