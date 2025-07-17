@@ -109,6 +109,9 @@ export default function useFacebookAuth() {
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
       
+      // Try to open the popup with a simple approach first
+      console.log('About to open popup with URL:', authUrl);
+      
       const popup = window.open(
         authUrl,
         'facebook-login',
@@ -119,8 +122,22 @@ export default function useFacebookAuth() {
         throw new Error('נחסם חלון קופץ. אנא אפשר חלונות קופצים ונסה שוב');
       }
       
-      console.log('Facebook popup opened');
+      console.log('Facebook popup opened successfully');
+      console.log('Popup object exists:', !!popup);
+      console.log('Popup closed status:', popup.closed);
+      
+      // Focus on the popup to ensure it loads
+      popup.focus();
+      
       setPopupWindow(popup);
+      
+      // Add immediate check
+      setTimeout(() => {
+        console.log('After 100ms - popup closed:', popup.closed);
+        if (popup.closed) {
+          console.log('Popup closed immediately - possible popup blocker');
+        }
+      }, 100);
       
       // Add more detailed polling to check popup status
       const pollTimer = setInterval(() => {
