@@ -9,15 +9,9 @@ import useFacebookPosts from "@/hooks/useFacebookPosts";
 import useFacebookPages from "@/hooks/useFacebookPages";
 
 export default function FacebookSection() {
-  console.log('FacebookSection component loaded!');
-  const authData = useFacebookAuth();
-  console.log('FacebookSection - auth data:', authData);
-  const { isAuthenticated, isAuthenticating, login, logout, pageAccess } = authData;
+  const { isAuthenticated, isAuthenticating, login, logout, pageAccess } = useFacebookAuth();
   const { posts, isLoading: isLoadingPosts, hidePosts, isHiding, restorePosts, isRestoring } = useFacebookPosts();
   const { pages, isLoading: isLoadingPages } = useFacebookPages();
-  
-  console.log('FacebookSection - isAuthenticated:', isAuthenticated);
-  console.log('FacebookSection - login function:', login);
 
   return (
     <Card className="w-full">
@@ -41,10 +35,7 @@ export default function FacebookSection() {
               </AlertDescription>
             </Alert>
             <Button 
-              onClick={() => {
-                console.log('Facebook login button clicked');
-                login();
-              }} 
+              onClick={login} 
               disabled={isAuthenticating}
               className="bg-[#1877F2] hover:bg-[#166FE5]"
             >

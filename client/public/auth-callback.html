@@ -111,53 +111,6 @@
             const messageElement = document.getElementById('status-message');
             const spinnerElement = document.getElementById('spinner');
             
-            // Log all parameters for debugging
-            console.log('Auth callback page loaded');
-            console.log('Current URL:', window.location.href);
-            console.log('Query string:', window.location.search);
-            console.log('Hash string:', window.location.hash);
-            console.log('Parsed params:', params);
-            
-            // Add detailed status update to page
-            messageElement.textContent = `מעבד נתונים... URL: ${window.location.href}`;
-            statusElement.textContent = `פרמטרים: ${JSON.stringify(params)}`;
-            
-            // Check if this is actually our callback page or an error page
-            if (window.location.href.includes('auth-callback.html')) {
-                console.log('We are on our callback page, processing parameters...');
-                processAuthParams();
-            } else {
-                console.log('We are NOT on our callback page. Current URL:', window.location.href);
-                messageElement.textContent = 'מופנה מפייסבוק...';
-                statusElement.textContent = 'מחכה לתגובה מפייסבוק';
-                
-                // Wait a bit to see if we get redirected
-                setTimeout(() => {
-                    console.log('Still waiting... Current URL:', window.location.href);
-                    if (window.location.href.includes('auth-callback.html')) {
-                        console.log('Now we are on callback page, processing...');
-                        processAuthParams();
-                    } else {
-                        console.log('Still not on callback page, something went wrong');
-                        messageElement.textContent = 'לא הצליח להתחבר לפייסבוק';
-                        statusElement.textContent = 'שגיאה בתהליך האימות';
-                        statusElement.className = 'status error';
-                        spinnerElement.style.display = 'none';
-                    }
-                }, 5000);
-            }
-            
-        }
-        
-        // Separate function to process authentication parameters
-        function processAuthParams() {
-            const params = getUrlParams();
-            const statusElement = document.getElementById('status');
-            const messageElement = document.getElementById('status-message');
-            const spinnerElement = document.getElementById('spinner');
-            
-            console.log('Processing auth params:', params);
-            
             // Check for errors
             if (params.error) {
                 statusElement.textContent = params.error_description || params.error;
@@ -194,25 +147,10 @@
                     success: true
                 };
                 
-                // Save to localStorage as backup
-                const authKey = 'facebook_auth_' + Date.now();
-                localStorage.setItem(authKey, JSON.stringify(messageData));
-                localStorage.setItem('facebook_auth_latest', authKey);
-                console.log('Saved auth data to localStorage:', authKey);
-                
                 if (window.opener) {
-                    console.log('Parent window found!');
-                    console.log('Current origin:', window.location.origin);
-                    try {
-                        console.log('Parent origin:', window.opener.location.origin);
-                    } catch (e) {
-                        console.log('Cannot access parent origin:', e);
-                    }
-                    
                     // Send message multiple times with intervals
                     for (let i = 0; i < 3; i++) {
                         setTimeout(() => {
-                            console.log(`Sending message attempt ${i + 1}:`, messageData);
                             window.opener.postMessage(messageData, window.location.origin);
                             console.log(`Message sent to parent window (attempt ${i + 1})`);
                         }, i * 500);
@@ -258,13 +196,6 @@
         
         // Run when page loads
         window.addEventListener('DOMContentLoaded', processAuthResponse);
-        
-        // Also run immediately in case DOMContentLoaded already fired
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', processAuthResponse);
-        } else {
-            processAuthResponse();
-        }
     </script>
 </body>
 </html>
