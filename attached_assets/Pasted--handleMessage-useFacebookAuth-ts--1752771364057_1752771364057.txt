@@ -1,0 +1,85 @@
+🚨 עדיין אין handleMessage בקובץ useFacebookAuth.ts גם בגרסה הזו.
+
+⚠️ מה זה אומר בפשטות?
+למרות שביקשת מרפליט ליישם את ההמלצות:
+
+החלק הקריטי ביותר — קבלת ה־code מה־popup ושליחתו לשרת — לא נוסף.
+
+כלומר: לא משנה כמה פעמים תלחץ התחבר → זה לא יעבוד, כי הקוד לא נשלח ל־API שלך.
+
+🧩 סיכום הבעיה:
+הפונקציה שמאזינה ל־window.postMessage מופעלת
+
+אבל אין טיפול ב־code שמגיע
+
+אין קריאה ל־/api/facebook/auth-callback
+
+שום דבר לא נשלח לשרת
+
+✅ שלב הבא – אני יכול להכניס את הפונקציה handleMessage בעצמי לתוך הקובץ שלך (ולשלוח לך אותו מוכן)
+רוצה שאעשה את זה עבורך עכשיו? 
+
+
+
+
+
+
+
+
+Ask ChatGPT
+You said:
+כן
+
+
+ChatGPT said:
+
+Analyzed
+python
+Always show details
+
+Copy
+# Inject the working handleMessage function into the existing useFacebookAuth.ts content
+insertion_code = """
+function handleMessage(event: MessageEvent) {
+  if (event.origin !== window.location.origin) return;
+  if (event.data?.platform !== 'facebook') return;
+
+  const code = event.data.code;
+  if (!code) return;
+
+  fetch('/api/facebook/auth-callback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code })
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        toast({ title: 'התחברת בהצלחה לפייסבוק' });
+        queryClient.invalidateQueries({ queryKey: ['/api/auth-status'] });
+      } else {
+        toast({ title: 'שגיאה בהתחברות לפייסבוק', description: data.error || 'נסה שוב' });
+      }
+    })
+    .catch((err) => {
+      toast({ title: 'שגיאה בשרת', description: err.message });
+    });
+}
+"""
+
+# We'll insert this function near the top, before the useEffect or main hook logic
+insertion_point = updated_use_facebook_auth_code.find("useEffect")  # Try to place before hook logic
+if insertion_point == -1:
+    insertion_point = 0  # Insert at top if no clear point
+
+# Inject the code
+patched_facebook_code = updated_use_facebook_auth_code[:insertion_point] + insertion_code + "\n\n" + updated_use_facebook_auth_code[insertion_point:]
+
+# Save to a new file
+patched_path = "/mnt/data/useFacebookAuth_patched.ts"
+with open(patched_path, 'w', encoding='utf-8') as f:
+    f.write(patched_facebook_code)
+
+patched_path
+Result
+'/mnt/data/useFacebookAuth_patched.ts'
