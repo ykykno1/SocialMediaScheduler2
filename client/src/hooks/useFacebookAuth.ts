@@ -109,17 +109,34 @@ export default function useFacebookAuth() {
   // Set up message listener once, not dependent on changing values
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      console.log('Message received:', event.data);
+      console.log('=== MESSAGE RECEIVED ===');
+      console.log('Full event:', event);
+      console.log('Message data:', event.data);
       console.log('Event origin:', event.origin);
       console.log('Window origin:', window.location.origin);
+      console.log('Data type:', typeof event.data);
+      console.log('Has platform?', event.data?.platform);
+      console.log('Platform value:', event.data?.platform);
+      console.log('Has code?', event.data?.code);
+      console.log('=======================');
       
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.platform !== 'facebook') return;
+      if (event.origin !== window.location.origin) {
+        console.log('Origin mismatch, ignoring message');
+        return;
+      }
+      
+      if (event.data?.platform !== 'facebook') {
+        console.log('Not a Facebook message, ignoring');
+        return;
+      }
 
       const code = event.data.code;
-      if (!code) return;
+      if (!code) {
+        console.log('No code in message, ignoring');
+        return;
+      }
 
-      console.log('Code received from popup:', code);
+      console.log('SUCCESS! Code received from popup:', code);
       
       // Store the auth data to be processed
       setPendingAuth({ code, redirectUri: window.location.origin + '/auth-callback.html' });
@@ -133,7 +150,7 @@ export default function useFacebookAuth() {
       });
     }
 
-    console.log('Setting up message listener');
+    console.log('Setting up message listener on window');
     window.addEventListener('message', handleMessage);
     return () => {
       console.log('Cleaning up message listener');
