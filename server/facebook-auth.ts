@@ -2,6 +2,7 @@
 
 import express, { Request, Response } from 'express';
 import fetch from 'node-fetch';
+import jwt from 'jsonwebtoken';
 import { enhancedStorage as storage } from './enhanced-storage.js';
 
 const router = express.Router();
@@ -47,7 +48,6 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: Funct
     return res.sendStatus(401);
   }
 
-  const jwt = require('jsonwebtoken');
   const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
 
   jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
