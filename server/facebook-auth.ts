@@ -58,7 +58,7 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: Funct
 }
 
 // שמירת טוקן והשלמת התחברות
-router.post('/api/facebook/auth-callback', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/api/facebook/auth-callback', async (req: Request, res: Response) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ error: 'Missing code' });
 
@@ -66,9 +66,22 @@ router.post('/api/facebook/auth-callback', authenticateToken, async (req: Authen
     console.log('📥 קוד שהתקבל מהקליינט:', code);
     const tokenData = await getAccessTokenFromCode(code);
 
-    const userId = req.user?.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+    // Get user ID from session or JWT token in Authorization header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Missing authorization token' });
+    }
+
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-shabbat-robot-2024';
+    let userId: string;
+    
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      userId = decoded.userId;
+    } catch (err) {
+      return res.status(403).json({ error: 'Invalid token' });
     }
 
     await storage.saveAuthToken({
