@@ -132,7 +132,32 @@ export default function useFacebookAuth() {
       
       // Now navigate to the Facebook URL
       console.log('Navigating popup to Facebook URL...');
-      popup.location.href = authUrl;
+      
+      // Try different approaches to navigate
+      try {
+        // Method 1: Direct location assignment
+        popup.location.href = authUrl;
+        console.log('Method 1: Direct location assignment attempted');
+      } catch (e) {
+        console.log('Method 1 failed:', e);
+        
+        // Method 2: Location replace
+        try {
+          popup.location.replace(authUrl);
+          console.log('Method 2: Location replace attempted');
+        } catch (e2) {
+          console.log('Method 2 failed:', e2);
+          
+          // Method 3: Document write with meta refresh
+          try {
+            popup.document.write(`<html><head><meta http-equiv="refresh" content="0;url=${authUrl}"></head><body>Redirecting...</body></html>`);
+            popup.document.close();
+            console.log('Method 3: Meta refresh attempted');
+          } catch (e3) {
+            console.log('Method 3 failed:', e3);
+          }
+        }
+      }
       
       setPopupWindow(popup);
       
