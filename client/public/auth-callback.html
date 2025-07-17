@@ -117,6 +117,8 @@
             console.log('Query string:', window.location.search);
             console.log('Hash string:', window.location.hash);
             console.log('Parsed params:', params);
+            console.log('Has window.opener:', !!window.opener);
+            console.log('localStorage facebook_return_url:', localStorage.getItem('facebook_return_url'));
             
             // Add detailed status update to page
             messageElement.textContent = `מעבד נתונים... URL: ${window.location.href}`;
