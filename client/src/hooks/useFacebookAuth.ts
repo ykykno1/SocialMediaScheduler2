@@ -112,8 +112,9 @@ export default function useFacebookAuth() {
       // Try to open the popup with a simple approach first
       console.log('About to open popup with URL:', authUrl);
       
+      // First open a blank popup
       const popup = window.open(
-        authUrl,
+        '',
         'facebook-login',
         `width=${width},height=${height},left=${left},top=${top}`
       );
@@ -129,6 +130,10 @@ export default function useFacebookAuth() {
       // Focus on the popup to ensure it loads
       popup.focus();
       
+      // Now navigate to the Facebook URL
+      console.log('Navigating popup to Facebook URL...');
+      popup.location.href = authUrl;
+      
       setPopupWindow(popup);
       
       // Add immediate check
@@ -136,6 +141,8 @@ export default function useFacebookAuth() {
         console.log('After 100ms - popup closed:', popup.closed);
         if (popup.closed) {
           console.log('Popup closed immediately - possible popup blocker');
+        } else {
+          console.log('Popup still open, should be navigating to Facebook...');
         }
       }, 100);
       

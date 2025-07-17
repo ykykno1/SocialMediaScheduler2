@@ -1,0 +1,55 @@
+
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+User authenticated successfully: phtLx68scJszZOMrBEPHL
+Getting Facebook auth for user in auth-status endpoint: phtLx68scJszZOMrBEPHL
+About to call storage.getAuthToken...
+Raw secureUser from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  passwordHash: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountTier: 'premium',
+  emailVerified: true,
+  isActive: true,
+  phoneNumber: null,
+  phoneVerified: false,
+  registrationMethod: 'email',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z,
+  lastLogin: 2025-06-27T12:09:46.135Z
+}
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+User authenticated successfully: phtLx68scJszZOMrBEPHL
+Storage.getAuthToken completed
+Auth result in auth-status endpoint: false
+Auth object details: null
+4:51:17 PM [express] GET /api/facebook/posts 401 in 215ms :: {"error":"Not authenticated with Facebo…
+Raw secureUser from database: {
+  id: 'phtLx68scJszZOMrBEPHL',
+  email: 'yk@gmail.com',
+  username: 'yk',
+  passwordHash: '$2b$10$3EObo0LMRb0iu3/HAfCCOOXACLmDeU9wFIknjnRc/SRWzf8Q8fq7a',
+  accountTier: 'premium',
+  emailVerified: true,
+  isActive: true,
+  phoneNumber: null,
+  phoneVerified: false,
+  registrationMethod: 'email',
+  shabbatCity: 'תל אביב',
+  shabbatCityId: '531',
+  hideTimingPreference: '15min',
+  restoreTimingPreference: '30min',
+  createdAt: 2025-06-10T01:25:14.797Z,
+  updatedAt: 2025-07-12T18:32:09.338Z,
+  lastLogin: 2025-06-27T12:09:46.135Z
+}
+Timing preferences from DB: { hideTimingPreference: '15min', restoreTimingPreference: '30min' }
+4:51:17 PM [express] GET /api/auth-status 304 in 257ms :: {"isAuthenticated":false,"platform":"faceb…
+4:51:18 PM [express] GET /api/facebook/pages 200 in 5ms
+Using Facebook App ID: 1598261231562840, from env: 1030763279018030
+Generated redirect URI: https://6866a7b9-e37b-4ce0-b193-e54ab5171d02-00-1hjnl20rbozcm.janeway.replit.dev/auth-callback.html
+4:51:43 PM [express] GET /api/facebook-config 304 in 1ms :: {"appId":"1598261231562840","redirectUri…
