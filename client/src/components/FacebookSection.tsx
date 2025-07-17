@@ -35,7 +35,10 @@ export default function FacebookSection() {
               </AlertDescription>
             </Alert>
             <Button 
-              onClick={login} 
+              onClick={() => {
+                console.log('Facebook login button clicked');
+                login();
+              }} 
               disabled={isAuthenticating}
               className="bg-[#1877F2] hover:bg-[#166FE5]"
             >
