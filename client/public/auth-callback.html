@@ -118,6 +118,28 @@
             console.log('Hash string:', window.location.hash);
             console.log('Parsed params:', params);
             
+            // Add detailed status update to page
+            messageElement.textContent = `מעבד נתונים... URL: ${window.location.href}`;
+            statusElement.textContent = `פרמטרים: ${JSON.stringify(params)}`;
+            
+            // Don't close immediately - wait 10 seconds to see what happens
+            console.log('Waiting 10 seconds before processing...');
+            setTimeout(() => {
+                console.log('10 seconds passed, now processing...');
+                processAuthParams();
+            }, 10000);
+            
+        }
+        
+        // Separate function to process authentication parameters
+        function processAuthParams() {
+            const params = getUrlParams();
+            const statusElement = document.getElementById('status');
+            const messageElement = document.getElementById('status-message');
+            const spinnerElement = document.getElementById('spinner');
+            
+            console.log('Processing auth params:', params);
+            
             // Check for errors
             if (params.error) {
                 statusElement.textContent = params.error_description || params.error;
